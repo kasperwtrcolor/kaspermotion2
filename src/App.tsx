@@ -515,7 +515,6 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
                     src={m.url}
                     alt={comp.caption}
                     className={isMulti ? multiMediaClass : mediaClass}
-                    style={{ imageOrientation: 'from-image' }}
                     onError={() => setHasError(true)}
                   />
                 )
@@ -544,6 +543,7 @@ export default function App() {
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
   const [libraryAssets, setLibraryAssets] = useState<LibraryAsset[]>([]);
+  const [selectedLibraryAssets, setSelectedLibraryAssets] = useState<Set<string>>(new Set());
   const [showLibrary, setShowLibrary] = useState(false);
   const [scriptText, setScriptText] = useState("");
 
@@ -1088,16 +1088,28 @@ export default function App() {
     setMediaFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const addFromLibrary = (asset: LibraryAsset) => {
-    const newItem: MediaItem = {
+  const addFromLibrary = (assets: LibraryAsset[]) => {
+    const newItems: MediaItem[] = assets.map(asset => ({
       id: Math.random().toString(36).substr(2, 9),
       url: asset.url,
       type: asset.type,
       name: asset.name
-    };
-    setMediaFiles(prev => [...prev, newItem]);
-    setToastMessage("Added from library!");
+    }));
+    setMediaFiles(prev => [...prev, ...newItems]);
+    setToastMessage(`Added ${assets.length} asset${assets.length > 1 ? 's' : ''} from library!`);
     setTimeout(() => setToastMessage(null), 2000);
+  };
+
+  const toggleLibraryAssetSelection = (id: string) => {
+    setSelectedLibraryAssets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
   const handleScrape = async () => {
@@ -1364,7 +1376,7 @@ export default function App() {
           
           {/* Loading Overlays */}
           <AnimatePresence>
-            {(isUploading || isGeneratingImage || isRenderingTrailer || isSaving) && (
+            {(isUploading || isGeneratingImage || isSaving) && (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
@@ -1375,14 +1387,8 @@ export default function App() {
                 <p className="text-white font-mono text-sm">
                   {isUploading && "Uploading assets..."}
                   {isGeneratingImage && "Generating AI image..."}
-                  {isRenderingTrailer && "Rendering world..."}
                   {isSaving && "Saving project..."}
                 </p>
-                {isRenderingTrailer && (
-                  <div className="w-48 h-1 bg-white/20 rounded-full mt-4 overflow-hidden">
-                    <div className="h-full bg-white transition-all duration-300" style={{ width: `${renderProgress}%` }} />
-                  </div>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1488,37 +1494,52 @@ export default function App() {
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {libraryAssets.map((asset) => (
-                              <button
-                                key={asset.id}
-                                onClick={() => {
-                                  addFromLibrary(asset);
-                                  setShowLibrary(false);
-                                }}
-                                className="relative aspect-square bg-white/5 rounded-xl border border-white/10 overflow-hidden group hover:border-blue-500/50 transition-all"
-                              >
-                                {asset.type === 'video' ? (
-                                  <video src={asset.url} className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-opacity" />
-                                ) : (
-                                  <img src={asset.url} className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-opacity" alt={asset.name} />
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                                  <p className="text-[10px] truncate w-full font-mono">{asset.name}</p>
-                                </div>
-                                <button 
-                                  onClick={(e) => deleteLibraryAsset(e, asset)}
-                                  className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            {libraryAssets.map((asset) => {
+                              const isSelected = selectedLibraryAssets.has(asset.id);
+                              return (
+                                <div
+                                  key={asset.id}
+                                  onClick={() => toggleLibraryAssetSelection(asset.id)}
+                                  className={`relative aspect-square rounded-xl border overflow-hidden group cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-white/5 hover:border-blue-500/50'}`}
                                 >
-                                  <Trash2 size={14} />
-                                </button>
-                              </button>
-                            ))}
+                                  {asset.type === 'video' ? (
+                                    <video src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'}`} />
+                                  ) : (
+                                    <img src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'}`} alt={asset.name} />
+                                  )}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                    <p className="text-[10px] truncate w-full font-mono">{asset.name}</p>
+                                  </div>
+                                  <div className={`absolute top-2 left-2 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-black/50 border-white/30 group-hover:border-white/60'}`}>
+                                    {isSelected && <CheckCircle2 size={14} className="text-white" />}
+                                  </div>
+                                  <button 
+                                    onClick={(e) => deleteLibraryAsset(e, asset)}
+                                    className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
                       
-                      <div className="p-6 border-t border-white/10 bg-white/5">
-                        <p className="text-xs text-white/40">Select an asset to add it to your current project.</p>
+                      <div className="p-6 border-t border-white/10 bg-white/5 flex items-center justify-between">
+                        <p className="text-xs text-white/40">Select assets to add them to your current project.</p>
+                        <button
+                          disabled={selectedLibraryAssets.size === 0}
+                          onClick={() => {
+                            const selectedAssets = libraryAssets.filter(a => selectedLibraryAssets.has(a.id));
+                            addFromLibrary(selectedAssets);
+                            setShowLibrary(false);
+                            setSelectedLibraryAssets(new Set());
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Add Selected ({selectedLibraryAssets.size})
+                        </button>
                       </div>
                     </motion.div>
                   </motion.div>
