@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import * as path from 'path';
+import * as cheerio from 'cheerio';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -23,18 +24,34 @@ async function startServer() {
       const response = await fetch(url);
       const html = await response.text();
       
-      // Basic HTML stripping to get text content
-      const cleanText = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                            .replace(/<[^>]*>?/gm, ' ')
-                            .replace(/\s+/g, ' ')
-                            .substring(0, 20000); // Limit to avoid token limits
+      // Parse HTML with cheerio
+      const $ = cheerio.load(html);
+      
+      const title = $('title').text().trim();
+      const metaDescription = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
+      
+      const h1s: string[] = [];
+      $('h1').each((_, el) => {
+        h1s.push($(el).text().trim());
+      });
+      
+      const h2s: string[] = [];
+      $('h2').each((_, el) => {
+        h2s.push($(el).text().trim());
+      });
 
-      const prompt = `Based on the following content scraped from ${url}, generate a short, punchy script for a motion graphics trailer. 
+      const extractedData = `
+Title: ${title}
+Meta Description: ${metaDescription}
+H1 Tags: ${h1s.join(' | ')}
+H2 Tags: ${h2s.join(' | ')}
+      `.trim();
+
+      const prompt = `Based on the following extracted structure from ${url}, identify the primary value proposition and slogans to generate a short, punchy script for a motion graphics trailer. 
       Return ONLY the script, with each scene's caption on a new line. Do not include scene numbers or prefixes. Keep it under 10 lines.
       
-      Content:
-      ${cleanText}`;
+      Extracted Content:
+      ${extractedData}`;
       
       const aiResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',

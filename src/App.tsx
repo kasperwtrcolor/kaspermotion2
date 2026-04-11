@@ -75,12 +75,12 @@ const generateComposition = (
     sceneType = 'text-morph';
   }
   
-  const angle = prevComp ? prevComp.angle + (Math.random() * 0.8 - 0.4) : 0;
-  const distance = 1500; // Reduced distance for better visibility
+  const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
+  const distance = 2000;
 
   const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
-  const y = prevComp ? prevComp.y + (Math.random() * 600 - 300) : 0;
-  const z = prevComp ? prevComp.z - distance : 0;
+  const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
+  const z = 0;
 
   const positions: Exclude<TextPosition, 'random'>[] = ['bottom', 'top', 'center', 'left', 'right'];
   const textPosition = preferredPosition === 'random' 
@@ -1180,11 +1180,11 @@ export default function App() {
   };
 
   const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition): Composition => {
-    const angle = prevComp ? prevComp.angle + (Math.random() * 0.8 - 0.4) : 0;
-    const distance = 1500;
+    const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
+    const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
-    const y = prevComp ? prevComp.y + (Math.random() * 600 - 300) : 0;
-    const z = prevComp ? prevComp.z - distance : 0;
+    const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
+    const z = 0;
 
     return {
       id: Math.random().toString(36).substr(2, 9),
