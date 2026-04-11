@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user profile information and settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique Firebase Auth ID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Trailer": {
+      "title": "Trailer Project",
+      "description": "Stores trailer project configuration and metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "script": { "type": "string" },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "fontStyle": { "type": "string" },
+            "backgroundStyle": { "type": "string" },
+            "textEffect": { "type": "string" },
+            "transitionType": { "type": "string" },
+            "transitionDuration": { "type": "number" }
+          }
+        },
+        "media": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "url": { "type": "string", "format": "uri" },
+              "type": { "type": "string", "enum": ["image", "video"] },
+              "caption": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name"]
+    },
+    "Asset": {
+      "title": "Library Asset",
+      "description": "Stores metadata for uploaded media assets in the user's library.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "type": { "type": "string", "enum": ["image", "video"] },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "url", "type", "name"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/trailers/{trailerId}": {
+      "schema": "Trailer",
+      "description": "Trailer project documents"
+    },
+    "/assets/{assetId}": {
+      "schema": "Asset",
+      "description": "User media library assets"
+    }
+  }
+}
