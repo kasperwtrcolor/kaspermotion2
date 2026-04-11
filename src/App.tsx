@@ -501,7 +501,7 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
             ) : (
               m.url && (
                 m.type === 'video' ? (
-                  <video
+                  <motion.video
                     src={m.url}
                     autoPlay
                     loop
@@ -509,13 +509,25 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
                     playsInline
                     className={isMulti ? multiMediaClass : mediaClass}
                     onError={() => setHasError(true)}
+                    animate={status === 'active' ? {
+                      scale: [1, 1.05],
+                      x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
+                      y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
+                    } : { scale: 1, x: 0, y: 0 }}
+                    transition={{ duration: 10, ease: "linear" }}
                   />
                 ) : (
-                  <img
+                  <motion.img
                     src={m.url}
                     alt={comp.caption}
                     className={isMulti ? multiMediaClass : mediaClass}
                     onError={() => setHasError(true)}
+                    animate={status === 'active' ? {
+                      scale: [1, 1.05],
+                      x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
+                      y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
+                    } : { scale: 1, x: 0, y: 0 }}
+                    transition={{ duration: 10, ease: "linear" }}
                   />
                 )
               )
@@ -537,6 +549,8 @@ export default function App() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRenderingTrailer, setIsRenderingTrailer] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [recordingProgress, setRecordingProgress] = useState(0);
 
   const [appMode, setAppMode] = useState<'setup' | 'playing'>('setup');
   const [setupStep, setSetupStep] = useState<1 | 2 | 3>(1);
@@ -730,6 +744,9 @@ export default function App() {
 
     if (!isAutoSave) setIsSaving(true);
     try {
+      let updatedMediaFiles = false;
+      const newMediaFiles = [...mediaFiles];
+
       // 1. Upload media if they are local files and add to library
       const mediaData = await Promise.all(mediaFiles.map(async (item, i) => {
         if (item.file) {
@@ -752,6 +769,9 @@ export default function App() {
               name: item.name,
               createdAt: serverTimestamp()
             });
+
+            newMediaFiles[i] = { ...item, url, file: undefined };
+            updatedMediaFiles = true;
 
             return {
               url,
@@ -779,8 +799,12 @@ export default function App() {
         }
       }));
 
+      if (updatedMediaFiles) {
+        setMediaFiles(newMediaFiles);
+      }
+
       // 2. Save the trailer project
-      const trailerData = {
+      const trailerData: any = {
         userId: user.uid,
         name: `Trailer ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}${isAutoSave ? ' (Auto-saved)' : ''}`,
         script: scriptText,
@@ -793,12 +817,19 @@ export default function App() {
           preset
         },
         media: mediaData,
-        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         isAutoSave
       };
 
-      await addDoc(collection(db, 'trailers'), trailerData);
-      setToastMessage(isAutoSave ? "Project auto-saved" : "Project saved successfully!");
+      if (currentProjectId) {
+        await setDoc(doc(db, 'trailers', currentProjectId), trailerData, { merge: true });
+        if (!isAutoSave) setToastMessage("Project saved successfully!");
+      } else {
+        trailerData.createdAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, 'trailers'), trailerData);
+        setCurrentProjectId(docRef.id);
+        if (!isAutoSave) setToastMessage("Project saved successfully!");
+      }
     } catch (err) {
       console.error("Save project failed:", err);
       if (!isAutoSave) setToastMessage("Failed to save project. Check your connection.");
@@ -809,12 +840,21 @@ export default function App() {
   };
 
   const loadProject = (project: any) => {
+    setCurrentProjectId(project.id);
     setScriptText(project.script);
     setFontStyle(project.settings.fontStyle);
     setBackgroundStyle(project.settings.backgroundStyle);
     setTextEffect(project.settings.textEffect);
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
+    
+    const loadedMedia: MediaItem[] = project.media.map((m: any) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      url: m.url,
+      type: m.type,
+      name: m.name
+    }));
+    setMediaFiles(loadedMedia);
     
     // We can't easily convert URLs back to File objects for the current setup
     // So we'll need to modify generateWorld to handle URLs directly
@@ -830,6 +870,7 @@ export default function App() {
   };
 
   const handleStartOver = () => {
+    setCurrentProjectId(null);
     setMediaFiles([]);
     setScriptText('');
     setCompositions([]);
@@ -841,6 +882,9 @@ export default function App() {
   const deleteProject = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'trailers', id));
+      if (currentProjectId === id) {
+        setCurrentProjectId(null);
+      }
       setToastMessage("Project deleted.");
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `trailers/${id}`);
@@ -1053,7 +1097,7 @@ export default function App() {
       
       return () => clearInterval(autoSaveTimer);
     }
-  }, [user, mediaFiles.length, scriptText, fontStyle, backgroundStyle, textEffect, transitionType, transitionDuration, preset]);
+  }, [user, mediaFiles, scriptText, fontStyle, backgroundStyle, textEffect, transitionType, transitionDuration, preset, currentProjectId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
@@ -1340,6 +1384,7 @@ export default function App() {
       // Auto-play sequence for recording
       // Give more time for the browser to stabilize and for the user to switch tabs if needed
       setCurrentIndex(0);
+      setRecordingProgress(0);
       await new Promise(r => setTimeout(r, 3000)); 
 
       for (let i = 1; i < compositions.length; i++) {
@@ -1347,6 +1392,7 @@ export default function App() {
         
         // Update index
         setCurrentIndex(i);
+        setRecordingProgress((i / compositions.length) * 100);
         
         // Wait for the transition and scene duration
         // We use a slightly longer wait to ensure the transition completes fully
@@ -1354,6 +1400,7 @@ export default function App() {
       }
 
       if (sequenceActiveRef.current) {
+        setRecordingProgress(100);
         // Final wait for the last scene to settle
         await new Promise(r => setTimeout(r, 2000)); 
         if (mediaRecorder.state !== 'inactive') {
@@ -2093,6 +2140,16 @@ export default function App() {
       {!isRecording && (
         <div className="fixed bottom-6 left-6 z-50 pointer-events-none opacity-40 font-mono text-[10px] uppercase tracking-widest">
           Drag to Rotate • Shift+Drag to Pan
+        </div>
+      )}
+
+      {/* Recording Progress Bar */}
+      {isRecording && (
+        <div className="fixed bottom-0 left-0 right-0 h-1.5 bg-white/10 z-[300]">
+          <div 
+            className="h-full bg-red-500 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(239,68,68,0.8)]" 
+            style={{ width: `${recordingProgress}%` }} 
+          />
         </div>
       )}
 
