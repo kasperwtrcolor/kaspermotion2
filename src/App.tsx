@@ -550,7 +550,14 @@ export default function App() {
     if (!user) return { url: URL.createObjectURL(file), uploaded: false };
     try {
       const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-      await uploadBytes(storageRef, file);
+      
+      // Add a timeout to the upload to prevent hanging on CORS/Permission errors
+      const uploadPromise = uploadBytes(storageRef, file);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Upload timed out. This may be due to missing CORS configuration on your Firebase Storage bucket.")), 10000);
+      });
+      
+      await Promise.race([uploadPromise, timeoutPromise]);
       const url = await getDownloadURL(storageRef);
       
       await addDoc(collection(db, 'assets'), {
@@ -607,7 +614,11 @@ export default function App() {
         
         setMediaFiles(prev => [...prev, newItem]);
         setAiPrompt("");
-        setToastMessage("AI Image generated and saved to library!");
+        if (!uploaded) {
+          setToastMessage("AI Image generated locally, but failed to save to cloud library (CORS/Permissions).");
+        } else {
+          setToastMessage("AI Image generated and saved to library!");
+        }
       } else {
         setToastMessage("Failed to generate image. Try a different prompt.");
       }
@@ -638,7 +649,13 @@ export default function App() {
         if (item.file) {
           try {
             const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${item.file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-            await uploadBytes(storageRef, item.file);
+            
+            const uploadPromise = uploadBytes(storageRef, item.file);
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error("Upload timed out.")), 10000);
+            });
+            
+            await Promise.race([uploadPromise, timeoutPromise]);
             const url = await getDownloadURL(storageRef);
             
             // Add to library metadata
@@ -937,8 +954,10 @@ export default function App() {
     if (files.length > 0) {
       setIsUploading(true);
       try {
+        let anyFailed = false;
         const newItems: MediaItem[] = await Promise.all(files.map(async (file) => {
           const { url, uploaded } = await uploadAssetToLibrary(file);
+          if (!uploaded) anyFailed = true;
           return {
             id: Math.random().toString(36).substr(2, 9),
             file: uploaded ? undefined : file,
@@ -948,7 +967,11 @@ export default function App() {
           };
         }));
         setMediaFiles(prev => [...prev, ...newItems]);
-        setToastMessage("Assets uploaded and saved to library!");
+        if (anyFailed) {
+          setToastMessage("Assets added locally, but failed to save to cloud library (CORS/Permissions).");
+        } else {
+          setToastMessage("Assets uploaded and saved to library!");
+        }
       } finally {
         setIsUploading(false);
       }
