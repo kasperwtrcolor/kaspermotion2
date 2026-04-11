@@ -117,9 +117,9 @@ const generateComposition = (
     id: Math.random().toString(36).substr(2, 9),
     media: processedMedia,
     x, y, z,
-    rotX: (Math.random() - 0.5) * 10,
-    rotY: (Math.random() - 0.5) * 10,
-    rotZ: (Math.random() - 0.5) * 5,
+    rotX: 0,
+    rotY: 0,
+    rotZ: 0,
     angle,
     caption,
     textPosition,
@@ -271,6 +271,79 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
   );
 };
 
+const ParticleTrails = () => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
+      {[...Array(15)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute w-2 h-2 rounded-full bg-gradient-to-tr from-white to-blue-400 blur-[1px]"
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+          animate={{
+            x: (Math.random() - 0.5) * 1000,
+            y: (Math.random() - 0.5) * 1000,
+            z: (Math.random() - 0.5) * 500,
+            opacity: [0, 1, 0],
+            scale: [0, Math.random() * 2 + 1, 0],
+          }}
+          transition={{
+            duration: Math.random() * 3 + 2,
+            repeat: Infinity,
+            ease: "easeOut",
+            delay: Math.random() * 2
+          }}
+          style={{ transformStyle: 'preserve-3d' }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => {
+  if (status !== 'active') return null;
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
+      <motion.div
+        className="absolute -top-32 -left-32 w-24 h-24 rounded-3xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 shadow-2xl"
+        initial={{ x: -800, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [-800, 0, 150, 800],
+          y: [-500, 0, -150, -500],
+          rotateX: [0, 360, 720],
+          rotateY: [0, 360, 720],
+          rotateZ: [0, 180, 360],
+          scale: [0, 1.5, 1, 0],
+        }}
+        transition={{
+          duration: 4.5,
+          times: [0, 0.4, 0.8, 1],
+          ease: "easeInOut",
+        }}
+        style={{ transformStyle: 'preserve-3d' }}
+      />
+      <motion.div
+        className="absolute -bottom-32 -right-32 w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 shadow-2xl"
+        initial={{ x: 800, y: 500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [800, 0, -100, -800],
+          y: [500, 0, 100, 500],
+          rotateX: [0, -360, -720],
+          rotateY: [0, -360, -720],
+          rotateZ: [0, -180, -360],
+          scale: [0, 1.2, 1, 0],
+        }}
+        transition={{
+          duration: 4.5,
+          times: [0, 0.4, 0.8, 1],
+          ease: "easeInOut",
+          delay: 0.5
+        }}
+        style={{ transformStyle: 'preserve-3d' }}
+      />
+    </div>
+  );
+};
+
 const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future' }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
@@ -354,7 +427,12 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
         default: { type: 'spring', damping: 15, stiffness: 100, mass: 1, delay: 0.1 }
       }
     },
-    past: transitionVariants.past
+    past: {
+      ...transitionVariants.past,
+      rotateZ: 360,
+      scale: 0,
+      transition: { duration: 1.5, ease: "easeInOut" }
+    }
   };
 
   const textMorphVariants = {
@@ -408,6 +486,8 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
               scale: m.scale || 1
             }}
           >
+            <ParticleTrails />
+            <CartoonShapes status={status} />
             {hasError ? (
               <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-white/5 border-white/10`}>
                 <AlertCircle size={isMulti ? 24 : 48} className="text-white/20" />
@@ -759,7 +839,6 @@ export default function App() {
   // Interactive Offsets
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
-  const userZoom = useMotionValue(0);
   const userPanX = useMotionValue(0);
   const userPanY = useMotionValue(0);
 
@@ -769,7 +848,6 @@ export default function App() {
   
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
-  const smoothZoom = useSpring(userZoom, { damping: 50, stiffness: 150 });
   const smoothPanX = useSpring(userPanX, { damping: 50, stiffness: 150 });
   const smoothPanY = useSpring(userPanY, { damping: 50, stiffness: 150 });
 
@@ -802,7 +880,7 @@ export default function App() {
 
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX], ([x, px, wx]) => Number(x) + Number(px) + Number(wx));
   const worldY = useTransform([smoothY, smoothPanY, smoothWiggleY], ([y, py, wy]) => Number(y) + Number(py) + Number(wy));
-  const worldZ = useTransform([smoothZ, smoothZoom], ([z, sz]) => Number(z) + Number(sz));
+  const worldZ = smoothZ;
 
   const flareX1 = useTransform(worldX, v => Number(v) * -0.5);
   const flareY1 = useTransform(worldY, v => Number(v) * -0.5);
@@ -851,10 +929,6 @@ export default function App() {
 
   const handleMouseUp = () => {
     isDraggingRef.current = false;
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    userZoom.set(userZoom.get() - e.deltaY * 5);
   };
 
   // --- ERROR HANDLING ---
@@ -912,7 +986,6 @@ export default function App() {
   const resetCamera = () => {
     userRotX.set(0);
     userRotY.set(0);
-    userZoom.set(0);
     userPanX.set(0);
     userPanY.set(0);
   };
@@ -1124,9 +1197,9 @@ export default function App() {
         scale: m.scale || 1
       })),
       x, y, z,
-      rotX: (Math.random() - 0.5) * 10,
-      rotY: (Math.random() - 0.5) * 10,
-      rotZ: (Math.random() - 0.5) * 5,
+      rotX: 0,
+      rotY: 0,
+      rotZ: 0,
       angle,
       caption: media[0]?.caption || '',
       textPosition: 'bottom',
@@ -1740,7 +1813,6 @@ export default function App() {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
     >
       
       {/* The 3D World */}
@@ -1942,7 +2014,7 @@ export default function App() {
       {/* Interaction Hint */}
       {!isRecording && (
         <div className="fixed bottom-6 left-6 z-50 pointer-events-none opacity-40 font-mono text-[10px] uppercase tracking-widest">
-          Drag to Rotate • Shift+Drag to Pan • Scroll to Zoom
+          Drag to Rotate • Shift+Drag to Pan
         </div>
       )}
 
