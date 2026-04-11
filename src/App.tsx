@@ -472,6 +472,13 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
           </motion.div>
         )}
 
+        {comp.media.length > 0 && (
+          <>
+            <ParticleTrails />
+            <CartoonShapes status={status} />
+          </>
+        )}
+
         {comp.media.map((m, i) => (
           <motion.div
             key={i}
@@ -486,8 +493,6 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
               scale: m.scale || 1
             }}
           >
-            <ParticleTrails />
-            <CartoonShapes status={status} />
             {hasError ? (
               <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-white/5 border-white/10`}>
                 <AlertCircle size={isMulti ? 24 : 48} className="text-white/20" />
@@ -510,6 +515,7 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
                     src={m.url}
                     alt={comp.caption}
                     className={isMulti ? multiMediaClass : mediaClass}
+                    style={{ imageOrientation: 'from-image' }}
                     onError={() => setHasError(true)}
                   />
                 )
@@ -821,6 +827,15 @@ export default function App() {
     });
     setCompositions(newComps);
     setAppMode('playing');
+  };
+
+  const handleStartOver = () => {
+    setMediaFiles([]);
+    setScriptText('');
+    setCompositions([]);
+    setAppMode('setup');
+    setSetupStep(1);
+    setToastMessage("Started over. Ready for a new project.");
   };
 
   const deleteProject = async (id: string) => {
@@ -1154,13 +1169,26 @@ export default function App() {
     let mediaIdx = 0;
     let sceneIdx = 0;
 
-    while (mediaIdx < mediaFiles.length) {
-      // Decide if this scene should have multiple images (2-4)
-      const isMulti = Math.random() > 0.6 && (mediaFiles.length - mediaIdx) >= 2;
-      const count = isMulti ? Math.min(Math.floor(Math.random() * 3) + 2, mediaFiles.length - mediaIdx) : 1;
+    while (mediaIdx < mediaFiles.length || sceneIdx < scriptLines.length) {
+      let caption = scriptLines[sceneIdx] || '';
+      let isTextOnly = false;
       
-      const sceneItems = mediaFiles.slice(mediaIdx, mediaIdx + count);
-      const caption = scriptLines[sceneIdx % scriptLines.length] || '';
+      if (caption.toUpperCase().includes('[TEXT]') || caption.toUpperCase().includes('[TEXT ONLY]')) {
+        isTextOnly = true;
+        caption = caption.replace(/\[TEXT ONLY\]/gi, '').replace(/\[TEXT\]/gi, '').trim();
+      }
+      
+      let sceneItems: MediaItem[] = [];
+      if (!isTextOnly && mediaIdx < mediaFiles.length) {
+        sceneItems = [mediaFiles[mediaIdx]];
+        mediaIdx++;
+      } else if (!isTextOnly && mediaIdx >= mediaFiles.length) {
+        isTextOnly = true;
+      }
+      
+      if (isTextOnly && !caption && mediaIdx >= mediaFiles.length) {
+        break;
+      }
       
       const comp = generateComposition(
         sceneItems, 
@@ -1176,11 +1204,10 @@ export default function App() {
       newComps.push(comp);
       prev = comp;
       
-      mediaIdx += count;
       sceneIdx++;
       
-      setRenderProgress((mediaIdx / mediaFiles.length) * 100);
-      await new Promise(r => setTimeout(r, 300));
+      setRenderProgress(Math.min(((mediaIdx / Math.max(mediaFiles.length, 1)) * 100), 100));
+      await new Promise(r => setTimeout(r, 100));
     }
 
     setCompositions(newComps);
@@ -1996,6 +2023,12 @@ export default function App() {
           className="flex items-center gap-2 md:gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
         >
           <span>MENU</span>
+        </button>
+        <button 
+          onClick={handleStartOver}
+          className="flex items-center gap-2 md:gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm text-red-300 hover:text-red-200 hover:bg-red-500/20"
+        >
+          <span>START OVER</span>
         </button>
         <button 
           onClick={resetCamera}

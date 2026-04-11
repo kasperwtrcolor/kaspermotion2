@@ -20,8 +20,22 @@ async function startServer() {
         return res.status(400).json({ error: 'URL is required' });
       }
 
-      // Fetch the URL content
-      const response = await fetch(url);
+      let targetUrl = url;
+      if (!/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = 'https://' + targetUrl;
+      }
+
+      // Fetch the URL content with a User-Agent
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+      }
+      
       const html = await response.text();
       
       // Parse HTML with cheerio
@@ -59,9 +73,9 @@ H2 Tags: ${h2s.join(' | ')}
       });
 
       res.json({ script: aiResponse.text?.trim() });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Scraping error:', error);
-      res.status(500).json({ error: 'Failed to scrape URL or generate script' });
+      res.status(500).json({ error: error.message || 'Failed to scrape URL or generate script' });
     }
   });
 
