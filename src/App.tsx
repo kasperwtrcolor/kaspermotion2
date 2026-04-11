@@ -4,7 +4,7 @@ import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, Arro
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -826,8 +826,26 @@ export default function App() {
   const deleteProject = async (id: string) => {
     try {
       await deleteDoc(doc(db, 'trailers', id));
+      setToastMessage("Project deleted.");
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `trailers/${id}`);
+    }
+  };
+
+  const deleteLibraryAsset = async (e: React.MouseEvent, asset: LibraryAsset) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'assets', asset.id));
+      try {
+        const storageRef = ref(storage, asset.url);
+        await deleteObject(storageRef);
+      } catch (e) {
+        console.error("Could not delete from storage", e);
+      }
+      setToastMessage("Asset deleted from library.");
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `assets/${asset.id}`);
     }
   };
 
@@ -1460,6 +1478,12 @@ export default function App() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
                                   <p className="text-[10px] truncate w-full font-mono">{asset.name}</p>
                                 </div>
+                                <button 
+                                  onClick={(e) => deleteLibraryAsset(e, asset)}
+                                  className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
                               </button>
                             ))}
                           </div>
