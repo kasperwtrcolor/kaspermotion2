@@ -447,6 +447,7 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [userTrailers, setUserTrailers] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRenderingTrailer, setIsRenderingTrailer] = useState(false);
@@ -545,6 +546,27 @@ export default function App() {
 
   const handleLogout = () => signOut(auth);
 
+  const uploadAssetToLibrary = async (file: File): Promise<{ url: string, uploaded: boolean }> => {
+    if (!user) return { url: URL.createObjectURL(file), uploaded: false };
+    try {
+      const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      
+      await addDoc(collection(db, 'assets'), {
+        userId: user.uid,
+        url,
+        type: file.type.startsWith('video/') ? 'video' : 'image',
+        name: file.name,
+        createdAt: serverTimestamp()
+      });
+      return { url, uploaded: true };
+    } catch (err) {
+      console.error("Upload failed", err);
+      return { url: URL.createObjectURL(file), uploaded: false };
+    }
+  };
+
   const generateAIImage = async () => {
     if (!aiPrompt) return;
     setIsGeneratingImage(true);
@@ -573,17 +595,19 @@ export default function App() {
         const blob = await res.blob();
         const file = new File([blob], `ai_gen_${Date.now()}.png`, { type: "image/png" });
         
+        const { url, uploaded } = await uploadAssetToLibrary(file);
+
         const newItem: MediaItem = {
           id: Math.random().toString(36).substr(2, 9),
-          file,
-          url: URL.createObjectURL(file),
+          file: uploaded ? undefined : file,
+          url,
           type: 'image',
           name: file.name
         };
         
         setMediaFiles(prev => [...prev, newItem]);
         setAiPrompt("");
-        setToastMessage("AI Image generated and added!");
+        setToastMessage("AI Image generated and saved to library!");
       } else {
         setToastMessage("Failed to generate image. Try a different prompt.");
       }
@@ -908,17 +932,26 @@ export default function App() {
     }
   }, [user, mediaFiles.length, scriptText, fontStyle, backgroundStyle, textEffect, transitionType, transitionDuration, preset]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
-      const newItems: MediaItem[] = files.map(file => ({
-        id: Math.random().toString(36).substr(2, 9),
-        file,
-        url: URL.createObjectURL(file),
-        type: file.type.startsWith('video/') ? 'video' : 'image',
-        name: file.name
-      }));
-      setMediaFiles(prev => [...prev, ...newItems]);
+      setIsUploading(true);
+      try {
+        const newItems: MediaItem[] = await Promise.all(files.map(async (file) => {
+          const { url, uploaded } = await uploadAssetToLibrary(file);
+          return {
+            id: Math.random().toString(36).substr(2, 9),
+            file: uploaded ? undefined : file,
+            url,
+            type: file.type.startsWith('video/') ? 'video' : 'image',
+            name: file.name
+          };
+        }));
+        setMediaFiles(prev => [...prev, ...newItems]);
+        setToastMessage("Assets uploaded and saved to library!");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -1185,8 +1218,33 @@ export default function App() {
   // --- RENDER SETUP WIZARD ---
   if (appMode === 'setup') {
     return (
-      <div className="min-h-screen bg-[#050505] text-white font-sans flex items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-12 backdrop-blur-xl shadow-2xl my-auto max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible custom-scrollbar">
+      <div className="min-h-screen bg-[#050505] text-white font-sans flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-12 backdrop-blur-xl shadow-2xl my-auto max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+          
+          {/* Loading Overlays */}
+          <AnimatePresence>
+            {(isUploading || isGeneratingImage || isRenderingTrailer || isSaving) && (
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl"
+              >
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
+                <p className="text-white font-mono text-sm">
+                  {isUploading && "Uploading assets..."}
+                  {isGeneratingImage && "Generating AI image..."}
+                  {isRenderingTrailer && "Rendering world..."}
+                  {isSaving && "Saving project..."}
+                </p>
+                {isRenderingTrailer && (
+                  <div className="w-48 h-1 bg-white/20 rounded-full mt-4 overflow-hidden">
+                    <div className="h-full bg-white transition-all duration-300" style={{ width: `${renderProgress}%` }} />
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Header */}
           <div className="flex items-center justify-between mb-8 md:12">
