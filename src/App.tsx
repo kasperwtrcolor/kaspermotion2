@@ -6,8 +6,10 @@ import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User 
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { GoogleGenAI } from "@google/genai";
+import { GiphyFetch } from '@giphy/js-fetch-api';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
@@ -58,6 +60,7 @@ type Composition = {
   isTextOnly?: boolean;
   preset?: string;
   backgroundStyle?: string;
+  giphyStickerUrl?: string;
 };
 
 const generateComposition = (
@@ -71,7 +74,8 @@ const generateComposition = (
   prevComp?: Composition,
   isTextOnly?: boolean,
   preset?: string,
-  backgroundStyle?: string
+  backgroundStyle?: string,
+  giphyStickerUrl?: string
 ): Composition => {
   // Determine scene type
   let sceneType: Composition['sceneType'] = 'standard';
@@ -135,7 +139,8 @@ const generateComposition = (
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
-    backgroundStyle
+    backgroundStyle,
+    giphyStickerUrl
   };
 };
 
@@ -586,6 +591,17 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
           <PopCulture3DIcon type={comp.backgroundStyle} status={status} />
         )}
 
+        {comp.giphyStickerUrl && status === 'active' && (
+          <motion.img
+            src={comp.giphyStickerUrl}
+            className="absolute z-30 w-64 h-64 object-contain pointer-events-none drop-shadow-2xl"
+            initial={{ scale: 0, opacity: 0, y: 100, z: 200, rotateZ: -15 }}
+            animate={{ scale: 1, opacity: 1, y: 0, z: 200, rotateZ: 0 }}
+            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: 0.5 }}
+            style={{ transformStyle: 'preserve-3d' }}
+          />
+        )}
+
         {comp.media.map((m, i) => {
           const mediaElement = m.url && (
             m.type === 'video' ? (
@@ -670,6 +686,7 @@ export default function App() {
   const [recordingProgress, setRecordingProgress] = useState(0);
   const [textOnlyLines, setTextOnlyLines] = useState<Set<number>>(new Set());
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
+  const [useGiphy, setUseGiphy] = useState(false);
 
   const [appMode, setAppMode] = useState<'setup' | 'playing'>('setup');
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
@@ -935,7 +952,8 @@ export default function App() {
           transitionDuration,
           preset,
           textOnlyLines: Array.from(textOnlyLines),
-          mediaMapping
+          mediaMapping,
+          useGiphy
         },
         media: mediaData,
         updatedAt: serverTimestamp(),
@@ -970,6 +988,7 @@ export default function App() {
     setTransitionDuration(project.settings.transitionDuration);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
+    setUseGiphy(project.settings.useGiphy || false);
     
     const loadedMedia: MediaItem[] = project.media.map((m: any) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -1411,6 +1430,21 @@ export default function App() {
         }
       }
       
+      let giphyStickerUrl: string | undefined;
+      if (useGiphy && caption) {
+        try {
+          const searchTerms = caption.split(' ').slice(0, 3).join(' ').replace(/[^a-zA-Z0-9 ]/g, '');
+          if (searchTerms) {
+            const { data } = await gf.search(searchTerms, { type: 'stickers', limit: 1 });
+            if (data && data.length > 0) {
+              giphyStickerUrl = data[0].images.original.url;
+            }
+          }
+        } catch (err) {
+          console.error("Giphy fetch error:", err);
+        }
+      }
+      
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
@@ -1422,7 +1456,8 @@ export default function App() {
         prev,
         isTextOnly,
         preset,
-        backgroundStyle
+        backgroundStyle,
+        giphyStickerUrl
       );
       
       newComps.push(comp);
@@ -1995,6 +2030,21 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+              </div>
+
+              <div className="mb-8">
+                <label className="flex items-center gap-3 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={useGiphy}
+                    onChange={(e) => setUseGiphy(e.target.checked)}
+                    className="w-5 h-5 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-black"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-white">Add Giphy Stickers</div>
+                    <div className="text-xs text-white/50">Automatically fetch and overlay animated stickers based on scene text.</div>
+                  </div>
+                </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
