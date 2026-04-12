@@ -7,6 +7,7 @@ import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimest
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { GoogleGenAI } from "@google/genai";
 import { GiphyFetch } from '@giphy/js-fetch-api';
+import LandingPage from './components/LandingPage';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
@@ -735,7 +736,7 @@ export default function App() {
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [useGiphy, setUseGiphy] = useState(false);
 
-  const [appMode, setAppMode] = useState<'setup' | 'playing'>('setup');
+  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing'>('landing');
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
@@ -1772,11 +1773,16 @@ export default function App() {
     }
   };
 
+  // --- RENDER LANDING PAGE ---
+  if (appMode === 'landing') {
+    return <LandingPage onStart={() => setAppMode('setup')} />;
+  }
+
   // --- RENDER SETUP WIZARD ---
   if (appMode === 'setup') {
     return (
-      <div className="min-h-screen bg-[#050505] text-white font-sans flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="w-full max-w-3xl bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-12 backdrop-blur-xl shadow-2xl my-auto max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+      <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto">
+        <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[90vh] overflow-y-auto custom-scrollbar relative">
           
           {/* Loading Overlays */}
           <AnimatePresence>
@@ -1798,24 +1804,24 @@ export default function App() {
           </AnimatePresence>
           
           {/* Header */}
-          <div className="flex items-center justify-between mb-8 md:12">
+          <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
             <div>
-              <h1 className="font-display text-2xl md:3xl font-bold tracking-tight mb-1 md:mb-2">Create Trailer</h1>
-              <p className="text-white/50 font-mono text-[10px] md:text-sm">Motion Graphics Generator</p>
+              <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
+              <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Motion Graphics Generator</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end gap-4">
               {user ? (
-                <div className="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-                  <img src={user.photoURL || ''} className="w-6 h-6 rounded-full" alt="Profile" />
-                  <span className="text-xs font-medium hidden sm:inline">{user.displayName}</span>
-                  <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors">
+                <div className="flex items-center gap-3 bg-brutal-purple px-3 py-1.5 brutal-border">
+                  <img src={user.photoURL || ''} className="w-6 h-6 brutal-border" alt="Profile" />
+                  <span className="text-xs font-bold font-mono uppercase hidden sm:inline">{user.displayName}</span>
+                  <button onClick={handleLogout} className="text-black hover:text-red-600 transition-colors">
                     <LogOut size={14} />
                   </button>
                 </div>
               ) : (
                 <button 
                   onClick={handleLogin}
-                  className="bg-white text-black px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 hover:bg-white/90 transition-colors"
+                  className="brutal-button bg-brutal-blue px-4 py-1.5 text-xs flex items-center gap-2"
                 >
                   <UserIcon size={14} /> LOGIN
                 </button>
@@ -1824,7 +1830,7 @@ export default function App() {
                 {[1, 2, 3, 4].map(step => (
                   <div 
                     key={step} 
-                    className={`w-3 h-3 rounded-full transition-colors ${setupStep >= step ? 'bg-white' : 'bg-white/20'}`} 
+                    className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
                   />
                 ))}
               </div>
@@ -1834,17 +1840,17 @@ export default function App() {
           {/* Step 1: Media */}
           {setupStep === 1 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              <h2 className="text-xl font-medium mb-6 flex items-center gap-3">
-                <ImageIcon className="text-blue-400" /> Step 1: Add Media
+              <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-brutal-blue brutal-border flex items-center justify-center"><ImageIcon size={16} /></div> Step 1: Add Media
               </h2>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {mediaFiles.map((item, i) => (
-                  <div key={i} className="relative aspect-square bg-black/50 rounded-xl border border-white/10 overflow-hidden group">
+                  <div key={i} className="relative aspect-square bg-white brutal-border overflow-hidden group">
                     <MediaThumbnail item={item} />
                     <button 
                       onClick={() => removeFile(i)}
-                      className="absolute top-2 right-2 bg-red-500/80 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 bg-brutal-pink brutal-border p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
                     >
                       <X size={14} />
                     </button>
@@ -1852,14 +1858,14 @@ export default function App() {
                 ))}
                 
                 <div className="flex flex-col gap-2">
-                  <label className="flex-1 aspect-square bg-white/5 hover:bg-white/10 border border-white/10 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors text-white/50 hover:text-white">
+                  <label className="flex-1 aspect-square bg-brutal-orange/20 hover:bg-brutal-orange/40 border-2 border-black border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors text-black">
                     <Upload size={24} className="mb-2" />
-                    <span className="text-[10px] uppercase font-mono">Upload</span>
+                    <span className="text-xs uppercase font-mono font-bold">Upload</span>
                     <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileUpload} />
                   </label>
                   <button 
                     onClick={() => setShowLibrary(true)}
-                    className="h-10 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-[10px] uppercase font-mono transition-colors"
+                    className="brutal-button bg-brutal-purple h-10 flex items-center justify-center gap-2 text-xs"
                   >
                     <History size={14} /> Library
                   </button>
@@ -1951,28 +1957,29 @@ export default function App() {
               </AnimatePresence>
 
               {/* AI Generation Tool */}
-              <div className="mb-8 p-6 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
+              <div className="bg-brutal-blue/20 brutal-border p-4 md:p-6 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-brutal-blue text-black font-mono text-[10px] font-bold px-2 py-1 brutal-border border-t-0 border-r-0">BETA</div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-                    <Sparkles size={18} />
+                  <div className="w-10 h-10 bg-brutal-blue brutal-border flex items-center justify-center text-black">
+                    <Sparkles size={20} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm">AI Visual Generator</h3>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest">Create unique motion assets</p>
+                    <h3 className="font-display font-bold text-lg uppercase">AI Visual Generator</h3>
+                    <p className="text-xs font-mono font-bold uppercase">Create unique motion assets</p>
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input 
                     type="text" 
                     placeholder="Describe the visual you want (e.g. 'Cyberpunk city at night, cinematic lighting')"
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
+                    className="brutal-input flex-1 px-4 py-3 text-sm"
                   />
                   <button 
                     onClick={generateAIImage}
                     disabled={isGeneratingImage || !aiPrompt}
-                    className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-3 h-full rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20"
+                    className="brutal-button bg-brutal-green px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isGeneratingImage ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
                     <span className="hidden sm:inline">GENERATE</span>
@@ -1984,7 +1991,7 @@ export default function App() {
                 <button 
                   onClick={() => setSetupStep(2)}
                   disabled={mediaFiles.length === 0}
-                  className="bg-white text-black px-8 py-3 rounded-full font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/90 transition-colors"
+                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2 disabled:opacity-50"
                 >
                   Next <ArrowRight size={18} />
                 </button>
@@ -1995,19 +2002,19 @@ export default function App() {
           {/* Step 2: Script */}
           {setupStep === 2 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              <h2 className="text-xl font-medium mb-6 flex items-center gap-3">
-                <FileText className="text-green-400" /> Step 2: Add Script
+              <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-brutal-green brutal-border flex items-center justify-center"><FileText size={16} /></div> Step 2: Add Script
               </h2>
               
-              <div className="mb-6 bg-black/30 p-3 md:p-4 rounded-xl border border-white/5">
-                <label className="block text-xs md:text-sm text-white/70 mb-2">AI URL Scraper (Optional)</label>
+              <div className="mb-6 bg-brutal-pink/20 brutal-border p-4">
+                <label className="block text-sm font-mono font-bold uppercase mb-2">AI URL Scraper (Optional)</label>
                 <div className="flex flex-col md:flex-row gap-2">
                   <div className="relative flex-1">
-                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={14} />
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" size={14} />
                     <input 
                       type="url" 
                       placeholder="https://example.com/article" 
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-xs md:text-sm focus:outline-none focus:border-white/30"
+                      className="brutal-input w-full py-2 pl-10 pr-4 text-sm"
                       value={scrapeUrl}
                       onChange={(e) => setScrapeUrl(e.target.value)}
                     />
@@ -2015,17 +2022,17 @@ export default function App() {
                   <button 
                     onClick={handleScrape}
                     disabled={isScraping || !scrapeUrl}
-                    className="bg-white/10 hover:bg-white/20 disabled:opacity-50 px-4 py-2 rounded-lg text-xs md:text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                    className="brutal-button bg-brutal-purple px-4 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isScraping ? <Loader2 size={14} className="animate-spin" /> : 'Generate'}
                   </button>
                 </div>
               </div>
 
-              <p className="text-white/50 text-sm mb-4">Each line of text will be displayed as a caption for the corresponding media file.</p>
+              <p className="text-black/70 text-sm mb-4 font-medium">Each line of text will be displayed as a caption for the corresponding media file.</p>
               
               <textarea
-                className="w-full bg-black/50 border border-white/10 rounded-xl p-6 text-white font-mono text-sm focus:outline-none focus:border-white/30 transition-colors resize-none h-48 mb-4"
+                className="brutal-input w-full p-6 font-mono text-sm resize-none h-48 mb-4"
                 placeholder="Line 1: Welcome to the presentation&#10;Line 2: Here is our first product&#10;Line 3: Notice the sleek design..."
                 value={scriptText}
                 onChange={(e) => handleScriptChange(e.target.value)}
@@ -2034,13 +2041,13 @@ export default function App() {
               <div className="flex justify-between mt-8">
                 <button 
                   onClick={() => setSetupStep(1)}
-                  className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
+                  className="brutal-button bg-white px-6 py-3"
                 >
                   Back
                 </button>
                 <button 
                   onClick={handleGoToMapping}
-                  className="bg-white text-black px-8 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-white/90 transition-colors"
+                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
                 >
                   Next <ArrowRight size={18} />
                 </button>
@@ -2051,24 +2058,24 @@ export default function App() {
           {/* Step 3: Link Media to Text */}
           {setupStep === 3 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              <h2 className="text-xl font-medium mb-6 flex items-center gap-3">
-                <LinkIcon className="text-purple-400" /> Step 3: Link Media to Text
+              <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center"><LinkIcon size={16} /></div> Step 3: Link Media to Text
               </h2>
               
-              <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2">
+              <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                 {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
-                  <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
-                    <div className="flex-1 text-sm text-white/80 flex items-center">
-                      <span className="text-white/30 mr-3 text-xs">{idx + 1}</span>
+                  <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white brutal-border p-3">
+                    <div className="flex-1 text-sm text-black font-medium flex items-center">
+                      <span className="bg-black text-white px-2 py-0.5 font-mono text-xs mr-3">{idx + 1}</span>
                       {line}
                     </div>
                     <div className="flex items-center gap-3 md:w-1/3">
-                      <label className="flex items-center gap-2 text-xs text-white/50 whitespace-nowrap cursor-pointer">
+                      <label className="flex items-center gap-2 text-xs font-mono font-bold uppercase whitespace-nowrap cursor-pointer">
                         <input 
                           type="checkbox" 
                           checked={textOnlyLines.has(idx)}
                           onChange={() => toggleTextOnly(idx)}
-                          className="rounded bg-black/50 border-white/20 text-blue-500 focus:ring-0 focus:ring-offset-0"
+                          className="w-4 h-4 border-2 border-black rounded-none text-brutal-blue focus:ring-0 focus:ring-offset-0"
                         />
                         Text Only
                       </label>
@@ -2077,7 +2084,7 @@ export default function App() {
                         <select
                           value={mediaMapping[idx] || ''}
                           onChange={(e) => setMediaMapping(prev => ({ ...prev, [idx]: e.target.value }))}
-                          className="flex-1 bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-white/30"
+                          className="brutal-input flex-1 px-2 py-1.5 text-xs font-mono"
                         >
                           <option value="">Select Media...</option>
                           {mediaFiles.map(m => (
@@ -2093,13 +2100,13 @@ export default function App() {
               <div className="flex justify-between mt-8">
                 <button 
                   onClick={() => setSetupStep(2)}
-                  className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
+                  className="brutal-button bg-white px-6 py-3"
                 >
                   Back
                 </button>
                 <button 
                   onClick={() => setSetupStep(4)}
-                  className="bg-white text-black px-8 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-white/90 transition-colors"
+                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
                 >
                   Next <ArrowRight size={18} />
                 </button>
@@ -2110,36 +2117,36 @@ export default function App() {
           {/* Step 4: Ready & Styling */}
           {setupStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 size={24} className="md:w-8 md:h-8" />
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-green brutal-border flex items-center justify-center mx-auto mb-4 transform -rotate-6">
+                <CheckCircle2 size={24} className="md:w-8 md:h-8 text-black" />
               </div>
-              <h2 className="text-xl md:text-2xl font-medium mb-1 md:mb-2 text-center">Style & Generate</h2>
-              <p className="text-white/50 mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
+              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter">Style & Generate</h2>
+              <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div className="col-span-1 md:col-span-2">
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Professional Presets (AE Style)</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Professional Presets</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {(['blockbuster', 'documentary', 'music-video', 'app-showcase'] as const).map(p => (
                       <button
                         key={p}
                         onClick={() => applyPreset(p)}
-                        className={`px-4 py-4 rounded-xl border text-center transition-all ${preset === p ? 'bg-blue-500/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                        className={`px-4 py-4 brutal-border text-center transition-all ${preset === p ? 'bg-brutal-blue transform translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
                       >
-                        <div className="font-bold capitalize mb-1">{p.replace('-', ' ')}</div>
-                        <div className="text-[10px] text-white/40 uppercase tracking-widest">Automated Engine</div>
+                        <div className="font-display font-bold uppercase mb-1">{p.replace('-', ' ')}</div>
+                        <div className="text-[10px] text-black/60 font-mono uppercase tracking-widest">Automated Engine</div>
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Typography</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Typography</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['font-sans', 'font-serif', 'font-mono', 'font-display'] as FontStyle[]).map(font => (
                       <button
                         key={font}
                         onClick={() => setFontStyle(font)}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-left border transition-colors text-xs md:text-sm ${fontStyle === font ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'} ${font}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors text-xs md:text-sm ${fontStyle === font ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'} ${font}`}
                       >
                         {font.replace('font-', '').toUpperCase()}
                       </button>
@@ -2147,13 +2154,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Background</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Background</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['black', 'gradient-blue', 'gradient-purple', 'grid', 'vibrant-glow'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => setBackgroundStyle(bg)}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-left border transition-colors capitalize text-xs md:text-sm ${backgroundStyle === bg ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${backgroundStyle === bg ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {bg.replace('-', ' ')}
                       </button>
@@ -2163,29 +2170,29 @@ export default function App() {
               </div>
 
               <div className="mb-8">
-                <label className="flex items-center gap-3 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors">
+                <label className="flex items-center gap-3 cursor-pointer bg-white p-4 brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
                   <input 
                     type="checkbox" 
                     checked={useGiphy}
                     onChange={(e) => setUseGiphy(e.target.checked)}
-                    className="w-5 h-5 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-black"
+                    className="w-5 h-5 border-2 border-black rounded-none text-brutal-green focus:ring-0 focus:ring-offset-0"
                   />
                   <div>
-                    <div className="text-sm font-medium text-white">Add Giphy Stickers</div>
-                    <div className="text-xs text-white/50">Automatically fetch and overlay animated stickers based on scene text.</div>
+                    <div className="text-sm font-bold uppercase font-mono">Add Giphy Stickers</div>
+                    <div className="text-xs text-black/70 font-medium">Automatically fetch and overlay animated stickers based on scene text.</div>
                   </div>
                 </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Text Animation</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Text Animation</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['gsap-split', 'typewriter', 'fade', 'kinetic'] as TextEffect[]).map(effect => (
                       <button
                         key={effect}
                         onClick={() => setTextEffect(effect)}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-left border transition-colors capitalize text-xs md:text-sm ${textEffect === effect ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${textEffect === effect ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {effect.replace('-', ' ')}
                       </button>
@@ -2193,13 +2200,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Text Position</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Text Position</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['random', 'top', 'bottom', 'center', 'left', 'right'] as TextPosition[]).map(pos => (
                       <button
                         key={pos}
                         onClick={() => setPreferredTextPosition(pos)}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-left border transition-colors capitalize text-xs md:text-sm ${preferredTextPosition === pos ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${preferredTextPosition === pos ? 'bg-brutal-purple' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {pos}
                       </button>
@@ -2277,7 +2284,7 @@ export default function App() {
               <div className="flex justify-center gap-4">
                 <button 
                   onClick={() => setSetupStep(3)}
-                  className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
+                  className="brutal-button bg-white px-6 py-3"
                 >
                   Back
                 </button>
@@ -2285,7 +2292,7 @@ export default function App() {
                   <button 
                     onClick={saveProject}
                     disabled={isSaving || mediaFiles.length === 0}
-                    className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-full font-bold flex items-center gap-3 transition-colors border border-white/10 disabled:opacity-50"
+                    className="brutal-button bg-brutal-blue px-8 py-4 text-lg flex items-center gap-3 disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                     SAVE PROJECT
@@ -2293,7 +2300,7 @@ export default function App() {
                 )}
                 <button 
                   onClick={generateWorld}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-10 py-4 rounded-full font-bold flex items-center gap-3 transition-colors shadow-lg shadow-blue-500/25"
+                  className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3"
                 >
                   <Play size={20} fill="currentColor" />
                   START TRAILER
@@ -2336,11 +2343,11 @@ export default function App() {
 
   const getBackgroundClass = () => {
     switch (backgroundStyle) {
-      case 'gradient-blue': return 'bg-gradient-to-br from-blue-900 via-black to-black';
-      case 'gradient-purple': return 'bg-gradient-to-br from-purple-900 via-black to-black';
-      case 'grid': return 'bg-[#050505] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]';
-      case 'vibrant-glow': return 'bg-vibrant-glow';
-      default: return 'bg-[#050505]';
+      case 'gradient-blue': return 'bg-brutal-blue';
+      case 'gradient-purple': return 'bg-brutal-purple';
+      case 'grid': return 'bg-isometric-grid bg-white';
+      case 'vibrant-glow': return 'bg-brutal-orange';
+      default: return 'bg-brutal-bg';
     }
   };
 
@@ -2349,15 +2356,15 @@ export default function App() {
       case 'top': return 'top-16 md:top-24 inset-x-0';
       case 'bottom': return 'bottom-16 md:bottom-24 inset-x-0';
       case 'center': return 'top-1/2 -translate-y-1/2 inset-x-0';
-      case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg';
-      case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg';
+      case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-left';
+      case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-right';
       default: return 'bottom-16 md:bottom-24 inset-x-0';
     }
   };
 
   return (
     <div 
-      className={`relative w-screen h-screen overflow-hidden text-white ${fontStyle} ${getBackgroundClass()}`} 
+      className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle} ${getBackgroundClass()}`} 
       style={{ perspective: '1500px' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -2459,8 +2466,8 @@ export default function App() {
             transition={{ type: 'spring', damping: 20, stiffness: 100 }}
             className={`pointer-events-none fixed z-40 flex flex-col items-center justify-center text-center px-8 ${getTextPositionClass(currentComp.textPosition)}`}
           >
-            <div className="px-8 py-4">
-              <div className="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]">
+            <div className="px-8 py-4 bg-white brutal-border transform -rotate-2">
+              <div className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-black uppercase">
                 <AnimatedCaption text={currentComp.caption} effect={currentComp.textEffect} />
               </div>
             </div>
@@ -2470,10 +2477,10 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] ${toastMessage.includes('success') ? 'bg-green-500/90 border-green-400/50' : 'bg-red-500/90 border-red-400/50'} text-white px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md flex items-start gap-4 max-w-md border`}>
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
           {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
-          <p className="text-sm font-medium leading-relaxed">{toastMessage}</p>
-          <button onClick={() => setToastMessage(null)} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+          <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
+          <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">
             <X size={20} />
           </button>
         </div>
@@ -2483,7 +2490,7 @@ export default function App() {
       <div className={`fixed top-4 right-4 md:top-6 md:right-6 z-50 transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={startRecording}
-          className="flex items-center gap-2 md:gap-3 bg-red-500/20 hover:bg-red-500/40 text-red-100 border border-red-500/30 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
+          className="brutal-button bg-brutal-pink px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
         >
           <Video size={14} className="md:w-4 md:h-4" />
           <span>EXPORT</span>
@@ -2493,19 +2500,19 @@ export default function App() {
       <div className={`fixed top-4 left-4 md:top-6 md:left-6 z-50 transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'} flex gap-2 md:gap-3`}>
         <button 
           onClick={() => setAppMode('setup')}
-          className="flex items-center gap-2 md:gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
+          className="brutal-button bg-white px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
         >
           <span>MENU</span>
         </button>
         <button 
           onClick={handleStartOver}
-          className="flex items-center gap-2 md:gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm text-red-300 hover:text-red-200 hover:bg-red-500/20"
+          className="brutal-button bg-brutal-orange px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
         >
           <span>START OVER</span>
         </button>
         <button 
           onClick={resetCamera}
-          className="flex items-center gap-2 md:gap-3 bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
+          className="brutal-button bg-brutal-blue px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2"
           title="Reset Camera"
         >
           <Play size={12} className="rotate-90 md:w-3 md:h-3" />
@@ -2618,11 +2625,11 @@ export default function App() {
 
       {/* Sticker Controls */}
       {!isRecording && compositions[currentIndex]?.giphyStickerUrl && (
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex flex-col gap-4 w-48">
-          <h4 className="text-xs font-mono text-white/50 uppercase tracking-widest text-center">Sticker Transform</h4>
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 bg-white brutal-border p-4 flex flex-col gap-4 w-48 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h4 className="text-xs font-mono font-bold uppercase text-center border-b-2 border-black pb-2">Sticker Transform</h4>
           
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-white/70 flex justify-between">
+            <label className="text-[10px] font-bold uppercase flex justify-between">
               <span>Scale</span>
               <span>{compositions[currentIndex].stickerScale?.toFixed(1) || '1.0'}</span>
             </label>
@@ -2630,12 +2637,12 @@ export default function App() {
               type="range" min="0.1" max="3" step="0.1" 
               value={compositions[currentIndex].stickerScale || 1} 
               onChange={(e) => updateCurrentStickerTransform(parseFloat(e.target.value), compositions[currentIndex].stickerX || 0, compositions[currentIndex].stickerY || 0)}
-              className="w-full accent-blue-500"
+              className="w-full accent-black"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-white/70 flex justify-between">
+            <label className="text-[10px] font-bold uppercase flex justify-between">
               <span>X Position</span>
               <span>{compositions[currentIndex].stickerX || 0}</span>
             </label>
@@ -2643,12 +2650,12 @@ export default function App() {
               type="range" min="-500" max="500" step="10" 
               value={compositions[currentIndex].stickerX || 0} 
               onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, parseInt(e.target.value), compositions[currentIndex].stickerY || 0)}
-              className="w-full accent-blue-500"
+              className="w-full accent-black"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-white/70 flex justify-between">
+            <label className="text-[10px] font-bold uppercase flex justify-between">
               <span>Y Position</span>
               <span>{compositions[currentIndex].stickerY || 0}</span>
             </label>
@@ -2656,13 +2663,13 @@ export default function App() {
               type="range" min="-500" max="500" step="10" 
               value={compositions[currentIndex].stickerY || 0} 
               onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, compositions[currentIndex].stickerX || 0, parseInt(e.target.value))}
-              className="w-full accent-blue-500"
+              className="w-full accent-black"
             />
           </div>
           
           <button 
             onClick={() => updateCurrentStickerTransform(1, 0, 0)}
-            className="text-[10px] bg-white/10 hover:bg-white/20 py-1.5 rounded-lg transition-colors mt-2"
+            className="brutal-button bg-brutal-orange py-1.5 text-[10px] mt-2"
           >
             Reset
           </button>
@@ -2678,36 +2685,38 @@ export default function App() {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+              className="bg-white brutal-border w-full max-w-2xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[80vh]"
             >
-              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
-                <h3 className="font-medium flex items-center gap-2"><Sparkles size={18} className="text-blue-400" /> Add Giphy Sticker</h3>
-                <button onClick={() => setShowGiphyModal(false)} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+              <div className="p-4 border-b-4 border-black flex justify-between items-center bg-brutal-purple text-black">
+                <h3 className="font-display font-bold uppercase flex items-center gap-2"><Sparkles size={18} /> Add Giphy Sticker</h3>
+                <button onClick={() => setShowGiphyModal(false)} className="p-1.5 hover:scale-110 transition-transform">
                   <X size={20} />
                 </button>
               </div>
               
-              <div className="p-4 border-b border-white/10">
-                <form onSubmit={handleGiphySearch} className="relative">
-                  <input 
-                    type="text" 
-                    value={giphySearchQuery}
-                    onChange={(e) => setGiphySearchQuery(e.target.value)}
-                    placeholder="Search for a sticker..."
-                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+              <div className="p-4 border-b-4 border-black bg-gray-100">
+                <form onSubmit={handleGiphySearch} className="relative flex gap-2">
+                  <div className="relative flex-1">
+                    <input 
+                      type="text" 
+                      value={giphySearchQuery}
+                      onChange={(e) => setGiphySearchQuery(e.target.value)}
+                      placeholder="Search for a sticker..."
+                      className="brutal-input w-full py-3 pl-10 pr-4 text-sm"
+                    />
+                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
+                  </div>
+                  <button type="submit" className="brutal-button bg-brutal-blue px-6 py-3 text-sm">
                     Search
                   </button>
                 </form>
               </div>
 
-              <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
+              <div className="p-4 overflow-y-auto flex-1 custom-scrollbar bg-white text-black">
                 {isSearchingGiphy ? (
-                  <div className="flex flex-col items-center justify-center h-48 text-white/50">
+                  <div className="flex flex-col items-center justify-center h-48 text-black/50">
                     <Loader2 size={32} className="animate-spin mb-4" />
-                    <p className="text-sm">Searching Giphy...</p>
+                    <p className="text-sm font-mono uppercase font-bold">Searching Giphy...</p>
                   </div>
                 ) : giphySearchResults.length > 0 ? (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
@@ -2715,7 +2724,7 @@ export default function App() {
                       <button 
                         key={gif.id}
                         onClick={() => applyStickerToCurrentScene(gif.images.original.url)}
-                        className="aspect-square bg-black/40 rounded-xl border border-white/5 hover:border-blue-500/50 hover:bg-white/5 transition-all p-2 flex items-center justify-center group"
+                        className="aspect-square bg-gray-100 brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all p-2 flex items-center justify-center group"
                       >
                         <img src={gif.images.fixed_height.url} alt={gif.title} className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform" />
                       </button>

@@ -6,12 +6,98 @@
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-brutal-bg: #f4f4f0;
+  --color-brutal-black: #000000;
+  --color-brutal-white: #ffffff;
+  --color-brutal-green: #a7f3d0;
+  --color-brutal-blue: #bfdbfe;
+  --color-brutal-purple: #ddd6fe;
+  --color-brutal-orange: #fed7aa;
+  --color-brutal-pink: #fbcfe8;
 }
 
 body {
-  background-color: #050505;
-  color: #ffffff;
-  overflow: hidden;
+  background-color: var(--color-brutal-bg);
+  color: var(--color-brutal-black);
+  overflow-x: hidden;
+}
+
+/* Isometric Grid Background */
+.bg-isometric-grid {
+  background-color: var(--color-brutal-bg);
+  background-image: 
+    linear-gradient(30deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
+    linear-gradient(150deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
+    linear-gradient(30deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
+    linear-gradient(150deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
+    linear-gradient(60deg, #e5e5e577 25%, transparent 25.5%, transparent 75%, #e5e5e577 75%, #e5e5e577),
+    linear-gradient(60deg, #e5e5e577 25%, transparent 25.5%, transparent 75%, #e5e5e577 75%, #e5e5e577);
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+}
+
+/* Brutalist Utilities */
+.brutal-border {
+  border: 2px solid var(--color-brutal-black);
+}
+
+.brutal-shadow {
+  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.brutal-shadow:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-shadow-lg {
+  box-shadow: 8px 8px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-card {
+  background-color: var(--color-brutal-white);
+  border: 2px solid var(--color-brutal-black);
+  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-button {
+  background-color: var(--color-brutal-white);
+  border: 2px solid var(--color-brutal-black);
+  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: all 0.1s ease;
+}
+
+.brutal-button:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-button:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px 0px var(--color-brutal-black);
+}
+
+.brutal-input {
+  background-color: var(--color-brutal-white);
+  border: 2px solid var(--color-brutal-black);
+  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
+  transition: all 0.2s ease;
+}
+
+.brutal-input:focus {
+  outline: none;
+  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
+  transform: translate(-2px, -2px);
 }
 
 .bg-vibrant-glow {
@@ -60,19 +146,19 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  background: var(--color-brutal-bg);
+  border-left: 2px solid var(--color-brutal-black);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  background: var(--color-brutal-black);
+  border: 2px solid var(--color-brutal-black);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #333;
 }
