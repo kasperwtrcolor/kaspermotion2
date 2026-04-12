@@ -981,7 +981,8 @@ export default function App() {
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev);
+      const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
+      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle);
       newComps.push(comp);
       prev = comp;
     });
@@ -1429,7 +1430,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -1456,7 +1457,10 @@ export default function App() {
       sceneType: media.length > 1 ? 'grid' : 'standard',
       textEffect: effect,
       transitionType: tType,
-      transitionDuration: tDur
+      transitionDuration: tDur,
+      isTextOnly,
+      preset,
+      backgroundStyle
     };
   };
 
