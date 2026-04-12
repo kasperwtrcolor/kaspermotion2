@@ -591,13 +591,13 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
           <PopCulture3DIcon type={comp.backgroundStyle} status={status} />
         )}
 
-        {comp.giphyStickerUrl && status === 'active' && (
+        {comp.giphyStickerUrl && (
           <motion.img
             src={comp.giphyStickerUrl}
-            className="absolute z-30 w-64 h-64 object-contain pointer-events-none drop-shadow-2xl"
-            initial={{ scale: 0, opacity: 0, y: 100, z: 200, rotateZ: -15 }}
-            animate={{ scale: 1, opacity: 1, y: 0, z: 200, rotateZ: 0 }}
-            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: 0.5 }}
+            className="absolute z-50 w-64 h-64 md:w-96 md:h-96 object-contain pointer-events-none drop-shadow-2xl"
+            initial={{ scale: 0, opacity: 0, y: 100, z: 300, rotateZ: -15 }}
+            animate={status === 'active' ? { scale: 1, opacity: 1, y: 0, z: 300, rotateZ: 0 } : { scale: 0, opacity: 0, y: 100, z: 300, rotateZ: -15 }}
+            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.5 : 0 }}
             style={{ transformStyle: 'preserve-3d' }}
           />
         )}
@@ -885,6 +885,9 @@ export default function App() {
 
       // 1. Upload media if they are local files and add to library
       const mediaData = await Promise.all(mediaFiles.map(async (item, i) => {
+        const compForMedia = compositions.find(c => c.media.some(m => m.url === item.url));
+        const giphyStickerUrl = compForMedia?.giphyStickerUrl;
+
         if (item.file) {
           try {
             const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${item.file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
@@ -913,7 +916,8 @@ export default function App() {
               url,
               type: item.type,
               name: item.name,
-              caption: scriptText.split('\n')[i] || ''
+              caption: scriptText.split('\n')[i] || '',
+              giphyStickerUrl
             };
           } catch (uploadErr) {
             console.error("File upload failed for:", item.name, uploadErr);
@@ -922,7 +926,8 @@ export default function App() {
               url: item.url,
               type: item.type,
               name: item.name,
-              caption: scriptText.split('\n')[i] || ''
+              caption: scriptText.split('\n')[i] || '',
+              giphyStickerUrl
             };
           }
         } else {
@@ -930,7 +935,8 @@ export default function App() {
             url: item.url,
             type: item.type,
             name: item.name,
-            caption: scriptText.split('\n')[i] || ''
+            caption: scriptText.split('\n')[i] || '',
+            giphyStickerUrl
           };
         }
       }));
@@ -1004,7 +1010,7 @@ export default function App() {
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
       const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle);
+      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle, m.giphyStickerUrl);
       newComps.push(comp);
       prev = comp;
     });
@@ -1433,11 +1439,23 @@ export default function App() {
       let giphyStickerUrl: string | undefined;
       if (useGiphy && caption) {
         try {
-          const searchTerms = caption.split(' ').slice(0, 3).join(' ').replace(/[^a-zA-Z0-9 ]/g, '');
-          if (searchTerms) {
-            const { data } = await gf.search(searchTerms, { type: 'stickers', limit: 1 });
+          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
+          const searchTerms = words.slice(0, 2).join(' ');
+          const fallbackTerm = words.sort((a, b) => b.length - a.length)[0] || 'wow';
+
+          if (searchTerms || fallbackTerm) {
+            let { data } = await gf.search(searchTerms || fallbackTerm, { type: 'stickers', limit: 1 });
+            
+            if (!data || data.length === 0) {
+              const fallbackRes = await gf.search(fallbackTerm, { type: 'stickers', limit: 1 });
+              data = fallbackRes.data;
+            }
+
             if (data && data.length > 0) {
               giphyStickerUrl = data[0].images.original.url;
+              console.log("Found Giphy sticker:", giphyStickerUrl);
+            } else {
+              console.log("No Giphy stickers found for:", searchTerms, "or", fallbackTerm);
             }
           }
         } catch (err: any) {
@@ -1509,7 +1527,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string, giphyStickerUrl?: string): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -1539,7 +1557,8 @@ export default function App() {
       transitionDuration: tDur,
       isTextOnly,
       preset,
-      backgroundStyle
+      backgroundStyle,
+      giphyStickerUrl
     };
   };
 
