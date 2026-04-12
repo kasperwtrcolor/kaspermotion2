@@ -1,0 +1,51 @@
+468-      rotateZ: 360,
+469-      scale: 0,
+470-      transition: { duration: 1.5, ease: "easeInOut" }
+471-    }
+472-  };
+473-
+474-  const textMorphVariants = {
+475-    future: { opacity: 0, scale: 0.5, z: 200 },
+476-    active: {
+477-      opacity: [0, 1, 1, 0],
+478-      scale: [0.5, 1, 1.1, 5],
+479-      z: [200, 200, 200, 800],
+480-      filter: ['blur(20px)', 'blur(0px)', 'blur(0px)', 'blur(40px)'],
+481-      transition: { times: [0, 0.15, 0.6, 1], duration: 4, ease: 'easeInOut' }
+482-    },
+483-    past: { opacity: 0 }
+484-  };
+485-
+486-  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain shadow-[0_0_60px_rgba(255,255,255,0.2)] border-[4px] border-white/90 rounded-[2rem] bg-black/20";
+487-  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain shadow-[0_0_40px_rgba(255,255,255,0.15)] border-[3px] border-white/80 rounded-[1.5rem] bg-black/20";
+488-
+489-  return (
+490-    <div
+491-      className="absolute left-0 top-0"
+492-      style={{
+493-        transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
+494-        transformStyle: 'preserve-3d'
+495-      }}
+496-    >
+497-      <div className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
+498-        
+499-        {isMorph && status === 'active' && (
+500-          <motion.div
+501-            className="absolute z-20 w-[80vw] text-center pointer-events-none"
+502-            variants={textMorphVariants}
+503-            initial="future"
+504-            animate="active"
+505-            style={{ transformStyle: 'preserve-3d' }}
+506-          >
+507-            <AnimatedCaption text={comp.caption} effect={comp.textEffect} className="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-2xl" />
+508-          </motion.div>
+509-        )}
+510-
+511-        {comp.media.length > 0 && (
+512-          <>
+513-            <ParticleTrails />
+514-            <CartoonShapes status={status} />
+515-          </>
+516-        )}
+517-
+518:        {comp.media.map((m, i) => (

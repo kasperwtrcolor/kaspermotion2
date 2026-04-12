@@ -55,6 +55,9 @@ type Composition = {
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
+  isTextOnly?: boolean;
+  preset?: string;
+  backgroundStyle?: string;
 };
 
 const generateComposition = (
@@ -65,7 +68,10 @@ const generateComposition = (
   preferredEffect: TextEffect,
   preferredTransition: TransitionType,
   preferredDuration: number,
-  prevComp?: Composition
+  prevComp?: Composition,
+  isTextOnly?: boolean,
+  preset?: string,
+  backgroundStyle?: string
 ): Composition => {
   // Determine scene type
   let sceneType: Composition['sceneType'] = 'standard';
@@ -126,7 +132,10 @@ const generateComposition = (
     sceneType,
     textEffect: preferredEffect,
     transitionType: preferredTransition,
-    transitionDuration: preferredDuration
+    transitionDuration: preferredDuration,
+    isTextOnly,
+    preset,
+    backgroundStyle
   };
 };
 
@@ -380,6 +389,64 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
   );
 };
 
+const MobileMockup = ({ children, status }: { children: React.ReactNode, status: string }) => {
+  return (
+    <motion.div
+      initial={{ rotateY: -20, rotateX: 10, scale: 0.8 }}
+      animate={status === 'active' ? { 
+        rotateY: [-20, 20, -20], 
+        rotateX: [10, -5, 10], 
+        scale: [0.8, 1.1, 0.8] 
+      } : { rotateY: -20, rotateX: 10, scale: 0.8 }}
+      transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      className="relative w-[280px] h-[580px] md:w-[320px] md:h-[650px] bg-black rounded-[3rem] border-[12px] border-gray-800 shadow-[20px_20px_60px_rgba(0,0,0,0.8),_inset_0_0_20px_rgba(255,255,255,0.2)] overflow-hidden"
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      {/* Dynamic Island */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20 flex items-center justify-between px-2">
+        <div className="w-2 h-2 rounded-full bg-white/10"></div>
+        <div className="w-2 h-2 rounded-full bg-green-900/50"></div>
+      </div>
+      {/* Screen Content */}
+      <div className="w-full h-full bg-gray-900 relative overflow-hidden flex items-center justify-center">
+        {children}
+      </div>
+      {/* Glare effect */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/20 pointer-events-none z-30"></div>
+    </motion.div>
+  );
+};
+
+const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) => {
+  let emoji = '✨';
+  if (type === 'black') emoji = '🍿'; // Blockbuster
+  if (type === 'vibrant-glow') emoji = '🎵'; // Music Video
+  if (type === 'grid') emoji = '🚀'; // App Showcase / Tech
+  if (type === 'particles') emoji = '🌍'; // Documentary
+
+  // Create 3D shadow effect
+  const depth = 30;
+  const shadows = Array.from({length: depth}).map((_, i) => `${i}px ${i}px 0px rgba(0,0,0,${0.8 - (i * 0.02)})`).join(',');
+
+  return (
+    <motion.div
+      initial={{ scale: 0, rotateY: -180, y: 100 }}
+      animate={status === 'active' ? { 
+        scale: [0, 1.2, 1], 
+        rotateY: [-180, 0, 20, -20, 0],
+        y: [100, -20, 0, -10, 0]
+      } : { scale: 0, rotateY: 180, y: 100 }}
+      transition={{ duration: 8, ease: "easeOut" }}
+      className="absolute z-0 flex items-center justify-center opacity-40"
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <div style={{ fontSize: '20rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
+        {emoji}
+      </div>
+    </motion.div>
+  );
+};
+
 const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future' }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
@@ -515,61 +582,75 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
           </>
         )}
 
-        {comp.media.map((m, i) => (
-          <motion.div
-            key={i}
-            className="absolute z-10"
-            variants={mediaVariants}
-            initial="future"
-            animate={status}
-            style={{ 
-              transformStyle: 'preserve-3d',
-              x: m.xOffset || 0,
-              y: m.yOffset || 0,
-              scale: m.scale || 1
-            }}
-          >
-            {hasError ? (
-              <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-white/5 border-white/10`}>
-                <AlertCircle size={isMulti ? 24 : 48} className="text-white/20" />
-                <p className="text-[8px] font-mono text-white/40 uppercase tracking-widest">Error</p>
-              </div>
+        {comp.isTextOnly && comp.backgroundStyle && (
+          <PopCulture3DIcon type={comp.backgroundStyle} status={status} />
+        )}
+
+        {comp.media.map((m, i) => {
+          const mediaElement = m.url && (
+            m.type === 'video' ? (
+              <motion.video
+                src={m.url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className={isMulti ? multiMediaClass : mediaClass}
+                onError={() => setHasError(true)}
+                animate={status === 'active' ? {
+                  scale: [1, 1.05],
+                  x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
+                  y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
+                } : { scale: 1, x: 0, y: 0 }}
+                transition={{ duration: 10, ease: "linear" }}
+              />
             ) : (
-              m.url && (
-                m.type === 'video' ? (
-                  <motion.video
-                    src={m.url}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className={isMulti ? multiMediaClass : mediaClass}
-                    onError={() => setHasError(true)}
-                    animate={status === 'active' ? {
-                      scale: [1, 1.05],
-                      x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
-                      y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
-                    } : { scale: 1, x: 0, y: 0 }}
-                    transition={{ duration: 10, ease: "linear" }}
-                  />
+              <motion.img
+                src={m.url}
+                alt={comp.caption}
+                className={isMulti ? multiMediaClass : mediaClass}
+                onError={() => setHasError(true)}
+                animate={status === 'active' ? {
+                  scale: [1, 1.05],
+                  x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
+                  y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
+                } : { scale: 1, x: 0, y: 0 }}
+                transition={{ duration: 10, ease: "linear" }}
+              />
+            )
+          );
+
+          return (
+            <motion.div
+              key={i}
+              className="absolute z-10"
+              variants={mediaVariants}
+              initial="future"
+              animate={status}
+              style={{ 
+                transformStyle: 'preserve-3d',
+                x: m.xOffset || 0,
+                y: m.yOffset || 0,
+                scale: m.scale || 1
+              }}
+            >
+              {hasError ? (
+                <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-white/5 border-white/10`}>
+                  <AlertCircle size={isMulti ? 24 : 48} className="text-white/20" />
+                  <p className="text-[8px] font-mono text-white/40 uppercase tracking-widest">Error</p>
+                </div>
+              ) : (
+                comp.preset === 'app-showcase' ? (
+                  <MobileMockup status={status}>
+                    {mediaElement}
+                  </MobileMockup>
                 ) : (
-                  <motion.img
-                    src={m.url}
-                    alt={comp.caption}
-                    className={isMulti ? multiMediaClass : mediaClass}
-                    onError={() => setHasError(true)}
-                    animate={status === 'active' ? {
-                      scale: [1, 1.05],
-                      x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
-                      y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
-                    } : { scale: 1, x: 0, y: 0 }}
-                    transition={{ duration: 10, ease: "linear" }}
-                  />
+                  mediaElement
                 )
-              )
-            )}
-          </motion.div>
-        ))}
+              )}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -607,7 +688,7 @@ export default function App() {
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
-  const [preset, setPreset] = useState<'custom' | 'blockbuster' | 'documentary' | 'music-video'>('custom');
+  const [preset, setPreset] = useState<'custom' | 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase'>('custom');
   
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
@@ -1243,7 +1324,7 @@ export default function App() {
     }
   };
 
-  const applyPreset = (p: 'blockbuster' | 'documentary' | 'music-video') => {
+  const applyPreset = (p: 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase') => {
     setPreset(p);
     switch (p) {
       case 'blockbuster':
@@ -1266,6 +1347,13 @@ export default function App() {
         setTextEffect('kinetic');
         setTransitionType('spin');
         setTransitionDuration(0.6);
+        break;
+      case 'app-showcase':
+        setFontStyle('font-sans');
+        setBackgroundStyle('grid');
+        setTextEffect('kinetic');
+        setTransitionType('slide');
+        setTransitionDuration(1.0);
         break;
     }
   };
@@ -1312,7 +1400,10 @@ export default function App() {
         textEffect, 
         transitionType, 
         transitionDuration, 
-        prev
+        prev,
+        isTextOnly,
+        preset,
+        backgroundStyle
       );
       
       newComps.push(comp);
@@ -1787,8 +1878,8 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div className="col-span-1 md:col-span-2">
                   <h3 className="text-sm font-medium text-white/70 mb-3">Professional Presets (AE Style)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {(['blockbuster', 'documentary', 'music-video'] as const).map(p => (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {(['blockbuster', 'documentary', 'music-video', 'app-showcase'] as const).map(p => (
                       <button
                         key={p}
                         onClick={() => applyPreset(p)}
