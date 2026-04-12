@@ -1440,8 +1440,13 @@ export default function App() {
               giphyStickerUrl = data[0].images.original.url;
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Giphy fetch error:", err);
+          if (err.message && err.message.includes('401')) {
+            setToastMessage("Giphy API Key is missing or invalid. Please check your Secrets.");
+          } else {
+            setToastMessage("Failed to fetch Giphy stickers. Check console for details.");
+          }
         }
       }
       
