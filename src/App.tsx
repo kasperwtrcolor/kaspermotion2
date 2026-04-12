@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -61,6 +61,9 @@ type Composition = {
   preset?: string;
   backgroundStyle?: string;
   giphyStickerUrl?: string;
+  stickerScale?: number;
+  stickerX?: number;
+  stickerY?: number;
 };
 
 const generateComposition = (
@@ -452,6 +455,36 @@ const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) =>
   );
 };
 
+const CinematicOverlay = () => {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+      <style>
+        {`
+          @keyframes film-grain {
+            0%, 100% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -10%); }
+            30% { transform: translate(7%, -15%); }
+            50% { transform: translate(-15%, 10%); }
+            70% { transform: translate(10%, 15%); }
+            90% { transform: translate(-10%, 5%); }
+          }
+        `}
+      </style>
+      {/* Film Grain */}
+      <div 
+        className="absolute opacity-[0.15] mix-blend-overlay pointer-events-none" 
+        style={{ 
+          top: '-50%', left: '-50%', width: '200%', height: '200%',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          animation: 'film-grain 8s steps(10) infinite'
+        }}
+      ></div>
+      {/* Vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,rgba(0,0,0,0.8)_120%)] mix-blend-multiply pointer-events-none"></div>
+    </div>
+  );
+};
+
 const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future' }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
@@ -595,8 +628,22 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
           <motion.img
             src={comp.giphyStickerUrl}
             className="absolute z-50 w-64 h-64 md:w-96 md:h-96 object-contain pointer-events-none drop-shadow-2xl"
-            initial={{ scale: 0, opacity: 0, y: 100, z: 300, rotateZ: -15 }}
-            animate={status === 'active' ? { scale: 1, opacity: 1, y: 0, z: 300, rotateZ: 0 } : { scale: 0, opacity: 0, y: 100, z: 300, rotateZ: -15 }}
+            initial={{ scale: 0, opacity: 0, y: 100, x: 0, z: 300, rotateZ: -15 }}
+            animate={status === 'active' ? { 
+              scale: comp.stickerScale ?? 1, 
+              opacity: 1, 
+              y: comp.stickerY ?? 0, 
+              x: comp.stickerX ?? 0,
+              z: 300, 
+              rotateZ: 0 
+            } : { 
+              scale: 0, 
+              opacity: 0, 
+              y: (comp.stickerY ?? 0) + 100, 
+              x: comp.stickerX ?? 0,
+              z: 300, 
+              rotateZ: -15 
+            }}
             transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.5 : 0 }}
             style={{ transformStyle: 'preserve-3d' }}
           />
@@ -719,6 +766,11 @@ export default function App() {
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [isRecording, setIsRecording] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [showGiphyModal, setShowGiphyModal] = useState(false);
+  const [giphySearchQuery, setGiphySearchQuery] = useState('');
+  const [giphySearchResults, setGiphySearchResults] = useState<any[]>([]);
+  const [isSearchingGiphy, setIsSearchingGiphy] = useState(false);
 
   // Firebase Auth & Firestore Connection Test
   useEffect(() => {
@@ -887,6 +939,9 @@ export default function App() {
       const mediaData = await Promise.all(mediaFiles.map(async (item, i) => {
         const compForMedia = compositions.find(c => c.media.some(m => m.url === item.url));
         const giphyStickerUrl = compForMedia?.giphyStickerUrl;
+        const stickerScale = compForMedia?.stickerScale;
+        const stickerX = compForMedia?.stickerX;
+        const stickerY = compForMedia?.stickerY;
 
         if (item.file) {
           try {
@@ -917,7 +972,10 @@ export default function App() {
               type: item.type,
               name: item.name,
               caption: scriptText.split('\n')[i] || '',
-              giphyStickerUrl
+              giphyStickerUrl,
+              stickerScale,
+              stickerX,
+              stickerY
             };
           } catch (uploadErr) {
             console.error("File upload failed for:", item.name, uploadErr);
@@ -927,7 +985,10 @@ export default function App() {
               type: item.type,
               name: item.name,
               caption: scriptText.split('\n')[i] || '',
-              giphyStickerUrl
+              giphyStickerUrl,
+              stickerScale,
+              stickerX,
+              stickerY
             };
           }
         } else {
@@ -936,7 +997,10 @@ export default function App() {
             type: item.type,
             name: item.name,
             caption: scriptText.split('\n')[i] || '',
-            giphyStickerUrl
+            giphyStickerUrl,
+            stickerScale,
+            stickerX,
+            stickerY
           };
         }
       }));
@@ -1010,12 +1074,47 @@ export default function App() {
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
       const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle, m.giphyStickerUrl);
+      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
       newComps.push(comp);
       prev = comp;
     });
     setCompositions(newComps);
     setAppMode('playing');
+  };
+
+  const handleGiphySearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!giphySearchQuery.trim()) return;
+    
+    setIsSearchingGiphy(true);
+    try {
+      const { data } = await gf.search(giphySearchQuery, { type: 'stickers', limit: 20 });
+      setGiphySearchResults(data || []);
+    } catch (err) {
+      console.error("Giphy search failed:", err);
+      setToastMessage("Failed to search Giphy. Check your API key.");
+    } finally {
+      setIsSearchingGiphy(false);
+    }
+  };
+
+  const applyStickerToCurrentScene = (url: string) => {
+    setCompositions(prev => prev.map((comp, i) => {
+      if (i === currentIndex) {
+        return { ...comp, giphyStickerUrl: url, stickerScale: 1, stickerX: 0, stickerY: 0 };
+      }
+      return comp;
+    }));
+    setShowGiphyModal(false);
+  };
+
+  const updateCurrentStickerTransform = (scale: number, x: number, y: number) => {
+    setCompositions(prev => prev.map((comp, i) => {
+      if (i === currentIndex) {
+        return { ...comp, stickerScale: scale, stickerX: x, stickerY: y };
+      }
+      return comp;
+    }));
   };
 
   const handleStartOver = () => {
@@ -1099,10 +1198,14 @@ export default function App() {
   const velY = useVelocity(smoothY);
   const velZ = useVelocity(smoothZ);
 
-  const cameraBlur = useTransform([velX, velY, velZ], ([vx, vy, vz]) => {
+  const cameraFilter = useTransform([velX, velY, velZ], ([vx, vy, vz]) => {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
-    const blurAmount = Math.min(speed / 120, 20); 
-    return `blur(${blurAmount}px)`;
+    const blurAmount = Math.min(speed / 120, 15); 
+    const caAmount = Math.min(speed / 80, 8); // Chromatic aberration spread
+    
+    if (speed < 5) return `blur(0px)`;
+    
+    return `blur(${blurAmount}px) drop-shadow(${caAmount}px 0px 0px rgba(255,0,0,0.6)) drop-shadow(-${caAmount}px 0px 0px rgba(0,255,255,0.6))`;
   });
 
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX], ([x, px, wx]) => Number(x) + Number(px) + Number(wx));
@@ -1527,7 +1630,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string, giphyStickerUrl?: string): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string, giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -1558,7 +1661,10 @@ export default function App() {
       isTextOnly,
       preset,
       backgroundStyle,
-      giphyStickerUrl
+      giphyStickerUrl,
+      stickerScale,
+      stickerX,
+      stickerY
     };
   };
 
@@ -2269,33 +2375,9 @@ export default function App() {
           z: worldZ,
           rotateX: smoothRotX,
           rotateY: smoothRotY,
-          filter: cameraBlur
+          filter: cameraFilter
         }}
       >
-        {/* Post-Processing Filters (AE Style) */}
-        <svg className="hidden">
-          <filter id="chromatic-aberration">
-            <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue" />
-            <feOffset in="red" dx="2" dy="0" result="red-offset" />
-            <feOffset in="blue" dx="-2" dy="0" result="blue-offset" />
-            <feBlend in="red-offset" in2="green" mode="screen" result="rg" />
-            <feBlend in="rg" in2="blue-offset" mode="screen" />
-          </filter>
-          <filter id="film-grain">
-            <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
-            <feColorMatrix type="saturate" values="0" />
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.1" />
-            </feComponentTransfer>
-            <feComposite operator="in" in2="SourceGraphic" />
-          </filter>
-        </svg>
-
-        <div className="absolute inset-0 pointer-events-none z-[100] mix-blend-overlay opacity-20" style={{ filter: 'url(#film-grain)' }} />
-        <div className="absolute inset-0 pointer-events-none z-[101] mix-blend-screen opacity-30" style={{ filter: 'url(#chromatic-aberration)' }} />
-
         {/* Cinematic Light Leaks */}
         <div className="absolute inset-0 pointer-events-none z-[102] overflow-hidden">
           <motion.div 
@@ -2304,7 +2386,7 @@ export default function App() {
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           <motion.div 
-            className="absolute -bottom-1/2 -right-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(0,100,255,0.1)_0%,transparent_60%)]"
+            className="absolute -bottom-1/2 -right-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(0,150,255,0.1)_0%,transparent_50%)]"
             animate={{ x: [0, -100, 0], y: [0, 50, 0], rotate: [0, -10, 0] }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           />
@@ -2333,10 +2415,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Vignette Overlay */}
-      <div className="pointer-events-none fixed inset-0 z-40" style={{
-        background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)'
-      }} />
+      {/* Cinematic Overlay (Film Grain, Vignette, Chromatic Aberration) */}
+      <CinematicOverlay />
 
       {/* Cinematic Letterboxing (AE Style) */}
       <div className="pointer-events-none fixed inset-0 z-50 flex flex-col justify-between">
@@ -2432,6 +2512,13 @@ export default function App() {
           <span className="hidden md:inline">RESET CAMERA</span>
           <span className="md:hidden">RESET</span>
         </button>
+        <button 
+          onClick={() => setShowGiphyModal(true)}
+          className="flex items-center gap-2 md:gap-3 bg-blue-500/20 hover:bg-blue-500/40 text-blue-100 border border-blue-500/30 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
+        >
+          <Sparkles size={14} className="md:w-4 md:h-4" />
+          <span>STICKERS</span>
+        </button>
       </div>
 
       {/* Manual Navigation Controls */}
@@ -2525,6 +2612,123 @@ export default function App() {
                 INITIALIZING VIRTUAL CAMERA & LIGHTING SYSTEMS...
               </p>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Sticker Controls */}
+      {!isRecording && compositions[currentIndex]?.giphyStickerUrl && (
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl border border-white/10 p-4 rounded-2xl flex flex-col gap-4 w-48">
+          <h4 className="text-xs font-mono text-white/50 uppercase tracking-widest text-center">Sticker Transform</h4>
+          
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-white/70 flex justify-between">
+              <span>Scale</span>
+              <span>{compositions[currentIndex].stickerScale?.toFixed(1) || '1.0'}</span>
+            </label>
+            <input 
+              type="range" min="0.1" max="3" step="0.1" 
+              value={compositions[currentIndex].stickerScale || 1} 
+              onChange={(e) => updateCurrentStickerTransform(parseFloat(e.target.value), compositions[currentIndex].stickerX || 0, compositions[currentIndex].stickerY || 0)}
+              className="w-full accent-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-white/70 flex justify-between">
+              <span>X Position</span>
+              <span>{compositions[currentIndex].stickerX || 0}</span>
+            </label>
+            <input 
+              type="range" min="-500" max="500" step="10" 
+              value={compositions[currentIndex].stickerX || 0} 
+              onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, parseInt(e.target.value), compositions[currentIndex].stickerY || 0)}
+              className="w-full accent-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-white/70 flex justify-between">
+              <span>Y Position</span>
+              <span>{compositions[currentIndex].stickerY || 0}</span>
+            </label>
+            <input 
+              type="range" min="-500" max="500" step="10" 
+              value={compositions[currentIndex].stickerY || 0} 
+              onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, compositions[currentIndex].stickerX || 0, parseInt(e.target.value))}
+              className="w-full accent-blue-500"
+            />
+          </div>
+          
+          <button 
+            onClick={() => updateCurrentStickerTransform(1, 0, 0)}
+            className="text-[10px] bg-white/10 hover:bg-white/20 py-1.5 rounded-lg transition-colors mt-2"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
+      {/* Giphy Search Modal */}
+      <AnimatePresence>
+        {showGiphyModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
+            >
+              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
+                <h3 className="font-medium flex items-center gap-2"><Sparkles size={18} className="text-blue-400" /> Add Giphy Sticker</h3>
+                <button onClick={() => setShowGiphyModal(false)} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-4 border-b border-white/10">
+                <form onSubmit={handleGiphySearch} className="relative">
+                  <input 
+                    type="text" 
+                    value={giphySearchQuery}
+                    onChange={(e) => setGiphySearchQuery(e.target.value)}
+                    placeholder="Search for a sticker..."
+                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                    Search
+                  </button>
+                </form>
+              </div>
+
+              <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
+                {isSearchingGiphy ? (
+                  <div className="flex flex-col items-center justify-center h-48 text-white/50">
+                    <Loader2 size={32} className="animate-spin mb-4" />
+                    <p className="text-sm">Searching Giphy...</p>
+                  </div>
+                ) : giphySearchResults.length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                    {giphySearchResults.map((gif) => (
+                      <button 
+                        key={gif.id}
+                        onClick={() => applyStickerToCurrentScene(gif.images.original.url)}
+                        className="aspect-square bg-black/40 rounded-xl border border-white/5 hover:border-blue-500/50 hover:bg-white/5 transition-all p-2 flex items-center justify-center group"
+                      >
+                        <img src={gif.images.fixed_height.url} alt={gif.title} className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-48 text-white/30">
+                    <ImageIcon size={48} className="mb-4 opacity-20" />
+                    <p className="text-sm">Search for stickers to add to Scene {currentIndex + 1}</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
