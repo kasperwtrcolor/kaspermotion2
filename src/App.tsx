@@ -130,21 +130,42 @@ const generateComposition = (
   };
 };
 
+const getWordStyle = (word: string, index: number) => {
+  const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
+  const hash = cleanWord.length + index;
+  
+  // AE Color Palette: Cyberpunk / Modern Tech
+  if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
+  if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
+  if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
+  if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
+  
+  return {};
+};
+
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => {
   const words = text.split(' ');
   return (
     <div className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
       {words.map((word, i) => (
-        <div key={i} className="overflow-hidden pb-2">
-          <motion.div
-            initial={{ y: '100%', opacity: 0, rotateX: -45 }}
-            animate={{ y: 0, opacity: 1, rotateX: 0 }}
-            transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-block origin-bottom"
-          >
-            {word}
-          </motion.div>
-        </div>
+        <span key={i} className="inline-flex whitespace-pre" style={getWordStyle(word, i)}>
+          {word.split('').map((char, j) => (
+            <motion.span
+              key={j}
+              initial={{ opacity: 0, y: 50, rotateY: 90, scale: 0.5 }}
+              animate={{ opacity: 1, y: 0, rotateY: 0, scale: 1 }}
+              transition={{
+                delay: i * 0.1 + j * 0.03,
+                type: 'spring',
+                damping: 15,
+                stiffness: 300
+              }}
+              className="inline-block"
+            >
+              {char}
+            </motion.span>
+          ))}
+        </span>
       ))}
     </div>
   );
@@ -160,46 +181,61 @@ const TypewriterText = ({ text, className = "" }: { text: string, className?: st
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.05, duration: 0.1 }}
+          style={getWordStyle(char, i)}
         >
           {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      ))}
+      <motion.span
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ repeat: Infinity, duration: 0.8 }}
+        className="inline-block w-1 h-8 bg-white ml-1"
+      />
+    </div>
+  );
+};
+
+const FadeText = ({ text, className = "" }: { text: string, className?: string }) => {
+  const words = text.split(' ');
+  return (
+    <div className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          transition={{ delay: i * 0.1, duration: 0.8 }}
+          style={getWordStyle(word, i)}
+        >
+          {word}
         </motion.span>
       ))}
     </div>
   );
 };
 
-const FadeText = ({ text, className = "" }: { text: string, className?: string }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.9 }}
-      animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-      transition={{ duration: 1, ease: "easeOut" }}
-      className={className}
-    >
-      {text}
-    </motion.div>
-  );
-};
-
 const KineticText = ({ text, className = "" }: { text: string, className?: string }) => {
   const words = text.split(' ');
   return (
-    <div className={`flex flex-wrap justify-center gap-4 ${className}`}>
+    <div className={`flex flex-wrap justify-center gap-x-4 gap-y-2 ${className}`}>
       {words.map((word, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, scale: 0, rotate: -180 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ 
-            delay: i * 0.1, 
-            type: 'spring', 
-            damping: 12, 
-            stiffness: 200 
-          }}
-          className="inline-block"
-        >
-          {word}
-        </motion.div>
+        <div key={i} className="overflow-hidden pb-2">
+          <motion.div
+            initial={{ y: '100%', opacity: 0, rotateX: -80, scale: 0.8 }}
+            animate={{ y: 0, opacity: 1, rotateX: 0, scale: 1 }}
+            transition={{ 
+              delay: i * 0.1, 
+              type: 'spring', 
+              damping: 12, 
+              stiffness: 200,
+              mass: 0.8
+            }}
+            className="inline-block origin-bottom font-black uppercase tracking-tighter"
+            style={getWordStyle(word, i)}
+          >
+            {word}
+          </motion.div>
+        </div>
       ))}
     </div>
   );
@@ -551,6 +587,7 @@ export default function App() {
   const [renderProgress, setRenderProgress] = useState(0);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recordingProgress, setRecordingProgress] = useState(0);
+  const [textOnlyLines, setTextOnlyLines] = useState<Set<number>>(new Set());
 
   const [appMode, setAppMode] = useState<'setup' | 'playing'>('setup');
   const [setupStep, setSetupStep] = useState<1 | 2 | 3>(1);
@@ -814,7 +851,8 @@ export default function App() {
           textEffect,
           transitionType,
           transitionDuration,
-          preset
+          preset,
+          textOnlyLines: Array.from(textOnlyLines)
         },
         media: mediaData,
         updatedAt: serverTimestamp(),
@@ -847,6 +885,7 @@ export default function App() {
     setTextEffect(project.settings.textEffect);
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
+    setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     
     const loadedMedia: MediaItem[] = project.media.map((m: any) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -873,6 +912,7 @@ export default function App() {
     setCurrentProjectId(null);
     setMediaFiles([]);
     setScriptText('');
+    setTextOnlyLines(new Set());
     setCompositions([]);
     setAppMode('setup');
     setSetupStep(1);
@@ -1156,6 +1196,29 @@ export default function App() {
     });
   };
 
+  const handleScriptChange = (newText: string) => {
+    let newTextOnly = new Set(textOnlyLines);
+    const lines = newText.split('\n');
+    const cleanLines = lines.map((line, i) => {
+      if (line.toUpperCase().includes('[TEXT]') || line.toUpperCase().includes('[TEXT ONLY]')) {
+        newTextOnly.add(i);
+        return line.replace(/\[TEXT ONLY\]/gi, '').replace(/\[TEXT\]/gi, '').trim();
+      }
+      return line;
+    });
+    setScriptText(cleanLines.join('\n'));
+    setTextOnlyLines(newTextOnly);
+  };
+
+  const toggleTextOnly = (index: number) => {
+    setTextOnlyLines(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) newSet.delete(index);
+      else newSet.add(index);
+      return newSet;
+    });
+  };
+
   const handleScrape = async () => {
     if (!scrapeUrl) return;
     setIsScraping(true);
@@ -1167,7 +1230,7 @@ export default function App() {
       });
       const data = await res.json();
       if (data.script) {
-        setScriptText(data.script);
+        handleScriptChange(data.script);
         setToastMessage("Script generated successfully!");
       } else {
         setToastMessage(data.error || "Failed to generate script.");
@@ -1227,12 +1290,7 @@ export default function App() {
 
     while (mediaIdx < mediaFiles.length || sceneIdx < scriptLines.length) {
       let caption = scriptLines[sceneIdx] || '';
-      let isTextOnly = false;
-      
-      if (caption.toUpperCase().includes('[TEXT]') || caption.toUpperCase().includes('[TEXT ONLY]')) {
-        isTextOnly = true;
-        caption = caption.replace(/\[TEXT ONLY\]/gi, '').replace(/\[TEXT\]/gi, '').trim();
-      }
+      let isTextOnly = textOnlyLines.has(sceneIdx);
       
       let sceneItems: MediaItem[] = [];
       if (!isTextOnly && mediaIdx < mediaFiles.length) {
@@ -1668,11 +1726,37 @@ export default function App() {
               <p className="text-white/50 text-sm mb-4">Each line of text will be displayed as a caption for the corresponding media file.</p>
               
               <textarea
-                className="w-full bg-black/50 border border-white/10 rounded-xl p-6 text-white font-mono text-sm focus:outline-none focus:border-white/30 transition-colors resize-none h-48 mb-8"
+                className="w-full bg-black/50 border border-white/10 rounded-xl p-6 text-white font-mono text-sm focus:outline-none focus:border-white/30 transition-colors resize-none h-48 mb-4"
                 placeholder="Line 1: Welcome to the presentation&#10;Line 2: Here is our first product&#10;Line 3: Notice the sleek design..."
                 value={scriptText}
-                onChange={(e) => setScriptText(e.target.value)}
+                onChange={(e) => handleScriptChange(e.target.value)}
               />
+
+              {scriptText.trim() && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8 max-h-64 overflow-y-auto">
+                  <h3 className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">Scene Settings</h3>
+                  <div className="space-y-2">
+                    {scriptText.split('\n').map((line, i) => (
+                      <div key={i} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
+                        <input 
+                          type="checkbox" 
+                          id={`textonly-${i}`}
+                          checked={textOnlyLines.has(i)}
+                          onChange={() => toggleTextOnly(i)}
+                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-black cursor-pointer"
+                        />
+                        <label htmlFor={`textonly-${i}`} className="text-sm text-white/80 cursor-pointer flex-1 truncate">
+                          <span className="text-white/40 font-mono mr-2">{i + 1}.</span>
+                          {line || <span className="italic text-white/30">Empty scene</span>}
+                        </label>
+                        {textOnlyLines.has(i) && (
+                          <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded uppercase font-mono">Text Only</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <button 
