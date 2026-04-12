@@ -662,16 +662,17 @@ export default function App() {
   const [userTrailers, setUserTrailers] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("https://");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRenderingTrailer, setIsRenderingTrailer] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recordingProgress, setRecordingProgress] = useState(0);
   const [textOnlyLines, setTextOnlyLines] = useState<Set<number>>(new Set());
+  const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
 
   const [appMode, setAppMode] = useState<'setup' | 'playing'>('setup');
-  const [setupStep, setSetupStep] = useState<1 | 2 | 3>(1);
+  const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
   const [libraryAssets, setLibraryAssets] = useState<LibraryAsset[]>([]);
@@ -679,7 +680,7 @@ export default function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [scriptText, setScriptText] = useState("");
 
-  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scrapeUrl, setScrapeUrl] = useState("https://");
   const [isScraping, setIsScraping] = useState(false);
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
@@ -933,7 +934,8 @@ export default function App() {
           transitionType,
           transitionDuration,
           preset,
-          textOnlyLines: Array.from(textOnlyLines)
+          textOnlyLines: Array.from(textOnlyLines),
+          mediaMapping
         },
         media: mediaData,
         updatedAt: serverTimestamp(),
@@ -967,6 +969,7 @@ export default function App() {
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
+    setMediaMapping(project.settings.mediaMapping || {});
     
     const loadedMedia: MediaItem[] = project.media.map((m: any) => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -1301,6 +1304,22 @@ export default function App() {
     });
   };
 
+  const handleGoToMapping = () => {
+    const newMapping = { ...mediaMapping };
+    const lines = scriptText.split('\n').filter(l => l.trim().length > 0);
+    let mediaIdx = 0;
+    
+    lines.forEach((line, idx) => {
+      if (!textOnlyLines.has(idx) && !newMapping[idx] && mediaIdx < mediaFiles.length) {
+        newMapping[idx] = mediaFiles[mediaIdx].id;
+        mediaIdx++;
+      }
+    });
+    
+    setMediaMapping(newMapping);
+    setSetupStep(3);
+  };
+
   const handleScrape = async () => {
     if (!scrapeUrl) return;
     setIsScraping(true);
@@ -1373,24 +1392,23 @@ export default function App() {
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
-    // Group media files into scenes (some single, some multi)
-    let mediaIdx = 0;
-    let sceneIdx = 0;
-
-    while (mediaIdx < mediaFiles.length || sceneIdx < scriptLines.length) {
+    for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       let caption = scriptLines[sceneIdx] || '';
       let isTextOnly = textOnlyLines.has(sceneIdx);
       
       let sceneItems: MediaItem[] = [];
-      if (!isTextOnly && mediaIdx < mediaFiles.length) {
-        sceneItems = [mediaFiles[mediaIdx]];
-        mediaIdx++;
-      } else if (!isTextOnly && mediaIdx >= mediaFiles.length) {
-        isTextOnly = true;
-      }
-      
-      if (isTextOnly && !caption && mediaIdx >= mediaFiles.length) {
-        break;
+      if (!isTextOnly) {
+        const mappedMediaId = mediaMapping[sceneIdx];
+        if (mappedMediaId) {
+          const mediaItem = mediaFiles.find(m => m.id === mappedMediaId);
+          if (mediaItem) {
+            sceneItems = [mediaItem];
+          } else {
+            isTextOnly = true;
+          }
+        } else {
+          isTextOnly = true;
+        }
       }
       
       const comp = generateComposition(
@@ -1410,10 +1428,31 @@ export default function App() {
       newComps.push(comp);
       prev = comp;
       
-      sceneIdx++;
-      
-      setRenderProgress(Math.min(((mediaIdx / Math.max(mediaFiles.length, 1)) * 100), 100));
+      setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
       await new Promise(r => setTimeout(r, 100));
+    }
+
+    // Add any unmapped media at the end
+    const mappedMediaIds = new Set(Object.values(mediaMapping));
+    const unmappedMedia = mediaFiles.filter(m => !mappedMediaIds.has(m.id));
+    
+    for (let i = 0; i < unmappedMedia.length; i++) {
+      const m = unmappedMedia[i];
+      const comp = generateComposition(
+        [m], 
+        scriptLines.length + i, 
+        '', 
+        preferredTextPosition, 
+        textEffect, 
+        transitionType, 
+        transitionDuration, 
+        prev,
+        false,
+        preset,
+        backgroundStyle
+      );
+      newComps.push(comp);
+      prev = comp;
     }
 
     setCompositions(newComps);
@@ -1617,7 +1656,7 @@ export default function App() {
                 </button>
               )}
               <div className="flex gap-2">
-                {[1, 2, 3].map(step => (
+                {[1, 2, 3, 4].map(step => (
                   <div 
                     key={step} 
                     className={`w-3 h-3 rounded-full transition-colors ${setupStep >= step ? 'bg-white' : 'bg-white/20'}`} 
@@ -1827,33 +1866,7 @@ export default function App() {
                 onChange={(e) => handleScriptChange(e.target.value)}
               />
 
-              {scriptText.trim() && (
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8 max-h-64 overflow-y-auto">
-                  <h3 className="text-xs font-mono text-white/50 uppercase tracking-widest mb-3">Scene Settings</h3>
-                  <div className="space-y-2">
-                    {scriptText.split('\n').map((line, i) => (
-                      <div key={i} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-lg transition-colors">
-                        <input 
-                          type="checkbox" 
-                          id={`textonly-${i}`}
-                          checked={textOnlyLines.has(i)}
-                          onChange={() => toggleTextOnly(i)}
-                          className="w-4 h-4 rounded border-white/20 bg-black/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-black cursor-pointer"
-                        />
-                        <label htmlFor={`textonly-${i}`} className="text-sm text-white/80 cursor-pointer flex-1 truncate">
-                          <span className="text-white/40 font-mono mr-2">{i + 1}.</span>
-                          {line || <span className="italic text-white/30">Empty scene</span>}
-                        </label>
-                        {textOnlyLines.has(i) && (
-                          <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded uppercase font-mono">Text Only</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between">
+              <div className="flex justify-between mt-8">
                 <button 
                   onClick={() => setSetupStep(1)}
                   className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
@@ -1861,7 +1874,7 @@ export default function App() {
                   Back
                 </button>
                 <button 
-                  onClick={() => setSetupStep(3)}
+                  onClick={handleGoToMapping}
                   className="bg-white text-black px-8 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-white/90 transition-colors"
                 >
                   Next <ArrowRight size={18} />
@@ -1870,8 +1883,67 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Step 3: Ready & Styling */}
+          {/* Step 3: Link Media to Text */}
           {setupStep === 3 && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+              <h2 className="text-xl font-medium mb-6 flex items-center gap-3">
+                <LinkIcon className="text-purple-400" /> Step 3: Link Media to Text
+              </h2>
+              
+              <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2">
+                {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
+                  <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                    <div className="flex-1 text-sm text-white/80 flex items-center">
+                      <span className="text-white/30 mr-3 text-xs">{idx + 1}</span>
+                      {line}
+                    </div>
+                    <div className="flex items-center gap-3 md:w-1/3">
+                      <label className="flex items-center gap-2 text-xs text-white/50 whitespace-nowrap cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={textOnlyLines.has(idx)}
+                          onChange={() => toggleTextOnly(idx)}
+                          className="rounded bg-black/50 border-white/20 text-blue-500 focus:ring-0 focus:ring-offset-0"
+                        />
+                        Text Only
+                      </label>
+                      
+                      {!textOnlyLines.has(idx) && (
+                        <select
+                          value={mediaMapping[idx] || ''}
+                          onChange={(e) => setMediaMapping(prev => ({ ...prev, [idx]: e.target.value }))}
+                          className="flex-1 bg-black/50 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-white/30"
+                        >
+                          <option value="">Select Media...</option>
+                          {mediaFiles.map(m => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-between mt-8">
+                <button 
+                  onClick={() => setSetupStep(2)}
+                  className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
+                >
+                  Back
+                </button>
+                <button 
+                  onClick={() => setSetupStep(4)}
+                  className="bg-white text-black px-8 py-3 rounded-full font-medium flex items-center gap-2 hover:bg-white/90 transition-colors"
+                >
+                  Next <ArrowRight size={18} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Ready & Styling */}
+          {setupStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
               <div className="w-12 h-12 md:w-16 md:h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 size={24} className="md:w-8 md:h-8" />
@@ -2024,7 +2096,7 @@ export default function App() {
 
               <div className="flex justify-center gap-4">
                 <button 
-                  onClick={() => setSetupStep(2)}
+                  onClick={() => setSetupStep(3)}
                   className="text-white/50 hover:text-white px-6 py-3 font-medium transition-colors"
                 >
                   Back
