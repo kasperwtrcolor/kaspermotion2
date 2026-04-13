@@ -19,7 +19,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective';
+type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract';
 
@@ -870,47 +870,7 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
   );
 };
 
-const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) => {
-  const emojis = useMemo(() => {
-    if (type === 'black') return ['🍿', '🎬', '🎥', '🎞️', '🎟️', '🎭'];
-    if (type === 'vibrant-glow') return ['🎵', '🎶', '🎧', '🎸', '🎹', '🥁'];
-    if (type === 'grid') return ['🚀', '💻', '📱', '🕹️', '💾', '🔋'];
-    if (type === 'particles') return ['🌍', '🪐', '☄️', '🌌', '🛸', '🛰️'];
-    if (type === 'parallax') return ['🏔️', '🌲', '🏕️', '🗺️', '🧭', '🦅'];
-    return ['✨', '🌟', '💫'];
-  }, [type]);
-
-  const randomIndex = useMemo(() => Math.floor(Math.random() * emojis.length), [emojis]);
-  const emoji = emojis[randomIndex];
-  
-  // Create 3D shadow effect
-  const depth = 30;
-  const shadows = Array.from({length: depth}).map((_, i) => `${i}px ${i}px 0px rgba(0,0,0,${0.8 - (i * 0.02)})`).join(',');
-
-  return (
-    <motion.div
-      initial={{ scale: 0, rotateY: -180, y: 100 }}
-      animate={status === 'active' ? { 
-        scale: [0, 1.2, 1], 
-        rotateY: [-180, 0, 20, -20, 0],
-        y: [100, -20, 0, -10, 0]
-      } : { scale: 0, rotateY: 180, y: 100 }}
-      transition={{ duration: 8, ease: "easeOut" }}
-      className="absolute z-0 flex items-center justify-center opacity-40"
-      style={{ 
-        transformStyle: 'preserve-3d',
-        left: '50%',
-        top: '50%',
-        x: '-50%',
-        y: '-50%'
-      }}
-    >
-      <div style={{ fontSize: '15rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
-        {emoji}
-      </div>
-    </motion.div>
-  );
-};
+// Helper components formerly here (icons/shapes) have been decommissioned for a cleaner cinematic look.
 
 const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
   return (
@@ -1078,41 +1038,29 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
           </motion.div>
         )}
 
-        {!comp.isTextOnly && comp.media.length > 0 && (
-          <>
-            <CartoonShapes status={status} />
-          </>
-        )}
-
-        {/* Hide cartoon icons in text-only scenes as per user request */}
-        {!comp.isTextOnly && comp.backgroundStyle && (
-          <PopCulture3DIcon type={comp.backgroundStyle} status={status} />
-        )}
-
-        {!comp.isTextOnly && comp.giphyStickerUrl && (
-          <motion.img
-            src={comp.giphyStickerUrl}
-            crossOrigin="anonymous"
-            className="absolute z-50 w-64 h-64 md:w-96 md:h-96 object-contain pointer-events-none drop-shadow-2xl"
-            initial={{ scale: 0, opacity: 0, y: 100, x: 0, rotateZ: -15 }}
+        {/* Cinematic media display */}
+        {comp.giphyStickerUrl && (
+          <motion.div
+            className="absolute z-50 flex items-center justify-center"
+            initial={{ scale: 0, opacity: 0, rotateZ: -15 }}
             animate={status === 'active' ? { 
-              scale: comp.stickerScale ?? 1, 
+              scale: 1.5, 
               opacity: 1, 
-              y: comp.stickerY ?? 0, 
-              x: comp.stickerX ?? 0,
               rotateZ: 0 
             } : { 
               scale: 0, 
               opacity: 0, 
-              y: (comp.stickerY ?? 0) + 100, 
-              x: comp.stickerX ?? 0,
               rotateZ: -15 
             }}
-            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.5 : 0 }}
-          />
+            transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.3 : 0 }}
+          >
+            <img
+              src={comp.giphyStickerUrl}
+              crossOrigin="anonymous"
+              className="w-96 h-96 object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]"
+            />
+          </motion.div>
         )}
-
-        {/* Website showcase scene */}
         {comp.sceneType === 'website-showcase' && comp.websiteScreenshot && (
           <WebsiteShowcaseScene
             screenshotUrl={comp.websiteScreenshot}
@@ -2093,35 +2041,22 @@ export default function App() {
         }
       }
       
-      let giphyStickerUrl: string | undefined;
-      if (useGiphy && caption) {
-        try {
-          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
-          const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
-          
-          const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
-          if (data && data.length > 0) {
-            giphyStickerUrl = data[0].images.original.url;
-            console.log(`Giphy sticker for "${caption}": term="${searchTerm}" url=${giphyStickerUrl}`);
-          }
-        } catch (err: any) {
-          console.error("Giphy fetch error:", err);
-        }
-      }
-      
+      const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
+      const activeEffect = textEffect === 'random' ? effects[Math.floor(Math.random() * effects.length)] : textEffect;
+
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
         caption, 
         preferredTextPosition, 
-        textEffect, 
+        activeEffect, 
         transitionType, 
         transitionDuration, 
         prev,
         isTextOnly,
         preset,
         backgroundStyle,
-        giphyStickerUrl,
+        undefined, // Dedicated Giphy scenes handled below
         fontFamily,
         textColor,
         isMultiColor
@@ -2129,6 +2064,40 @@ export default function App() {
       
       newComps.push(comp);
       prev = comp;
+
+      // Dedicated Giphy Scene Insertion
+      if (useGiphy && caption && sceneIdx % 3 === 0) {
+        try {
+          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
+          const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
+          const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
+          
+          if (data && data.length > 0) {
+            const stickerUrl = data[0].images.original.url;
+            const giphyComp = generateComposition(
+              [], // No media, focus on sticker
+              sceneIdx + 100, 
+              searchTerm.toUpperCase(), 
+              'center', 
+              activeEffect, 
+              'zoom', 
+              transitionDuration, 
+              prev,
+              true, // isTextOnly logic
+              preset,
+              backgroundStyle,
+              stickerUrl,
+              fontFamily,
+              textColor,
+              isMultiColor
+            );
+            newComps.push(giphyComp);
+            prev = giphyComp;
+          }
+        } catch (err) {
+          console.error("Giphy logic error:", err);
+        }
+      }
       
       setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
       await new Promise(r => setTimeout(r, 100));
@@ -2826,7 +2795,7 @@ export default function App() {
                   >
                     {[
                       'gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 
-                      'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'
+                      'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'random'
                     ].map(effect => (
                       <option key={effect} value={effect}>{effect.replace('-', ' ')}</option>
                     ))}
@@ -3132,6 +3101,8 @@ export default function App() {
         onStudio={() => setAppMode('setup')}
         onStickers={() => setShowGiphyModal(true)}
         onResetCamera={resetCamera}
+        isRendering={isRenderingTrailer}
+        renderProgress={renderProgress}
       />
       
       {renderContent()}
@@ -3147,43 +3118,6 @@ export default function App() {
           </button>
         </div>
       )}
-
-      {/* Full Screen Generation Loader */}
-      <AnimatePresence>
-        {isRenderingTrailer && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[2000] bg-black/90 flex flex-col items-center justify-center text-white"
-          >
-            <div className="relative mb-12">
-              <div className="w-32 h-32 border-8 border-brutal-blue/20 rounded-full"></div>
-              <motion.div 
-                className="absolute top-0 w-32 h-32 border-8 border-transparent border-t-brutal-pink rounded-full"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              ></motion.div>
-              <div className="absolute inset-0 flex items-center justify-center font-display font-bold text-2xl">
-                {Math.round(renderProgress)}%
-              </div>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-display font-bold uppercase mb-4 tracking-tighter text-center px-4">AI Director is Working</h2>
-            <p className="font-mono text-xl text-brutal-green mb-10 uppercase tracking-widest px-4 text-center">Compiling Cinematic World...</p>
-            
-            <div className="w-full max-w-sm px-6">
-              <div className="w-full h-4 bg-gray-800 brutal-border border-white overflow-hidden shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-                <motion.div 
-                  className="h-full bg-brutal-green"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${renderProgress}%` }}
-                  transition={{ duration: 0.2 }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Giphy Search Modal */}
       <AnimatePresence>

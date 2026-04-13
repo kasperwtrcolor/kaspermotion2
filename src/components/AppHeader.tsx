@@ -14,15 +14,14 @@ interface AppHeaderProps {
   onNewProject: () => void;
   // Studio Controls for Playing Mode
   onExport?: () => void;
-  onStudio?: () => void;
-  onStickers?: () => void;
   onResetCamera?: () => void;
+  isRendering?: boolean;
+  renderProgress?: number;
 }
 
 export default function AppHeader({ 
-  appMode, user, credits, 
-  onNavigate, onLogin, onLogout, onNewProject,
-  onExport, onStudio, onStickers, onResetCamera
+  onExport, onStudio, onStickers, onResetCamera,
+  isRendering, renderProgress = 0
 }: AppHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -214,6 +213,25 @@ export default function AppHeader({
             </button>
           </div>
         </div>
+        
+        {/* Progress Bar (Visible when AI is working) */}
+        <AnimatePresence>
+          {isRendering && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 4, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="absolute left-0 right-0 bottom-0 bg-white overflow-hidden pointer-events-none"
+            >
+              <motion.div 
+                className="h-full bg-brutal-green"
+                initial={{ width: 0 }}
+                animate={{ width: `${renderProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.header>
 
       {/* Mobile Drawer */}

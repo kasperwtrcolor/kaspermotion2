@@ -29,7 +29,7 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
   }, [isRecording]);
 
   return (
-    <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none bg-black">
+    <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none bg-transparent">
       <div
         id="video-canvas"
         className="relative pointer-events-auto"
