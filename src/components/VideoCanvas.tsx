@@ -33,11 +33,14 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
       <div
         id="video-canvas"
         className="relative pointer-events-auto"
-        style={{
+        style={isRecording ? {
           width: 1920,
           height: 1080,
           transform: `scale(${scale})`,
           transformOrigin: 'center center',
+        } : {
+          width: '100vw',
+          height: '100vh',
         }}
       >
         {/* Overflow hidden container for clipping */}
@@ -46,6 +49,5 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
         </div>
       </div>
     </div>
-
   );
 }

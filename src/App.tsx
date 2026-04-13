@@ -21,7 +21,7 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
 type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract';
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 
 type LibraryAsset = {
   id: string;
@@ -835,16 +835,39 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
   );
 };
 
-const MobileMockup = ({ children, status }: { children: React.ReactNode, status: string }) => {
+const MobileMockup = ({ children, status, variant = 0 }: { children: React.ReactNode, status: string, variant?: number }) => {
+  const animations = [
+    // Variant 0: Standard Perspective Tilt
+    { 
+      rotateY: [-20, 20, -20], 
+      rotateX: [10, -5, 10], 
+      scale: [0.8, 1.1, 0.8] 
+    },
+    // Variant 1: Spin & Reveal
+    {
+      rotateY: [0, 360],
+      scale: [0.7, 1.2, 0.7],
+      rotateZ: [0, 5, -5, 0]
+    },
+    // Variant 2: Zoom Dive
+    {
+      z: [0, 400, 0],
+      rotateY: [-10, 10, -10],
+      scale: [0.8, 1.5, 0.8]
+    },
+    // Variant 3: Kinetic Shake
+    {
+      x: [0, 20, -20, 0],
+      rotateY: [-15, 15],
+      scale: [0.9, 1.1]
+    }
+  ];
+
   return (
     <motion.div
       initial={{ rotateY: -20, rotateX: 10, scale: 0.8 }}
-      animate={status === 'active' ? { 
-        rotateY: [-20, 20, -20], 
-        rotateX: [10, -5, 10], 
-        scale: [0.8, 1.1, 0.8] 
-      } : { rotateY: -20, rotateX: 10, scale: 0.8 }}
-      transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      animate={status === 'active' ? animations[variant % animations.length] : { rotateY: -20, rotateX: 10, scale: 0.8 }}
+      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       className="relative bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
       style={{ transformStyle: 'preserve-3d', width: 320, height: 650 }}
     >
@@ -854,10 +877,10 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
         <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
       </div>
       {/* Screen Content */}
-      <div className="w-full h-full bg-brutal-bg relative overflow-hidden flex items-center justify-center">
+      <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
         {children || (
-          <div className="flex flex-col items-center justify-center gap-3 text-black/30">
-            <div className="w-16 h-16 brutal-border bg-white flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-3 text-white/30">
+            <div className="w-16 h-16 border-2 border-white/20 bg-white/5 flex items-center justify-center">
               <ImageIcon size={24} />
             </div>
             <p className="font-mono text-[10px] font-bold uppercase">App Preview</p>
@@ -865,12 +888,22 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
         )}
       </div>
       {/* Glare effect */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/20 pointer-events-none z-30"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none z-30"></div>
     </motion.div>
   );
 };
 
 // Helper components formerly here (icons/shapes) have been decommissioned for a cleaner cinematic look.
+const FlashOverlay = ({ status }: { status: string }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={status === 'active' ? { opacity: [0, 0.4, 0] } : { opacity: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="fixed inset-0 z-[1000] bg-white pointer-events-none"
+    />
+  );
+};
 
 const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
   return (
@@ -1124,20 +1157,20 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
-                  <MobileMockup status={status}>
+                  <MobileMockup status={status} variant={index}>
                     {m.url && (
                       m.type === 'video' ? (
                         <video
                           src={m.url}
                           autoPlay loop muted playsInline
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                           onError={() => setHasError(true)}
                         />
                       ) : (
                         <img
                           src={m.url}
                           alt={comp.caption}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                           onError={() => setHasError(true)}
                         />
                       )
@@ -2044,13 +2077,16 @@ export default function App() {
       const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
       const activeEffect = textEffect === 'random' ? effects[Math.floor(Math.random() * effects.length)] : textEffect;
 
+      const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'];
+      const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
+
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
         caption, 
         preferredTextPosition, 
         activeEffect, 
-        transitionType, 
+        activeTransition, 
         transitionDuration, 
         prev,
         isTextOnly,
@@ -2821,7 +2857,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'] as TransitionType[]).map(type => (
+                    {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'random'] as TransitionType[]).map(type => (
                       <button
                         key={type}
                         onClick={() => setTransitionType(type)}
@@ -2956,10 +2992,11 @@ export default function App() {
     if (appMode === 'playing') {
       const getBackgroundClass = () => {
         switch (backgroundStyle) {
-          case 'gradient-blue': return 'bg-brutal-blue';
-          case 'gradient-purple': return 'bg-brutal-purple';
+          case 'gradient-blue': return 'bg-gradient-to-br from-brutal-blue via-white to-brutal-blue animate-pulse';
+          case 'gradient-purple': return 'bg-gradient-to-tr from-brutal-purple via-brutal-pink to-white animate-pulse';
           case 'grid': return 'bg-isometric-grid bg-white';
-          case 'vibrant-glow': return 'bg-brutal-orange';
+          case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
+          case 'black': return 'bg-black';
           default: return 'bg-brutal-bg';
         }
       };
@@ -3034,6 +3071,7 @@ export default function App() {
 
           return (
             <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+              <FlashOverlay status={status} />
               <CompositionNode comp={comp} status={status} fontSizeOverride={randomFontSize} />
             </div>
           );
