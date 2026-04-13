@@ -2845,34 +2845,11 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      </VideoCanvas>
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
-          {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
-          <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
-          <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">
-            <X size={20} />
-          </button>
-        </div>
-      )}
-
-      {/* UI Controls Overlay (Hidden during recording) */}
-      <div className={`fixed top-4 right-4 md:top-6 md:right-6 z-[900] transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <button 
-          onClick={startRecording}
-          className="brutal-button bg-brutal-pink px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
-        >
-          <Video size={14} className="md:w-4 md:h-4" />
-          <span>EXPORT VIDEO</span>
-        </button>
+        </VideoCanvas>
       </div>
-      
-          </VideoCanvas>
-        </div>
-      );
-    }
+    );
+  }
+
 
     return null;
   };
