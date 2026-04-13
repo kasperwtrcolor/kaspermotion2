@@ -1845,7 +1845,9 @@ export default function App() {
       return;
     }
 
-    if (credits < 5) {
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+
+    if (!isAdmin && credits < 5) {
       setToastMessage("Not enough credits. You need 5 credits to generate a trailer.");
       return;
     }
@@ -2021,10 +2023,13 @@ export default function App() {
     setCurrentIndex(0);
     
     if (newComps.length > 0) {
-      if (user) {
+      const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+      if (user && !isAdmin) {
         const userRef = doc(db, 'users', user.uid);
         await setDoc(userRef, { credits: credits - 5 }, { merge: true });
         setToastMessage("Trailer generated! 5 credits used.");
+      } else if (isAdmin) {
+        setToastMessage("Admin access: Trailer generated without credit deduction!");
       }
       setTimeout(() => {
         setIsRenderingTrailer(false);
@@ -2257,7 +2262,7 @@ export default function App() {
         <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-6 overflow-y-auto">
         <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
           
-          {/* Loading Overlays */}
+          {/* Loading Overlays (Excluding Generation) */}
           <AnimatePresence>
             {(isUploading || isGeneratingImage || isSaving) && (
               <motion.div 
@@ -2952,7 +2957,7 @@ export default function App() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
           {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
           <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
           <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">
@@ -2962,7 +2967,7 @@ export default function App() {
       )}
 
       {/* UI Controls Overlay (Hidden during recording) */}
-      <div className={`fixed top-4 right-4 md:top-6 md:right-6 z-50 transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+      <div className={`fixed top-4 right-4 md:top-6 md:right-6 z-[900] transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button 
           onClick={startRecording}
           className="brutal-button bg-brutal-pink px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
@@ -2972,7 +2977,7 @@ export default function App() {
         </button>
       </div>
       
-      <div className={`fixed top-4 left-4 md:top-6 md:left-6 z-50 transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'} flex gap-2 md:gap-3`}>
+      <div className={`fixed top-4 left-4 md:top-6 md:left-6 z-[900] transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'} flex gap-2 md:gap-3`}>
         <button 
           onClick={() => setAppMode('setup')}
           className="brutal-button bg-white px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
@@ -3166,6 +3171,43 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+
+    {/* Full Screen Generation Loader */}
+    <AnimatePresence>
+      {isRenderingTrailer && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[2000] bg-black/90 flex flex-col items-center justify-center text-white"
+        >
+          <div className="relative mb-12">
+            <div className="w-32 h-32 border-8 border-brutal-blue/20 rounded-full"></div>
+            <motion.div 
+              className="absolute top-0 w-32 h-32 border-8 border-transparent border-t-brutal-pink rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            ></motion.div>
+            <div className="absolute inset-0 flex items-center justify-center font-display font-bold text-2xl">
+              {Math.round(renderProgress)}%
+            </div>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-display font-bold uppercase mb-4 tracking-tighter text-center px-4">AI Director is Working</h2>
+          <p className="font-mono text-xl text-brutal-green mb-10 uppercase tracking-widest px-4 text-center">Compiling Cinematic World...</p>
+          
+          <div className="w-full max-w-sm px-6">
+            <div className="w-full h-4 bg-gray-800 brutal-border border-white overflow-hidden shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
+              <motion.div 
+                className="h-full bg-brutal-green"
+                initial={{ width: 0 }}
+                animate={{ width: `${renderProgress}%` }}
+                transition={{ duration: 0.2 }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
     </>
   );
 }
