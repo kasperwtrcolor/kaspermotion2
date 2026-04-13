@@ -2723,15 +2723,11 @@ export default function App() {
               )}
             </motion.div>
           )}
-
         </div>
       </div>
-      </>
     );
-          </div>
-        </div>
-      );
-    }
+  }
+
 
     if (appMode === 'playing') {
       const getBackgroundClass = () => {
