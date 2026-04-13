@@ -14,7 +14,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
 type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract';
 
@@ -316,12 +316,38 @@ const FloatingParticles = () => {
 const MediaThumbnail = ({ item }: { item: MediaItem }) => {
   const url = item.url;
 
-  if (!url) return <div className="w-full h-full bg-white/5 animate-pulse" />;
+  if (!url) return <div className="w-full h-full bg-brutal-bg brutal-border animate-pulse" />;
 
   return item.type === 'video' ? (
     <video src={url} className="w-full h-full object-cover opacity-70" muted />
   ) : (
     <img src={url} className="w-full h-full object-cover opacity-70" alt="thumbnail" />
+  );
+};
+
+const ParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) => {
+  const bgX1 = useTransform(worldX, v => Number(v) * 0.1);
+  const bgY1 = useTransform(worldY, v => Number(v) * 0.1);
+  const bgX2 = useTransform(worldX, v => Number(v) * 0.2);
+  const bgY2 = useTransform(worldY, v => Number(v) * 0.2);
+  const bgX3 = useTransform(worldX, v => Number(v) * 0.3);
+  const bgY3 = useTransform(worldY, v => Number(v) * 0.3);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]">
+      <motion.div 
+        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/stars/1920/1080')] bg-repeat opacity-20 mix-blend-screen"
+        style={{ x: bgX1, y: bgY1, backgroundSize: '500px 500px' }}
+      />
+      <motion.div 
+        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/nebula/1920/1080')] bg-repeat opacity-30 mix-blend-screen"
+        style={{ x: bgX2, y: bgY2, backgroundSize: '800px 800px' }}
+      />
+      <motion.div 
+        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/dust/1920/1080')] bg-repeat opacity-40 mix-blend-screen"
+        style={{ x: bgX3, y: bgY3, backgroundSize: '1200px 1200px' }}
+      />
+    </div>
   );
 };
 
@@ -357,8 +383,9 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
   if (status !== 'active') return null;
   return (
     <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
+      {/* Existing Shape 1 */}
       <motion.div
-        className="absolute -top-32 -left-32 w-24 h-24 rounded-3xl bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 shadow-2xl"
+        className="absolute -top-32 -left-32 w-24 h-24 rounded-3xl bg-brutal-pink brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         initial={{ x: -800, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
         animate={{
           x: [-800, 0, 150, 800],
@@ -368,15 +395,12 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
           rotateZ: [0, 180, 360],
           scale: [0, 1.5, 1, 0],
         }}
-        transition={{
-          duration: 4.5,
-          times: [0, 0.4, 0.8, 1],
-          ease: "easeInOut",
-        }}
+        transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut" }}
         style={{ transformStyle: 'preserve-3d' }}
       />
+      {/* Existing Shape 2 */}
       <motion.div
-        className="absolute -bottom-32 -right-32 w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 shadow-2xl"
+        className="absolute -bottom-32 -right-32 w-20 h-20 rounded-full bg-brutal-blue brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
         initial={{ x: 800, y: 500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
         animate={{
           x: [800, 0, -100, -800],
@@ -386,14 +410,90 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
           rotateZ: [0, -180, -360],
           scale: [0, 1.2, 1, 0],
         }}
-        transition={{
-          duration: 4.5,
-          times: [0, 0.4, 0.8, 1],
-          ease: "easeInOut",
-          delay: 0.5
-        }}
+        transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.5 }}
         style={{ transformStyle: 'preserve-3d' }}
       />
+      {/* New Shape 1: Triangle */}
+      <motion.div
+        className="absolute top-1/4 -right-20 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[69.3px] border-b-brutal-green drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]"
+        initial={{ x: 800, y: -200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [800, -100, -300, -800],
+          y: [-200, 100, 200, -200],
+          rotateX: [0, 180, 360],
+          rotateY: [0, 360, 720],
+          rotateZ: [0, -90, -180],
+          scale: [0, 1.3, 1, 0],
+        }}
+        transition={{ duration: 5, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.2 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      />
+      {/* New Shape 2: Star */}
+      <motion.div
+        className="absolute bottom-1/4 -left-20 text-6xl drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-orange"
+        initial={{ x: -800, y: 200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [-800, 100, 300, 800],
+          y: [200, -100, -200, 200],
+          rotateX: [0, -180, -360],
+          rotateY: [0, -360, -720],
+          rotateZ: [0, 180, 360],
+          scale: [0, 1.4, 1, 0],
+        }}
+        transition={{ duration: 5.5, times: [0, 0.35, 0.75, 1], ease: "easeInOut", delay: 0.7 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        ★
+      </motion.div>
+      {/* New Shape 3: Pill */}
+      <motion.div
+        className="absolute top-1/2 -left-32 w-32 h-12 rounded-full bg-brutal-purple brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+        initial={{ x: -800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [-800, 200, 400, 1000],
+          y: [0, -150, 150, 0],
+          rotateX: [0, 360, 720],
+          rotateY: [0, 180, 360],
+          rotateZ: [0, 45, 90],
+          scale: [0, 1.1, 1.1, 0],
+        }}
+        transition={{ duration: 6, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.3 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      />
+      {/* New Shape 4: Cross */}
+      <motion.div
+        className="absolute bottom-1/2 -right-32 text-7xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-blue"
+        initial={{ x: 800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [800, -200, -400, -1000],
+          y: [0, 150, -150, 0],
+          rotateX: [0, -360, -720],
+          rotateY: [0, -180, -360],
+          rotateZ: [0, -45, -90],
+          scale: [0, 1.2, 1.2, 0],
+        }}
+        transition={{ duration: 6.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.6 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        +
+      </motion.div>
+      {/* New Shape 5: ZigZag */}
+      <motion.div
+        className="absolute top-10 right-1/4 text-6xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-white"
+        initial={{ x: 0, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+        animate={{
+          x: [0, 100, -100, 0],
+          y: [-500, 200, 400, 800],
+          rotateX: [0, 180, 360],
+          rotateY: [0, 360, 720],
+          rotateZ: [0, 90, 180],
+          scale: [0, 1.5, 1.5, 0],
+        }}
+        transition={{ duration: 5.2, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.4 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        ~
+      </motion.div>
     </div>
   );
 };
@@ -408,16 +508,16 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
         scale: [0.8, 1.1, 0.8] 
       } : { rotateY: -20, rotateX: 10, scale: 0.8 }}
       transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      className="relative w-[280px] h-[580px] md:w-[320px] md:h-[650px] bg-black rounded-[3rem] border-[12px] border-gray-800 shadow-[20px_20px_60px_rgba(0,0,0,0.8),_inset_0_0_20px_rgba(255,255,255,0.2)] overflow-hidden"
+      className="relative w-[280px] h-[580px] md:w-[320px] md:h-[650px] bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
       style={{ transformStyle: 'preserve-3d' }}
     >
       {/* Dynamic Island */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20 flex items-center justify-between px-2">
-        <div className="w-2 h-2 rounded-full bg-white/10"></div>
-        <div className="w-2 h-2 rounded-full bg-green-900/50"></div>
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black z-20 flex items-center justify-between px-2 brutal-border">
+        <div className="w-2 h-2 bg-white brutal-border"></div>
+        <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
       </div>
       {/* Screen Content */}
-      <div className="w-full h-full bg-gray-900 relative overflow-hidden flex items-center justify-center">
+      <div className="w-full h-full bg-brutal-bg relative overflow-hidden flex items-center justify-center">
         {children}
       </div>
       {/* Glare effect */}
@@ -427,32 +527,42 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
 };
 
 const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) => {
-  let emoji = '✨';
-  if (type === 'black') emoji = '🍿'; // Blockbuster
-  if (type === 'vibrant-glow') emoji = '🎵'; // Music Video
-  if (type === 'grid') emoji = '🚀'; // App Showcase / Tech
-  if (type === 'particles') emoji = '🌍'; // Documentary
-
+  let emojis = ['✨', '🌟', '💫'];
+  if (type === 'black') emojis = ['🍿', '🎬', '🎥', '🎞️', '🎟️', '🎭'];
+  if (type === 'vibrant-glow') emojis = ['🎵', '🎶', '🎧', '🎸', '🎹', '🥁'];
+  if (type === 'grid') emojis = ['🚀', '💻', '📱', '🕹️', '💾', '🔋'];
+  if (type === 'particles') emojis = ['🌍', '🪐', '☄️', '🌌', '🛸', '🛰️'];
+  if (type === 'parallax') emojis = ['🏔️', '🌲', '🏕️', '🗺️', '🧭', '🦅'];
+  
   // Create 3D shadow effect
   const depth = 30;
   const shadows = Array.from({length: depth}).map((_, i) => `${i}px ${i}px 0px rgba(0,0,0,${0.8 - (i * 0.02)})`).join(',');
 
   return (
-    <motion.div
-      initial={{ scale: 0, rotateY: -180, y: 100 }}
-      animate={status === 'active' ? { 
-        scale: [0, 1.2, 1], 
-        rotateY: [-180, 0, 20, -20, 0],
-        y: [100, -20, 0, -10, 0]
-      } : { scale: 0, rotateY: 180, y: 100 }}
-      transition={{ duration: 8, ease: "easeOut" }}
-      className="absolute z-0 flex items-center justify-center opacity-40"
-      style={{ transformStyle: 'preserve-3d' }}
-    >
-      <div style={{ fontSize: '20rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
-        {emoji}
-      </div>
-    </motion.div>
+    <>
+      {emojis.map((emoji, index) => (
+        <motion.div
+          key={index}
+          initial={{ scale: 0, rotateY: -180, y: 100 }}
+          animate={status === 'active' ? { 
+            scale: [0, 1.2, 1], 
+            rotateY: [-180, 0, 20, -20, 0],
+            y: [100, -20, 0, -10, 0]
+          } : { scale: 0, rotateY: 180, y: 100 }}
+          transition={{ duration: 8, ease: "easeOut", delay: index * 0.5 }}
+          className="absolute z-0 flex items-center justify-center opacity-40"
+          style={{ 
+            transformStyle: 'preserve-3d',
+            left: `${(index % 3) * 30 + 10}%`,
+            top: `${Math.floor(index / 3) * 40 + 10}%`
+          }}
+        >
+          <div style={{ fontSize: '10rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
+            {emoji}
+          </div>
+        </motion.div>
+      ))}
+    </>
   );
 };
 
@@ -589,8 +699,8 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
     past: { opacity: 0 }
   };
 
-  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain shadow-[0_0_60px_rgba(255,255,255,0.2)] border-[4px] border-white/90 rounded-[2rem] bg-black/20";
-  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain shadow-[0_0_40px_rgba(255,255,255,0.15)] border-[3px] border-white/80 rounded-[1.5rem] bg-black/20";
+  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]";
+  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]";
 
   return (
     <div
@@ -610,13 +720,12 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
             animate="active"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            <AnimatedCaption text={comp.caption} effect={comp.textEffect} className="text-5xl md:text-7xl font-bold tracking-tight text-white drop-shadow-2xl" />
+            <AnimatedCaption text={comp.caption} effect={comp.textEffect} className="text-5xl md:text-7xl font-bold tracking-tight text-black drop-shadow-2xl" />
           </motion.div>
         )}
 
         {comp.media.length > 0 && (
           <>
-            <ParticleTrails />
             <CartoonShapes status={status} />
           </>
         )}
@@ -699,9 +808,9 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
               }}
             >
               {hasError ? (
-                <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-white/5 border-white/10`}>
-                  <AlertCircle size={isMulti ? 24 : 48} className="text-white/20" />
-                  <p className="text-[8px] font-mono text-white/40 uppercase tracking-widest">Error</p>
+                <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-brutal-pink brutal-border`}>
+                  <AlertCircle size={isMulti ? 24 : 48} className="text-black" />
+                  <p className="text-[10px] font-mono font-bold text-black uppercase tracking-widest">Error</p>
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
@@ -722,6 +831,7 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [credits, setCredits] = useState<number>(0);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [userTrailers, setUserTrailers] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -818,18 +928,53 @@ export default function App() {
         handleFirestoreError(error, OperationType.LIST, 'assets');
       });
 
+      const checkAndRewardCredits = async () => {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          const today = new Date().toISOString().split('T')[0];
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.lastRewardDate !== today) {
+              const newCredits = (userData.credits || 0) + 10;
+              await setDoc(userRef, { credits: newCredits, lastRewardDate: today }, { merge: true });
+              setToastMessage("You received 10 daily credits!");
+            }
+          } else {
+            await setDoc(userRef, { credits: 20, lastRewardDate: today }, { merge: true });
+            setToastMessage("Welcome! You received 20 initial credits.");
+          }
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+        }
+      };
+      
+      checkAndRewardCredits();
+
+      const unsubscribeUser = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+        if (doc.exists()) {
+          setCredits(doc.data().credits || 0);
+        }
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+      });
+
       return () => {
         unsubscribe();
         unsubscribeAssets();
+        unsubscribeUser();
       };
     }
   }, [user]);
 
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      return result.user;
     } catch (err) {
       setToastMessage("Login failed. Please try again.");
+      return null;
     }
   };
 
@@ -865,6 +1010,10 @@ export default function App() {
 
   const generateAIImage = async () => {
     if (!aiPrompt) return;
+    if (credits < 1) {
+      setToastMessage("Not enough credits. You need 1 credit to generate an image.");
+      return;
+    }
     setIsGeneratingImage(true);
     try {
       const response = await ai.models.generateContent({
@@ -903,10 +1052,13 @@ export default function App() {
         
         setMediaFiles(prev => [...prev, newItem]);
         setAiPrompt("");
-        if (!uploaded) {
-          setToastMessage("AI Image generated locally, but failed to save to cloud library (CORS/Permissions).");
+        
+        if (user) {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, { credits: credits - 1 }, { merge: true });
+          setToastMessage("Image generated! 1 credit used.");
         } else {
-          setToastMessage("AI Image generated and saved to library!");
+          setToastMessage("Image generated locally.");
         }
       } else {
         setToastMessage("Failed to generate image. Try a different prompt.");
@@ -1514,6 +1666,11 @@ export default function App() {
       return;
     }
 
+    if (credits < 5) {
+      setToastMessage("Not enough credits. You need 5 credits to generate a trailer.");
+      return;
+    }
+
     setIsRenderingTrailer(true);
     setRenderProgress(0);
     
@@ -1621,6 +1778,11 @@ export default function App() {
     setCurrentIndex(0);
     
     if (newComps.length > 0) {
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { credits: credits - 5 }, { merge: true });
+        setToastMessage("Trailer generated! 5 credits used.");
+      }
       setTimeout(() => {
         setIsRenderingTrailer(false);
         setAppMode('playing');
@@ -1775,7 +1937,16 @@ export default function App() {
 
   // --- RENDER LANDING PAGE ---
   if (appMode === 'landing') {
-    return <LandingPage onStart={() => setAppMode('setup')} />;
+    return <LandingPage onStart={async () => {
+      if (!user) {
+        const loggedInUser = await handleLogin();
+        if (loggedInUser) {
+          setAppMode('setup');
+        }
+      } else {
+        setAppMode('setup');
+      }
+    }} />;
   }
 
   // --- RENDER SETUP WIZARD ---
@@ -1791,10 +1962,10 @@ export default function App() {
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl"
+                className="absolute inset-0 z-50 bg-brutal-blue/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl brutal-border"
               >
-                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-                <p className="text-white font-mono text-sm">
+                <div className="w-16 h-16 border-8 border-black border-t-brutal-pink rounded-full animate-spin mb-6"></div>
+                <p className="text-black font-display font-bold uppercase text-xl bg-white px-4 py-2 brutal-border">
                   {isUploading && "Uploading assets..."}
                   {isGeneratingImage && "Generating AI image..."}
                   {isSaving && "Saving project..."}
@@ -1879,28 +2050,28 @@ export default function App() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                    className="fixed inset-0 z-[100] bg-brutal-bg/90 backdrop-blur-md flex items-center justify-center p-4"
                   >
                     <motion.div 
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.9, opacity: 0 }}
-                      className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden"
+                      className="bg-white brutal-border w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="text-xl font-bold flex items-center gap-3">
-                          <History className="text-blue-400" /> Your Asset Library
+                      <div className="p-6 border-b-4 border-black flex items-center justify-between bg-brutal-blue">
+                        <h3 className="text-2xl font-display font-bold uppercase flex items-center gap-3 text-black">
+                          <History size={24} /> Your Asset Library
                         </h3>
-                        <button onClick={() => setShowLibrary(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                          <X size={20} />
+                        <button onClick={() => setShowLibrary(false)} className="p-2 hover:bg-black/10 transition-colors text-black">
+                          <X size={24} />
                         </button>
                       </div>
                       
-                      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-brutal-bg">
                         {libraryAssets.length === 0 ? (
-                          <div className="h-64 flex flex-col items-center justify-center text-white/30">
-                            <ImageIcon size={48} className="mb-4 opacity-20" />
-                            <p>Your library is empty. Upload assets to see them here.</p>
+                          <div className="h-64 flex flex-col items-center justify-center text-black/40">
+                            <ImageIcon size={48} className="mb-4 opacity-50" />
+                            <p className="font-mono font-bold uppercase">Your library is empty. Upload assets to see them here.</p>
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -1910,22 +2081,22 @@ export default function App() {
                                 <div
                                   key={asset.id}
                                   onClick={() => toggleLibraryAssetSelection(asset.id)}
-                                  className={`relative aspect-square rounded-xl border overflow-hidden group cursor-pointer transition-all ${isSelected ? 'border-blue-500 bg-blue-500/10' : 'border-white/10 bg-white/5 hover:border-blue-500/50'}`}
+                                  className={`relative aspect-square brutal-border overflow-hidden group cursor-pointer transition-all ${isSelected ? 'border-4 border-black bg-brutal-green' : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
                                 >
                                   {asset.type === 'video' ? (
-                                    <video src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'}`} />
+                                    <video src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`} />
                                   ) : (
-                                    <img src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-50 group-hover:opacity-80'}`} alt={asset.name} />
+                                    <img src={asset.url} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`} alt={asset.name} />
                                   )}
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                                    <p className="text-[10px] truncate w-full font-mono">{asset.name}</p>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                                    <p className="text-[10px] truncate w-full font-mono font-bold text-black">{asset.name}</p>
                                   </div>
-                                  <div className={`absolute top-2 left-2 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500' : 'bg-black/50 border-white/30 group-hover:border-white/60'}`}>
-                                    {isSelected && <CheckCircle2 size={14} className="text-white" />}
+                                  <div className={`absolute top-2 left-2 w-6 h-6 brutal-border flex items-center justify-center transition-colors ${isSelected ? 'bg-brutal-green' : 'bg-white'}`}>
+                                    {isSelected && <CheckCircle2 size={16} className="text-black" />}
                                   </div>
                                   <button 
                                     onClick={(e) => deleteLibraryAsset(e, asset)}
-                                    className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 bg-brutal-pink brutal-border p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 text-black"
                                   >
                                     <Trash2 size={14} />
                                   </button>
@@ -1936,8 +2107,8 @@ export default function App() {
                         )}
                       </div>
                       
-                      <div className="p-6 border-t border-white/10 bg-white/5 flex items-center justify-between">
-                        <p className="text-xs text-white/40">Select assets to add them to your current project.</p>
+                      <div className="p-6 border-t-4 border-black bg-white flex items-center justify-between">
+                        <p className="text-xs text-black/60 font-mono font-bold uppercase">Select assets to add them to your current project.</p>
                         <button
                           disabled={selectedLibraryAssets.size === 0}
                           onClick={() => {
@@ -1946,9 +2117,9 @@ export default function App() {
                             setShowLibrary(false);
                             setSelectedLibraryAssets(new Set());
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="brutal-button bg-brutal-green px-6 py-2 text-sm disabled:opacity-50"
                         >
-                          Add Selected ({selectedLibraryAssets.size})
+                          ADD SELECTED ({selectedLibraryAssets.size})
                         </button>
                       </div>
                     </motion.div>
@@ -2066,7 +2237,7 @@ export default function App() {
                 {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
                   <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white brutal-border p-3">
                     <div className="flex-1 text-sm text-black font-medium flex items-center">
-                      <span className="bg-black text-white px-2 py-0.5 font-mono text-xs mr-3">{idx + 1}</span>
+                      <span className="bg-brutal-blue brutal-border text-black px-2 py-0.5 font-mono font-bold text-xs mr-3">{idx + 1}</span>
                       {line}
                     </div>
                     <div className="flex items-center gap-3 md:w-1/3">
@@ -2120,18 +2291,18 @@ export default function App() {
               <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-green brutal-border flex items-center justify-center mx-auto mb-4 transform -rotate-6">
                 <CheckCircle2 size={24} className="md:w-8 md:h-8 text-black" />
               </div>
-              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter">Style & Generate</h2>
+              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter text-black">Style & Generate</h2>
               <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div className="col-span-1 md:col-span-2">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Professional Presets</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Professional Presets</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {(['blockbuster', 'documentary', 'music-video', 'app-showcase'] as const).map(p => (
                       <button
                         key={p}
                         onClick={() => applyPreset(p)}
-                        className={`px-4 py-4 brutal-border text-center transition-all ${preset === p ? 'bg-brutal-blue transform translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
+                        className={`px-4 py-4 brutal-border text-center transition-all text-black ${preset === p ? 'bg-brutal-blue transform translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
                       >
                         <div className="font-display font-bold uppercase mb-1">{p.replace('-', ' ')}</div>
                         <div className="text-[10px] text-black/60 font-mono uppercase tracking-widest">Automated Engine</div>
@@ -2140,13 +2311,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Typography</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['font-sans', 'font-serif', 'font-mono', 'font-display'] as FontStyle[]).map(font => (
                       <button
                         key={font}
                         onClick={() => setFontStyle(font)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors text-xs md:text-sm ${fontStyle === font ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'} ${font}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors text-xs md:text-sm text-black ${fontStyle === font ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'} ${font}`}
                       >
                         {font.replace('font-', '').toUpperCase()}
                       </button>
@@ -2154,13 +2325,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Background</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'grid', 'vibrant-glow'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'gradient-blue', 'gradient-purple', 'grid', 'vibrant-glow', 'particles', 'parallax'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => setBackgroundStyle(bg)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${backgroundStyle === bg ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${backgroundStyle === bg ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {bg.replace('-', ' ')}
                       </button>
@@ -2186,13 +2357,13 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Text Animation</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['gsap-split', 'typewriter', 'fade', 'kinetic'] as TextEffect[]).map(effect => (
                       <button
                         key={effect}
                         onClick={() => setTextEffect(effect)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${textEffect === effect ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-100'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${textEffect === effect ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {effect.replace('-', ' ')}
                       </button>
@@ -2200,13 +2371,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block">Text Position</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Position</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['random', 'top', 'bottom', 'center', 'left', 'right'] as TextPosition[]).map(pos => (
                       <button
                         key={pos}
                         onClick={() => setPreferredTextPosition(pos)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm ${preferredTextPosition === pos ? 'bg-brutal-purple' : 'bg-white hover:bg-gray-100'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${preferredTextPosition === pos ? 'bg-brutal-purple' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {pos}
                       </button>
@@ -2217,13 +2388,13 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Transition Effect</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
                     {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'] as TransitionType[]).map(type => (
                       <button
                         key={type}
                         onClick={() => setTransitionType(type)}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-left border transition-colors capitalize text-xs md:text-sm ${transitionType === type ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${transitionType === type ? 'bg-brutal-green' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {type}
                       </button>
@@ -2231,8 +2402,8 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Transition Speed</h3>
-                  <div className="flex flex-col gap-4 px-2">
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Speed</h3>
+                  <div className="flex flex-col gap-4 px-2 bg-white brutal-border p-4">
                     <input 
                       type="range" 
                       min="0.2" 
@@ -2240,9 +2411,9 @@ export default function App() {
                       step="0.1" 
                       value={transitionDuration}
                       onChange={(e) => setTransitionDuration(parseFloat(e.target.value))}
-                      className="w-full accent-white"
+                      className="w-full accent-black"
                     />
-                    <div className="flex justify-between text-[10px] font-mono text-white/40">
+                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
                       <span>FAST ({transitionDuration}s)</span>
                       <span>SLOW</span>
                     </div>
@@ -2252,13 +2423,13 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Export Format</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Format</h3>
                   <div className="grid grid-cols-3 gap-2">
                     {(['webm', 'mp4', 'mov'] as const).map(f => (
                       <button
                         key={f}
                         onClick={() => setExportFormat(f)}
-                        className={`px-3 py-2 rounded-lg text-center border transition-colors uppercase text-[10px] font-mono ${exportFormat === f ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 text-center brutal-border transition-colors uppercase text-[10px] font-mono font-bold text-black ${exportFormat === f ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {f}
                       </button>
@@ -2266,13 +2437,13 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-white/70 mb-3">Export Resolution</h3>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Resolution</h3>
                   <div className="grid grid-cols-3 gap-2">
                     {(['720p', '1080p', '4K'] as const).map(r => (
                       <button
                         key={r}
                         onClick={() => setExportResolution(r)}
-                        className={`px-3 py-2 rounded-lg text-center border transition-colors uppercase text-[10px] font-mono ${exportResolution === r ? 'bg-white/10 border-white/30' : 'bg-transparent border-white/5 hover:bg-white/5'}`}
+                        className={`px-3 py-2 text-center brutal-border transition-colors uppercase text-[10px] font-mono font-bold text-black ${exportResolution === r ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {r}
                       </button>
@@ -2308,20 +2479,20 @@ export default function App() {
               </div>
 
               {user && userTrailers.length > 0 && (
-                <div className="mt-12 pt-12 border-t border-white/10">
-                  <h3 className="text-lg font-medium mb-6 flex items-center gap-3">
-                    <History className="text-purple-400" /> Your Saved Trailers
+                <div className="mt-12 pt-12 border-t-4 border-black">
+                  <h3 className="text-xl font-display font-bold uppercase mb-6 flex items-center gap-3 text-black">
+                    <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center"><History size={16} /></div> Your Saved Trailers
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {userTrailers.map(project => (
-                      <div key={project.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between group hover:bg-white/10 transition-colors">
+                      <div key={project.id} className="bg-white brutal-border p-4 flex items-center justify-between group hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
                         <div className="cursor-pointer flex-1" onClick={() => loadProject(project)}>
-                          <div className="font-medium text-sm mb-1">{project.name}</div>
-                          <div className="text-[10px] text-white/40 font-mono">{new Date(project.createdAt?.seconds * 1000).toLocaleDateString()} • {project.media.length} Scenes</div>
+                          <div className="font-bold font-mono uppercase text-sm mb-1 text-black">{project.name}</div>
+                          <div className="text-[10px] text-black/60 font-mono font-bold uppercase">{new Date(project.createdAt?.seconds * 1000).toLocaleDateString()} • {project.media.length} Scenes</div>
                         </div>
                         <button 
                           onClick={() => deleteProject(project.id)}
-                          className="text-white/20 hover:text-red-400 p-2 transition-colors opacity-0 group-hover:opacity-100"
+                          className="text-black hover:text-brutal-pink p-2 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -2373,6 +2544,8 @@ export default function App() {
     >
       
       {/* The 3D World */}
+      {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
+      {backgroundStyle === 'particles' && <ParticleTrails />}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
@@ -2414,9 +2587,9 @@ export default function App() {
 
       {/* Scene Counter Overlay */}
       <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[70] pointer-events-none">
-        <div className="bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-[10px] font-mono tracking-widest text-white/70 uppercase">
+        <div className="bg-white brutal-border px-4 py-2 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <div className="w-3 h-3 bg-brutal-orange brutal-border animate-pulse" />
+          <span className="text-xs font-mono font-bold text-black uppercase">
             Scene {currentIndex + 1} / {compositions.length}
           </span>
         </div>
@@ -2430,12 +2603,12 @@ export default function App() {
         <motion.div 
           initial={{ y: -100 }}
           animate={{ y: 0 }}
-          className="h-[10vh] w-full bg-black"
+          className="h-[10vh] w-full bg-brutal-bg border-b-8 border-black"
         />
         <motion.div 
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="h-[10vh] w-full bg-black"
+          className="h-[10vh] w-full bg-brutal-bg border-t-8 border-black"
         />
       </div>
 
@@ -2521,19 +2694,19 @@ export default function App() {
         </button>
         <button 
           onClick={() => setShowGiphyModal(true)}
-          className="flex items-center gap-2 md:gap-3 bg-blue-500/20 hover:bg-blue-500/40 text-blue-100 border border-blue-500/30 backdrop-blur-xl px-4 py-2 md:px-6 md:py-3 rounded-full cursor-pointer transition-all font-mono text-[10px] md:text-sm"
+          className="brutal-button bg-brutal-purple px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
         >
-          <Sparkles size={14} className="md:w-4 md:h-4" />
-          <span>STICKERS</span>
+          <Sparkles size={14} className="md:w-4 md:h-4 text-black" />
+          <span className="text-black">STICKERS</span>
         </button>
       </div>
 
       {/* Manual Navigation Controls */}
       {!isRecording && compositions.length > 1 && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6">
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 bg-white brutal-border p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <button 
             onClick={() => setCurrentIndex(prev => (prev > 0 ? prev - 1 : compositions.length - 1))}
-            className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-white/50 hover:text-white"
+            className="p-2 bg-brutal-pink brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
           >
             <ChevronLeft size={24} />
           </button>
@@ -2542,13 +2715,13 @@ export default function App() {
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? 'bg-blue-500 w-4' : 'bg-white/20 hover:bg-white/40'}`}
+                className={`w-4 h-4 brutal-border transition-all ${i === currentIndex ? 'bg-brutal-blue scale-125' : 'bg-white hover:bg-gray-200'}`}
               />
             ))}
           </div>
           <button 
             onClick={() => setCurrentIndex(prev => (prev < compositions.length - 1 ? prev + 1 : 0))}
-            className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all text-white/50 hover:text-white"
+            className="p-2 bg-brutal-green brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
           >
             <ChevronRight size={24} />
           </button>
@@ -2557,16 +2730,16 @@ export default function App() {
 
       {/* Interaction Hint */}
       {!isRecording && (
-        <div className="fixed bottom-6 left-6 z-50 pointer-events-none opacity-40 font-mono text-[10px] uppercase tracking-widest">
+        <div className="fixed bottom-6 left-6 z-50 pointer-events-none font-mono text-xs font-bold uppercase tracking-widest bg-white brutal-border px-3 py-1 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           Drag to Rotate • Shift+Drag to Pan
         </div>
       )}
 
       {/* Recording Progress Bar */}
       {isRecording && (
-        <div className="fixed bottom-0 left-0 right-0 h-1.5 bg-white/10 z-[300]">
+        <div className="fixed bottom-0 left-0 right-0 h-4 bg-white border-t-4 border-black z-[300]">
           <div 
-            className="h-full bg-red-500 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(239,68,68,0.8)]" 
+            className="h-full bg-brutal-pink border-r-4 border-black transition-all duration-1000 ease-linear" 
             style={{ width: `${recordingProgress}%` }} 
           />
         </div>
@@ -2579,25 +2752,25 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-[#050505] flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-[200] bg-brutal-bg flex flex-col items-center justify-center p-6"
           >
-            <div className="w-full max-w-md">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-                    <Sparkles size={20} className="animate-pulse" />
+            <div className="w-full max-w-md bg-white brutal-border p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-brutal-green brutal-border">
+                    <Sparkles size={24} className="animate-pulse text-black" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">AI Rendering Engine</h2>
-                    <p className="text-xs text-white/40 uppercase tracking-widest">Processing cinematic assets</p>
+                    <h2 className="text-xl font-display font-bold uppercase text-black">AI Rendering Engine</h2>
+                    <p className="text-xs text-black/60 font-mono font-bold uppercase tracking-widest">Processing cinematic assets</p>
                   </div>
                 </div>
-                <span className="text-sm font-mono text-blue-400">{Math.round(renderProgress)}%</span>
+                <span className="text-xl font-display font-bold text-black">{Math.round(renderProgress)}%</span>
               </div>
               
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+              <div className="h-4 w-full bg-white brutal-border overflow-hidden">
                 <motion.div 
-                  className="h-full bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                  className="h-full bg-brutal-blue border-r-2 border-black"
                   initial={{ width: 0 }}
                   animate={{ width: `${renderProgress}%` }}
                   transition={{ type: 'spring', damping: 20, stiffness: 100 }}
@@ -2605,17 +2778,17 @@ export default function App() {
               </div>
               
               <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                  <p className="text-[10px] text-white/40 uppercase mb-1">Status</p>
-                  <p className="text-xs font-medium">Analyzing Composition</p>
+                <div className="p-4 bg-brutal-pink brutal-border">
+                  <p className="text-[10px] text-black/60 font-mono font-bold uppercase mb-1">Status</p>
+                  <p className="text-sm font-bold uppercase text-black">Analyzing Composition</p>
                 </div>
-                <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                  <p className="text-[10px] text-white/40 uppercase mb-1">Task</p>
-                  <p className="text-xs font-medium">Syncing 3D Coordinates</p>
+                <div className="p-4 bg-brutal-orange brutal-border">
+                  <p className="text-[10px] text-black/60 font-mono font-bold uppercase mb-1">Task</p>
+                  <p className="text-sm font-bold uppercase text-black">Syncing 3D Coordinates</p>
                 </div>
               </div>
               
-              <p className="mt-12 text-center text-[10px] text-white/20 font-mono animate-pulse">
+              <p className="mt-12 text-center text-xs text-black font-mono font-bold animate-pulse">
                 INITIALIZING VIRTUAL CAMERA & LIGHTING SYSTEMS...
               </p>
             </div>
@@ -2623,65 +2796,14 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Sticker Controls */}
-      {!isRecording && compositions[currentIndex]?.giphyStickerUrl && (
-        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 bg-white brutal-border p-4 flex flex-col gap-4 w-48 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <h4 className="text-xs font-mono font-bold uppercase text-center border-b-2 border-black pb-2">Sticker Transform</h4>
-          
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold uppercase flex justify-between">
-              <span>Scale</span>
-              <span>{compositions[currentIndex].stickerScale?.toFixed(1) || '1.0'}</span>
-            </label>
-            <input 
-              type="range" min="0.1" max="3" step="0.1" 
-              value={compositions[currentIndex].stickerScale || 1} 
-              onChange={(e) => updateCurrentStickerTransform(parseFloat(e.target.value), compositions[currentIndex].stickerX || 0, compositions[currentIndex].stickerY || 0)}
-              className="w-full accent-black"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold uppercase flex justify-between">
-              <span>X Position</span>
-              <span>{compositions[currentIndex].stickerX || 0}</span>
-            </label>
-            <input 
-              type="range" min="-500" max="500" step="10" 
-              value={compositions[currentIndex].stickerX || 0} 
-              onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, parseInt(e.target.value), compositions[currentIndex].stickerY || 0)}
-              className="w-full accent-black"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold uppercase flex justify-between">
-              <span>Y Position</span>
-              <span>{compositions[currentIndex].stickerY || 0}</span>
-            </label>
-            <input 
-              type="range" min="-500" max="500" step="10" 
-              value={compositions[currentIndex].stickerY || 0} 
-              onChange={(e) => updateCurrentStickerTransform(compositions[currentIndex].stickerScale || 1, compositions[currentIndex].stickerX || 0, parseInt(e.target.value))}
-              className="w-full accent-black"
-            />
-          </div>
-          
-          <button 
-            onClick={() => updateCurrentStickerTransform(1, 0, 0)}
-            className="brutal-button bg-brutal-orange py-1.5 text-[10px] mt-2"
-          >
-            Reset
-          </button>
-        </div>
-      )}
+      {/* Sticker Controls Removed */}
 
       {/* Giphy Search Modal */}
       <AnimatePresence>
         {showGiphyModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[200] bg-brutal-bg/90 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
@@ -2731,9 +2853,9 @@ export default function App() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-48 text-white/30">
-                    <ImageIcon size={48} className="mb-4 opacity-20" />
-                    <p className="text-sm">Search for stickers to add to Scene {currentIndex + 1}</p>
+                  <div className="flex flex-col items-center justify-center h-48 text-black/40">
+                    <ImageIcon size={48} className="mb-4 opacity-50" />
+                    <p className="text-sm font-mono font-bold uppercase">Search for stickers to add to Scene {currentIndex + 1}</p>
                   </div>
                 )}
               </div>

@@ -17,10 +17,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-brutal-bg border-b-2 border-black p-4 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center font-bold text-xl">
-            T
+          <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center overflow-hidden">
+            <img src="/favicon.ico" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerText = 'K'; }} />
           </div>
-          <span className="font-display font-bold text-xl tracking-tight uppercase">TrailerGen</span>
+          <span className="font-display font-bold text-xl tracking-tight uppercase">KasperMotion</span>
         </div>
         <div className="flex gap-4">
           <button className="hidden sm:block font-mono text-sm font-bold uppercase hover:underline">Features</button>
@@ -165,7 +165,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <span className="bg-brutal-green px-2 brutal-border inline-block transform -rotate-2 mt-2">Effects</span>
             </h2>
             <p className="text-xl font-medium mb-8">
-              Go beyond simple slideshows. TrailerGen adds real 3D camera movements, depth of field, chromatic aberration, and motion blur to make your static images feel alive.
+              Go beyond simple slideshows. KasperMotion adds real 3D camera movements, depth of field, chromatic aberration, and motion blur to make your static images feel alive.
             </p>
             <ul className="space-y-4 font-mono font-bold uppercase text-sm">
               <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-purple brutal-border"></div> 3D Parallax & Depth</li>
@@ -221,7 +221,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
       {/* Footer */}
       <footer className="bg-black text-white py-8 border-t-4 border-black text-center font-mono text-sm uppercase">
-        <p>© {new Date().getFullYear()} TrailerGen. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} KasperMotion. All rights reserved.</p>
       </footer>
     </div>
   );

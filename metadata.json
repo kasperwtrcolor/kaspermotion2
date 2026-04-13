@@ -1,5 +1,5 @@
 {
-  "name": "Motion Canvas",
+  "name": "KasperMotion",
   "description": "A continuous 2.5D motion graphics world that a virtual camera travels through.",
   "requestFramePermissions": []
 }
