@@ -8,6 +8,10 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { GoogleGenAI } from "@google/genai";
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import LandingPage from './components/LandingPage';
+import AppHeader from './components/AppHeader';
+import ProfilePage from './components/ProfilePage';
+import VideoCanvas from './components/VideoCanvas';
+import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
@@ -54,7 +58,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: Exclude<TextPosition, 'random'>;
-  sceneType: 'standard' | 'text-morph' | 'grid' | 'split';
+  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'website-showcase';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -65,6 +69,8 @@ type Composition = {
   stickerScale?: number;
   stickerX?: number;
   stickerY?: number;
+  websiteScreenshot?: string;
+  websiteUrl?: string;
 };
 
 const generateComposition = (
@@ -634,8 +640,8 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
         scale: [0.8, 1.1, 0.8] 
       } : { rotateY: -20, rotateX: 10, scale: 0.8 }}
       transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      className="relative w-[280px] h-[580px] md:w-[320px] md:h-[650px] bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
-      style={{ transformStyle: 'preserve-3d' }}
+      className="relative bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
+      style={{ transformStyle: 'preserve-3d', width: 320, height: 650 }}
     >
       {/* Dynamic Island */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black z-20 flex items-center justify-between px-2 brutal-border">
@@ -644,7 +650,14 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
       </div>
       {/* Screen Content */}
       <div className="w-full h-full bg-brutal-bg relative overflow-hidden flex items-center justify-center">
-        {children}
+        {children || (
+          <div className="flex flex-col items-center justify-center gap-3 text-black/30">
+            <div className="w-16 h-16 brutal-border bg-white flex items-center justify-center">
+              <ImageIcon size={24} />
+            </div>
+            <p className="font-mono text-[10px] font-bold uppercase">App Preview</p>
+          </div>
+        )}
       </div>
       {/* Glare effect */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/20 pointer-events-none z-30"></div>
@@ -811,7 +824,7 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
     },
     past: {
       ...transitionVariants.past,
-      rotateZ: 360,
+      rotateZ: 0,
       scale: 0,
       transition: { duration: 1.5, ease: "easeInOut" }
     }
@@ -867,25 +880,32 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
         {comp.giphyStickerUrl && (
           <motion.img
             src={comp.giphyStickerUrl}
+            crossOrigin="anonymous"
             className="absolute z-50 w-64 h-64 md:w-96 md:h-96 object-contain pointer-events-none drop-shadow-2xl"
-            initial={{ scale: 0, opacity: 0, y: 100, x: 0, z: 300, rotateZ: -15 }}
+            initial={{ scale: 0, opacity: 0, y: 100, x: 0, rotateZ: -15 }}
             animate={status === 'active' ? { 
               scale: comp.stickerScale ?? 1, 
               opacity: 1, 
               y: comp.stickerY ?? 0, 
               x: comp.stickerX ?? 0,
-              z: 300, 
               rotateZ: 0 
             } : { 
               scale: 0, 
               opacity: 0, 
               y: (comp.stickerY ?? 0) + 100, 
               x: comp.stickerX ?? 0,
-              z: 300, 
               rotateZ: -15 
             }}
             transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.5 : 0 }}
-            style={{ transformStyle: 'preserve-3d' }}
+          />
+        )}
+
+        {/* Website showcase scene */}
+        {comp.sceneType === 'website-showcase' && comp.websiteScreenshot && (
+          <WebsiteShowcaseScene
+            screenshotUrl={comp.websiteScreenshot}
+            websiteUrl={comp.websiteUrl || ''}
+            status={status}
           />
         )}
 
@@ -945,7 +965,23 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
               ) : (
                 comp.preset === 'app-showcase' ? (
                   <MobileMockup status={status}>
-                    {mediaElement}
+                    {m.url && (
+                      m.type === 'video' ? (
+                        <video
+                          src={m.url}
+                          autoPlay loop muted playsInline
+                          className="w-full h-full object-cover"
+                          onError={() => setHasError(true)}
+                        />
+                      ) : (
+                        <img
+                          src={m.url}
+                          alt={comp.caption}
+                          className="w-full h-full object-cover"
+                          onError={() => setHasError(true)}
+                        />
+                      )
+                    )}
                   </MobileMockup>
                 ) : (
                   mediaElement
@@ -976,7 +1012,7 @@ export default function App() {
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [useGiphy, setUseGiphy] = useState(false);
 
-  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing'>('landing');
+  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile'>('landing');
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
@@ -987,6 +1023,8 @@ export default function App() {
 
   const [scrapeUrl, setScrapeUrl] = useState("https://");
   const [isScraping, setIsScraping] = useState(false);
+  const [websiteScreenshot, setWebsiteScreenshot] = useState<string | null>(null);
+  const [websiteSiteName, setWebsiteSiteName] = useState<string>('');
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('black');
@@ -1745,7 +1783,16 @@ export default function App() {
       const data = await res.json();
       if (data.script) {
         handleScriptChange(data.script);
-        setToastMessage("Script generated successfully!");
+        
+        // Capture screenshot URL
+        if (data.screenshotUrl) {
+          setWebsiteScreenshot(data.screenshotUrl);
+        }
+        if (data.siteName) {
+          setWebsiteSiteName(data.siteName);
+        }
+        
+        setToastMessage("Content fetched — script, screenshot & assets ready!");
       } else {
         setToastMessage(data.error || "Failed to generate script.");
       }
@@ -1832,24 +1879,51 @@ export default function App() {
       let giphyStickerUrl: string | undefined;
       if (useGiphy && caption) {
         try {
-          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
-          const searchTerms = words.slice(0, 2).join(' ');
-          const fallbackTerm = words.sort((a, b) => b.length - a.length)[0] || 'wow';
-
-          if (searchTerms || fallbackTerm) {
-            let { data } = await gf.search(searchTerms || fallbackTerm, { type: 'stickers', limit: 1 });
-            
-            if (!data || data.length === 0) {
-              const fallbackRes = await gf.search(fallbackTerm, { type: 'stickers', limit: 1 });
-              data = fallbackRes.data;
+          // AI-controlled sticker selection for professional results
+          let searchTerms: string[] = [];
+          try {
+            const stickerPrompt = `For a cinematic trailer scene with the caption: "${caption}", suggest 3 single-word Giphy sticker search terms that would enhance the visual impact professionally. Focus on emotions, actions, or objects that complement the message. Return ONLY a JSON array of 3 strings, nothing else. Example: ["fire","celebrate","rocket"]`;
+            const stickerAiResponse = await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: stickerPrompt,
+            });
+            const stickerText = (stickerAiResponse.text || '').trim();
+            // Parse JSON from AI response
+            const jsonMatch = stickerText.match(/\[.*\]/s);
+            if (jsonMatch) {
+              searchTerms = JSON.parse(jsonMatch[0]);
             }
-
-            if (data && data.length > 0) {
-              giphyStickerUrl = data[0].images.original.url;
-              console.log("Found Giphy sticker:", giphyStickerUrl);
-            } else {
-              console.log("No Giphy stickers found for:", searchTerms, "or", fallbackTerm);
+          } catch (aiErr) {
+            console.warn("AI sticker suggestion failed, falling back to keyword extraction:", aiErr);
+            const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
+            searchTerms = words.slice(0, 3);
+          }
+          
+          // Try each AI-suggested term until we find a sticker
+          for (const term of searchTerms) {
+            if (giphyStickerUrl) break;
+            try {
+              const { data } = await gf.search(term, { type: 'stickers', limit: 3 });
+              if (data && data.length > 0) {
+                // Pick the best rated / most popular one
+                const best = data[0];
+                giphyStickerUrl = best.images.original.url;
+                console.log(`AI selected Giphy sticker for "${caption}": term="${term}" url=${giphyStickerUrl}`);
+              }
+            } catch (searchErr) {
+              console.warn(`Giphy search failed for term "${term}":`, searchErr);
             }
+          }
+          
+          // Final fallback
+          if (!giphyStickerUrl) {
+            const fallbackTerm = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3).sort((a, b) => b.length - a.length)[0] || 'wow';
+            try {
+              const { data } = await gf.search(fallbackTerm, { type: 'stickers', limit: 1 });
+              if (data && data.length > 0) {
+                giphyStickerUrl = data[0].images.original.url;
+              }
+            } catch {}
           }
         } catch (err: any) {
           console.error("Giphy fetch error:", err);
@@ -1881,6 +1955,43 @@ export default function App() {
       
       setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
       await new Promise(r => setTimeout(r, 100));
+    }
+
+    // Inject Website Showcase scene if screenshot is available
+    if (websiteScreenshot) {
+      const showcaseCaption = websiteSiteName || scrapeUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      const showcaseAngle = prev ? prev.angle + (Math.random() * 1.5 - 0.75) : 0;
+      const distance = 2000;
+      const showcaseX = prev ? prev.x + Math.cos(showcaseAngle) * distance : 0;
+      const showcaseY = prev ? prev.y + Math.sin(showcaseAngle) * distance : 0;
+      
+      const websiteComp: Composition = {
+        id: Math.random().toString(36).substr(2, 9),
+        media: [],
+        x: showcaseX,
+        y: showcaseY,
+        z: 0,
+        rotX: 0, rotY: 0, rotZ: 0,
+        angle: showcaseAngle,
+        caption: `Visit ${showcaseCaption}`,
+        textPosition: 'bottom',
+        sceneType: 'website-showcase',
+        textEffect,
+        transitionType: 'zoom',
+        transitionDuration: 1.5,
+        isTextOnly: false,
+        preset,
+        backgroundStyle,
+        websiteScreenshot,
+        websiteUrl: scrapeUrl,
+      };
+      
+      // Insert website scene early in the trailer (after scene 1)
+      if (newComps.length > 1) {
+        newComps.splice(1, 0, websiteComp);
+      } else {
+        newComps.push(websiteComp);
+      }
     }
 
     // Add any unmapped media at the end
@@ -2067,25 +2178,84 @@ export default function App() {
     }
   };
 
+  // Helper for header navigation
+  const handleNavigate = (mode: 'landing' | 'setup' | 'playing' | 'profile') => {
+    if (mode === 'setup' && !user) {
+      handleLogin().then((loggedInUser) => {
+        if (loggedInUser) setAppMode('setup');
+      });
+      return;
+    }
+    if (mode === 'profile' && !user) {
+      handleLogin().then((loggedInUser) => {
+        if (loggedInUser) setAppMode('profile');
+      });
+      return;
+    }
+    setAppMode(mode);
+  };
+
+  const headerElement = (
+    <AppHeader
+      appMode={appMode}
+      user={user}
+      credits={credits}
+      onNavigate={handleNavigate}
+      onLogin={handleLogin}
+      onLogout={handleLogout}
+      onNewProject={handleStartOver}
+    />
+  );
+
   // --- RENDER LANDING PAGE ---
   if (appMode === 'landing') {
-    return <LandingPage onStart={async () => {
-      if (!user) {
-        const loggedInUser = await handleLogin();
-        if (loggedInUser) {
-          setAppMode('setup');
-        }
-      } else {
-        setAppMode('setup');
-      }
-    }} />;
+    return (
+      <>
+        {headerElement}
+        <LandingPage onStart={async () => {
+          if (!user) {
+            const loggedInUser = await handleLogin();
+            if (loggedInUser) {
+              setAppMode('setup');
+            }
+          } else {
+            setAppMode('setup');
+          }
+        }} />
+      </>
+    );
+  }
+
+  // --- RENDER PROFILE PAGE ---
+  if (appMode === 'profile') {
+    return (
+      <>
+        {headerElement}
+        <ProfilePage
+          user={user}
+          credits={credits}
+          libraryAssets={libraryAssets}
+          userTrailers={userTrailers}
+          onLoadProject={loadProject}
+          onDeleteProject={deleteProject}
+          onDeleteAsset={deleteLibraryAsset}
+          onUseAssetInProject={(assets) => {
+            addFromLibrary(assets);
+            setAppMode('setup');
+            setSetupStep(1);
+          }}
+        />
+      </>
+    );
   }
 
   // --- RENDER SETUP WIZARD ---
   if (appMode === 'setup') {
     return (
-      <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 overflow-y-auto">
-        <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[90vh] overflow-y-auto custom-scrollbar relative">
+      <>
+        {headerElement}
+        <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-6 overflow-y-auto">
+        <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
           
           {/* Loading Overlays */}
           <AnimatePresence>
@@ -2106,37 +2276,19 @@ export default function App() {
             )}
           </AnimatePresence>
           
-          {/* Header */}
+          {/* Card Header */}
           <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
             <div>
               <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
-              <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Motion Graphics Generator</p>
+              <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 4</p>
             </div>
-            <div className="flex flex-col items-end gap-4">
-              {user ? (
-                <div className="flex items-center gap-3 bg-brutal-purple px-3 py-1.5 brutal-border">
-                  <img src={user.photoURL || ''} className="w-6 h-6 brutal-border" alt="Profile" />
-                  <span className="text-xs font-bold font-mono uppercase hidden sm:inline">{user.displayName}</span>
-                  <button onClick={handleLogout} className="text-black hover:text-red-600 transition-colors">
-                    <LogOut size={14} />
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleLogin}
-                  className="brutal-button bg-brutal-blue px-4 py-1.5 text-xs flex items-center gap-2"
-                >
-                  <UserIcon size={14} /> LOGIN
-                </button>
-              )}
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map(step => (
-                  <div 
-                    key={step} 
-                    className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
-                  />
-                ))}
-              </div>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map(step => (
+                <div 
+                  key={step} 
+                  className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
+                />
+              ))}
             </div>
           </div>
 
@@ -2251,7 +2403,7 @@ export default function App() {
                           }}
                           className="brutal-button bg-brutal-green px-6 py-2 text-sm disabled:opacity-50"
                         >
-                          ADD SELECTED ({selectedLibraryAssets.size})
+                          IMPORT SELECTED ({selectedLibraryAssets.size})
                         </button>
                       </div>
                     </motion.div>
@@ -2285,7 +2437,7 @@ export default function App() {
                     className="brutal-button bg-brutal-green px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {isGeneratingImage ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
-                    <span className="hidden sm:inline">GENERATE</span>
+                    <span className="hidden sm:inline">CREATE IMAGE</span>
                   </button>
                 </div>
               </div>
@@ -2296,7 +2448,7 @@ export default function App() {
                   disabled={mediaFiles.length === 0}
                   className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2 disabled:opacity-50"
                 >
-                  Next <ArrowRight size={18} />
+                  Continue <ArrowRight size={18} />
                 </button>
               </div>
             </motion.div>
@@ -2327,7 +2479,7 @@ export default function App() {
                     disabled={isScraping || !scrapeUrl}
                     className="brutal-button bg-brutal-purple px-4 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {isScraping ? <Loader2 size={14} className="animate-spin" /> : 'Generate'}
+                    {isScraping ? <Loader2 size={14} className="animate-spin" /> : 'Fetch Content'}
                   </button>
                 </div>
               </div>
@@ -2611,7 +2763,7 @@ export default function App() {
                     className="brutal-button bg-brutal-blue px-8 py-4 text-lg flex items-center gap-3 disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                    SAVE PROJECT
+                    SAVE DRAFT
                   </button>
                 )}
                 <button 
@@ -2619,7 +2771,7 @@ export default function App() {
                   className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3"
                 >
                   <Play size={20} fill="currentColor" />
-                  START TRAILER
+                  GENERATE PREVIEW
                 </button>
               </div>
 
@@ -2651,6 +2803,7 @@ export default function App() {
 
         </div>
       </div>
+      </>
     );
   }
 
@@ -2679,6 +2832,8 @@ export default function App() {
   };
 
   return (
+    <>
+    {headerElement}
     <div 
       className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle} ${getBackgroundClass()}`} 
       style={{ perspective: '1500px' }}
@@ -2689,8 +2844,9 @@ export default function App() {
     >
       
       {/* The 3D World */}
-      {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
-      {backgroundStyle === 'particles' && <ParticleTrails />}
+      <VideoCanvas isRecording={isRecording}>
+        {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
+        {backgroundStyle === 'particles' && <ParticleTrails />}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
@@ -2792,6 +2948,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      </VideoCanvas>
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -2811,7 +2968,7 @@ export default function App() {
           className="brutal-button bg-brutal-pink px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
         >
           <Video size={14} className="md:w-4 md:h-4" />
-          <span>EXPORT</span>
+          <span>EXPORT VIDEO</span>
         </button>
       </div>
       
@@ -2820,13 +2977,13 @@ export default function App() {
           onClick={() => setAppMode('setup')}
           className="brutal-button bg-white px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
         >
-          <span>MENU</span>
+          <span>STUDIO</span>
         </button>
         <button 
           onClick={handleStartOver}
           className="brutal-button bg-brutal-orange px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
         >
-          <span>START OVER</span>
+          <span>NEW PROJECT</span>
         </button>
         <button 
           onClick={resetCamera}
@@ -2842,7 +2999,7 @@ export default function App() {
           className="brutal-button bg-brutal-purple px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
         >
           <Sparkles size={14} className="md:w-4 md:h-4 text-black" />
-          <span className="text-black">STICKERS</span>
+          <span className="text-black">ADD STICKERS</span>
         </button>
       </div>
 
@@ -3009,5 +3166,6 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }

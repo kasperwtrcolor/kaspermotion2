@@ -14,22 +14,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   return (
     <div className="min-h-screen bg-isometric-grid text-black font-sans selection:bg-brutal-green selection:text-black">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-brutal-bg border-b-2 border-black p-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center overflow-hidden">
-            <img src="/favicon.ico" alt="Logo" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerText = 'K'; }} />
-          </div>
-          <span className="font-display font-bold text-xl tracking-tight uppercase">KasperMotion</span>
-        </div>
-        <div className="flex gap-4">
-          <button className="hidden sm:block font-mono text-sm font-bold uppercase hover:underline">Features</button>
-          <button className="hidden sm:block font-mono text-sm font-bold uppercase hover:underline">How it works</button>
-          <button onClick={onStart} className="brutal-button bg-brutal-green px-4 py-2 text-sm">
-            Start Creating
-          </button>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 min-h-[90vh]">

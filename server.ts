@@ -43,6 +43,7 @@ async function startServer() {
       
       const title = $('title').text().trim();
       const metaDescription = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
+      const ogImage = $('meta[property="og:image"]').attr('content') || '';
       
       const h1s: string[] = [];
       $('h1').each((_, el) => {
@@ -53,6 +54,25 @@ async function startServer() {
       $('h2').each((_, el) => {
         h2s.push($(el).text().trim());
       });
+
+      // Extract page images for assets
+      const pageImages: string[] = [];
+      if (ogImage) pageImages.push(ogImage);
+      $('img').each((_, el) => {
+        const src = $(el).attr('src');
+        if (src && !src.startsWith('data:') && !src.includes('icon') && !src.includes('favicon') && pageImages.length < 8) {
+          // Resolve relative URLs
+          try {
+            const resolved = new URL(src, targetUrl).href;
+            if (!pageImages.includes(resolved)) {
+              pageImages.push(resolved);
+            }
+          } catch {}
+        }
+      });
+
+      // Generate screenshot URL using thum.io
+      const screenshotUrl = `https://image.thum.io/get/width/1920/crop/1080/noanimate/${encodeURIComponent(targetUrl)}`;
 
       const extractedData = `
 Title: ${title}
@@ -72,10 +92,36 @@ H2 Tags: ${h2s.join(' | ')}
         contents: prompt,
       });
 
-      res.json({ script: aiResponse.text?.trim() });
+      res.json({
+        script: aiResponse.text?.trim(),
+        screenshotUrl,
+        pageImages: pageImages.slice(0, 6),
+        siteName: title,
+      });
     } catch (error: any) {
       console.error('Scraping error:', error);
       res.status(500).json({ error: error.message || 'Failed to scrape URL or generate script' });
+    }
+  });
+
+  // API Route for website screenshot
+  app.post('/api/screenshot', async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+
+      let targetUrl = url;
+      if (!/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = 'https://' + targetUrl;
+      }
+
+      const screenshotUrl = `https://image.thum.io/get/width/1920/crop/1080/noanimate/${encodeURIComponent(targetUrl)}`;
+      res.json({ screenshotUrl });
+    } catch (error: any) {
+      console.error('Screenshot error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate screenshot' });
     }
   });
 
