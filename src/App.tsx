@@ -19,7 +19,8 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic';
+type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective';
+type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract';
 
 type LibraryAsset = {
@@ -71,6 +72,9 @@ type Composition = {
   stickerY?: number;
   websiteScreenshot?: string;
   websiteUrl?: string;
+  fontFamily?: FontFamily;
+  textColor?: string;
+  isMultiColor?: boolean;
 };
 
 const generateComposition = (
@@ -85,7 +89,10 @@ const generateComposition = (
   isTextOnly?: boolean,
   preset?: string,
   backgroundStyle?: string,
-  giphyStickerUrl?: string
+  giphyStickerUrl?: string,
+  fontFamily?: FontFamily,
+  textColor?: string,
+  isMultiColor?: boolean
 ): Composition => {
   // Determine scene type
   let sceneType: Composition['sceneType'] = 'standard';
@@ -150,29 +157,33 @@ const generateComposition = (
     isTextOnly,
     preset,
     backgroundStyle,
-    giphyStickerUrl
+    giphyStickerUrl,
+    fontFamily,
+    textColor,
+    isMultiColor
   };
 };
 
-const getWordStyle = (word: string, index: number) => {
+const getWordStyle = (word: string, index: number, customColor?: string, isMulti?: boolean) => {
   const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
   const hash = cleanWord.length + index;
   
-  // AE Color Palette: Cyberpunk / Modern Tech
-  if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
-  if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
-  if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
-  if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
+  if (isMulti) {
+    if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
+    if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
+    if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
+    if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
+  }
   
-  return {};
+  return customColor ? { color: customColor } : {};
 };
 
-const SplitText = ({ text, className = "" }: { text: string, className?: string }) => {
+const SplitText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const words = text.split(' ');
   return (
     <div className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={getWordStyle(word, i)}>
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...style, ...getWordStyle(word, i, textColor, isMulti) }}>
           {word.split('').map((char, j) => (
             <motion.span
               key={j}
@@ -195,7 +206,7 @@ const SplitText = ({ text, className = "" }: { text: string, className?: string 
   );
 };
 
-const TypewriterText = ({ text, className = "" }: { text: string, className?: string }) => {
+const TypewriterText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const characters = text.split('');
   return (
     <div className={`flex flex-wrap justify-center ${className}`}>
@@ -205,7 +216,7 @@ const TypewriterText = ({ text, className = "" }: { text: string, className?: st
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.05, duration: 0.1 }}
-          style={getWordStyle(char, i)}
+          style={{ ...style, ...getWordStyle(char, i, textColor, isMulti) }}
         >
           {char === ' ' ? '\u00A0' : char}
         </motion.span>
@@ -219,7 +230,7 @@ const TypewriterText = ({ text, className = "" }: { text: string, className?: st
   );
 };
 
-const FadeText = ({ text, className = "" }: { text: string, className?: string }) => {
+const FadeText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const words = text.split(' ');
   return (
     <div className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
@@ -229,7 +240,7 @@ const FadeText = ({ text, className = "" }: { text: string, className?: string }
           initial={{ opacity: 0, filter: 'blur(10px)' }}
           animate={{ opacity: 1, filter: 'blur(0px)' }}
           transition={{ delay: i * 0.1, duration: 0.8 }}
-          style={getWordStyle(word, i)}
+          style={{ ...style, ...getWordStyle(word, i, textColor, isMulti) }}
         >
           {word}
         </motion.span>
@@ -238,7 +249,7 @@ const FadeText = ({ text, className = "" }: { text: string, className?: string }
   );
 };
 
-const KineticText = ({ text, className = "" }: { text: string, className?: string }) => {
+const KineticText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const words = text.split(' ');
   return (
     <div className={`flex flex-wrap justify-center gap-x-4 gap-y-2 ${className}`}>
@@ -255,7 +266,7 @@ const KineticText = ({ text, className = "" }: { text: string, className?: strin
               mass: 0.8
             }}
             className="inline-block origin-bottom font-black uppercase tracking-tighter"
-            style={getWordStyle(word, i)}
+            style={{ ...style, ...getWordStyle(word, i, textColor, isMulti) }}
           >
             {word}
           </motion.div>
@@ -265,12 +276,206 @@ const KineticText = ({ text, className = "" }: { text: string, className?: strin
   );
 };
 
-const AnimatedCaption = ({ text, effect, className }: { text: string, effect: TextEffect, className?: string }) => {
+const BounceText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  const words = text.split(' ');
+  return (
+    <div className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ y: 0 }}
+          animate={{ y: [0, -20, 0] }}
+          transition={{
+            repeat: Infinity,
+            duration: 0.6,
+            delay: i * 0.1,
+            ease: "easeInOut"
+          }}
+          className="inline-block"
+          style={style}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </div>
+  );
+};
+
+const GlitchText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <div className={`relative ${className} font-black uppercase`} style={style}>
+      <motion.div
+        animate={{
+          x: [-2, 2, -1, 0, 1],
+          y: [1, -1, 2, 0, -2],
+          opacity: [1, 0.8, 1, 0.9, 1]
+        }}
+        transition={{ repeat: Infinity, duration: 0.2 }}
+        className="relative z-10"
+      >
+        {text}
+      </motion.div>
+      <motion.div
+        className="absolute inset-0 text-[#FF2A6D] z-0"
+        animate={{ x: [-3, 3], y: [2, -2] }}
+        transition={{ repeat: Infinity, duration: 0.1 }}
+      >
+        {text}
+      </motion.div>
+      <motion.div
+        className="absolute inset-0 text-[#05D9E8] z-0"
+        animate={{ x: [3, -3], y: [-2, 2] }}
+        transition={{ repeat: Infinity, duration: 0.1 }}
+      >
+        {text}
+      </motion.div>
+    </div>
+  );
+};
+
+const RevealText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <div className={`overflow-hidden ${className}`}>
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        style={style}
+      >
+        {text}
+      </motion.div>
+    </div>
+  );
+};
+
+const ZoomText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <motion.div
+      initial={{ scale: 0.2, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', damping: 15, stiffness: 100 }}
+      className={className}
+      style={style}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+const BlurText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <motion.div
+      initial={{ filter: 'blur(20px)', opacity: 0 }}
+      animate={{ filter: 'blur(0px)', opacity: 1 }}
+      transition={{ duration: 1.2 }}
+      className={className}
+      style={style}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+const NeonText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <motion.div
+      animate={{
+        textShadow: [
+          '0 0 5px #fff, 0 0 10px #fff, 0 0 20px #01FFC3',
+          '0 0 2px #fff, 0 0 5px #fff, 0 0 10px #01FFC3',
+          '0 0 5px #fff, 0 0 10px #fff, 0 0 20px #01FFC3'
+        ],
+        opacity: [1, 0.9, 1, 0.8, 1]
+      }}
+      transition={{ repeat: Infinity, duration: 2 }}
+      className={`${className} text-[#01FFC3]`}
+      style={style}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+const WaveText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <div className={`flex justify-center flex-wrap ${className}`}>
+      {text.split('').map((char, i) => (
+        <motion.span
+          key={i}
+          animate={{ y: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.05 }}
+          className="inline-block"
+          style={style}
+        >
+          {char === ' ' ? '\u00A0' : char}
+        </motion.span>
+      ))}
+    </div>
+  );
+};
+
+const ShakeText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <motion.div
+      animate={{ x: [-1, 1, -1, 1, 0] }}
+      transition={{ repeat: Infinity, duration: 0.1 }}
+      className={className}
+      style={style}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+const SlideText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <div className={`flex flex-col gap-2 ${className}`}>
+      {text.split(' ').map((word, i) => (
+        <motion.div
+          key={i}
+          initial={{ x: i % 2 === 0 ? -100 : 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: i * 0.1, type: 'spring' }}
+          style={style}
+        >
+          {word}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+const PerspectiveText = ({ text, className = "", style = {} }: { text: string, className?: string, style?: any }) => {
+  return (
+    <motion.div
+      initial={{ rotateY: 90, opacity: 0, scale: 0.8 }}
+      animate={{ rotateY: 0, opacity: 1, scale: 1 }}
+      transition={{ duration: 1, ease: "easeOut" }}
+      className={`${className} origin-left`}
+      style={{ ...style, perspective: '1000px' }}
+    >
+      {text}
+    </motion.div>
+  );
+};
+
+const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const props = { text, className, style, textColor, isMulti };
   switch (effect) {
-    case 'typewriter': return <TypewriterText text={text} className={className} />;
-    case 'fade': return <FadeText text={text} className={className} />;
-    case 'kinetic': return <KineticText text={text} className={className} />;
-    default: return <SplitText text={text} className={className} />;
+    case 'typewriter': return <TypewriterText {...props} />;
+    case 'fade': return <FadeText {...props} />;
+    case 'kinetic': return <KineticText {...props} />;
+    case 'bounce': return <BounceText {...props} />;
+    case 'glitch': return <GlitchText {...props} />;
+    case 'reveal': return <RevealText {...props} />;
+    case 'zoom': return <ZoomText {...props} />;
+    case 'blur': return <BlurText {...props} />;
+    case 'neon': return <NeonText {...props} />;
+    case 'wave': return <WaveText {...props} />;
+    case 'shake': return <ShakeText {...props} />;
+    case 'slide': return <SlideText {...props} />;
+    case 'perspective': return <PerspectiveText {...props} />;
+    default: return <SplitText {...props} />;
   }
 };
 
@@ -739,7 +944,7 @@ const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
   );
 };
 
-const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future' }) => {
+const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future'; fontSizeOverride?: string }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
   const duration = comp.transitionDuration;
@@ -863,21 +1068,28 @@ const CompositionNode = ({ comp, status }: { key?: string; comp: Composition; st
             animate="active"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            <AnimatedCaption text={comp.caption} effect={comp.textEffect} className="text-5xl md:text-7xl font-bold tracking-tight text-black drop-shadow-2xl" />
+            <AnimatedCaption 
+              text={comp.caption} 
+              effect={comp.textEffect} 
+              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight drop-shadow-2xl ${comp.fontFamily || 'font-display'}`} 
+              textColor={comp.textColor}
+              isMulti={comp.isMultiColor}
+            />
           </motion.div>
         )}
 
-        {comp.media.length > 0 && (
+        {!comp.isTextOnly && comp.media.length > 0 && (
           <>
             <CartoonShapes status={status} />
           </>
         )}
 
-        {comp.isTextOnly && comp.backgroundStyle && (
+        {/* Hide cartoon icons in text-only scenes as per user request */}
+        {!comp.isTextOnly && comp.backgroundStyle && (
           <PopCulture3DIcon type={comp.backgroundStyle} status={status} />
         )}
 
-        {comp.giphyStickerUrl && (
+        {!comp.isTextOnly && comp.giphyStickerUrl && (
           <motion.img
             src={comp.giphyStickerUrl}
             crossOrigin="anonymous"
@@ -1028,6 +1240,9 @@ export default function App() {
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('black');
+  const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
+  const [textColor, setTextColor] = useState<string>('#FFFFFF');
+  const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [textEffect, setTextEffect] = useState<TextEffect>('gsap-split');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
@@ -1906,7 +2121,10 @@ export default function App() {
         isTextOnly,
         preset,
         backgroundStyle,
-        giphyStickerUrl
+        giphyStickerUrl,
+        fontFamily,
+        textColor,
+        isMultiColor
       );
       
       newComps.push(comp);
@@ -1943,6 +2161,9 @@ export default function App() {
         backgroundStyle,
         websiteScreenshot,
         websiteUrl: scrapeUrl,
+        fontFamily,
+        textColor,
+        isMultiColor
       };
       
       // Insert website scene early in the trailer (after scene 1)
@@ -2518,17 +2739,50 @@ export default function App() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['font-sans', 'font-serif', 'font-mono', 'font-display'] as FontStyle[]).map(font => (
-                      <button
-                        key={font}
-                        onClick={() => setFontStyle(font)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors text-xs md:text-sm text-black ${fontStyle === font ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'} ${font}`}
-                      >
-                        {font.replace('font-', '').toUpperCase()}
-                      </button>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography Style</h3>
+                  <select 
+                    value={fontFamily}
+                    onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+                    className="w-full brutal-input px-3 py-3 text-sm font-bold uppercase transition-all"
+                  >
+                    {[
+                      { val: 'font-display', label: 'Space Grotesk' },
+                      { val: 'font-sans', label: 'Inter' },
+                      { val: 'font-serif', label: 'Playfair Display' },
+                      { val: 'font-mono', label: 'JetBrains Mono' },
+                      { val: 'font-archivo', label: 'Archivo Black' },
+                      { val: 'font-bebas', label: 'Bebas Neue' },
+                      { val: 'font-outfit', label: 'Outfit' },
+                      { val: 'font-syne', label: 'Syne' },
+                      { val: 'font-unbounded', label: 'Unbounded' },
+                      { val: 'font-kanit', label: 'Kanit' },
+                      { val: 'font-public', label: 'Public Sans' },
+                      { val: 'font-work', label: 'Work Sans' },
+                      { val: 'font-montserrat', label: 'Montserrat' },
+                      { val: 'font-impact', label: 'Impact Display' }
+                    ].map(f => (
+                      <option key={f.val} value={f.val} className={f.val}>{f.label}</option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Font Color</h3>
+                  <div className="flex gap-4">
+                    <input 
+                      type="color" 
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="w-12 h-12 brutal-border cursor-pointer bg-white p-1"
+                    />
+                    <label className="flex items-center gap-2 cursor-pointer flex-1 brutal-border px-3 bg-white">
+                      <input 
+                        type="checkbox" 
+                        checked={isMultiColor}
+                        onChange={(e) => setIsMultiColor(e.target.checked)}
+                        className="w-5 h-5 border-2 border-black rounded-none text-brutal-green focus:ring-0"
+                      />
+                      <span className="text-[10px] font-mono font-bold uppercase">Multicolors</span>
+                    </label>
                   </div>
                 </div>
                 <div>
@@ -2565,17 +2819,18 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['gsap-split', 'typewriter', 'fade', 'kinetic'] as TextEffect[]).map(effect => (
-                      <button
-                        key={effect}
-                        onClick={() => setTextEffect(effect)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${textEffect === effect ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {effect.replace('-', ' ')}
-                      </button>
+                  <select 
+                    value={textEffect}
+                    onChange={(e) => setTextEffect(e.target.value as TextEffect)}
+                    className="w-full brutal-input px-3 py-3 text-sm font-bold uppercase transition-all bg-white"
+                  >
+                    {[
+                      'gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 
+                      'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'
+                    ].map(effect => (
+                      <option key={effect} value={effect}>{effect.replace('-', ' ')}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Position</h3>
@@ -2803,7 +3058,16 @@ export default function App() {
           if (index === currentIndex) status = 'active';
           else if (index < currentIndex) status = 'past';
 
-          return <CompositionNode key={comp.id} comp={comp} status={status} />;
+          // Randomize text size for text-only scenes
+          const randomFontSize = comp.isTextOnly 
+            ? ['text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl'][Math.floor(Math.random() * 5)]
+            : 'text-4xl md:text-6xl';
+
+          return (
+            <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+              <CompositionNode comp={comp} status={status} fontSizeOverride={randomFontSize} />
+            </div>
+          );
         })}
       </motion.div>
 
