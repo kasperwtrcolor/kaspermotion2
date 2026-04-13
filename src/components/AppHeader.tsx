@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, Sparkles, RefreshCcw } from 'lucide-react';
 
 type AppMode = 'landing' | 'setup' | 'playing' | 'profile';
 
@@ -12,9 +12,18 @@ interface AppHeaderProps {
   onLogin: () => void;
   onLogout: () => void;
   onNewProject: () => void;
+  // Studio Controls for Playing Mode
+  onExport?: () => void;
+  onStudio?: () => void;
+  onStickers?: () => void;
+  onResetCamera?: () => void;
 }
 
-export default function AppHeader({ appMode, user, credits, onNavigate, onLogin, onLogout, onNewProject }: AppHeaderProps) {
+export default function AppHeader({ 
+  appMode, user, credits, 
+  onNavigate, onLogin, onLogout, onNewProject,
+  onExport, onStudio, onStickers, onResetCamera
+}: AppHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [lastMouseY, setLastMouseY] = useState(0);
@@ -85,30 +94,72 @@ export default function AppHeader({ appMode, user, credits, onNavigate, onLogin,
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onNavigate(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
-                  appMode === item.id
-                    ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
-                    : 'bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-            <button
-              onClick={onNewProject}
-              className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ml-1"
-            >
-              <Plus size={14} />
-              New
-            </button>
+            {appMode === 'playing' ? (
+              <>
+                <button
+                  onClick={onExport}
+                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-pink hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                >
+                  <Video size={14} />
+                  Export
+                </button>
+                <button
+                  onClick={onStudio}
+                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                >
+                  Studio
+                </button>
+                <button
+                  onClick={onStickers}
+                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-purple hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
+                >
+                  <Sparkles size={14} />
+                  Stickers
+                </button>
+                <button
+                  onClick={onResetCamera}
+                  className="p-2 brutal-border bg-brutal-blue hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  title="Reset Camera"
+                >
+                  <RefreshCcw size={14} />
+                </button>
+                <div className="w-px h-6 bg-black mx-2" />
+                <button
+                  onClick={onNewProject}
+                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                >
+                  <Plus size={14} />
+                  New
+                </button>
+              </>
+            ) : (
+              <>
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onNavigate(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
+                      appMode === item.id
+                        ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
+                        : 'bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                ))}
+                <button
+                  onClick={onNewProject}
+                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ml-1"
+                >
+                  <Plus size={14} />
+                  New
+                </button>
+              </>
+            )}
           </nav>
 
           {/* Right side: Credits + User */}

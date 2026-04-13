@@ -1881,59 +1881,16 @@ export default function App() {
       let giphyStickerUrl: string | undefined;
       if (useGiphy && caption) {
         try {
-          // AI-controlled sticker selection for professional results
-          let searchTerms: string[] = [];
-          try {
-            const stickerPrompt = `For a cinematic trailer scene with the caption: "${caption}", suggest 3 single-word Giphy sticker search terms that would enhance the visual impact professionally. Focus on emotions, actions, or objects that complement the message. Return ONLY a JSON array of 3 strings, nothing else. Example: ["fire","celebrate","rocket"]`;
-            const stickerAiResponse = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: stickerPrompt,
-            });
-            const stickerText = (stickerAiResponse.text || '').trim();
-            // Parse JSON from AI response
-            const jsonMatch = stickerText.match(/\[.*\]/s);
-            if (jsonMatch) {
-              searchTerms = JSON.parse(jsonMatch[0]);
-            }
-          } catch (aiErr) {
-            console.warn("AI sticker suggestion failed, falling back to keyword extraction:", aiErr);
-            const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
-            searchTerms = words.slice(0, 3);
-          }
+          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
+          const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
           
-          // Try each AI-suggested term until we find a sticker
-          for (const term of searchTerms) {
-            if (giphyStickerUrl) break;
-            try {
-              const { data } = await gf.search(term, { type: 'stickers', limit: 3 });
-              if (data && data.length > 0) {
-                // Pick the best rated / most popular one
-                const best = data[0];
-                giphyStickerUrl = best.images.original.url;
-                console.log(`AI selected Giphy sticker for "${caption}": term="${term}" url=${giphyStickerUrl}`);
-              }
-            } catch (searchErr) {
-              console.warn(`Giphy search failed for term "${term}":`, searchErr);
-            }
-          }
-          
-          // Final fallback
-          if (!giphyStickerUrl) {
-            const fallbackTerm = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3).sort((a, b) => b.length - a.length)[0] || 'wow';
-            try {
-              const { data } = await gf.search(fallbackTerm, { type: 'stickers', limit: 1 });
-              if (data && data.length > 0) {
-                giphyStickerUrl = data[0].images.original.url;
-              }
-            } catch {}
+          const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
+          if (data && data.length > 0) {
+            giphyStickerUrl = data[0].images.original.url;
+            console.log(`Giphy sticker for "${caption}": term="${searchTerm}" url=${giphyStickerUrl}`);
           }
         } catch (err: any) {
           console.error("Giphy fetch error:", err);
-          if (err.message && err.message.includes('401')) {
-            setToastMessage("Giphy API Key is missing or invalid. Please check your Secrets.");
-          } else {
-            setToastMessage("Failed to fetch Giphy stickers. Check console for details.");
-          }
         }
       }
       
@@ -2183,40 +2140,10 @@ export default function App() {
     }
   };
 
-  // Helper for header navigation
-  const handleNavigate = (mode: 'landing' | 'setup' | 'playing' | 'profile') => {
-    if (mode === 'setup' && !user) {
-      handleLogin().then((loggedInUser) => {
-        if (loggedInUser) setAppMode('setup');
-      });
-      return;
-    }
-    if (mode === 'profile' && !user) {
-      handleLogin().then((loggedInUser) => {
-        if (loggedInUser) setAppMode('profile');
-      });
-      return;
-    }
-    setAppMode(mode);
-  };
-
-  const headerElement = (
-    <AppHeader
-      appMode={appMode}
-      user={user}
-      credits={credits}
-      onNavigate={handleNavigate}
-      onLogin={handleLogin}
-      onLogout={handleLogout}
-      onNewProject={handleStartOver}
-    />
-  );
-
-  // --- RENDER LANDING PAGE ---
-  if (appMode === 'landing') {
-    return (
-      <>
-        {headerElement}
+  // --- RENDER MAIN CONTENT ---
+  const renderContent = () => {
+    if (appMode === 'landing') {
+      return (
         <LandingPage onStart={async () => {
           if (!user) {
             const loggedInUser = await handleLogin();
@@ -2227,15 +2154,11 @@ export default function App() {
             setAppMode('setup');
           }
         }} />
-      </>
-    );
-  }
+      );
+    }
 
-  // --- RENDER PROFILE PAGE ---
-  if (appMode === 'profile') {
-    return (
-      <>
-        {headerElement}
+    if (appMode === 'profile') {
+      return (
         <ProfilePage
           user={user}
           credits={credits}
@@ -2250,52 +2173,47 @@ export default function App() {
             setSetupStep(1);
           }}
         />
-      </>
-    );
-  }
+      );
+    }
 
-  // --- RENDER SETUP WIZARD ---
-  if (appMode === 'setup') {
-    return (
-      <>
-        {headerElement}
-        <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-6 overflow-y-auto">
-        <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
-          
-          {/* Loading Overlays (Excluding Generation) */}
-          <AnimatePresence>
-            {(isUploading || isGeneratingImage || isSaving) && (
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 z-50 bg-brutal-blue/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl brutal-border"
-              >
-                <div className="w-16 h-16 border-8 border-black border-t-brutal-pink rounded-full animate-spin mb-6"></div>
-                <p className="text-black font-display font-bold uppercase text-xl bg-white px-4 py-2 brutal-border">
-                  {isUploading && "Uploading assets..."}
-                  {isGeneratingImage && "Generating AI image..."}
-                  {isSaving && "Saving project..."}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Card Header */}
-          <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
-            <div>
-              <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
-              <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 4</p>
+    if (appMode === 'setup') {
+      return (
+        <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-16 overflow-y-auto">
+          <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
+            {/* Loading Overlays (Excluding Generation) */}
+            <AnimatePresence>
+              {(isUploading || isGeneratingImage || isSaving) && (
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 bg-brutal-blue/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl brutal-border"
+                >
+                  <div className="w-16 h-16 border-8 border-black border-t-brutal-pink rounded-full animate-spin mb-6"></div>
+                  <p className="text-black font-display font-bold uppercase text-xl bg-white px-4 py-2 brutal-border">
+                    {isUploading && "Uploading assets..."}
+                    {isGeneratingImage && "Generating AI image..."}
+                    {isSaving && "Saving project..."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Card Header */}
+            <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
+              <div>
+                <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
+                <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 4</p>
+              </div>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map(step => (
+                  <div 
+                    key={step} 
+                    className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
+                  />
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map(step => (
-                <div 
-                  key={step} 
-                  className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
-                />
-              ))}
-            </div>
-          </div>
 
           {/* Step 1: Media */}
           {setupStep === 1 && (
@@ -2810,43 +2728,45 @@ export default function App() {
       </div>
       </>
     );
-  }
-
-  // --- RENDER PLAYING MODE ---
-  const camera = currentComp ? { x: currentComp.x, y: currentComp.y, z: currentComp.z } : { x: 0, y: 0, z: 0 };
-
-  const getBackgroundClass = () => {
-    switch (backgroundStyle) {
-      case 'gradient-blue': return 'bg-brutal-blue';
-      case 'gradient-purple': return 'bg-brutal-purple';
-      case 'grid': return 'bg-isometric-grid bg-white';
-      case 'vibrant-glow': return 'bg-brutal-orange';
-      default: return 'bg-brutal-bg';
+          </div>
+        </div>
+      );
     }
-  };
 
-  const getTextPositionClass = (pos: TextPosition) => {
-    switch (pos) {
-      case 'top': return 'top-16 md:top-24 inset-x-0';
-      case 'bottom': return 'bottom-16 md:bottom-24 inset-x-0';
-      case 'center': return 'top-1/2 -translate-y-1/2 inset-x-0';
-      case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-left';
-      case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-right';
-      default: return 'bottom-16 md:bottom-24 inset-x-0';
-    }
-  };
+    if (appMode === 'playing') {
+      const getBackgroundClass = () => {
+        switch (backgroundStyle) {
+          case 'gradient-blue': return 'bg-brutal-blue';
+          case 'gradient-purple': return 'bg-brutal-purple';
+          case 'grid': return 'bg-isometric-grid bg-white';
+          case 'vibrant-glow': return 'bg-brutal-orange';
+          default: return 'bg-brutal-bg';
+        }
+      };
 
-  return (
-    <>
-    {headerElement}
-    <div 
-      className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle} ${getBackgroundClass()}`} 
-      style={{ perspective: '1500px' }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
+      const getTextPositionClass = (pos: TextPosition) => {
+        switch (pos) {
+          case 'top': return 'top-16 md:top-24 inset-x-0';
+          case 'bottom': return 'bottom-16 md:bottom-24 inset-x-0';
+          case 'center': return 'top-1/2 -translate-y-1/2 inset-x-0';
+          case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-left';
+          case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-right';
+          default: return 'bottom-16 md:bottom-24 inset-x-0';
+        }
+      };
+
+      const camera = currentComp ? { x: currentComp.x, y: currentComp.y, z: currentComp.z } : { x: 0, y: 0, z: 0 };
+      
+      return (
+        <div 
+          className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle} ${getBackgroundClass()}`} 
+          style={{ perspective: '1500px' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+
       
       {/* The 3D World */}
       <VideoCanvas isRecording={isRecording}>
@@ -2891,32 +2811,8 @@ export default function App() {
         })}
       </motion.div>
 
-      {/* Scene Counter Overlay */}
-      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[70] pointer-events-none">
-        <div className="bg-white brutal-border px-4 py-2 flex items-center gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <div className="w-3 h-3 bg-brutal-orange brutal-border animate-pulse" />
-          <span className="text-xs font-mono font-bold text-black uppercase">
-            Scene {currentIndex + 1} / {compositions.length}
-          </span>
-        </div>
-      </div>
-
       {/* Cinematic Overlay (Film Grain, Vignette, Chromatic Aberration) */}
       <CinematicOverlay useGrainEffect={useGrainEffect} />
-
-      {/* Cinematic Letterboxing (AE Style) */}
-      <div className="pointer-events-none fixed inset-0 z-50 flex flex-col justify-between">
-        <motion.div 
-          initial={{ y: -100 }}
-          animate={{ y: 0 }}
-          className="h-[10vh] w-full bg-brutal-bg border-b-8 border-black"
-        />
-        <motion.div 
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="h-[10vh] w-full bg-brutal-bg border-t-8 border-black"
-        />
-      </div>
 
       {/* Global Lens Flare (AE Style) */}
       <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden mix-blend-screen opacity-40">
@@ -2977,140 +2873,87 @@ export default function App() {
         </button>
       </div>
       
-      <div className={`fixed top-4 left-4 md:top-6 md:left-6 z-[900] transition-opacity duration-500 ${isRecording ? 'opacity-0 pointer-events-none' : 'opacity-100'} flex gap-2 md:gap-3`}>
-        <button 
-          onClick={() => setAppMode('setup')}
-          className="brutal-button bg-white px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
-        >
-          <span>STUDIO</span>
-        </button>
-        <button 
-          onClick={handleStartOver}
-          className="brutal-button bg-brutal-orange px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm"
-        >
-          <span>NEW PROJECT</span>
-        </button>
-        <button 
-          onClick={resetCamera}
-          className="brutal-button bg-brutal-blue px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2"
-          title="Reset Camera"
-        >
-          <Play size={12} className="rotate-90 md:w-3 md:h-3" />
-          <span className="hidden md:inline">RESET CAMERA</span>
-          <span className="md:hidden">RESET</span>
-        </button>
-        <button 
-          onClick={() => setShowGiphyModal(true)}
-          className="brutal-button bg-brutal-purple px-4 py-2 md:px-6 md:py-3 text-[10px] md:text-sm flex items-center gap-2 md:gap-3"
-        >
-          <Sparkles size={14} className="md:w-4 md:h-4 text-black" />
-          <span className="text-black">ADD STICKERS</span>
-        </button>
-      </div>
+          </VideoCanvas>
+        </div>
+      );
+    }
 
-      {/* Manual Navigation Controls */}
-      {!isRecording && compositions.length > 1 && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-6 bg-white brutal-border p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <button 
-            onClick={() => setCurrentIndex(prev => (prev > 0 ? prev - 1 : compositions.length - 1))}
-            className="p-2 bg-brutal-pink brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <div className="flex gap-2">
-            {compositions.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className={`w-4 h-4 brutal-border transition-all ${i === currentIndex ? 'bg-brutal-blue scale-125' : 'bg-white hover:bg-gray-200'}`}
-              />
-            ))}
-          </div>
-          <button 
-            onClick={() => setCurrentIndex(prev => (prev < compositions.length - 1 ? prev + 1 : 0))}
-            className="p-2 bg-brutal-green brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
-          >
-            <ChevronRight size={24} />
+    return null;
+  };
+
+  return (
+    <>
+      <AppHeader
+        appMode={appMode}
+        user={user}
+        credits={credits}
+        onNavigate={setAppMode}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        onNewProject={handleStartOver}
+        onExport={startRecording}
+        onStudio={() => setAppMode('setup')}
+        onStickers={() => setShowGiphyModal(true)}
+        onResetCamera={resetCamera}
+      />
+      
+      {renderContent()}
+
+      {/* Global Overlays Layer */}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
+          {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
+          <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
+          <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">
+            <X size={20} />
           </button>
         </div>
       )}
 
-      {/* Interaction Hint */}
-      {!isRecording && (
-        <div className="fixed bottom-6 left-6 z-50 pointer-events-none font-mono text-xs font-bold uppercase tracking-widest bg-white brutal-border px-3 py-1 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          Drag to Rotate • Shift+Drag to Pan
-        </div>
-      )}
-
-      {/* Recording Progress Bar */}
-      {isRecording && (
-        <div className="fixed bottom-0 left-0 right-0 h-4 bg-white border-t-4 border-black z-[300]">
-          <div 
-            className="h-full bg-brutal-pink border-r-4 border-black transition-all duration-1000 ease-linear" 
-            style={{ width: `${recordingProgress}%` }} 
-          />
-        </div>
-      )}
-
-      {/* AI Rendering Overlay */}
+      {/* Full Screen Generation Loader */}
       <AnimatePresence>
         {isRenderingTrailer && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-brutal-bg flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-[2000] bg-black/90 flex flex-col items-center justify-center text-white"
           >
-            <div className="w-full max-w-md bg-white brutal-border p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-brutal-green brutal-border">
-                    <Sparkles size={24} className="animate-pulse text-black" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-display font-bold uppercase text-black">AI Rendering Engine</h2>
-                    <p className="text-xs text-black/60 font-mono font-bold uppercase tracking-widest">Processing cinematic assets</p>
-                  </div>
-                </div>
-                <span className="text-xl font-display font-bold text-black">{Math.round(renderProgress)}%</span>
+            <div className="relative mb-12">
+              <div className="w-32 h-32 border-8 border-brutal-blue/20 rounded-full"></div>
+              <motion.div 
+                className="absolute top-0 w-32 h-32 border-8 border-transparent border-t-brutal-pink rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              ></motion.div>
+              <div className="absolute inset-0 flex items-center justify-center font-display font-bold text-2xl">
+                {Math.round(renderProgress)}%
               </div>
-              
-              <div className="h-4 w-full bg-white brutal-border overflow-hidden">
+            </div>
+            <h2 className="text-4xl md:text-5xl font-display font-bold uppercase mb-4 tracking-tighter text-center px-4">AI Director is Working</h2>
+            <p className="font-mono text-xl text-brutal-green mb-10 uppercase tracking-widest px-4 text-center">Compiling Cinematic World...</p>
+            
+            <div className="w-full max-w-sm px-6">
+              <div className="w-full h-4 bg-gray-800 brutal-border border-white overflow-hidden shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
                 <motion.div 
-                  className="h-full bg-brutal-blue border-r-2 border-black"
+                  className="h-full bg-brutal-green"
                   initial={{ width: 0 }}
                   animate={{ width: `${renderProgress}%` }}
-                  transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                  transition={{ duration: 0.2 }}
                 />
               </div>
-              
-              <div className="mt-8 grid grid-cols-2 gap-4">
-                <div className="p-4 bg-brutal-pink brutal-border">
-                  <p className="text-[10px] text-black/60 font-mono font-bold uppercase mb-1">Status</p>
-                  <p className="text-sm font-bold uppercase text-black">Analyzing Composition</p>
-                </div>
-                <div className="p-4 bg-brutal-orange brutal-border">
-                  <p className="text-[10px] text-black/60 font-mono font-bold uppercase mb-1">Task</p>
-                  <p className="text-sm font-bold uppercase text-black">Syncing 3D Coordinates</p>
-                </div>
-              </div>
-              
-              <p className="mt-12 text-center text-xs text-black font-mono font-bold animate-pulse">
-                INITIALIZING VIRTUAL CAMERA & LIGHTING SYSTEMS...
-              </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Sticker Controls Removed */}
 
       {/* Giphy Search Modal */}
       <AnimatePresence>
         {showGiphyModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-brutal-bg/90 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
@@ -3131,7 +2974,7 @@ export default function App() {
                       value={giphySearchQuery}
                       onChange={(e) => setGiphySearchQuery(e.target.value)}
                       placeholder="Search for a sticker..."
-                      className="brutal-input w-full py-3 pl-10 pr-4 text-sm"
+                      className="brutal-input w-full py-3 pl-10 pr-4 text-sm bg-white"
                     />
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                   </div>
@@ -3170,44 +3013,6 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-
-    {/* Full Screen Generation Loader */}
-    <AnimatePresence>
-      {isRenderingTrailer && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[2000] bg-black/90 flex flex-col items-center justify-center text-white"
-        >
-          <div className="relative mb-12">
-            <div className="w-32 h-32 border-8 border-brutal-blue/20 rounded-full"></div>
-            <motion.div 
-              className="absolute top-0 w-32 h-32 border-8 border-transparent border-t-brutal-pink rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            ></motion.div>
-            <div className="absolute inset-0 flex items-center justify-center font-display font-bold text-2xl">
-              {Math.round(renderProgress)}%
-            </div>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-display font-bold uppercase mb-4 tracking-tighter text-center px-4">AI Director is Working</h2>
-          <p className="font-mono text-xl text-brutal-green mb-10 uppercase tracking-widest px-4 text-center">Compiling Cinematic World...</p>
-          
-          <div className="w-full max-w-sm px-6">
-            <div className="w-full h-4 bg-gray-800 brutal-border border-white overflow-hidden shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">
-              <motion.div 
-                className="h-full bg-brutal-green"
-                initial={{ width: 0 }}
-                animate={{ width: `${renderProgress}%` }}
-                transition={{ duration: 0.2 }}
-              />
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
     </>
   );
 }

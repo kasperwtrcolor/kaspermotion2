@@ -16,9 +16,9 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
       const canvasW = 1920;
       const canvasH = 1080;
       // Fit within viewport with some padding (unless recording)
-      const padding = isRecording ? 0 : 40;
-      const availW = vw - padding * 2;
-      const availH = vh - padding * 2;
+      const padding = 0;
+      const availW = vw;
+      const availH = vh;
       const s = Math.min(availW / canvasW, availH / canvasH);
       setScale(s);
     };
@@ -29,7 +29,7 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
   }, [isRecording]);
 
   return (
-    <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none bg-black">
       <div
         id="video-canvas"
         className="relative pointer-events-auto"
@@ -40,21 +40,12 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
           transformOrigin: 'center center',
         }}
       >
-        {/* Canvas border glow (hidden during recording) */}
-        {!isRecording && (
-          <div
-            className="absolute -inset-[3px] border-2 border-black/20 pointer-events-none z-[999]"
-            style={{
-              boxShadow: '0 0 30px rgba(0,0,0,0.15), inset 0 0 30px rgba(0,0,0,0.05)',
-            }}
-          />
-        )}
-
         {/* Overflow hidden container for clipping */}
         <div className="absolute inset-0 overflow-hidden">
           {children}
         </div>
       </div>
     </div>
+
   );
 }
