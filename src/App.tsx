@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -380,120 +380,246 @@ const ParticleTrails = () => {
 };
 
 const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => {
+  const randomIndex = useMemo(() => Math.floor(Math.random() * 14), []);
+  
   if (status !== 'active') return null;
+
+  const shapes = [
+    <motion.div
+      key="shape-0"
+      className="absolute -top-32 -left-32 w-24 h-24 rounded-3xl bg-brutal-pink brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+      initial={{ x: -800, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-800, 0, 150, 800],
+        y: [-500, 0, -150, -500],
+        rotateX: [0, 360, 720],
+        rotateY: [0, 360, 720],
+        rotateZ: [0, 180, 360],
+        scale: [0, 1.5, 1, 0],
+      }}
+      transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut" }}
+      style={{ transformStyle: 'preserve-3d' }}
+    />,
+    <motion.div
+      key="shape-1"
+      className="absolute -bottom-32 -right-32 w-20 h-20 rounded-full bg-brutal-blue brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+      initial={{ x: 800, y: 500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [800, 0, -100, -800],
+        y: [500, 0, 100, 500],
+        rotateX: [0, -360, -720],
+        rotateY: [0, -360, -720],
+        rotateZ: [0, -180, -360],
+        scale: [0, 1.2, 1, 0],
+      }}
+      transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.5 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    />,
+    <motion.div
+      key="shape-2"
+      className="absolute top-1/4 -right-20 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[69.3px] border-b-brutal-green drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]"
+      initial={{ x: 800, y: -200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [800, -100, -300, -800],
+        y: [-200, 100, 200, -200],
+        rotateX: [0, 180, 360],
+        rotateY: [0, 360, 720],
+        rotateZ: [0, -90, -180],
+        scale: [0, 1.3, 1, 0],
+      }}
+      transition={{ duration: 5, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.2 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    />,
+    <motion.div
+      key="shape-3"
+      className="absolute bottom-1/4 -left-20 text-6xl drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-orange"
+      initial={{ x: -800, y: 200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-800, 100, 300, 800],
+        y: [200, -100, -200, 200],
+        rotateX: [0, -180, -360],
+        rotateY: [0, -360, -720],
+        rotateZ: [0, 180, 360],
+        scale: [0, 1.4, 1, 0],
+      }}
+      transition={{ duration: 5.5, times: [0, 0.35, 0.75, 1], ease: "easeInOut", delay: 0.7 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      ★
+    </motion.div>,
+    <motion.div
+      key="shape-4"
+      className="absolute top-1/2 -left-32 w-32 h-12 rounded-full bg-brutal-purple brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+      initial={{ x: -800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-800, 200, 400, 1000],
+        y: [0, -150, 150, 0],
+        rotateX: [0, 360, 720],
+        rotateY: [0, 180, 360],
+        rotateZ: [0, 45, 90],
+        scale: [0, 1.1, 1.1, 0],
+      }}
+      transition={{ duration: 6, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.3 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    />,
+    <motion.div
+      key="shape-5"
+      className="absolute bottom-1/2 -right-32 text-7xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-blue"
+      initial={{ x: 800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [800, -200, -400, -1000],
+        y: [0, 150, -150, 0],
+        rotateX: [0, -360, -720],
+        rotateY: [0, -180, -360],
+        rotateZ: [0, -45, -90],
+        scale: [0, 1.2, 1.2, 0],
+      }}
+      transition={{ duration: 6.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.6 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      +
+    </motion.div>,
+    <motion.div
+      key="shape-6"
+      className="absolute top-10 right-1/4 text-6xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-white"
+      initial={{ x: 0, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [0, 100, -100, 0],
+        y: [-500, 200, 400, 800],
+        rotateX: [0, 180, 360],
+        rotateY: [0, 360, 720],
+        rotateZ: [0, 90, 180],
+        scale: [0, 1.5, 1.5, 0],
+      }}
+      transition={{ duration: 5.2, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.4 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      ~
+    </motion.div>,
+    <motion.div
+      key="shape-7"
+      className="absolute top-1/3 left-10 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-pink"
+      initial={{ x: -800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-800, 100, 200, 800],
+        y: [0, -200, 200, 0],
+        rotateX: [0, 360, 720],
+        rotateY: [0, 180, 360],
+        rotateZ: [0, 90, 180],
+        scale: [0, 1.5, 1.5, 0],
+      }}
+      transition={{ duration: 5.8, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.1 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Github size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-8"
+      className="absolute bottom-1/3 right-10 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-blue"
+      initial={{ x: 800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [800, -100, -200, -800],
+        y: [0, 200, -200, 0],
+        rotateX: [0, -360, -720],
+        rotateY: [0, -180, -360],
+        rotateZ: [0, -90, -180],
+        scale: [0, 1.6, 1.6, 0],
+      }}
+      transition={{ duration: 6.2, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.4 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Twitter size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-9"
+      className="absolute top-20 right-20 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-orange"
+      initial={{ x: 500, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [500, 0, -200, -800],
+        y: [-500, 100, 300, 800],
+        rotateX: [0, 180, 360],
+        rotateY: [0, 360, 720],
+        rotateZ: [0, 45, 90],
+        scale: [0, 1.4, 1.4, 0],
+      }}
+      transition={{ duration: 5.5, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.3 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Youtube size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-10"
+      className="absolute bottom-20 left-20 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-green"
+      initial={{ x: -500, y: 500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-500, 0, 200, 800],
+        y: [500, -100, -300, -800],
+        rotateX: [0, -180, -360],
+        rotateY: [0, -360, -720],
+        rotateZ: [0, -45, -90],
+        scale: [0, 1.5, 1.5, 0],
+      }}
+      transition={{ duration: 6.1, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.5 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Figma size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-11"
+      className="absolute top-1/2 left-1/4 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-purple"
+      initial={{ x: -800, y: -200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [-800, 0, 300, 1000],
+        y: [-200, 100, -100, 200],
+        rotateX: [0, 360, 720],
+        rotateY: [0, 180, 360],
+        rotateZ: [0, 90, 180],
+        scale: [0, 1.3, 1.3, 0],
+      }}
+      transition={{ duration: 5.9, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.2 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Slack size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-12"
+      className="absolute bottom-1/2 right-1/4 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-pink"
+      initial={{ x: 800, y: 200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [800, 0, -300, -1000],
+        y: [200, -100, 100, -200],
+        rotateX: [0, -360, -720],
+        rotateY: [0, -180, -360],
+        rotateZ: [0, -90, -180],
+        scale: [0, 1.4, 1.4, 0],
+      }}
+      transition={{ duration: 6.3, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.6 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Instagram size={80} strokeWidth={1.5} />
+    </motion.div>,
+    <motion.div
+      key="shape-13"
+      className="absolute top-1/4 left-1/2 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-blue"
+      initial={{ x: 0, y: -800, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
+      animate={{
+        x: [0, 200, -200, 0],
+        y: [-800, 0, 300, 1000],
+        rotateX: [0, 180, 360],
+        rotateY: [0, 360, 720],
+        rotateZ: [0, 45, 90],
+        scale: [0, 1.5, 1.5, 0],
+      }}
+      transition={{ duration: 5.7, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.3 }}
+      style={{ transformStyle: 'preserve-3d' }}
+    >
+      <Chrome size={80} strokeWidth={1.5} />
+    </motion.div>
+  ];
+
   return (
     <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
-      {/* Existing Shape 1 */}
-      <motion.div
-        className="absolute -top-32 -left-32 w-24 h-24 rounded-3xl bg-brutal-pink brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-        initial={{ x: -800, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [-800, 0, 150, 800],
-          y: [-500, 0, -150, -500],
-          rotateX: [0, 360, 720],
-          rotateY: [0, 360, 720],
-          rotateZ: [0, 180, 360],
-          scale: [0, 1.5, 1, 0],
-        }}
-        transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut" }}
-        style={{ transformStyle: 'preserve-3d' }}
-      />
-      {/* Existing Shape 2 */}
-      <motion.div
-        className="absolute -bottom-32 -right-32 w-20 h-20 rounded-full bg-brutal-blue brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-        initial={{ x: 800, y: 500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [800, 0, -100, -800],
-          y: [500, 0, 100, 500],
-          rotateX: [0, -360, -720],
-          rotateY: [0, -360, -720],
-          rotateZ: [0, -180, -360],
-          scale: [0, 1.2, 1, 0],
-        }}
-        transition={{ duration: 4.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.5 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      />
-      {/* New Shape 1: Triangle */}
-      <motion.div
-        className="absolute top-1/4 -right-20 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[69.3px] border-b-brutal-green drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]"
-        initial={{ x: 800, y: -200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [800, -100, -300, -800],
-          y: [-200, 100, 200, -200],
-          rotateX: [0, 180, 360],
-          rotateY: [0, 360, 720],
-          rotateZ: [0, -90, -180],
-          scale: [0, 1.3, 1, 0],
-        }}
-        transition={{ duration: 5, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.2 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      />
-      {/* New Shape 2: Star */}
-      <motion.div
-        className="absolute bottom-1/4 -left-20 text-6xl drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-orange"
-        initial={{ x: -800, y: 200, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [-800, 100, 300, 800],
-          y: [200, -100, -200, 200],
-          rotateX: [0, -180, -360],
-          rotateY: [0, -360, -720],
-          rotateZ: [0, 180, 360],
-          scale: [0, 1.4, 1, 0],
-        }}
-        transition={{ duration: 5.5, times: [0, 0.35, 0.75, 1], ease: "easeInOut", delay: 0.7 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        ★
-      </motion.div>
-      {/* New Shape 3: Pill */}
-      <motion.div
-        className="absolute top-1/2 -left-32 w-32 h-12 rounded-full bg-brutal-purple brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-        initial={{ x: -800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [-800, 200, 400, 1000],
-          y: [0, -150, 150, 0],
-          rotateX: [0, 360, 720],
-          rotateY: [0, 180, 360],
-          rotateZ: [0, 45, 90],
-          scale: [0, 1.1, 1.1, 0],
-        }}
-        transition={{ duration: 6, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.3 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      />
-      {/* New Shape 4: Cross */}
-      <motion.div
-        className="absolute bottom-1/2 -right-32 text-7xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-brutal-blue"
-        initial={{ x: 800, y: 0, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [800, -200, -400, -1000],
-          y: [0, 150, -150, 0],
-          rotateX: [0, -360, -720],
-          rotateY: [0, -180, -360],
-          rotateZ: [0, -45, -90],
-          scale: [0, 1.2, 1.2, 0],
-        }}
-        transition={{ duration: 6.5, times: [0, 0.4, 0.8, 1], ease: "easeInOut", delay: 0.6 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        +
-      </motion.div>
-      {/* New Shape 5: ZigZag */}
-      <motion.div
-        className="absolute top-10 right-1/4 text-6xl font-bold drop-shadow-[8px_8px_0px_rgba(0,0,0,1)] text-white"
-        initial={{ x: 0, y: -500, rotateX: 0, rotateY: 0, rotateZ: 0, scale: 0 }}
-        animate={{
-          x: [0, 100, -100, 0],
-          y: [-500, 200, 400, 800],
-          rotateX: [0, 180, 360],
-          rotateY: [0, 360, 720],
-          rotateZ: [0, 90, 180],
-          scale: [0, 1.5, 1.5, 0],
-        }}
-        transition={{ duration: 5.2, times: [0, 0.3, 0.7, 1], ease: "easeInOut", delay: 0.4 }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        ~
-      </motion.div>
+      {shapes[randomIndex]}
     </div>
   );
 };
@@ -527,42 +653,44 @@ const MobileMockup = ({ children, status }: { children: React.ReactNode, status:
 };
 
 const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) => {
-  let emojis = ['✨', '🌟', '💫'];
-  if (type === 'black') emojis = ['🍿', '🎬', '🎥', '🎞️', '🎟️', '🎭'];
-  if (type === 'vibrant-glow') emojis = ['🎵', '🎶', '🎧', '🎸', '🎹', '🥁'];
-  if (type === 'grid') emojis = ['🚀', '💻', '📱', '🕹️', '💾', '🔋'];
-  if (type === 'particles') emojis = ['🌍', '🪐', '☄️', '🌌', '🛸', '🛰️'];
-  if (type === 'parallax') emojis = ['🏔️', '🌲', '🏕️', '🗺️', '🧭', '🦅'];
+  const emojis = useMemo(() => {
+    if (type === 'black') return ['🍿', '🎬', '🎥', '🎞️', '🎟️', '🎭'];
+    if (type === 'vibrant-glow') return ['🎵', '🎶', '🎧', '🎸', '🎹', '🥁'];
+    if (type === 'grid') return ['🚀', '💻', '📱', '🕹️', '💾', '🔋'];
+    if (type === 'particles') return ['🌍', '🪐', '☄️', '🌌', '🛸', '🛰️'];
+    if (type === 'parallax') return ['🏔️', '🌲', '🏕️', '🗺️', '🧭', '🦅'];
+    return ['✨', '🌟', '💫'];
+  }, [type]);
+
+  const randomIndex = useMemo(() => Math.floor(Math.random() * emojis.length), [emojis]);
+  const emoji = emojis[randomIndex];
   
   // Create 3D shadow effect
   const depth = 30;
   const shadows = Array.from({length: depth}).map((_, i) => `${i}px ${i}px 0px rgba(0,0,0,${0.8 - (i * 0.02)})`).join(',');
 
   return (
-    <>
-      {emojis.map((emoji, index) => (
-        <motion.div
-          key={index}
-          initial={{ scale: 0, rotateY: -180, y: 100 }}
-          animate={status === 'active' ? { 
-            scale: [0, 1.2, 1], 
-            rotateY: [-180, 0, 20, -20, 0],
-            y: [100, -20, 0, -10, 0]
-          } : { scale: 0, rotateY: 180, y: 100 }}
-          transition={{ duration: 8, ease: "easeOut", delay: index * 0.5 }}
-          className="absolute z-0 flex items-center justify-center opacity-40"
-          style={{ 
-            transformStyle: 'preserve-3d',
-            left: `${(index % 3) * 30 + 10}%`,
-            top: `${Math.floor(index / 3) * 40 + 10}%`
-          }}
-        >
-          <div style={{ fontSize: '10rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
-            {emoji}
-          </div>
-        </motion.div>
-      ))}
-    </>
+    <motion.div
+      initial={{ scale: 0, rotateY: -180, y: 100 }}
+      animate={status === 'active' ? { 
+        scale: [0, 1.2, 1], 
+        rotateY: [-180, 0, 20, -20, 0],
+        y: [100, -20, 0, -10, 0]
+      } : { scale: 0, rotateY: 180, y: 100 }}
+      transition={{ duration: 8, ease: "easeOut" }}
+      className="absolute z-0 flex items-center justify-center opacity-40"
+      style={{ 
+        transformStyle: 'preserve-3d',
+        left: '50%',
+        top: '50%',
+        x: '-50%',
+        y: '-50%'
+      }}
+    >
+      <div style={{ fontSize: '15rem', textShadow: shadows, filter: 'drop-shadow(0 0 50px rgba(255,255,255,0.2))' }}>
+        {emoji}
+      </div>
+    </motion.div>
   );
 };
 
