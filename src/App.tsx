@@ -694,7 +694,7 @@ const PopCulture3DIcon = ({ type, status }: { type: string, status: string }) =>
   );
 };
 
-const CinematicOverlay = () => {
+const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
       <style>
@@ -710,14 +710,16 @@ const CinematicOverlay = () => {
         `}
       </style>
       {/* Film Grain */}
-      <div 
-        className="absolute opacity-[0.15] mix-blend-overlay pointer-events-none" 
-        style={{ 
-          top: '-50%', left: '-50%', width: '200%', height: '200%',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          animation: 'film-grain 8s steps(10) infinite'
-        }}
-      ></div>
+      {useGrainEffect && (
+        <div 
+          className="absolute opacity-[0.15] mix-blend-overlay pointer-events-none" 
+          style={{ 
+            top: '-50%', left: '-50%', width: '200%', height: '200%',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+            animation: 'film-grain 8s steps(10) infinite'
+          }}
+        ></div>
+      )}
       {/* Vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,rgba(0,0,0,0.8)_120%)] mix-blend-multiply pointer-events-none"></div>
     </div>
@@ -996,6 +998,8 @@ export default function App() {
   
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
+  const [useGrainEffect, setUseGrainEffect] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
 
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -2580,6 +2584,19 @@ export default function App() {
                 </div>
               </div>
 
+              <div className="mb-8 md:mb-12">
+                <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Video Effects</h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setUseGrainEffect(!useGrainEffect)}
+                    className={`w-12 h-6 brutal-border relative transition-colors ${useGrainEffect ? 'bg-brutal-green' : 'bg-white'}`}
+                  >
+                    <div className={`absolute top-0.5 w-4 h-4 bg-black transition-all ${useGrainEffect ? 'left-7' : 'left-1'}`} />
+                  </button>
+                  <span className="text-xs font-mono font-bold uppercase tracking-widest text-black">Film Grain Overlay</span>
+                </div>
+              </div>
+
               <div className="flex justify-center gap-4">
                 <button 
                   onClick={() => setSetupStep(3)}
@@ -2724,7 +2741,7 @@ export default function App() {
       </div>
 
       {/* Cinematic Overlay (Film Grain, Vignette, Chromatic Aberration) */}
-      <CinematicOverlay />
+      <CinematicOverlay useGrainEffect={useGrainEffect} />
 
       {/* Cinematic Letterboxing (AE Style) */}
       <div className="pointer-events-none fixed inset-0 z-50 flex flex-col justify-between">
