@@ -14,12 +14,16 @@ interface AppHeaderProps {
   onNewProject: () => void;
   // Studio Controls for Playing Mode
   onExport?: () => void;
+  onStudio?: () => void;
+  onStickers?: () => void;
   onResetCamera?: () => void;
   isRendering?: boolean;
   renderProgress?: number;
 }
 
 export default function AppHeader({ 
+  appMode, user, credits, 
+  onNavigate, onLogin, onLogout, onNewProject,
   onExport, onStudio, onStickers, onResetCamera,
   isRendering, renderProgress = 0
 }: AppHeaderProps) {
