@@ -172,3 +172,33 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #333;
 }
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-slow {
+  background-size: 300% 300%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+.recording-countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.85);
+  pointer-events: none;
+}
+
+.recording-countdown span {
+  font-size: 12rem;
+  font-weight: 900;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  text-shadow: 0 0 80px rgba(255,255,255,0.3);
+}

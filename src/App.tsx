@@ -22,7 +22,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight';
 type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
@@ -1562,7 +1562,7 @@ export default function App() {
     gsap.globalTimeline.timeScale(textAnimationSpeed);
   }, [textAnimationSpeed]);
 
-  const [preset, setPreset] = useState<'custom' | 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase'>('custom');
+  const [preset, setPreset] = useState<string>('custom');
   
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
@@ -1887,7 +1887,7 @@ export default function App() {
           transitionDuration,
           textAnimationSpeed,
           sceneDuration,
-          preset,
+          preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
           useGiphy
@@ -2691,6 +2691,8 @@ export default function App() {
         setIsRecording(false);
         stream.getTracks().forEach(t => t.stop());
         document.body.style.cursor = 'default';
+        const header = document.querySelector('header');
+        if (header) (header as HTMLElement).style.display = '';
       };
 
       stream.getVideoTracks()[0].onended = () => {
@@ -2703,9 +2705,22 @@ export default function App() {
       setCurrentIndex(0);
       setRecordingProgress(0);
       
-      // Hide cursor and wait 3s before starting mediaRecorder to allow header to hide fully
+      // Hide cursor, header, and show countdown before recording
       document.body.style.cursor = 'none';
-      await new Promise(r => setTimeout(r, 3000));
+      const header = document.querySelector('header');
+      if (header) (header as HTMLElement).style.display = 'none';
+      
+      // Countdown overlay
+      const countdownEl = document.createElement('div');
+      countdownEl.className = 'recording-countdown';
+      countdownEl.innerHTML = '<span>3</span>';
+      document.body.appendChild(countdownEl);
+      await new Promise(r => setTimeout(r, 1000));
+      countdownEl.innerHTML = '<span>2</span>';
+      await new Promise(r => setTimeout(r, 1000));
+      countdownEl.innerHTML = '<span>1</span>';
+      await new Promise(r => setTimeout(r, 1000));
+      countdownEl.remove();
 
       mediaRecorder.start();
       setIsRecording(true);
@@ -3107,21 +3122,6 @@ export default function App() {
               <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div className="col-span-1 md:col-span-2">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Professional Presets</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {(['blockbuster', 'documentary', 'music-video', 'app-showcase'] as const).map(p => (
-                      <button
-                        key={p}
-                        onClick={() => applyPreset(p)}
-                        className={`px-4 py-4 brutal-border text-center transition-all text-black ${preset === p ? 'bg-brutal-blue transform translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
-                      >
-                        <div className="font-display font-bold uppercase mb-1">{p.replace('-', ' ')}</div>
-                        <div className="text-[10px] text-black/60 font-mono uppercase tracking-widest">Automated Engine</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography Style</h3>
                   <select 
@@ -3171,8 +3171,8 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'grid', 'vibrant-glow', 'particles', 'parallax'] as BackgroundStyle[]).map(bg => (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => setBackgroundStyle(bg)}
@@ -3185,19 +3185,6 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="mb-8">
-                <label className="flex items-center gap-3 cursor-pointer bg-white p-4 brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all">
-                  <input 
-                    type="checkbox" 
-                    checked={useGiphy}
-                    onChange={(e) => setUseGiphy(e.target.checked)}
-                    className="w-5 h-5 border-2 border-black rounded-none text-brutal-green focus:ring-0 focus:ring-offset-0"
-                  />
-                  <div>
-                    <div className="text-sm font-bold uppercase font-mono">Add Giphy Stickers</div>
-                    <div className="text-xs text-black/70 font-medium">Automatically fetch and overlay animated stickers based on scene text.</div>
-                  </div>
-                </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
@@ -3406,6 +3393,15 @@ export default function App() {
         switch (backgroundStyle) {
           case 'gradient-blue': return 'bg-gradient-to-br from-brutal-blue via-white to-brutal-blue animate-pulse';
           case 'gradient-purple': return 'bg-gradient-to-tr from-brutal-purple via-brutal-pink to-white animate-pulse';
+          case 'gradient-teal': return 'bg-gradient-to-br from-teal-400 via-cyan-500 to-teal-700 animate-gradient-slow';
+          case 'gradient-rose': return 'bg-gradient-to-br from-rose-400 via-pink-500 to-rose-700 animate-gradient-slow';
+          case 'gradient-amber': return 'bg-gradient-to-br from-amber-300 via-orange-500 to-red-600 animate-gradient-slow';
+          case 'gradient-emerald': return 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 animate-gradient-slow';
+          case 'gradient-indigo': return 'bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-700 animate-gradient-slow';
+          case 'gradient-slate': return 'bg-gradient-to-br from-slate-600 via-gray-700 to-slate-900 animate-gradient-slow';
+          case 'deep-ocean': return 'bg-gradient-to-b from-blue-950 via-cyan-900 to-teal-950 animate-gradient-slow';
+          case 'sunset-fire': return 'bg-gradient-to-br from-yellow-400 via-red-500 to-purple-700 animate-gradient-slow';
+          case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
           case 'grid': return 'bg-isometric-grid bg-white';
           case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
           case 'black': return 'bg-black';
