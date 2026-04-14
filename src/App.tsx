@@ -23,7 +23,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic';
+type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 
@@ -632,6 +632,163 @@ const GSAPMergeElasticText = ({ text, className = "", style = {}, textColor, isM
   );
 };
 
+const GSAPFunnelText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-funnel-char", {
+      keyframes: {
+        "0%": { y: -300, scale: 2, opacity: 0, rotation: () => Math.random() * 180 - 90 },
+        "30%": { y: 0, scale: 1, opacity: 1, rotation: 0, ease: "bounce.out" },
+        "70%": { y: 0, opacity: 1 },
+        "100%": { y: 300, scale: 0, opacity: 0, ease: "power2.in" }
+      },
+      duration: 4,
+      stagger: { each: 0.05, from: "edges" },
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-funnel-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-triangle-char", {
+      keyframes: {
+        "0%": { x: 0, y: 0, opacity: 0 },
+        "20%": { 
+          x: (i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? -40 : 40) + (Math.random()*10-5),
+          y: (i) => (i % 3 === 0 ? -40 : 40) + (Math.random()*10-5),
+          opacity: 1
+        },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "100%": { opacity: 0, scale: 3 }
+      },
+      duration: 4,
+      stagger: 0.02,
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-triangle-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-square-char", {
+      keyframes: {
+        "0%": { x: 0, y: 0, opacity: 0 },
+        "20%": { 
+          x: (i) => (i % 4 === 0 || i % 4 === 3 ? -40 : 40),
+          y: (i) => (i % 4 === 0 || i % 4 === 1 ? -40 : 40),
+          opacity: 1
+        },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "100%": { opacity: 0, rotationY: 90 }
+      },
+      duration: 4,
+      stagger: 0.02,
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-square-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-heart-char", {
+      keyframes: {
+        "0%": { x: 0, y: 0, opacity: 0 },
+        "20%": { 
+          x: (i) => 2.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)), 
+          y: (i) => -2.5 * (13 * Math.cos(i * 0.5) - 5 * Math.cos(2*i*0.5) - 2 * Math.cos(3*i*0.5) - Math.cos(4*i*0.5)),
+          opacity: 1
+        },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "100%": { opacity: 0, scale: 2 }
+      },
+      duration: 4,
+      stagger: 0.015,
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-heart-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-stack-char", {
+      keyframes: {
+        "0%": { x: 0, y: -300, opacity: 0 },
+        "20%": { x: 0, y: 0, opacity: 1, ease: "bounce.out" },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "100%": { x: () => (Math.random() - 0.5) * 500, y: 300, opacity: 0 }
+      },
+      duration: 4,
+      stagger: 0.05,
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-stack-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const props = { text, className, style, textColor, isMulti };
   switch (effect) {
@@ -655,6 +812,11 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-expand': return <GSAPExpandText {...props} />;
     case 'gsap-tornado': return <GSAPTornadoText {...props} />;
     case 'gsap-merge-elastic': return <GSAPMergeElasticText {...props} />;
+    case 'gsap-funnel': return <GSAPFunnelText {...props} />;
+    case 'gsap-triangle': return <GSAPTriangleText {...props} />;
+    case 'gsap-square': return <GSAPSquareText {...props} />;
+    case 'gsap-heart': return <GSAPHeartText {...props} />;
+    case 'gsap-stack': return <GSAPStackText {...props} />;
     default: return <SplitText {...props} />;
   }
 };
@@ -2263,7 +2425,7 @@ export default function App() {
       
       let activeEffect = textEffect;
       if (isTextOnly) {
-        const textOnlyEffects: TextEffect[] = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic'];
+        const textOnlyEffects: TextEffect[] = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'];
         activeEffect = textOnlyEffects[Math.floor(Math.random() * textOnlyEffects.length)];
       } else if (textEffect === 'random') {
         const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
@@ -2514,6 +2676,7 @@ export default function App() {
         URL.revokeObjectURL(url);
         setIsRecording(false);
         stream.getTracks().forEach(t => t.stop());
+        document.body.style.cursor = 'default';
       };
 
       stream.getVideoTracks()[0].onended = () => {
@@ -2522,14 +2685,16 @@ export default function App() {
         }
       };
 
-      mediaRecorder.start();
-      setIsRecording(true);
-
       // Auto-play sequence for recording
-      // Give more time for the browser to stabilize and for the user to switch tabs if needed
       setCurrentIndex(0);
       setRecordingProgress(0);
-      await new Promise(r => setTimeout(r, 3000)); 
+      
+      // Hide cursor and wait 3s before starting mediaRecorder to allow header to hide fully
+      document.body.style.cursor = 'none';
+      await new Promise(r => setTimeout(r, 3000));
+
+      mediaRecorder.start();
+      setIsRecording(true);
 
       for (let i = 1; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;

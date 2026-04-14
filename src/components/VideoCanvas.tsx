@@ -33,12 +33,7 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
       <div
         id="video-canvas"
         className="relative pointer-events-auto"
-        style={isRecording ? {
-          width: 1920,
-          height: 1080,
-          transform: `scale(${scale})`,
-          transformOrigin: 'center center',
-        } : {
+        style={{
           width: '100vw',
           height: '100vh',
         }}
