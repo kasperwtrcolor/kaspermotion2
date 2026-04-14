@@ -23,7 +23,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic';
+type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 
@@ -543,6 +543,95 @@ const GSAPSplitText = ({ text, className = "", style = {}, textColor, isMulti }:
   );
 };
 
+const GSAPExpandText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-expand-char", {
+      keyframes: {
+        "0%": { scale: 0.1, opacity: 0 },
+        "15%": { scale: 1, opacity: 1 },
+        "70%": { scale: 1.1, opacity: 1 },
+        "100%": { scale: 30, opacity: 0 }
+      },
+      duration: 4,
+      stagger: { each: 0.05, from: "center" },
+      ease: "power2.inOut",
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={{ ...style, perspective: 1000 }}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-expand-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPTornadoText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-tornado-char", {
+      keyframes: {
+        "0%": { x: 0, y: 100, rotation: 0, scale: 0.5, opacity: 0 },
+        "15%": { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 },
+        "60%": { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1 },
+        "100%": { x: () => (Math.random() - 0.5) * 1000, y: () => -500 - Math.random() * 500, rotation: () => Math.random() * 720 - 360, scale: 0.2, opacity: 0 }
+      },
+      duration: 4,
+      stagger: { each: 0.02, from: "random" },
+      ease: "power2.inOut",
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-tornado-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPMergeElasticText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.to(".gsap-elastic-merge-char", {
+      keyframes: {
+        "0%":   { x: () => (Math.random() - 0.5) * 800, y: () => (Math.random() - 0.5) * 800, opacity: 0, scale: 0.5 },
+        "25%":  { x: 0, y: 0, opacity: 1, scale: 1, ease: "elastic.out(1, 0.3)" },
+        "70%":  { x: 0, y: 0, opacity: 1, scale: 1 },
+        "100%": { scale: 10, opacity: 0, ease: "back.in(2)" }
+      },
+      duration: 4,
+      stagger: 0.02,
+      overwrite: "auto"
+    });
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-elastic-merge-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const props = { text, className, style, textColor, isMulti };
   switch (effect) {
@@ -563,6 +652,9 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-cascade': return <GSAPCascadeText {...props} />;
     case 'gsap-3d-roll': return <GSAP3DRollText {...props} />;
     case 'gsap-elastic': return <GSAPElasticText {...props} />;
+    case 'gsap-expand': return <GSAPExpandText {...props} />;
+    case 'gsap-tornado': return <GSAPTornadoText {...props} />;
+    case 'gsap-merge-elastic': return <GSAPMergeElasticText {...props} />;
     default: return <SplitText {...props} />;
   }
 };
@@ -2161,8 +2253,14 @@ export default function App() {
         }
       }
       
-      const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
-      const activeEffect = textEffect === 'random' ? effects[Math.floor(Math.random() * effects.length)] : textEffect;
+      let activeEffect = textEffect;
+      if (isTextOnly) {
+        const textOnlyEffects: TextEffect[] = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic'];
+        activeEffect = textOnlyEffects[Math.floor(Math.random() * textOnlyEffects.length)];
+      } else if (textEffect === 'random') {
+        const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
+        activeEffect = effects[Math.floor(Math.random() * effects.length)];
+      }
 
       const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
