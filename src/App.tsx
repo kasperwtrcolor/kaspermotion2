@@ -12,6 +12,10 @@ import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
 import VideoCanvas from './components/VideoCanvas';
 import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(useGSAP);
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
@@ -19,7 +23,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random';
+type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 
@@ -459,6 +463,86 @@ const PerspectiveText = ({ text, className = "", style = {} }: { text: string, c
   );
 };
 
+const GSAPCascadeText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.fromTo(
+      ".gsap-cascade-word",
+      { y: 50, opacity: 0, rotateX: -90 },
+      { y: 0, opacity: 1, rotateX: 0, duration: 0.8, stagger: 0.1, ease: "back.out(1.7)", overwrite: "auto" }
+    );
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="gsap-cascade-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+      ))}
+    </div>
+  );
+};
+
+const GSAP3DRollText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.fromTo(
+      ".gsap-roll-word",
+      { z: -100, rotationX: 90, opacity: 0 },
+      { z: 0, rotationX: 0, opacity: 1, duration: 1, transformOrigin: '0% 50% -50', stagger: 0.1, ease: "expo.out", overwrite: "auto" }
+    );
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={{ ...style, perspective: '800px' }}>
+      {words.map((word, i) => (
+        <span key={i} className="gsap-roll-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPElasticText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.fromTo(
+      ".gsap-elastic-word",
+      { scale: 0, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 1.5, stagger: 0.05, ease: "elastic.out(1, 0.3)", overwrite: "auto" }
+    );
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="gsap-elastic-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPSplitText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  useGSAP(() => {
+    gsap.fromTo(
+      ".gsap-split-char",
+      { opacity: 0, scale: 0.5, y: 20 },
+      { opacity: 1, scale: 1, y: 0, duration: 0.5, stagger: 0.02, ease: "back.out(1.5)", overwrite: "auto" }
+    );
+  }, { scope: containerRef });
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-split-char inline-block">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const props = { text, className, style, textColor, isMulti };
   switch (effect) {
@@ -475,6 +559,10 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'shake': return <ShakeText {...props} />;
     case 'slide': return <SlideText {...props} />;
     case 'perspective': return <PerspectiveText {...props} />;
+    case 'gsap-split': return <GSAPSplitText {...props} />;
+    case 'gsap-cascade': return <GSAPCascadeText {...props} />;
+    case 'gsap-3d-roll': return <GSAP3DRollText {...props} />;
+    case 'gsap-elastic': return <GSAPElasticText {...props} />;
     default: return <SplitText {...props} />;
   }
 };
@@ -835,7 +923,7 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
   );
 };
 
-const MobileMockup = ({ children, status, variant = 0 }: { children: React.ReactNode, status: string, variant?: number }) => {
+const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { children: React.ReactNode, status: string, variant?: number, isLandscape?: boolean }) => {
   const animations = [
     // Variant 0: Standard Perspective Tilt
     { 
@@ -1157,24 +1245,8 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
-                  <MobileMockup status={status} variant={index}>
-                    {m.url && (
-                      m.type === 'video' ? (
-                        <video
-                          src={m.url}
-                          autoPlay loop muted playsInline
-                          className="w-full h-full object-contain"
-                          onError={() => setHasError(true)}
-                        />
-                      ) : (
-                        <img
-                          src={m.url}
-                          alt={comp.caption}
-                          className="w-full h-full object-contain"
-                          onError={() => setHasError(true)}
-                        />
-                      )
-                    )}
+                  <MobileMockup status={status} variant={index} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
+                    <MobileMockupContent m={m} caption={comp.caption} setHasError={setHasError} />
                   </MobileMockup>
                 ) : (
                   mediaElement
@@ -2001,6 +2073,15 @@ export default function App() {
   };
 
   const applyPreset = (p: 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase') => {
+    if (preset === p) {
+      setPreset(undefined as any);
+      // Reset to defaults
+      setFontStyle('font-display');
+      setBackgroundStyle('black');
+      setTextEffect('gsap-split');
+      setTransitionType('dissolve');
+      return;
+    }
     setPreset(p);
     switch (p) {
       case 'blockbuster':
