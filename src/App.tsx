@@ -2154,6 +2154,14 @@ export default function App() {
         // Capture screenshot URL
         if (data.screenshotUrl) {
           setWebsiteScreenshot(data.screenshotUrl);
+          
+          const newScreenshotItem: MediaItem = {
+            id: `screenshot-${Date.now()}`,
+            type: 'image',
+            url: data.screenshotUrl,
+            file: null as any
+          };
+          setMediaFiles(prev => [...prev, newScreenshotItem]);
         }
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
