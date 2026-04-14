@@ -1555,7 +1555,7 @@ export default function App() {
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
-  const [sceneDuration, setSceneDuration] = useState<number>(8.0);
+  const [sceneDuration, setSceneDuration] = useState<number>(5.0);
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -2202,7 +2202,7 @@ export default function App() {
       // Base GSAP animation duration is 4s; adjusted by speed multiplier
       const animDuration = (4 / textAnimationSpeed) * 1000;
       // Scene stays at least long enough for text animation to finish + buffer
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1000);
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration);
       const timer = setInterval(() => {
         setCurrentIndex(prev => {
           if (prev < compositions.length - 1) return prev + 1;
@@ -2719,7 +2719,7 @@ export default function App() {
         
         // Wait for text animation to finish + scene duration
         const animDuration = (4 / textAnimationSpeed) * 1000;
-        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1000);
+        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration);
         await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
 
@@ -3277,7 +3277,7 @@ export default function App() {
                     <div className="flex justify-between text-[10px] font-mono text-black font-bold">
                       <span>SLOWER (0.5x)</span>
                       <span>{textAnimationSpeed}x</span>
-                      <span>FASTER (3x)</span>
+                      <span>FASTER (2x)</span>
                     </div>
 
                     <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Scene Length</h4>
