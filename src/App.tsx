@@ -1555,6 +1555,7 @@ export default function App() {
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
+  const [sceneDuration, setSceneDuration] = useState<number>(5.0);
 
   useEffect(() => {
     gsap.globalTimeline.timeScale(textAnimationSpeed);
@@ -1879,6 +1880,7 @@ export default function App() {
           transitionType,
           transitionDuration,
           textAnimationSpeed,
+          sceneDuration,
           preset,
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -1916,6 +1918,7 @@ export default function App() {
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
+    setSceneDuration(project.settings.sceneDuration || 5.0);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -2195,10 +2198,10 @@ export default function App() {
           if (prev < compositions.length - 1) return prev + 1;
           return 0; // Loop back to start for a better experience
         });
-      }, 4500); 
+      }, sceneDuration * 1000); 
       return () => clearInterval(timer);
     }
-  }, [appMode, isRecording, compositions]); // Depend on compositions array itself
+  }, [appMode, isRecording, compositions, sceneDuration]); // Depend on compositions array itself
 
   // Auto-save logic (every 2 minutes)
   useEffect(() => {
@@ -2712,8 +2715,7 @@ export default function App() {
         setRecordingProgress((i / compositions.length) * 100);
         
         // Wait for the transition and scene duration
-        // We use a slightly longer wait to ensure the transition completes fully
-        await new Promise(r => setTimeout(r, 5000)); 
+        await new Promise(r => setTimeout(r, sceneDuration * 1000)); 
       }
 
       if (sequenceActiveRef.current) {
@@ -3265,6 +3267,23 @@ export default function App() {
                       <span>{textAnimationSpeed}x</span>
                       <span>FASTER (3x)</span>
                     </div>
+
+                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Scene Length</h4>
+                    <input 
+                      type="range" 
+                      min="2" 
+                      max="15" 
+                      step="0.5" 
+                      value={sceneDuration}
+                      onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
+                      className="w-full accent-black"
+                    />
+                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
+                      <span>SHORT (2s)</span>
+                      <span>{sceneDuration}s</span>
+                      <span>LONG (15s)</span>
+                    </div>
+
                   </div>
                 </div>
               </div>
