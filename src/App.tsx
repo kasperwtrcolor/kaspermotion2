@@ -1555,7 +1555,8 @@ export default function App() {
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
-  const [sceneDuration, setSceneDuration] = useState<number>(5.0);
+  const [sceneDuration, setSceneDuration] = useState<number>(8.0);
+  const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
     gsap.globalTimeline.timeScale(textAnimationSpeed);
@@ -1635,6 +1636,7 @@ export default function App() {
       });
 
       const checkAndRewardCredits = async () => {
+        if (dailyCreditsClaimed) return;
         try {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
@@ -1646,10 +1648,14 @@ export default function App() {
               const newCredits = (userData.credits || 0) + 10;
               await setDoc(userRef, { credits: newCredits, lastRewardDate: today }, { merge: true });
               setToastMessage("You received 10 daily credits!");
+              setDailyCreditsClaimed(true);
+            } else {
+              setDailyCreditsClaimed(true);
             }
           } else {
             await setDoc(userRef, { credits: 20, lastRewardDate: today }, { merge: true });
             setToastMessage("Welcome! You received 20 initial credits.");
+            setDailyCreditsClaimed(true);
           }
         } catch (error) {
           handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
@@ -1787,7 +1793,7 @@ export default function App() {
       return;
     }
     
-    if (mediaFiles.length === 0) return;
+    if (mediaFiles.length === 0 && !scriptText.trim()) return;
 
     if (!isAutoSave) setIsSaving(true);
     try {
@@ -2190,30 +2196,22 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-play logic
+  // Auto-play logic — scene duration accounts for text animation time
   useEffect(() => {
     if (appMode === 'playing' && !isRecording && compositions.length > 0) {
+      // Base GSAP animation duration is 4s; adjusted by speed multiplier
+      const animDuration = (4 / textAnimationSpeed) * 1000;
+      // Scene stays at least long enough for text animation to finish + buffer
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1000);
       const timer = setInterval(() => {
         setCurrentIndex(prev => {
           if (prev < compositions.length - 1) return prev + 1;
-          return 0; // Loop back to start for a better experience
+          return 0;
         });
-      }, sceneDuration * 1000); 
+      }, effectiveSceneDuration); 
       return () => clearInterval(timer);
     }
-  }, [appMode, isRecording, compositions, sceneDuration]); // Depend on compositions array itself
-
-  // Auto-save logic (every 2 minutes)
-  useEffect(() => {
-    if (user && mediaFiles.length > 0) {
-      const autoSaveTimer = setInterval(() => {
-        console.log("Auto-saving project...");
-        saveProject(true);
-      }, 120000); // 2 minutes
-      
-      return () => clearInterval(autoSaveTimer);
-    }
-  }, [user, mediaFiles, scriptText, fontStyle, backgroundStyle, textEffect, transitionType, transitionDuration, preset, currentProjectId]);
+  }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
@@ -2403,8 +2401,8 @@ export default function App() {
 
     const isAdmin = user?.email === 'philipsimmons67@gmail.com';
 
-    if (!isAdmin && credits < 5) {
-      setToastMessage("Not enough credits. You need 5 credits to generate a trailer.");
+    if (!isAdmin && credits < 1) {
+      setToastMessage("Not enough credits. You need 1 credit to generate a trailer.");
       return;
     }
 
@@ -2575,8 +2573,8 @@ export default function App() {
       const isAdmin = user?.email === 'philipsimmons67@gmail.com';
       if (user && !isAdmin) {
         const userRef = doc(db, 'users', user.uid);
-        await setDoc(userRef, { credits: credits - 5 }, { merge: true });
-        setToastMessage("Trailer generated! 5 credits used.");
+        await setDoc(userRef, { credits: Math.max(0, credits - 1) }, { merge: true });
+        setToastMessage("Trailer generated! 1 credit used.");
       } else if (isAdmin) {
         setToastMessage("Admin access: Trailer generated without credit deduction!");
       }
@@ -2629,6 +2627,11 @@ export default function App() {
   };
 
   const startRecording = async () => {
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+    if (!isAdmin && credits < 2) {
+      setToastMessage("Not enough credits. You need 2 credits to export.");
+      return;
+    }
     try {
       const resConstraints = {
         '4K': { width: 3840, height: 2160 },
@@ -2714,16 +2717,25 @@ export default function App() {
         setCurrentIndex(i);
         setRecordingProgress((i / compositions.length) * 100);
         
-        // Wait for the transition and scene duration
-        await new Promise(r => setTimeout(r, sceneDuration * 1000)); 
+        // Wait for text animation to finish + scene duration
+        const animDuration = (4 / textAnimationSpeed) * 1000;
+        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1000);
+        await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
 
       if (sequenceActiveRef.current) {
         setRecordingProgress(100);
         // Final wait for the last scene to settle
-        await new Promise(r => setTimeout(r, 2000)); 
+        const finalAnimDuration = (4 / textAnimationSpeed) * 1000;
+        await new Promise(r => setTimeout(r, Math.max(2000, finalAnimDuration))); 
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
+        }
+        // Deduct export credits
+        if (user && !isAdmin) {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
+          setToastMessage("Export complete! 2 credits used.");
         }
       }
 
@@ -3256,7 +3268,7 @@ export default function App() {
                     <input 
                       type="range" 
                       min="0.5" 
-                      max="3" 
+                      max="2" 
                       step="0.1" 
                       value={textAnimationSpeed}
                       onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
@@ -3342,7 +3354,7 @@ export default function App() {
                 {user && (
                   <button 
                     onClick={saveProject}
-                    disabled={isSaving || mediaFiles.length === 0}
+                    disabled={isSaving}
                     className="brutal-button bg-brutal-blue px-8 py-4 text-lg flex items-center gap-3 disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
