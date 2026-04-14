@@ -1554,6 +1554,12 @@ export default function App() {
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
+  const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
+
+  useEffect(() => {
+    gsap.globalTimeline.timeScale(textAnimationSpeed);
+  }, [textAnimationSpeed]);
+
   const [preset, setPreset] = useState<'custom' | 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase'>('custom');
   
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
@@ -1872,6 +1878,7 @@ export default function App() {
           textEffect,
           transitionType,
           transitionDuration,
+          textAnimationSpeed,
           preset,
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -1908,6 +1915,7 @@ export default function App() {
     setTextEffect(project.settings.textEffect);
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
+    setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -3240,6 +3248,22 @@ export default function App() {
                     <div className="flex justify-between text-[10px] font-mono text-black font-bold">
                       <span>FAST ({transitionDuration}s)</span>
                       <span>SLOW</span>
+                    </div>
+                    
+                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Text Anim Speed</h4>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="3" 
+                      step="0.1" 
+                      value={textAnimationSpeed}
+                      onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
+                      className="w-full accent-black"
+                    />
+                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
+                      <span>SLOWER (0.5x)</span>
+                      <span>{textAnimationSpeed}x</span>
+                      <span>FASTER (3x)</span>
                     </div>
                   </div>
                 </div>
