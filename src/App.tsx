@@ -2123,9 +2123,8 @@ export default function App() {
   };
 
   const generateWorld = async () => {
-    if (mediaFiles.length === 0) {
-      setToastMessage("Please add some media files first.");
-      setTimeout(() => setToastMessage(null), 3000);
+    if (mediaFiles.length === 0 && !scriptText.trim()) {
+      setToastMessage("Please add some media files or write a script first.");
       return;
     }
 
