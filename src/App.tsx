@@ -1316,6 +1316,13 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
   const [showGiphyModal, setShowGiphyModal] = useState(false);
   const [giphySearchQuery, setGiphySearchQuery] = useState('');
   const [giphySearchResults, setGiphySearchResults] = useState<any[]>([]);
@@ -2675,8 +2682,7 @@ export default function App() {
               <div className="flex justify-end">
                 <button 
                   onClick={() => setSetupStep(2)}
-                  disabled={mediaFiles.length === 0}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2 disabled:opacity-50"
+                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
                 >
                   Continue <ArrowRight size={18} />
                 </button>
@@ -3229,7 +3235,7 @@ export default function App() {
       {/* Global Overlays Layer */}
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green' : 'bg-brutal-pink'} text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green/90' : 'bg-brutal-pink/90'} backdrop-blur-sm shadow-xl text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
           {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
           <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
           <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">

@@ -137,26 +137,34 @@ export default function AppHeader({
               </>
             ) : (
               <>
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      onNavigate(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
-                      appMode === item.id
-                        ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
-                        : 'bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                    }`}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </button>
-                ))}
+                {navItems.map((item) => {
+                  const isDisabled = !user && (item.id === 'setup' || item.id === 'profile');
+                  return (
+                    <button
+                      key={item.id}
+                      disabled={isDisabled}
+                      onClick={() => {
+                        onNavigate(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
+                        isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-200' :
+                        appMode === item.id
+                          ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
+                          : 'bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </button>
+                  );
+                })}
                 <button
                   onClick={onNewProject}
-                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ml-1"
+                  disabled={!user}
+                  className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ml-1 ${
+                    !user ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                  }`}
                 >
                   <Plus size={14} />
                   New
@@ -256,30 +264,38 @@ export default function AppHeader({
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed top-14 right-0 bottom-0 w-64 bg-brutal-bg brutal-border border-t-0 z-[500] md:hidden flex flex-col p-4 gap-2 shadow-[-8px_0_0_0_rgba(0,0,0,1)]"
             >
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    onNavigate(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border transition-all ${
-                    appMode === item.id
-                      ? 'bg-brutal-blue'
-                      : 'bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </button>
-              ))}
+              {navItems.map((item) => {
+                const isDisabled = !user && (item.id === 'setup' || item.id === 'profile');
+                return (
+                  <button
+                    key={item.id}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      onNavigate(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border transition-all ${
+                      isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-200' :
+                      appMode === item.id
+                        ? 'bg-brutal-blue'
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                );
+              })}
 
               <button
                 onClick={() => {
                   onNewProject();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border bg-brutal-green"
+                disabled={!user}
+                className={`w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border ${
+                  !user ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-brutal-green'
+                }`}
               >
                 <Plus size={16} />
                 New Project

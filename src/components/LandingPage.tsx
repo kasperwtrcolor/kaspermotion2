@@ -37,9 +37,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <button onClick={onStart} className="brutal-button bg-brutal-green px-8 py-4 text-lg flex items-center justify-center gap-2">
                 Create Now <ArrowRight size={20} />
               </button>
-              <button className="brutal-button bg-white px-8 py-4 text-lg flex items-center justify-center gap-2">
-                <Play size={20} /> Watch Demo
-              </button>
             </div>
           </motion.div>
         </div>
