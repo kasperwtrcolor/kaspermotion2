@@ -1576,14 +1576,11 @@ export default function App() {
   
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [isRecording, setIsRecording] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => setToastMessage(null), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const setToastMessage = (msg: string | null) => {
+    if (!msg) return;
+    setNotifications(prev => prev.includes(msg) ? prev : [msg, ...prev]);
+  };
 
   const [showGiphyModal, setShowGiphyModal] = useState(false);
   const [giphySearchQuery, setGiphySearchQuery] = useState('');
@@ -1837,10 +1834,10 @@ export default function App() {
               type: item.type,
               name: item.name,
               caption: scriptText.split('\n')[i] || '',
-              giphyStickerUrl,
-              stickerScale,
-              stickerX,
-              stickerY
+              ...(giphyStickerUrl && { giphyStickerUrl }),
+              ...(stickerScale && { stickerScale }),
+              ...(stickerX !== undefined && { stickerX }),
+              ...(stickerY !== undefined && { stickerY })
             };
           } catch (uploadErr) {
             console.error("File upload failed for:", item.name, uploadErr);
@@ -1850,10 +1847,10 @@ export default function App() {
               type: item.type,
               name: item.name,
               caption: scriptText.split('\n')[i] || '',
-              giphyStickerUrl,
-              stickerScale,
-              stickerX,
-              stickerY
+              ...(giphyStickerUrl && { giphyStickerUrl }),
+              ...(stickerScale && { stickerScale }),
+              ...(stickerX !== undefined && { stickerX }),
+              ...(stickerY !== undefined && { stickerY })
             };
           }
         } else {
@@ -1862,10 +1859,10 @@ export default function App() {
             type: item.type,
             name: item.name,
             caption: scriptText.split('\n')[i] || '',
-            giphyStickerUrl,
-            stickerScale,
-            stickerX,
-            stickerY
+            ...(giphyStickerUrl && { giphyStickerUrl }),
+            ...(stickerScale && { stickerScale }),
+            ...(stickerX !== undefined && { stickerX }),
+            ...(stickerY !== undefined && { stickerY })
           };
         }
       }));
@@ -2202,7 +2199,7 @@ export default function App() {
       // Base GSAP animation duration is 4s; adjusted by speed multiplier
       const animDuration = (4 / textAnimationSpeed) * 1000;
       // Scene stays at least long enough for text animation to finish + buffer
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration);
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
       const timer = setInterval(() => {
         setCurrentIndex(prev => {
           if (prev < compositions.length - 1) return prev + 1;
@@ -2734,7 +2731,7 @@ export default function App() {
         
         // Wait for text animation to finish + scene duration
         const animDuration = (4 / textAnimationSpeed) * 1000;
-        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration);
+        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
         await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
 
@@ -2793,6 +2790,7 @@ export default function App() {
             setAppMode('setup');
             setSetupStep(1);
           }}
+          notifications={notifications}
         />
       );
     }
@@ -3553,16 +3551,7 @@ export default function App() {
       {renderContent()}
 
       {/* Global Overlays Layer */}
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[1000] ${toastMessage.includes('success') ? 'bg-brutal-green/90' : 'bg-brutal-pink/90'} backdrop-blur-sm shadow-xl text-black px-6 py-4 brutal-border flex items-start gap-4 max-w-md`}>
-          {toastMessage.includes('success') ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
-          <p className="text-sm font-bold font-mono uppercase leading-relaxed">{toastMessage}</p>
-          <button onClick={() => setToastMessage(null)} className="shrink-0 hover:scale-110 transition-transform">
-            <X size={20} />
-          </button>
-        </div>
-      )}
+      {/* Toast logic removed, notifications shown in ProfilePage */}
 
       {/* Giphy Search Modal */}
       <AnimatePresence>

@@ -11,6 +11,7 @@ interface ProfilePageProps {
   onDeleteProject: (id: string) => void;
   onDeleteAsset: (e: React.MouseEvent, asset: any) => void;
   onUseAssetInProject: (assets: any[]) => void;
+  notifications: string[];
 }
 
 type ProfileTab = 'videos' | 'assets' | 'account';
@@ -24,6 +25,7 @@ export default function ProfilePage({
   onDeleteProject,
   onDeleteAsset,
   onUseAssetInProject,
+  notifications,
 }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('videos');
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
@@ -337,6 +339,27 @@ export default function ProfilePage({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Notifications */}
+              <div className="brutal-card p-6">
+                <h3 className="font-display text-xl font-bold uppercase mb-6 flex items-center gap-3 border-b-2 border-black pb-3">
+                   Activity Notifications
+                </h3>
+                {notifications.length === 0 ? (
+                  <p className="font-mono text-sm uppercase text-black/50">No notifications yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {notifications.map((msg, idx) => (
+                      <div key={idx} className="bg-white brutal-border p-3 flex items-start gap-3">
+                        <div className="mt-0.5 text-black">
+                           <span className="font-bold">›</span>
+                        </div>
+                        <p className="font-mono text-xs font-bold uppercase">{msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
