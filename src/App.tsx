@@ -1583,6 +1583,8 @@ export default function App() {
   };
 
   const [showGiphyModal, setShowGiphyModal] = useState(false);
+  const [showExportExplainer, setShowExportExplainer] = useState(false);
+  const [recordingKey, setRecordingKey] = useState(0);
   const [giphySearchQuery, setGiphySearchQuery] = useState('');
   const [giphySearchResults, setGiphySearchResults] = useState<any[]>([]);
   const [isSearchingGiphy, setIsSearchingGiphy] = useState(false);
@@ -2630,6 +2632,7 @@ export default function App() {
       return;
     }
     try {
+      setShowExportExplainer(false);
       const resConstraints = {
         '4K': { width: 3840, height: 2160 },
         '1080p': { width: 1920, height: 1080 },
@@ -2698,10 +2701,6 @@ export default function App() {
         }
       };
 
-      // Auto-play sequence for recording
-      setCurrentIndex(0);
-      setRecordingProgress(0);
-      
       // Hide cursor, header, and show countdown before recording
       document.body.style.cursor = 'none';
       const header = document.querySelector('header');
@@ -2719,19 +2718,27 @@ export default function App() {
       await new Promise(r => setTimeout(r, 1000));
       countdownEl.remove();
 
-      mediaRecorder.start();
+      // Start actual recording and remount scene 0
       setIsRecording(true);
+      setRecordingKey(prev => prev + 1);
+      setCurrentIndex(0);
+      setRecordingProgress(0);
 
-      for (let i = 1; i < compositions.length; i++) {
+      // Brief delay for React flush
+      await new Promise(r => setTimeout(r, 100));
+      mediaRecorder.start();
+      
+      const animDuration = (4 / textAnimationSpeed) * 1000;
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
+
+      for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
         
         // Update index
         setCurrentIndex(i);
         setRecordingProgress((i / compositions.length) * 100);
         
-        // Wait for text animation to finish + scene duration
-        const animDuration = (4 / textAnimationSpeed) * 1000;
-        const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
+        // Wait for current scene duration
         await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
 
@@ -3431,7 +3438,7 @@ export default function App() {
 
       
       {/* The 3D World */}
-      <VideoCanvas isRecording={isRecording}>
+      <VideoCanvas key={recordingKey} isRecording={isRecording}>
         {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
         {backgroundStyle === 'particles' && <ParticleTrails />}
       <motion.div
@@ -3540,7 +3547,7 @@ export default function App() {
         onLogin={handleLogin}
         onLogout={handleLogout}
         onNewProject={handleStartOver}
-        onExport={startRecording}
+        onExport={() => setShowExportExplainer(true)}
         onStudio={() => setAppMode('setup')}
         onStickers={() => setShowGiphyModal(true)}
         onResetCamera={resetCamera}
@@ -3551,7 +3558,46 @@ export default function App() {
       {renderContent()}
 
       {/* Global Overlays Layer */}
-      {/* Toast logic removed, notifications shown in ProfilePage */}
+      {/* Export Explainer Modal */}
+      <AnimatePresence>
+        {showExportExplainer && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="bg-white brutal-border p-8 max-w-md w-full text-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <h2 className="font-display text-2xl font-bold uppercase mb-4 text-brutal-blue">Export Instructions</h2>
+              <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
+                1. Click <span className="bg-brutal-blue px-1">PROCEED</span> to select a screen to record.
+              </p>
+              <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
+                2. Your browser will ask you to share your screen. Select the <span className="bg-brutal-green px-1">CURRENT TAB</span>. Make sure "Share Audio" is checked if available.
+              </p>
+              <p className="font-mono text-sm mb-6 leading-relaxed font-bold">
+                3. Do not minimize or switch tabs. A 3-second countdown will start, followed by the actual video export.
+              </p>
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowExportExplainer(false)} 
+                  className="flex-1 px-4 py-3 bg-white brutal-border font-bold font-mono text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all uppercase"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={startRecording}
+                  className="flex-1 px-4 py-3 bg-brutal-blue text-black brutal-border font-bold font-mono text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all uppercase flex items-center justify-center gap-2"
+                >
+                  Proceed
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Giphy Search Modal */}
       <AnimatePresence>
