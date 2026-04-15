@@ -1573,7 +1573,8 @@ export default function App() {
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#000000');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
-  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-split');
+  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-split']);
+  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-split'); // Kept for legacy compatibility
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
@@ -1905,6 +1906,7 @@ export default function App() {
           fontStyle,
           backgroundStyle,
           textEffect,
+          selectedEffects,
           transitionType,
           transitionDuration,
           textAnimationSpeed,
@@ -1942,7 +1944,8 @@ export default function App() {
     setScriptText(project.script);
     setFontStyle(project.settings.fontStyle);
     setBackgroundStyle(project.settings.backgroundStyle);
-    setTextEffect(project.settings.textEffect);
+    setTextEffect(project.settings.textEffect || 'gsap-split');
+    setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-split']);
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
@@ -2457,13 +2460,20 @@ export default function App() {
         }
       }
       
-      let activeEffect = textEffect;
+      // Advanced Combination Logic
+      const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-split'] as TextEffect[]);
+      let activeEffect = effectsPool[sceneIdx % effectsPool.length];
+      
       if (isTextOnly) {
-        const textOnlyEffects: TextEffect[] = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'];
-        activeEffect = textOnlyEffects[Math.floor(Math.random() * textOnlyEffects.length)];
-      } else if (textEffect === 'random') {
-        const effects: TextEffect[] = ['gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'];
-        activeEffect = effects[Math.floor(Math.random() * effects.length)];
+        // Text-only scenes favor explosive/advanced GSAP effects but respect the pool if they are in it
+        const textOnlyPref = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'] as TextEffect[];
+        const availableTextOnly = effectsPool.filter(e => textOnlyPref.includes(e));
+        if (availableTextOnly.length > 0) {
+          activeEffect = availableTextOnly[Math.floor(Math.random() * availableTextOnly.length)];
+        } else {
+          // Fallback to textOnly list if nothing selected
+          activeEffect = textOnlyPref[Math.floor(Math.random() * textOnlyPref.length)];
+        }
       }
 
       const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'];
@@ -2504,7 +2514,7 @@ export default function App() {
               sceneIdx + 100, 
               searchTerm.toUpperCase(), 
               'center', 
-              activeEffect, 
+              effectsPool[(sceneIdx + 1) % effectsPool.length], 
               'zoom', 
               transitionDuration, 
               prev,
@@ -2547,7 +2557,7 @@ export default function App() {
         caption: `Visit ${showcaseCaption}`,
         textPosition: 'bottom',
         sceneType: 'website-showcase',
-        textEffect,
+        textEffect: effectsPool[0] || 'gsap-split',
         transitionType: 'zoom',
         transitionDuration: 1.5,
         isTextOnly: false,
@@ -2579,7 +2589,7 @@ export default function App() {
         scriptLines.length + i, 
         '', 
         preferredTextPosition, 
-        textEffect, 
+        effectsPool[i % effectsPool.length], 
         transitionType, 
         transitionDuration, 
         prev,
@@ -3220,20 +3230,85 @@ export default function App() {
 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation</h3>
-                  <select 
-                    value={textEffect}
-                    onChange={(e) => setTextEffect(e.target.value as TextEffect)}
-                    className="w-full brutal-input px-3 py-3 text-sm font-bold uppercase transition-all bg-white"
-                  >
-                    {[
-                      'gsap-split', 'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 
-                      'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'random'
-                    ].map(effect => (
-                      <option key={effect} value={effect}>{effect.replace('-', ' ')}</option>
-                    ))}
-                  </select>
+                <div className="md:col-span-2">
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation Combination</h3>
+                  
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <button 
+                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'])}
+                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
+                    >
+                      Select All
+                    </button>
+                    <button 
+                      onClick={() => setSelectedEffects(['gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'])}
+                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-purple text-white"
+                    >
+                      Pure GSAP
+                    </button>
+                    <button 
+                      onClick={() => setSelectedEffects([])}
+                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-white hover:bg-gray-100"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Advanced Cinematic (GSAP)</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                        {[
+                          'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 
+                          'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 
+                          'gsap-square', 'gsap-heart', 'gsap-stack'
+                        ].map((effect: any) => (
+                          <button
+                            key={effect}
+                            onClick={() => {
+                              setSelectedEffects(prev => 
+                                prev.includes(effect) ? prev.filter(e => e !== effect) : [...prev, effect]
+                              );
+                            }}
+                            className={`px-2 py-2 text-[10px] font-bold uppercase brutal-border transition-all ${selectedEffects.includes(effect) ? 'bg-brutal-purple text-white' : 'bg-white hover:bg-gray-50'}`}
+                          >
+                            {effect.replace('gsap-', '').replace('-', ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Standard Effects</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                        {[
+                          'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 
+                          'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'
+                        ].map((effect: any) => (
+                          <button
+                            key={effect}
+                            onClick={() => {
+                              setSelectedEffects(prev => 
+                                prev.includes(effect) ? prev.filter(e => e !== effect) : [...prev, effect]
+                              );
+                            }}
+                            className={`px-2 py-2 text-[10px] font-bold uppercase brutal-border transition-all ${selectedEffects.includes(effect) ? 'bg-brutal-green' : 'bg-white hover:bg-gray-50'}`}
+                          >
+                            {effect.replace('-', ' ')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {selectedEffects.length === 0 && (
+                    <p className="mt-3 text-[10px] font-mono font-bold text-red-500 uppercase animate-pulse">
+                      Warning: No animations selected. Defaulting to GSAP Split.
+                    </p>
+                  )}
+                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
+                    The engine will cycle through your {selectedEffects.length} selected animations across your trailer scenes.
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Position</h3>
