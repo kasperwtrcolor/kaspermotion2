@@ -113,10 +113,15 @@ const generateComposition = (
   const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
   const z = 0;
 
-  const positions: Exclude<TextPosition, 'random'>[] = ['bottom', 'top', 'center', 'left', 'right'];
+  const positions: Exclude<TextPosition, 'random'>[] = items.length > 0 
+    ? ['left', 'right'] 
+    : ['bottom', 'top', 'center', 'left', 'right'];
+    
   const textPosition = preferredPosition === 'random' 
     ? positions[Math.floor(Math.random() * positions.length)]
-    : preferredPosition as Exclude<TextPosition, 'random'>;
+    : (items.length > 0 && (preferredPosition === 'center' || preferredPosition === 'top' || preferredPosition === 'bottom'))
+      ? (Math.random() > 0.5 ? 'left' : 'right')
+      : preferredPosition as Exclude<TextPosition, 'random'>;
 
   // Process media items with offsets for multi-image scenes
   const processedMedia = items.map((item, i) => {
@@ -1315,9 +1320,9 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
         };
       case 'spin':
         return {
-          future: { rotateZ: 180, opacity: 0, scale: 0.5, transition: baseTransition },
-          active: { rotateZ: 0, opacity: 1, scale: 1, transition: baseTransition },
-          past: { rotateZ: -180, opacity: 0, scale: 0.5, transition: baseTransition }
+          future: { rotateY: 180, opacity: 0, scale: 0.5, transition: baseTransition },
+          active: { rotateY: 0, opacity: 1, scale: 1, transition: baseTransition },
+          past: { rotateY: -180, opacity: 0, scale: 0.5, transition: baseTransition }
         };
       case 'expand':
         return {
@@ -1351,13 +1356,16 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
       scale: [0.9, 1, 1],
       rotateY: 0, 
       rotateX: 0,
+      z: 0,
       filter: ['blur(20px)', 'blur(10px)', 'blur(0px)'],
       transition: { times: [0, 0.3, 1], duration: 4, ease: 'easeOut' }
     } : { 
       ...transitionVariants.active,
-      rotateY: 0, 
-      rotateX: 0,
+      rotateY: [15, -5], 
+      rotateX: [10, 5],
+      z: [0, 200], // Zoom in effect
       transition: { 
+        z: { duration: 8, ease: "easeOut" },
         filter: { duration: 0.4 },
         default: { type: 'spring', damping: 15, stiffness: 100, mass: 1, delay: 0.1 }
       }
@@ -1366,6 +1374,7 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
       ...transitionVariants.past,
       rotateZ: 0,
       scale: 0,
+      z: 400,
       transition: { duration: 1.5, ease: "easeInOut" }
     }
   };
@@ -1382,8 +1391,8 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
     past: { opacity: 0 }
   };
 
-  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]";
-  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]";
+  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-2";
+  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1";
 
   return (
     <div
@@ -1407,8 +1416,8 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
               text={comp.caption} 
               effect={comp.textEffect} 
               className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight drop-shadow-2xl ${comp.fontFamily || 'font-display'}`} 
-              textColor={comp.textColor}
-              isMulti={comp.isMultiColor}
+              textColor={comp.textColor || textColor}
+              isMulti={comp.isMultiColor || isMultiColor}
             />
           </motion.div>
         )}
@@ -1644,9 +1653,9 @@ export default function App() {
           if (userSnap.exists()) {
             const userData = userSnap.data();
             if (userData.lastRewardDate !== today) {
-              const newCredits = (userData.credits || 0) + 10;
+              const newCredits = (userData.credits || 0) + 5;
               await setDoc(userRef, { credits: newCredits, lastRewardDate: today }, { merge: true });
-              setToastMessage("You received 10 daily credits!");
+              setToastMessage("You received 5 daily credits!");
               setDailyCreditsClaimed(true);
             } else {
               setDailyCreditsClaimed(true);
@@ -1721,8 +1730,8 @@ export default function App() {
 
   const generateAIImage = async () => {
     if (!aiPrompt) return;
-    if (credits < 1) {
-      setToastMessage("Not enough credits. You need 1 credit to generate an image.");
+    if (credits < 3) {
+      setToastMessage("Not enough credits. You need 3 credits to generate an image.");
       return;
     }
     setIsGeneratingImage(true);
@@ -1766,8 +1775,8 @@ export default function App() {
         
         if (user) {
           const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, { credits: credits - 1 }, { merge: true });
-          setToastMessage("Image generated! 1 credit used.");
+          await setDoc(userRef, { credits: Math.max(0, credits - 3) }, { merge: true });
+          setToastMessage("Image generated! 3 credits used.");
         } else {
           setToastMessage("Image generated locally.");
         }

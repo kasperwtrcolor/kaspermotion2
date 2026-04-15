@@ -328,13 +328,13 @@ export default function ProfilePage({
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Award size={20} />
                     </div>
-                    <p className="font-display text-xl font-bold">+10 Daily</p>
+                    <p className="font-display text-xl font-bold">+5 Daily</p>
                     <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Daily Reward</p>
                   </div>
                   <div className="bg-brutal-purple brutal-border p-6 text-center">
                     <p className="font-mono text-xs font-bold uppercase mb-2">Credit Costs</p>
                     <div className="space-y-1 text-[11px] font-mono">
-                      <p>AI Image: <strong>1 credit</strong></p>
+                      <p>AI Image: <strong>3 credits</strong></p>
                       <p>Trailer: <strong>5 credits</strong></p>
                     </div>
                   </div>
