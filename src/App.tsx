@@ -2759,6 +2759,9 @@ export default function App() {
       countdownEl.innerHTML = '<span>1</span>';
       await new Promise(r => setTimeout(r, 1000));
       countdownEl.remove();
+      
+      // 1-second buffer where no countdown is shown before recording starts
+      await new Promise(r => setTimeout(r, 1000));
 
       // Start actual recording and remount scene 0
       setIsRecording(true);
