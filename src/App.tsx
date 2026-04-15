@@ -23,8 +23,8 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight';
-type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph';
+type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
@@ -770,6 +770,117 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
   );
 };
 
+const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const chars = containerRef.current.querySelectorAll('.gsap-glow-char');
+    
+    gsap.set(chars, { opacity: 0, y: 30, scale: 0.8 });
+    
+    gsap.to(chars, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      textShadow: `0 0 20px ${textColor || '#00f2ff'}`,
+      duration: 0.8,
+      stagger: 0.05,
+      ease: "power3.out",
+      onComplete: () => {
+        gsap.to(chars, {
+          textShadow: `0 0 5px ${textColor || '#00f2ff'}`,
+          duration: 1.5,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut"
+        });
+      }
+    });
+  }, { scope: containerRef, dependencies: [text] });
+
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
+          {word.split('').map((char, j) => (
+            <span key={j} className="gsap-glow-char inline-block whitespace-pre">{char}</span>
+          ))}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ').filter(w => w.length > 0);
+  
+  const heroIndex = useMemo(() => {
+    let maxLen = -1;
+    let idx = 0;
+    words.forEach((w, i) => {
+      if (w.length > maxLen) {
+        maxLen = w.length;
+        idx = i;
+      }
+    });
+    return idx;
+  }, [words]);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const wordElements = containerRef.current.querySelectorAll('.gsap-focus-word');
+    
+    gsap.set(wordElements, { opacity: 0, scale: 0.5, filter: 'blur(10px)' });
+    
+    const tl = gsap.timeline();
+    
+    tl.to(wordElements, {
+      opacity: 1,
+      scale: 1,
+      filter: 'blur(0px)',
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "back.out(1.7)"
+    });
+
+    const others = Array.from(wordElements).filter((_, i) => i !== heroIndex);
+    if (others.length > 0) {
+      tl.to(others, {
+        opacity: [1, 0, 1, 0, 1, 0],
+        duration: 0.2,
+        repeat: 3,
+        ease: "none",
+        delay: 1.0
+      }).to(others, { opacity: 0, duration: 0.2 });
+    }
+
+    tl.to(wordElements[heroIndex], {
+      scale: 1.4,
+      textShadow: '0 0 40px rgba(255,255,255,0.9)',
+      duration: 0.6,
+      ease: "elastic.out(1, 0.3)"
+    }, "-=0.2");
+
+  }, { scope: containerRef, dependencies: [text] });
+
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
+      {words.map((word, i) => (
+        <span 
+          key={i} 
+          className="gsap-focus-word inline-flex whitespace-pre" 
+          style={{ ...getWordStyle(word, i, textColor, isMulti) }}
+        >
+          {word}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
@@ -827,6 +938,8 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-square': return <GSAPSquareText {...props} />;
     case 'gsap-heart': return <GSAPHeartText {...props} />;
     case 'gsap-stack': return <GSAPStackText {...props} />;
+    case 'gsap-glow': return <GSAPGlowText {...props} />;
+    case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
     default: return <SplitText {...props} />;
   }
 };
@@ -885,6 +998,56 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
     <video src={url} className="w-full h-full object-cover opacity-70" muted />
   ) : (
     <img src={url} className="w-full h-full object-cover opacity-70" alt="thumbnail" />
+  );
+};
+
+const GeometryMorphBackground = () => {
+  const shapes = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
+    id: i,
+    type: ['rect', 'circle', 'triangle', 'plus'][Math.floor(Math.random() * 4)],
+    size: Math.random() * 200 + 100,
+    x: Math.random() * 2000 - 1000,
+    y: Math.random() * 2000 - 1000,
+    z: Math.random() * -1000 - 500,
+    color: ['bg-brutal-blue', 'bg-brutal-pink', 'bg-brutal-green', 'bg-white', 'bg-brutal-purple'][Math.floor(Math.random() * 5)],
+    duration: Math.random() * 20 + 20,
+    delay: Math.random() * -20
+  })), []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]" style={{ transformStyle: 'preserve-3d' }}>
+      {shapes.map(s => (
+        <motion.div
+          key={s.id}
+          className={`absolute brutal-border opacity-20 ${s.color} ${s.type === 'circle' ? 'rounded-full' : s.type === 'rect' ? 'rounded-xl' : ''}`}
+          style={{ 
+            width: s.size, 
+            height: s.type === 'plus' ? s.size / 4 : s.size,
+            x: s.x, y: s.y, z: s.z,
+            transformStyle: 'preserve-3d'
+          }}
+          animate={{
+            rotateZ: [0, 360],
+            x: [s.x, s.x + (Math.random() * 400 - 200)],
+            y: [s.y, s.y + (Math.random() * 400 - 200)],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: s.duration,
+            repeat: Infinity,
+            ease: "linear",
+            times: [0, 1]
+          }}
+        >
+          {s.type === 'triangle' && (
+            <div className="w-full h-full clip-path-triangle bg-inherit" />
+          )}
+          {s.type === 'plus' && (
+            <div className="absolute inset-0 bg-inherit rotate-90" />
+          )}
+        </motion.div>
+      ))}
+    </div>
   );
 };
 
@@ -3317,7 +3480,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => setBackgroundStyle(bg)}
@@ -3362,13 +3525,13 @@ export default function App() {
                   
                   <div className="flex flex-wrap gap-2 mb-4">
                     <button 
-                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'])}
+                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
                       className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
                     >
                       Select All
                     </button>
                     <button 
-                      onClick={() => setSelectedEffects(['gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'])}
+                      onClick={() => setSelectedEffects(['gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
                       className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-purple text-white"
                     >
                       Pure GSAP
@@ -3388,7 +3551,7 @@ export default function App() {
                         {[
                           'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 
                           'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 
-                          'gsap-square', 'gsap-heart', 'gsap-stack'
+                          'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'
                         ].map((effect: any) => (
                           <button
                             key={effect}
@@ -3685,6 +3848,7 @@ export default function App() {
       <VideoCanvas key={recordingKey} isRecording={isRecording}>
         {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
         {backgroundStyle === 'particles' && <ParticleTrails />}
+        {backgroundStyle === 'geometry-morph' && <GeometryMorphBackground />}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
