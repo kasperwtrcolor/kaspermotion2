@@ -112,7 +112,7 @@ const PathLine = ({ start, end, index, activeIndex }: { start: PathPoint; end: P
     return () => ctx.revert();
   }, [index, activeIndex]);
 
-  const colors = ['#00f2ff', '#ff00ea', '#7000ff', '#00ff88', '#ffea00'];
+  const colors = ['#00ffff', '#ff00ff', '#00ff00', '#ffff00', '#ff0000'];
   const pathColor = colors[index % colors.length];
 
   return (

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Archivo+Black&family=Bebas+Neue&family=Outfit:wght@300;400;600;700&family=Syne:wght@400;700;800&family=Unbounded:wght@400;700;900&family=Kanit:wght@400;600;800&family=Public+Sans:wght@400;700;900&family=Work+Sans:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Big+Shoulders+Display:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Archivo+Black&family=Bebas+Neue&family=Outfit:wght@300;400;600;700&family=Syne:wght@400;700;800&family=Unbounded:wght@400;700;900&family=Kanit:wght@400;600;800&family=Public+Sans:wght@400;700;900&family=Work+Sans:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Big+Shoulders+Display:wght@400;700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Righteous&family=Bangers&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -16,6 +16,11 @@
   --font-work: "Work Sans", sans-serif;
   --font-montserrat: "Montserrat", sans-serif;
   --font-impact: "Big Shoulders Display", sans-serif;
+  --font-pixel: "Press Start 2P", cursive;
+  --font-pixel-arcade: "Silkscreen", cursive;
+  --font-righteous: "Righteous", cursive;
+  --font-space-tech: "Space Grotesk", sans-serif;
+  --font-bangers: "Bangers", system-ui;
 
   --color-brutal-bg: #f4f4f0;
   --color-brutal-black: #000000;
@@ -186,22 +191,29 @@ body {
 
 .neon-path {
   position: absolute;
-  height: 2px;
+  height: 4px;
   background: white;
   pointer-events: none;
   transform-origin: left center;
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px var(--path-color, #00f2ff);
-  z-index: 50;
+  z-index: 100 !important;
+  opacity: 1 !important;
 }
 
 .neon-path::after {
   content: '';
   position: absolute;
-  inset: -10px;
+  inset: -15px;
   background: inherit;
-  filter: blur(15px);
-  opacity: 0.4;
+  filter: blur(20px);
+  opacity: 0.6;
   border-radius: 50px;
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+  0%, 100% { opacity: 0.4; filter: blur(15px); }
+  50% { opacity: 0.8; filter: blur(25px); }
 }
 
 .recording-countdown {

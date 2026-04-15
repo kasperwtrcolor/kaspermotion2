@@ -25,7 +25,7 @@ type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight';
 type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
-type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact';
+type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 
 type LibraryAsset = {
@@ -1583,6 +1583,7 @@ export default function App() {
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
+  const [showPathLines, setShowPathLines] = useState(false);
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -1914,6 +1915,7 @@ export default function App() {
           transitionDuration,
           textAnimationSpeed,
           sceneDuration,
+          showPathLines,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -1953,6 +1955,7 @@ export default function App() {
     setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setSceneDuration(project.settings.sceneDuration || 5.0);
+    setShowPathLines(project.settings.showPathLines || false);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -3189,7 +3192,12 @@ export default function App() {
                       { val: 'font-public', label: 'Public Sans' },
                       { val: 'font-work', label: 'Work Sans' },
                       { val: 'font-montserrat', label: 'Montserrat' },
-                      { val: 'font-impact', label: 'Impact Display' }
+                      { val: 'font-impact', label: 'Impact Display' },
+                      { val: 'font-pixel', label: 'Pixel Press (8-bit)' },
+                      { val: 'font-pixel-arcade', label: 'Arcade Silk' },
+                      { val: 'font-righteous', label: 'Retro Righteous' },
+                      { val: 'font-space-tech', label: 'Space Technical' },
+                      { val: 'font-bangers', label: 'Bangers Comic' }
                     ].map(f => (
                       <option key={f.val} value={f.val} className={f.val}>{f.label}</option>
                     ))}
@@ -3393,6 +3401,20 @@ export default function App() {
                       <span>LONG (15s)</span>
                     </div>
 
+                    <h4 className="text-xs font-mono font-bold uppercase mt-6 mb-3 text-black border-t-2 border-black pt-4">Path Trajectory</h4>
+                    <label className="flex items-center gap-3 cursor-pointer select-none group">
+                      <div className="relative">
+                        <input 
+                          type="checkbox" 
+                          checked={showPathLines}
+                          onChange={(e) => setShowPathLines(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-12 h-6 brutal-border transition-colors ${showPathLines ? 'bg-brutal-green' : 'bg-gray-200'}`} />
+                        <div className={`absolute top-1 left-1 w-4 h-4 brutal-border bg-white transition-transform ${showPathLines ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold uppercase group-hover:text-brutal-blue transition-colors">Show Path Lines</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -3577,7 +3599,7 @@ export default function App() {
         <FloatingParticles />
 
         {/* Cinematic Path Guidance */}
-        <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />
+        {showPathLines && <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />}
 
         {/* Compositions */}
         {compositions.map((comp, index) => {
