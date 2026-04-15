@@ -675,8 +675,8 @@ const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { 
-          x: (i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? -40 : 40) + (Math.random()*10-5),
-          y: (i) => (i % 3 === 0 ? -40 : 40) + (Math.random()*10-5),
+          x: (i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? -120 : 120) + (Math.random()*10-5),
+          y: (i) => (i % 3 === 0 ? -120 : 120) + (Math.random()*10-5),
           opacity: 1
         },
         "60%": { x: 0, y: 0, opacity: 1 },
@@ -708,8 +708,8 @@ const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { 
-          x: (i) => (i % 4 === 0 || i % 4 === 3 ? -40 : 40),
-          y: (i) => (i % 4 === 0 || i % 4 === 1 ? -40 : 40),
+          x: (i) => (i % 4 === 0 || i % 4 === 3 ? -120 : 120),
+          y: (i) => (i % 4 === 0 || i % 4 === 1 ? -120 : 120),
           opacity: 1
         },
         "60%": { x: 0, y: 0, opacity: 1 },
@@ -741,8 +741,8 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { 
-          x: (i) => 2.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)), 
-          y: (i) => -2.5 * (13 * Math.cos(i * 0.5) - 5 * Math.cos(2*i*0.5) - 2 * Math.cos(3*i*0.5) - Math.cos(4*i*0.5)),
+          x: (i) => 7.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)), 
+          y: (i) => -7.5 * (13 * Math.cos(i * 0.5) - 5 * Math.cos(2*i*0.5) - 2 * Math.cos(3*i*0.5) - Math.cos(4*i*0.5)),
           opacity: 1
         },
         "60%": { x: 0, y: 0, opacity: 1 },
@@ -2062,9 +2062,9 @@ export default function App() {
   const userPanX = useMotionValue(0);
   const userPanY = useMotionValue(0);
 
-  const smoothX = useSpring(camX, { damping: 30, stiffness: 100, mass: 1 });
-  const smoothY = useSpring(camY, { damping: 30, stiffness: 100, mass: 1 });
-  const smoothZ = useSpring(camZ, { damping: 30, stiffness: 100, mass: 1 });
+  const smoothX = useSpring(camX, { damping: 26, stiffness: 220, mass: 1 });
+  const smoothY = useSpring(camY, { damping: 26, stiffness: 220, mass: 1 });
+  const smoothZ = useSpring(camZ, { damping: 26, stiffness: 220, mass: 1 });
   
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
@@ -2228,8 +2228,8 @@ export default function App() {
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       // Base GSAP animation duration is 4s; adjusted by speed multiplier
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      // Scene stays at least long enough for text animation to finish + buffer (if gsap text exists)
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
+      // Scene stays at least long enough for text animation to finish + small buffer
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 200 : 0);
       
       timer = setTimeout(() => {
         setCurrentIndex(prev => {
