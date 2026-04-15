@@ -27,6 +27,7 @@ type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 
 type TextEffect = 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
+type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 type LibraryAsset = {
   id: string;
@@ -1256,9 +1257,80 @@ const FlashOverlay = ({ status }: { status: string }) => {
   );
 };
 
-const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
+const FilmBurnTransition = ({ active }: { active: boolean }) => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          initial={{ opacity: 0, x: '-100%' }}
+          animate={{ opacity: [0, 1, 0], x: ['-100%', '0%', '100%'] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="fixed inset-0 z-[1100] pointer-events-none bg-gradient-to-r from-transparent via-orange-500/40 to-transparent mix-blend-screen overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,100,0,0.6)_0%,transparent_70%)] blur-3xl scale-150" />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ForegroundAtmosphere = () => {
+  const particles = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
+    id: i,
+    x: Math.random() * 2000 - 1000,
+    y: Math.random() * 2000 - 1000,
+    z: Math.random() * 500 - 250,
+    size: Math.random() * 10 + 5,
+    duration: Math.random() * 10 + 10,
+    delay: Math.random() * 5
+  })), []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d', zIndex: 1000 }}>
+      {particles.map(p => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full bg-white/20 blur-[1px]"
+          style={{ 
+            width: p.size, height: p.size,
+            x: p.x, y: p.y, z: p.z + 500, // Very close to camera
+          }}
+          animate={{ 
+            y: [p.y, p.y - 400],
+            x: [p.x, p.x + 200],
+            opacity: [0, 0.3, 0]
+          }}
+          transition={{ 
+            duration: p.duration, 
+            repeat: Infinity, 
+            delay: p.delay,
+            ease: "linear" 
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const CinematicOverlay = ({ useGrainEffect, mood = 'standard' }: { useGrainEffect: boolean, mood?: CinematicMood }) => {
+  const getMoodFilter = () => {
+    switch (mood) {
+      case 'golden-hour':
+        return 'sepia(0.3) saturate(1.4) brightness(1.1) contrast(1.1) hue-rotate(-10deg)';
+      case 'cyberpunk':
+        return 'contrast(1.2) saturate(1.8) hue-rotate(160deg) brightness(0.9)';
+      case 'noir':
+        return 'grayscale(1) contrast(1.5) brightness(0.9)';
+      case 'teal-and-orange':
+        return 'contrast(1.1) saturate(1.3) hue-rotate(-20deg) brightness(1.05)';
+      default:
+        return 'none';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden" style={{ filter: getMoodFilter() }}>
       <style>
         {`
           @keyframes film-grain {
@@ -1584,6 +1656,8 @@ export default function App() {
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
   const [showPathLines, setShowPathLines] = useState(false);
+  const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
+  const [activeFilmBurn, setActiveFilmBurn] = useState(false);
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -1916,6 +1990,7 @@ export default function App() {
           textAnimationSpeed,
           sceneDuration,
           showPathLines,
+          cinematicMood,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -1956,6 +2031,7 @@ export default function App() {
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setSceneDuration(project.settings.sceneDuration || 5.0);
     setShowPathLines(project.settings.showPathLines || false);
+    setCinematicMood(project.settings.cinematicMood || 'standard');
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -2084,8 +2160,16 @@ export default function App() {
   useEffect(() => {
     if (appMode === 'playing') {
       const interval = setInterval(() => {
+        // High-frequency wiggle
         wiggleX.set((Math.random() - 0.5) * 40);
         wiggleY.set((Math.random() - 0.5) * 40);
+        
+        // Low-frequency breathing
+        const time = Date.now() / 2000;
+        const breathX = Math.sin(time) * 15;
+        const breathY = Math.cos(time * 0.8) * 15;
+        userPanX.set(breathX);
+        userPanY.set(breathY);
       }, 150);
       return () => clearInterval(interval);
     }
@@ -2238,8 +2322,11 @@ export default function App() {
       const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 200 : 0);
       
       timer = setTimeout(() => {
-        setCurrentIndex(prev => {
-          if (prev < compositions.length - 1) return prev + 1;
+          if (prev < compositions.length - 1) {
+            setActiveFilmBurn(true);
+            setTimeout(() => setActiveFilmBurn(false), 800);
+            return prev + 1;
+          }
           return 0;
         });
       }, effectiveSceneDuration); 
@@ -3240,6 +3327,31 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Cinematic Mood (LUTs)</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    {[
+                      { id: 'standard', label: 'Classic', color: 'bg-white' },
+                      { id: 'golden-hour', label: 'Golden Hour', color: 'bg-[#FFD700]' },
+                      { id: 'cyberpunk', label: 'Cyberpunk', color: 'bg-[#FF00FF]' },
+                      { id: 'noir', label: 'Noir (B&W)', color: 'bg-[#333333] text-white' },
+                      { id: 'teal-and-orange', label: 'Hollywood', color: 'bg-[#008080] text-white' }
+                    ].map(mood => (
+                      <button
+                        key={mood.id}
+                        onClick={() => setCinematicMood(mood.id as CinematicMood)}
+                        className={`p-3 brutal-border transition-all flex flex-col items-center gap-2 ${cinematicMood === mood.id ? 'translate-x-1 translate-y-1 shadow-none bg-brutal-blue text-white' : 'hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full brutal-border ${mood.color}`} />
+                        <span className="text-[10px] font-mono font-bold uppercase">{mood.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
+                    Moods apply global color grading, atmospheric lighting, and emotional contrast.
+                  </p>
+                </div>
               </div>
 
 
@@ -3604,6 +3716,9 @@ export default function App() {
         {/* Cinematic Path Guidance */}
         {showPathLines && <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />}
 
+        {/* Pro Atmospheric Layer (V2) */}
+        <ForegroundAtmosphere />
+
         {/* Compositions */}
         {compositions.map((comp, index) => {
           let status: 'past' | 'active' | 'future' = 'future';
@@ -3631,7 +3746,10 @@ export default function App() {
       </motion.div>
 
       {/* Cinematic Overlay (Film Grain, Vignette, Chromatic Aberration) */}
-      <CinematicOverlay useGrainEffect={useGrainEffect} />
+      <CinematicOverlay useGrainEffect={useGrainEffect} mood={cinematicMood} />
+
+      {/* V2 Transition Effects */}
+      <FilmBurnTransition active={activeFilmBurn} />
 
       {/* Global Lens Flare (AE Style) */}
       <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden mix-blend-screen opacity-40">
