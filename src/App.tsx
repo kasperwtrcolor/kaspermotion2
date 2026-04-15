@@ -2322,6 +2322,7 @@ export default function App() {
       const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 200 : 0);
       
       timer = setTimeout(() => {
+        setCurrentIndex(prev => {
           if (prev < compositions.length - 1) {
             setActiveFilmBurn(true);
             setTimeout(() => setActiveFilmBurn(false), 800);
