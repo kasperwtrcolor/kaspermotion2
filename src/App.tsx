@@ -1548,7 +1548,7 @@ export default function App() {
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
   const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('black');
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
-  const [textColor, setTextColor] = useState<string>('#FFFFFF');
+  const [textColor, setTextColor] = useState<string>('#000000');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [textEffect, setTextEffect] = useState<TextEffect>('gsap-split');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
@@ -2195,22 +2195,25 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-play logic — scene duration accounts for text animation time
+  // Auto-play logic — scene duration accounts for text animation time if text exists
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (appMode === 'playing' && !isRecording && compositions.length > 0) {
+      const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       // Base GSAP animation duration is 4s; adjusted by speed multiplier
-      const animDuration = (4 / textAnimationSpeed) * 1000;
-      // Scene stays at least long enough for text animation to finish + buffer
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
-      const timer = setInterval(() => {
+      const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
+      // Scene stays at least long enough for text animation to finish + buffer (if gsap text exists)
+      const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
+      
+      timer = setTimeout(() => {
         setCurrentIndex(prev => {
           if (prev < compositions.length - 1) return prev + 1;
           return 0;
         });
       }, effectiveSceneDuration); 
-      return () => clearInterval(timer);
     }
-  }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed]);
+    return () => clearTimeout(timer);
+  }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
@@ -2728,9 +2731,6 @@ export default function App() {
       await new Promise(r => setTimeout(r, 100));
       mediaRecorder.start();
       
-      const animDuration = (4 / textAnimationSpeed) * 1000;
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, animDuration + 1500);
-
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
         
@@ -2738,6 +2738,11 @@ export default function App() {
         setCurrentIndex(i);
         setRecordingProgress((i / compositions.length) * 100);
         
+        // Calculate duration per scene dynamically
+        const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
+        const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
+        const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
+
         // Wait for current scene duration
         await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
@@ -3520,10 +3525,14 @@ export default function App() {
             transition={{ type: 'spring', damping: 20, stiffness: 100 }}
             className={`pointer-events-none fixed z-40 flex flex-col items-center justify-center text-center px-8 ${getTextPositionClass(currentComp.textPosition)}`}
           >
-            <div className="px-8 py-4 bg-white brutal-border transform -rotate-2">
-              <div className="text-4xl md:text-6xl font-display font-bold tracking-tighter text-black uppercase">
-                <AnimatedCaption text={currentComp.caption} effect={currentComp.textEffect} />
-              </div>
+            <div className={`transform -rotate-2 ${fontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]`}>
+              <AnimatedCaption 
+                text={currentComp.caption} 
+                effect={currentComp.textEffect} 
+                className="text-4xl md:text-6xl"
+                textColor={currentComp.textColor || textColor}
+                isMulti={currentComp.isMultiColor || isMultiColor}
+              />
             </div>
           </motion.div>
         )}
