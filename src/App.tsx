@@ -1284,7 +1284,20 @@ const CinematicOverlay = ({ useGrainEffect }: { useGrainEffect: boolean }) => {
   );
 };
 
-const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; comp: Composition; status: 'past' | 'active' | 'future'; fontSizeOverride?: string }) => {
+const CompositionNode = ({ 
+  comp, 
+  status, 
+  fontSizeOverride,
+  globalTextColor,
+  globalIsMultiColor
+}: { 
+  key?: string; 
+  comp: Composition; 
+  status: 'past' | 'active' | 'future'; 
+  fontSizeOverride?: string;
+  globalTextColor: string;
+  globalIsMultiColor: boolean;
+}) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
   const duration = comp.transitionDuration;
@@ -1416,8 +1429,8 @@ const CompositionNode = ({ comp, status, fontSizeOverride }: { key?: string; com
               text={comp.caption} 
               effect={comp.textEffect} 
               className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight drop-shadow-2xl ${comp.fontFamily || 'font-display'}`} 
-              textColor={comp.textColor || textColor}
-              isMulti={comp.isMultiColor || isMultiColor}
+              textColor={comp.textColor || globalTextColor}
+              isMulti={comp.isMultiColor || globalIsMultiColor}
             />
           </motion.div>
         )}
@@ -3498,7 +3511,13 @@ export default function App() {
           return (
             <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
               <FlashOverlay status={status} />
-              <CompositionNode comp={comp} status={status} fontSizeOverride={randomFontSize} />
+              <CompositionNode 
+                comp={comp} 
+                status={status} 
+                fontSizeOverride={randomFontSize} 
+                globalTextColor={textColor}
+                globalIsMultiColor={isMultiColor}
+              />
             </div>
           );
         })}
