@@ -674,12 +674,13 @@ const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti
     gsap.to(".gsap-triangle-char", {
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
-        "20%": { 
+        "20%": { x: 0, y: 0, opacity: 1 },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "85%": { 
           x: (i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? -120 : 120) + (Math.random()*10-5),
           y: (i) => (i % 3 === 0 ? -120 : 120) + (Math.random()*10-5),
           opacity: 1
         },
-        "60%": { x: 0, y: 0, opacity: 1 },
         "100%": { opacity: 0, scale: 3 }
       },
       duration: 4,
@@ -707,12 +708,13 @@ const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }
     gsap.to(".gsap-square-char", {
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
-        "20%": { 
+        "20%": { x: 0, y: 0, opacity: 1 },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "85%": { 
           x: (i) => (i % 4 === 0 || i % 4 === 3 ? -120 : 120),
           y: (i) => (i % 4 === 0 || i % 4 === 1 ? -120 : 120),
           opacity: 1
         },
-        "60%": { x: 0, y: 0, opacity: 1 },
         "100%": { opacity: 0, rotationY: 90 }
       },
       duration: 4,
@@ -740,12 +742,13 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
     gsap.to(".gsap-heart-char", {
       keyframes: {
         "0%": { x: 0, y: 0, opacity: 0 },
-        "20%": { 
+        "20%": { x: 0, y: 0, opacity: 1 },
+        "60%": { x: 0, y: 0, opacity: 1 },
+        "85%": { 
           x: (i) => 7.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)), 
           y: (i) => -7.5 * (13 * Math.cos(i * 0.5) - 5 * Math.cos(2*i*0.5) - 2 * Math.cos(3*i*0.5) - Math.cos(4*i*0.5)),
           opacity: 1
         },
-        "60%": { x: 0, y: 0, opacity: 1 },
         "100%": { opacity: 0, scale: 2 }
       },
       duration: 4,

@@ -113,13 +113,6 @@ export default function AppHeader({
                   Studio
                 </button>
                 <button
-                  onClick={onStickers}
-                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-purple hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all text-black"
-                >
-                  <Sparkles size={14} />
-                  Stickers
-                </button>
-                <button
                   onClick={onResetCamera}
                   className="p-2 brutal-border bg-brutal-blue hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
                   title="Reset Camera"
