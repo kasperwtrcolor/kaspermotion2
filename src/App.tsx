@@ -3185,7 +3185,6 @@ export default function App() {
                 </div>
               </div>
 
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
