@@ -12,6 +12,7 @@ import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
 import VideoCanvas from './components/VideoCanvas';
 import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
+import WorldNavigationPaths from './components/WorldNavigationPaths';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
@@ -3496,6 +3497,9 @@ export default function App() {
 
         {/* Floating Particles Background */}
         <FloatingParticles />
+
+        {/* Cinematic Path Guidance */}
+        <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />
 
         {/* Compositions */}
         {compositions.map((comp, index) => {
