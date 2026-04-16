@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Music, Volume2, VolumeX } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -18,31 +18,6 @@ import { useGSAP } from '@gsap/react';
 
 gsap.registerPlugin(useGSAP);
 
-const MUSIC_LIBRARY: MusicTrack[] = [
-  { id: 'epic-cinematic', name: 'Legendary Journey', genre: 'Cinematic', url: 'https://cdn.pixabay.com/audio/2022/03/10/audio_b281f62135.mp3' },
-  { id: 'lofi-chill', name: 'Urban Sunset', genre: 'Lo-Fi', url: 'https://cdn.pixabay.com/audio/2022/02/22/audio_d1e8c05001.mp3' },
-  { id: 'cybertech', name: 'Digital Pulse', genre: 'Cyberpunk', url: 'https://cdn.pixabay.com/audio/2023/10/24/audio_3d309062aa.mp3' },
-  { id: 'corporate-fresh', name: 'Modern Success', genre: 'Corporate', url: 'https://cdn.pixabay.com/audio/2022/03/15/audio_7314781404.mp3' },
-  { id: 'happy-upbeat', name: 'Sunshine Rays', genre: 'Happy', url: 'https://cdn.pixabay.com/audio/2022/01/21/audio_31743c5891.mp3' }
-];
-
-const SFX_PACKS: SfxPack[] = [
-  { 
-    id: 'modern', 
-    name: 'Modern Cinematic', 
-    woosh: 'https://cdn.pixabay.com/audio/2022/03/15/audio_23e010884d.mp3',
-    impact: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c35272735a.mp3',
-    glitch: 'https://cdn.pixabay.com/audio/2022/03/24/audio_907865766a.mp3'
-  },
-  { 
-    id: 'digital', 
-    name: 'Digital Edge', 
-    woosh: 'https://cdn.pixabay.com/audio/2023/12/12/audio_17b359737f.mp3',
-    impact: 'https://cdn.pixabay.com/audio/2023/12/12/audio_34dbd101a9.mp3',
-    glitch: 'https://cdn.pixabay.com/audio/2023/04/18/audio_65191c42f0.mp3'
-  }
-];
-
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
 
@@ -53,21 +28,6 @@ type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter'
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
-
-interface MusicTrack {
-  id: string;
-  name: string;
-  url: string;
-  genre: string;
-}
-
-interface SfxPack {
-  id: string;
-  name: string;
-  woosh: string;
-  impact: string;
-  glitch: string;
-}
 
 type LibraryAsset = {
   id: string;
@@ -810,7 +770,7 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
   );
 };
 
-const GSAPGlowText = ({ text, className, textColor, isMulti, playSfx }: { text: string, className?: string, textColor?: string, isMulti?: boolean, playSfx?: any }) => {
+const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
 
@@ -828,7 +788,6 @@ const GSAPGlowText = ({ text, className, textColor, isMulti, playSfx }: { text: 
       duration: 0.8,
       stagger: 0.05,
       ease: "power3.out",
-      onStart: () => playSfx?.('woosh'),
       onComplete: () => {
         gsap.to(chars, {
           textShadow: `0 0 5px ${textColor || '#00f2ff'}`,
@@ -854,7 +813,7 @@ const GSAPGlowText = ({ text, className, textColor, isMulti, playSfx }: { text: 
   );
 };
 
-const GSAPFocusFlashText = ({ text, className, textColor, isMulti, playSfx }: { text: string, className?: string, textColor?: string, isMulti?: boolean, playSfx?: any }) => {
+const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ').filter(w => w.length > 0);
   
@@ -876,14 +835,15 @@ const GSAPFocusFlashText = ({ text, className, textColor, isMulti, playSfx }: { 
     
     gsap.set(wordElements, { opacity: 0, scale: 0.5, filter: 'blur(10px)' });
     
+    const tl = gsap.timeline();
+    
     tl.to(wordElements, {
       opacity: 1,
       scale: 1,
       filter: 'blur(0px)',
       duration: 0.5,
       stagger: 0.1,
-      ease: "back.out(1.7)",
-      onStart: () => playSfx?.('glitch')
+      ease: "back.out(1.7)"
     });
 
     const others = Array.from(wordElements).filter((_, i) => i !== heroIndex);
@@ -950,8 +910,8 @@ const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }:
   );
 };
 
-const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, playSfx }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean, playSfx?: (type: 'woosh' | 'impact' | 'glitch') => void }) => {
-  const props = { text, className, style, textColor, isMulti, playSfx };
+const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+  const props = { text, className, style, textColor, isMulti };
   switch (effect) {
     case 'typewriter': return <TypewriterText {...props} />;
     case 'fade': return <FadeText {...props} />;
@@ -1568,8 +1528,7 @@ const CompositionNode = ({
   status, 
   fontSizeOverride,
   globalTextColor,
-  globalIsMultiColor,
-  playSfx
+  globalIsMultiColor
 }: { 
   key?: string; 
   comp: Composition; 
@@ -1577,7 +1536,6 @@ const CompositionNode = ({
   fontSizeOverride?: string;
   globalTextColor: string;
   globalIsMultiColor: boolean;
-  playSfx?: (type: 'woosh' | 'impact' | 'glitch') => void;
 }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
@@ -1712,7 +1670,6 @@ const CompositionNode = ({
               className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight drop-shadow-2xl ${comp.fontFamily || 'font-display'}`} 
               textColor={comp.textColor || globalTextColor}
               isMulti={comp.isMultiColor || globalIsMultiColor}
-              playSfx={playSfx}
             />
           </motion.div>
         )}
@@ -1864,92 +1821,6 @@ export default function App() {
   const [showPathLines, setShowPathLines] = useState(false);
   const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
-  
-  // Audio State
-  const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
-  const [selectedSfxPack, setSelectedSfxPack] = useState<string>('modern');
-  const [musicVolume, setMusicVolume] = useState<number>(0.5);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const musicAudioRef = useRef<HTMLAudioElement | null>(null);
-  const musicSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const sfxGainRef = useRef<GainNode | null>(null);
-  const masterGainRef = useRef<GainNode | null>(null);
-
-  const initAudio = () => {
-    if (audioContextRef.current) return;
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContextRef.current = ctx;
-    
-    const masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-    masterGainRef.current = masterGain;
-
-    const sfxGain = ctx.createGain();
-    sfxGain.connect(masterGain);
-    sfxGainRef.current = sfxGain;
-    sfxGain.gain.value = 0.8;
-  };
-
-  const playSfx = async (type: 'woosh' | 'impact' | 'glitch') => {
-    if (!audioContextRef.current || isMuted) return;
-    try {
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      
-      const pack = SFX_PACKS.find(p => p.id === selectedSfxPack) || SFX_PACKS[0];
-      const url = pack[type];
-      
-      const audio = new Audio(url);
-      const source = audioContextRef.current.createMediaElementSource(audio);
-      source.connect(sfxGainRef.current!);
-      audio.play();
-    } catch (err) {
-      console.warn('SFX failed:', err);
-    }
-  };
-
-  // Music playback logic
-  useEffect(() => {
-    if (!selectedMusic) {
-      if (musicAudioRef.current) {
-        musicAudioRef.current.pause();
-      }
-      return;
-    }
-
-    initAudio();
-    const track = MUSIC_LIBRARY.find(t => t.id === selectedMusic);
-    if (!track) return;
-
-    if (!musicAudioRef.current) {
-      musicAudioRef.current = new Audio(track.url);
-      musicAudioRef.current.loop = true;
-      musicAudioRef.current.crossOrigin = 'anonymous';
-      
-      const source = audioContextRef.current!.createMediaElementSource(musicAudioRef.current);
-      source.connect(masterGainRef.current!);
-      musicSourceNodeRef.current = source;
-    } else {
-      musicAudioRef.current.src = track.url;
-    }
-
-    if (appMode === 'playing') {
-      musicAudioRef.current.play().catch(() => {
-        console.log('Autoplay blocked - awaiting user interaction');
-      });
-    } else {
-      musicAudioRef.current.pause();
-    }
-  }, [selectedMusic, appMode]);
-
-  useEffect(() => {
-    if (masterGainRef.current) {
-      masterGainRef.current.gain.value = isMuted ? 0 : musicVolume;
-    }
-  }, [musicVolume, isMuted]);
-
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -2283,9 +2154,6 @@ export default function App() {
           sceneDuration,
           showPathLines,
           cinematicMood,
-          selectedMusic,
-          selectedSfxPack,
-          musicVolume,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -2327,9 +2195,6 @@ export default function App() {
     setSceneDuration(project.settings.sceneDuration || 5.0);
     setShowPathLines(project.settings.showPathLines || false);
     setCinematicMood(project.settings.cinematicMood || 'standard');
-    setSelectedMusic(project.settings.selectedMusic || null);
-    setSelectedSfxPack(project.settings.selectedSfxPack || 'modern');
-    setMusicVolume(project.settings.musicVolume || 0.5);
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -3067,14 +2932,14 @@ export default function App() {
         '720p': { width: 1280, height: 720 }
       }[exportResolution];
 
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+      const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { 
           displaySurface: "browser",
           width: { ideal: resConstraints.width },
           height: { ideal: resConstraints.height },
           frameRate: { ideal: 60 }
         },
-        audio: true,
+        audio: false,
         preferCurrentTab: true
       } as any);
 
@@ -3094,20 +2959,7 @@ export default function App() {
         }
       }
 
-      // Create a combined stream for the recorder
-      let combinedStream = displayStream;
-
-      if (audioContextRef.current && masterGainRef.current) {
-        const audioDestination = audioContextRef.current.createMediaStreamDestination();
-        masterGainRef.current.connect(audioDestination);
-        
-        const videoTrack = displayStream.getVideoTracks()[0];
-        const audioTrack = audioDestination.stream.getAudioTracks()[0];
-        
-        combinedStream = new MediaStream([videoTrack, audioTrack]);
-      }
-
-      const mediaRecorder = new MediaRecorder(combinedStream, { 
+      const mediaRecorder = new MediaRecorder(stream, { 
         mimeType,
         videoBitsPerSecond: exportResolution === '4K' ? 50000000 : 15000000 
       });
@@ -3130,7 +2982,7 @@ export default function App() {
         a.click();
         URL.revokeObjectURL(url);
         setIsRecording(false);
-        displayStream.getTracks().forEach(t => t.stop());
+        stream.getTracks().forEach(t => t.stop());
         document.body.style.cursor = 'default';
         const header = document.querySelector('header');
         if (header) (header as HTMLElement).style.display = '';
@@ -3908,125 +3760,13 @@ export default function App() {
                   </button>
                 )}
                 <button 
-                  onClick={() => setSetupStep(5)}
-                  className="brutal-button bg-brutal-orange px-10 py-4 text-xl flex items-center gap-3"
+                  onClick={generateWorld}
+                  className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3"
                 >
-                  NEXT <ArrowRight size={20} />
+                  <Play size={20} fill="currentColor" />
+                  GENERATE PREVIEW
                 </button>
               </div>
-            </motion.div>
-          )}
-
-          {/* Step 5: Audio & Music */}
-          {setupStep === 5 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-blue brutal-border flex items-center justify-center mx-auto mb-4 transform rotate-3">
-                <Music size={24} className="md:w-8 md:h-8 text-black" />
-              </div>
-              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter text-black">Audio Library</h2>
-              <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Select background tracks and synchronized sound effects.</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                {/* Music Selection */}
-                <div className="md:col-span-2 space-y-4">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background Music</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {MUSIC_LIBRARY.map(track => (
-                      <button
-                        key={track.id}
-                        onClick={() => {
-                          setSelectedMusic(selectedMusic === track.id ? null : track.id);
-                          initAudio();
-                        }}
-                        className={`p-4 brutal-border text-left transition-all relative ${selectedMusic === track.id ? 'bg-brutal-blue text-white translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 brutal-border ${selectedMusic === track.id ? 'bg-white text-black' : 'bg-brutal-blue text-white'}`}>
-                            {track.genre}
-                          </span>
-                          {selectedMusic === track.id && <CheckCircle2 size={16} />}
-                        </div>
-                        <p className="font-bold text-sm uppercase">{track.name}</p>
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setSelectedMusic(null)}
-                      className={`p-4 brutal-border text-left transition-all ${!selectedMusic ? 'bg-black text-white translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:bg-gray-100 text-black'}`}
-                    >
-                      <p className="font-bold text-sm uppercase">No Music</p>
-                      <p className="text-[10px] uppercase opacity-60">Silent background</p>
-                    </button>
-                  </div>
-                </div>
-
-                {/* SFX and Volume */}
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Sound Effects (SFX)</h3>
-                    <div className="space-y-3">
-                      {SFX_PACKS.map(pack => (
-                        <button
-                          key={pack.id}
-                          onClick={() => {
-                            setSelectedSfxPack(pack.id);
-                            initAudio();
-                            playSfx('woosh');
-                          }}
-                          className={`w-full p-4 brutal-border text-left transition-all relative ${selectedSfxPack === pack.id ? 'bg-brutal-green text-black translate-x-1 translate-y-1 shadow-none' : 'bg-white hover:bg-gray-100'}`}
-                        >
-                          <p className="font-bold text-sm uppercase">{pack.name}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white brutal-border">
-                    <h3 className="text-xs font-mono font-bold uppercase mb-4 text-black">Master Volume</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <button 
-                          onClick={() => setIsMuted(!isMuted)}
-                          className={`p-2 brutal-border ${isMuted ? 'bg-red-500 text-white' : 'bg-white text-black'}`}
-                        >
-                          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                        </button>
-                        <input 
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={musicVolume}
-                          onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
-                          className="flex-1 accent-black"
-                        />
-                      </div>
-                      <p className="text-[10px] font-mono font-bold uppercase text-gray-500">
-                        Volume: {Math.round(musicVolume * 100)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between mt-8">
-                <button 
-                  onClick={() => setSetupStep(4)}
-                  className="brutal-button bg-white px-6 py-3"
-                >
-                  Back
-                </button>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={generateWorld}
-                    className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3"
-                  >
-                    <Play size={20} fill="currentColor" />
-                    GENERATE PREVIEW
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
               {user && userTrailers.length > 0 && (
                 <div className="mt-12 pt-12 border-t-4 border-black">
@@ -4051,10 +3791,12 @@ export default function App() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        );
-      }
+            </motion.div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
 
     if (appMode === 'playing') {
@@ -4162,7 +3904,6 @@ export default function App() {
                 fontSizeOverride={randomFontSize} 
                 globalTextColor={textColor}
                 globalIsMultiColor={isMultiColor}
-                playSfx={playSfx}
               />
             </div>
           );
