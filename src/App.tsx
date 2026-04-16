@@ -4051,12 +4051,10 @@ export default function App() {
                   </div>
                 </div>
               )}
-            </motion.div>
-          )}
-        </div>
-      </div>
-    );
-  }
+            </div>
+          </div>
+        );
+      }
 
 
     if (appMode === 'playing') {
