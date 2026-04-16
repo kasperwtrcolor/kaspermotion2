@@ -3554,7 +3554,7 @@ export default function App() {
                   Back
                 </button>
                 <button 
-                  onClick={() => setSetupStep(5)}
+                  onClick={() => setSetupStep(4)}
                   className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
                 >
                   Next <ArrowRight size={18} />
