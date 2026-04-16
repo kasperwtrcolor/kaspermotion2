@@ -1563,6 +1563,10 @@ const CinematicOverlay = ({ useGrainEffect, mood = 'standard' }: { useGrainEffec
   );
 };
 
+const CompositionNode = ({ 
+  comp, 
+  status, 
+  fontSizeOverride,
   globalTextColor,
   globalIsMultiColor,
   playSfx
