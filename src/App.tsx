@@ -23,7 +23,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper';
 type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
@@ -943,6 +943,172 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
     default: return <SplitText {...props} />;
   }
+};
+
+const RadioWavesBackground = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+      <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+        {[...Array(8)].map((_, i) => (
+          <motion.circle
+            key={i}
+            cx="500"
+            cy="500"
+            r="0"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            initial={{ r: 0, opacity: 0.8 }}
+            animate={{ 
+              r: 800, 
+              opacity: 0,
+              strokeWidth: [2, 0.5]
+            }}
+            transition={{ 
+              duration: 6, 
+              repeat: Infinity, 
+              delay: i * 0.75,
+              ease: "easeOut" 
+            }}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+};
+
+const FluidDisplaceBackground = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <svg className="hidden">
+        <filter id="fluid-filter">
+          <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise">
+            <animate attributeName="baseFrequency" values="0.01;0.015;0.01" dur="10s" repeatCount="indefinity" />
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="50" />
+        </filter>
+      </svg>
+      <motion.div 
+        className="absolute inset-[-100px] bg-gradient-to-br from-purple-900 via-blue-900 to-black z-0"
+        style={{ filter: 'url(#fluid-filter)' }}
+        animate={{
+          scale: [1, 1.1, 1],
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+      >
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full bg-white opacity-10 blur-3xl"
+            style={{
+              width: Math.random() * 600 + 400,
+              height: Math.random() * 600 + 400,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              x: [0, Math.random() * 200 - 100, 0],
+              y: [0, Math.random() * 200 - 100, 0],
+              scale: [1, 1.2, 1],
+            }}
+            transition={{ duration: Math.random() * 10 + 10, repeat: Infinity }}
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+const MotionTileBackground = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none grid grid-cols-12 grid-rows-8 gap-4 opacity-10">
+      {[...Array(96)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="w-full h-full border-2 border-white rounded-lg"
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+            opacity: [0.1, 0.4, 0.1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            delay: (i % 12) * 0.2 + Math.floor(i / 8) * 0.3,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const PremiumParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) => {
+  const layer1X = useTransform(worldX, (x: number) => x * 0.2);
+  const layer1Y = useTransform(worldY, (y: number) => y * 0.2);
+  const layer2X = useTransform(worldX, (x: number) => x * 0.5);
+  const layer2Y = useTransform(worldY, (y: number) => y * 0.5);
+  const layer3X = useTransform(worldX, (x: number) => x * 0.8);
+  const layer3Y = useTransform(worldY, (y: number) => y * 0.8);
+  const layer4X = useTransform(worldX, (x: number) => x * 1.2);
+  const layer4Y = useTransform(worldY, (y: number) => y * 1.2);
+
+  return (
+    <div className="absolute inset-[-500px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+      {/* Deep Background - Distant stars/nodes */}
+      <motion.div style={{ x: layer1X, y: layer1Y, z: -1000 }} className="absolute inset-0 bg-[radial-gradient(circle,white_1px,transparent_1px)] bg-[length:50px_50px]" />
+      
+      {/* Mid Background - Floating semi-transparent planes */}
+      <motion.div style={{ x: layer2X, y: layer2Y, z: -500 }} className="absolute inset-0 flex items-center justify-center">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="w-[800px] h-[800px] border-4 border-white/20 absolute" style={{ transform: `rotate(${i * 45}deg)` }} />
+        ))}
+      </motion.div>
+
+      {/* Front Elements - Technical lines */}
+      <motion.div style={{ x: layer3X, y: layer3Y, z: -200 }} className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:200px_100%] opacity-30" />
+      
+      {/* Dynamic Forefront - Parallax particles */}
+      <motion.div style={{ x: layer4X, y: layer4Y, z: 200 }} className="absolute inset-0">
+         {[...Array(20)].map((_, i) => (
+          <div key={i} className="absolute w-2 h-2 bg-brutal-green rounded-full shadow-[0_0_10px_#88ff00]" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }} />
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+const TexturePaperBackground = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#f4f1ea]">
+      <svg className="hidden">
+        <filter id="paper-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.1" />
+          </feComponentTransfer>
+        </filter>
+      </svg>
+      <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ filter: 'url(#paper-grain)' }} />
+      <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/10" />
+      {/* Artistic "Coffee Stains" / Organic shapes */}
+      {[...Array(3)].map((_, i) => (
+        <motion.div
+           key={i}
+           className="absolute bg-black/5 rounded-full blur-3xl"
+           style={{ 
+              width: 800 + i * 200, 
+              height: 600 + i * 150, 
+              left: `${Math.random() * 50}%`, 
+              top: `${Math.random() * 50}%` 
+           }}
+           animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
+           transition={{ duration: 40 + i * 10, repeat: Infinity, ease: "linear" }}
+        />
+      ))}
+    </div>
+  );
 };
 
 const FloatingParticles = () => {
@@ -3526,7 +3692,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph', 'radio-waves', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => setBackgroundStyle(bg)}
@@ -3885,7 +4051,14 @@ export default function App() {
           case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
           case 'grid': return 'bg-isometric-grid bg-white';
           case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
-          case 'black': return 'bg-black';
+          case 'black': 
+          case 'radio-waves':
+          case 'motion-tile':
+          case 'premium-parallax':
+          case 'fluid-displace':
+            return 'bg-black';
+          case 'textured-paper':
+            return 'bg-[#f4f1ea]';
           default: return 'bg-brutal-bg';
         }
       };
@@ -3917,8 +4090,13 @@ export default function App() {
       {/* The 3D World */}
       <VideoCanvas key={recordingKey} isRecording={isRecording}>
         {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
+        {backgroundStyle === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX} worldY={worldY} />}
         {backgroundStyle === 'particles' && <ParticleTrails />}
         {backgroundStyle === 'geometry-morph' && <GeometryMorphBackground />}
+        {backgroundStyle === 'radio-waves' && <RadioWavesBackground />}
+        {backgroundStyle === 'fluid-displace' && <FluidDisplaceBackground />}
+        {backgroundStyle === 'motion-tile' && <MotionTileBackground />}
+        {backgroundStyle === 'textured-paper' && <TexturePaperBackground />}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
