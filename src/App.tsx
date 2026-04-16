@@ -1820,7 +1820,6 @@ export default function App() {
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
   const [showPathLines, setShowPathLines] = useState(false);
-  const [sceneMetadata, setSceneMetadata] = useState<Record<number, { textColor?: string }>>({});
   const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
   const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
@@ -2159,7 +2158,6 @@ export default function App() {
           showPathLines,
           cinematicMood,
           cameraArtistry,
-          sceneMetadata,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -2202,7 +2200,6 @@ export default function App() {
     setShowPathLines(project.settings.showPathLines || false);
     setCinematicMood(project.settings.cinematicMood || 'standard');
     setCameraArtistry(project.settings.cameraArtistry || 'natural');
-    setSceneMetadata(project.settings.sceneMetadata || {});
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -2799,7 +2796,7 @@ export default function App() {
         backgroundStyle,
         undefined, // Dedicated Giphy scenes handled below
         fontFamily,
-        sceneMetadata[sceneIdx]?.textColor || textColor,
+        textColor,
         isMultiColor
       );
       
@@ -2829,7 +2826,7 @@ export default function App() {
               backgroundStyle,
               stickerUrl,
               fontFamily,
-              sceneMetadata[sceneIdx]?.textColor || textColor,
+              textColor,
               isMultiColor
             );
             newComps.push(giphyComp);
@@ -3419,33 +3416,7 @@ export default function App() {
                       <span className="bg-brutal-blue brutal-border text-black px-2 py-0.5 font-mono font-bold text-xs mr-3">{idx + 1}</span>
                       {line}
                     </div>
-                    <div className="flex items-center gap-3 md:w-1/2">
-                      <div className="flex items-center gap-2 brutal-border bg-gray-50 px-2 py-1">
-                        <input 
-                          type="color" 
-                          value={sceneMetadata[idx]?.textColor || textColor}
-                          onChange={(e) => setSceneMetadata(prev => ({ ...prev, [idx]: { ...prev[idx], textColor: e.target.value } }))}
-                          className="w-6 h-6 brutal-border cursor-pointer p-0.5 bg-white"
-                          title="Scene Text Color"
-                        />
-                        <button
-                          onClick={() => {
-                            const newColor = sceneMetadata[idx]?.textColor || textColor;
-                            const newMetadata = { ...sceneMetadata };
-                            scriptText.split('\n').filter(l => l.trim()).forEach((_, i) => {
-                              newMetadata[i] = { ...newMetadata[i], textColor: newColor };
-                            });
-                            setSceneMetadata(newMetadata);
-                            setTextColor(newColor);
-                            setToastMessage("Color applied to all scenes!");
-                          }}
-                          className="p-1 hover:bg-brutal-blue transition-colors text-black/60 hover:text-black"
-                          title="Apply to all scenes"
-                        >
-                          <CheckCircle2 size={14} />
-                        </button>
-                      </div>
-
+                    <div className="flex items-center gap-3 md:w-1/3">
                       <label className="flex items-center gap-2 text-xs font-mono font-bold uppercase whitespace-nowrap cursor-pointer">
                         <input 
                           type="checkbox" 
