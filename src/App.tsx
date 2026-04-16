@@ -28,6 +28,7 @@ type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter'
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
+type CameraArtistry = 'natural' | 'orbit' | 'plunge' | 'drift' | 'side-scroller';
 
 type LibraryAsset = {
   id: string;
@@ -1820,6 +1821,7 @@ export default function App() {
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
   const [showPathLines, setShowPathLines] = useState(false);
   const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
+  const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
@@ -1836,6 +1838,7 @@ export default function App() {
 
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [sceneStartTime, setSceneStartTime] = useState(Date.now());
 
   const currentComp = compositions[currentIndex];
   
@@ -2154,6 +2157,7 @@ export default function App() {
           sceneDuration,
           showPathLines,
           cinematicMood,
+          cameraArtistry,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -2195,6 +2199,7 @@ export default function App() {
     setSceneDuration(project.settings.sceneDuration || 5.0);
     setShowPathLines(project.settings.showPathLines || false);
     setCinematicMood(project.settings.cinematicMood || 'standard');
+    setCameraArtistry(project.settings.cameraArtistry || 'natural');
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -2301,6 +2306,10 @@ export default function App() {
   const camY = useMotionValue(0);
   const camZ = useMotionValue(0);
   
+  const artistryX = useMotionValue(0);
+  const artistryY = useMotionValue(0);
+  const artistryZ = useMotionValue(0);
+  
   // Interactive Offsets
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
@@ -2310,6 +2319,10 @@ export default function App() {
   const smoothX = useSpring(camX, { damping: 26, stiffness: 220, mass: 1 });
   const smoothY = useSpring(camY, { damping: 26, stiffness: 220, mass: 1 });
   const smoothZ = useSpring(camZ, { damping: 26, stiffness: 220, mass: 1 });
+
+  const smoothArtX = useSpring(artistryX, { damping: 30, stiffness: 100 });
+  const smoothArtY = useSpring(artistryY, { damping: 30, stiffness: 100 });
+  const smoothArtZ = useSpring(artistryZ, { damping: 30, stiffness: 100 });
   
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
@@ -2323,20 +2336,48 @@ export default function App() {
   useEffect(() => {
     if (appMode === 'playing') {
       const interval = setInterval(() => {
-        // High-frequency wiggle
+        const now = Date.now();
+        const elapsed = (now - sceneStartTime) / 1000;
+        
+        // --- 1. Breathing & Wiggle (Natural) ---
         wiggleX.set((Math.random() - 0.5) * 40);
         wiggleY.set((Math.random() - 0.5) * 40);
         
-        // Low-frequency breathing
-        const time = Date.now() / 2000;
-        const breathX = Math.sin(time) * 15;
-        const breathY = Math.cos(time * 0.8) * 15;
-        userPanX.set(breathX);
-        userPanY.set(breathY);
+        const time = now / 2000;
+        userPanX.set(Math.sin(time) * 15);
+        userPanY.set(Math.cos(time * 0.8) * 15);
+
+        // --- 2. Camera Artistry Patterns ---
+        switch (cameraArtistry) {
+          case 'orbit':
+            artistryX.set(Math.cos(elapsed * 0.5) * 200);
+            artistryY.set(Math.sin(elapsed * 0.5) * 200);
+            artistryZ.set(Math.sin(elapsed * 0.3) * 100);
+            break;
+          case 'plunge':
+            artistryZ.set(elapsed * 150); // Deep push-in
+            artistryX.set(Math.sin(elapsed * 0.8) * 30);
+            break;
+          case 'drift':
+            artistryX.set(Math.sin(elapsed * 0.4) * 150 + Math.cos(elapsed * 0.7) * 50);
+            artistryY.set(Math.cos(elapsed * 0.3) * 120 + Math.sin(elapsed * 0.6) * 40);
+            artistryZ.set(Math.sin(elapsed * 0.2) * 80);
+            break;
+          case 'side-scroller':
+            artistryX.set(elapsed * 180); // Constant pan
+            artistryY.set(Math.sin(elapsed * 1.5) * 10); // Subtle vertical bob
+            break;
+          case 'natural':
+          default:
+            artistryX.set(0);
+            artistryY.set(0);
+            artistryZ.set(0);
+            break;
+        }
       }, 150);
       return () => clearInterval(interval);
     }
-  }, [appMode]);
+  }, [appMode, cameraArtistry, sceneStartTime]);
 
   const smoothWiggleX = useSpring(wiggleX, { damping: 20, stiffness: 50 });
   const smoothWiggleY = useSpring(wiggleY, { damping: 20, stiffness: 50 });
@@ -2355,9 +2396,9 @@ export default function App() {
     return `blur(${blurAmount}px) drop-shadow(${caAmount}px 0px 0px rgba(255,0,0,0.6)) drop-shadow(-${caAmount}px 0px 0px rgba(0,255,255,0.6))`;
   });
 
-  const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX], ([x, px, wx]) => Number(x) + Number(px) + Number(wx));
-  const worldY = useTransform([smoothY, smoothPanY, smoothWiggleY], ([y, py, wy]) => Number(y) + Number(py) + Number(wy));
-  const worldZ = smoothZ;
+  const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX, smoothArtX], ([x, px, wx, ax]) => Number(x) + Number(px) + Number(wx) + Number(ax));
+  const worldY = useTransform([smoothY, smoothPanY, smoothWiggleY, smoothArtY], ([y, py, wy, ay]) => Number(y) + Number(py) + Number(wy) + Number(ay));
+  const worldZ = useTransform([smoothZ, smoothArtZ], ([z, az]) => Number(z) + Number(az));
 
   const flareX1 = useTransform(worldX, v => Number(v) * -0.5);
   const flareY1 = useTransform(worldY, v => Number(v) * -0.5);
@@ -2377,6 +2418,11 @@ export default function App() {
       camX.set(windowSize.w / 2 - currentComp.x);
       camY.set(windowSize.h / 2 - currentComp.y);
       camZ.set(-currentComp.z);
+      setSceneStartTime(Date.now());
+      // Reset artistry for clean start
+      artistryX.set(0);
+      artistryY.set(0);
+      artistryZ.set(0);
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
 
@@ -3491,7 +3537,6 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-
                 <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Cinematic Mood (LUTs)</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
@@ -3514,6 +3559,31 @@ export default function App() {
                   </div>
                   <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
                     Moods apply global color grading, atmospheric lighting, and emotional contrast.
+                  </p>
+                </div>
+
+                <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Camera Artistry (Patterns)</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    {[
+                      { id: 'natural', label: 'Natural', icon: '🍃' },
+                      { id: 'orbit', label: 'Focal Orbit', icon: '🔄' },
+                      { id: 'plunge', label: 'The Plunge', icon: '⬇️' },
+                      { id: 'drift', label: 'Floating Drift', icon: '☁️' },
+                      { id: 'side-scroller', label: 'Side-Scroller', icon: '➡️' }
+                    ].map(pattern => (
+                      <button
+                        key={pattern.id}
+                        onClick={() => setCameraArtistry(pattern.id as CameraArtistry)}
+                        className={`p-3 brutal-border transition-all flex flex-col items-center gap-2 ${cameraArtistry === pattern.id ? 'translate-x-1 translate-y-1 shadow-none bg-brutal-orange text-black' : 'hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white'}`}
+                      >
+                        <span className="text-2xl">{pattern.icon}</span>
+                        <span className="text-[10px] font-mono font-bold uppercase">{pattern.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
+                    Patterns overlay professional camera movements on top of your trailer transitions.
                   </p>
                 </div>
               </div>
