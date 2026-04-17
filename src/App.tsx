@@ -24,7 +24,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
-type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
+type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
@@ -73,6 +73,7 @@ type Composition = {
   isTextOnly?: boolean;
   preset?: string;
   backgroundStyles?: string[];
+  activeBackground?: BackgroundStyle;
   giphyStickerUrl?: string;
   stickerScale?: number;
   stickerX?: number;
@@ -169,6 +170,7 @@ const generateComposition = (
     isTextOnly,
     preset,
     backgroundStyles,
+    activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[index % backgroundStyles.length] as BackgroundStyle) : 'black',
     giphyStickerUrl,
     fontFamily,
     textColor,
@@ -927,7 +929,7 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'shake': return <ShakeText {...props} />;
     case 'slide': return <SlideText {...props} />;
     case 'perspective': return <PerspectiveText {...props} />;
-    case 'gsap-split': return <GSAPSplitText {...props} />;
+    case 'gsap-glow': return <GSAPGlowText {...props} />;
     case 'gsap-cascade': return <GSAPCascadeText {...props} />;
     case 'gsap-3d-roll': return <GSAP3DRollText {...props} />;
     case 'gsap-elastic': return <GSAPElasticText {...props} />;
@@ -1133,6 +1135,34 @@ const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundSt
         ))}
       </motion.div>
     </div>
+  );
+};
+
+const SceneBackground = ({ style, status, worldX, worldY }: { style?: BackgroundStyle, status: string, worldX?: any, worldY?: any }) => {
+  if (!style || style === 'black') return null;
+
+  return (
+    <motion.div 
+      className="absolute inset-[-2000px] pointer-events-none overflow-hidden"
+      style={{ transformStyle: 'preserve-3d', z: -1000 }}
+      animate={{ 
+        opacity: status === 'active' ? 1 : 0.3,
+        filter: status === 'active' ? 'blur(0px)' : 'blur(20px)'
+      }}
+      transition={{ duration: 1.5 }}
+    >
+      {style === 'parallax' && <ParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
+      {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
+      {style === 'particles' && <ParticleTrails />}
+      {style === 'geometry-morph' && <GeometryMorphBackground />}
+      {style === 'radio-waves' && <RadioWavesBackground />}
+      {style === 'fluid-displace' && <FluidDisplaceBackground />}
+      {style === 'motion-tile' && <MotionTileBackground />}
+      {style === 'textured-paper' && <TexturePaperBackground />}
+      {['pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'].includes(style) && (
+        <PastelParallaxBackground type={style} worldX={worldX || 0} worldY={worldY || 0} />
+      )}
+    </motion.div>
   );
 };
 
@@ -1796,6 +1826,8 @@ const CompositionNode = ({
   fontSizeOverride?: string;
   globalTextColor: string;
   globalIsMultiColor: boolean;
+  worldX: any;
+  worldY: any;
 }) => {
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
@@ -1916,6 +1948,8 @@ const CompositionNode = ({
     >
       <div className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
         
+        {/* Kinetic Scene Background */}
+        <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
         {isMorph && status === 'active' && (
           <motion.div
             className="absolute z-20 w-[80vw] text-center pointer-events-none"
@@ -2070,8 +2104,8 @@ export default function App() {
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#000000');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
-  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-split']);
-  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-split'); // Kept for legacy compatibility
+  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
+  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-glow'); // Kept for legacy compatibility
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
@@ -2453,8 +2487,8 @@ export default function App() {
       ? project.settings.backgroundStyles 
       : (project.settings.backgroundStyle ? [project.settings.backgroundStyle] : ['black']);
     setBackgroundStyles(loadedBackgrounds);
-    setTextEffect(project.settings.textEffect || 'gsap-split');
-    setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-split']);
+    setTextEffect(project.settings.textEffect || 'gsap-glow');
+    setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-glow']);
     setTransitionType(project.settings.transitionType);
     setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
@@ -2948,8 +2982,8 @@ export default function App() {
       setPreset(undefined as any);
       // Reset to defaults
       setFontStyle('font-display');
-      setBackgroundStyle('black');
-      setTextEffect('gsap-split');
+      setBackgroundStyles(['black']);
+      setTextEffect('gsap-glow');
       setTransitionType('dissolve');
       return;
     }
@@ -2957,28 +2991,28 @@ export default function App() {
     switch (p) {
       case 'blockbuster':
         setFontStyle('font-display');
-        setBackgroundStyle('black');
-        setTextEffect('gsap-split');
+        setBackgroundStyles(['black']);
+        setTextEffect('gsap-glow');
         setTransitionType('explode');
         setTransitionDuration(0.8);
         break;
       case 'documentary':
         setFontStyle('font-serif');
-        setBackgroundStyle('grid');
+        setBackgroundStyles(['grid']);
         setTextEffect('fade');
         setTransitionType('dissolve');
         setTransitionDuration(2.0);
         break;
       case 'music-video':
         setFontStyle('font-mono');
-        setBackgroundStyle('vibrant-glow');
+        setBackgroundStyles(['vibrant-glow']);
         setTextEffect('kinetic');
         setTransitionType('spin');
         setTransitionDuration(0.6);
         break;
       case 'app-showcase':
         setFontStyle('font-sans');
-        setBackgroundStyle('grid');
+        setBackgroundStyles(['grid']);
         setTextEffect('kinetic');
         setTransitionType('slide');
         setTransitionDuration(1.0);
@@ -3006,7 +3040,7 @@ export default function App() {
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
-    const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-split'] as TextEffect[]);
+    const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
     
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       let caption = scriptLines[sceneIdx] || '';
@@ -3123,7 +3157,7 @@ export default function App() {
         caption: `Visit ${showcaseCaption}`,
         textPosition: 'bottom',
         sceneType: 'website-showcase',
-        textEffect: effectsPool[0] || 'gsap-split',
+        textEffect: effectsPool[0] || 'gsap-glow',
         transitionType: 'zoom',
         transitionDuration: 1.5,
         isTextOnly: false,
@@ -3220,6 +3254,7 @@ export default function App() {
       isTextOnly,
       preset,
       backgroundStyles,
+      activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[index % backgroundStyles.length] as BackgroundStyle) : 'black',
       giphyStickerUrl,
       stickerScale,
       stickerX,
@@ -3865,13 +3900,13 @@ export default function App() {
                   
                   <div className="flex flex-wrap gap-2 mb-4">
                     <button 
-                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
+                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
                       className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
                     >
                       Select All
                     </button>
                     <button 
-                      onClick={() => setSelectedEffects(['gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
+                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
                       className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-purple text-white"
                     >
                       Pure GSAP
@@ -3889,7 +3924,7 @@ export default function App() {
                       <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Advanced Cinematic (GSAP)</p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                         {[
-                          'gsap-split', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 
+                          'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 
                           'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 
                           'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'
                         ].map((effect: any) => (
@@ -3933,7 +3968,7 @@ export default function App() {
                   
                   {selectedEffects.length === 0 && (
                     <p className="mt-3 text-[10px] font-mono font-bold text-red-500 uppercase animate-pulse">
-                      Warning: No animations selected. Defaulting to GSAP Split.
+                      Warning: No animations selected. Defaulting to GSAP Glow.
                     </p>
                   )}
                   <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
@@ -4205,21 +4240,6 @@ export default function App() {
       
       {/* The 3D World */}
       <VideoCanvas key={recordingKey} isRecording={isRecording}>
-        {backgroundStyles.map(style => (
-          <React.Fragment key={style}>
-            {style === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
-            {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX} worldY={worldY} />}
-            {style === 'particles' && <ParticleTrails />}
-            {style === 'geometry-morph' && <GeometryMorphBackground />}
-            {style === 'radio-waves' && <RadioWavesBackground />}
-            {style === 'fluid-displace' && <FluidDisplaceBackground />}
-            {style === 'motion-tile' && <MotionTileBackground />}
-            {style === 'textured-paper' && <TexturePaperBackground />}
-            {['pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'].includes(style) && (
-              <PastelParallaxBackground type={style} worldX={worldX} worldY={worldY} />
-            )}
-          </React.Fragment>
-        ))}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
@@ -4275,6 +4295,8 @@ export default function App() {
                 fontSizeOverride={randomFontSize} 
                 globalTextColor={textColor}
                 globalIsMultiColor={isMultiColor}
+                worldX={worldX}
+                worldY={worldY}
               />
             </div>
           );
