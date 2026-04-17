@@ -3006,6 +3006,8 @@ export default function App() {
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
+    const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-split'] as TextEffect[]);
+    
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       let caption = scriptLines[sceneIdx] || '';
       let isTextOnly = textOnlyLines.has(sceneIdx);
@@ -3026,7 +3028,6 @@ export default function App() {
       }
       
       // Advanced Combination Logic
-      const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-split'] as TextEffect[]);
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
       
       if (isTextOnly) {
