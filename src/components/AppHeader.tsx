@@ -81,17 +81,17 @@ export default function AppHeader({
           >
             <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center overflow-hidden group-hover:rotate-12 transition-transform">
               <img
-                src="/favicon.ico"
-                alt="Logo"
+                src="/logo.png"
+                alt="VibeTrailer Logo"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerText = 'K';
+                  e.currentTarget.parentElement!.innerText = 'V';
                 }}
               />
             </div>
             <span className="font-display font-bold text-lg tracking-tight uppercase hidden sm:inline">
-              KasperMotion
+              VibeTrailer
             </span>
           </button>
 

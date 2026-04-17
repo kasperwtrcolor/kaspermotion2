@@ -2979,7 +2979,7 @@ export default function App() {
     }
   };
 
-  const applyPreset = (p: 'blockbuster' | 'documentary' | 'music-video' | 'app-showcase') => {
+  const applyPreset = (p: 'blockbuster' | 'documentary' | 'product-vibe' | 'app-showcase') => {
     if (preset === p) {
       setPreset(undefined as any);
       // Reset to defaults
@@ -3005,7 +3005,7 @@ export default function App() {
         setTransitionType('dissolve');
         setTransitionDuration(2.0);
         break;
-      case 'music-video':
+      case 'product-vibe':
         setFontStyle('font-mono');
         setBackgroundStyles(['vibrant-glow']);
         setTextEffect('kinetic');

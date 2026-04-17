@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Music, Type } from 'lucide-react';
+import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type } from 'lucide-react';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -24,14 +24,14 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             transition={{ duration: 0.5 }}
           >
             <div className="inline-block bg-brutal-orange brutal-border px-3 py-1 mb-6 font-mono text-sm font-bold uppercase transform -rotate-2">
-              AI-Powered Video Creation
+              Cinematic App Showcases
             </div>
             <h1 className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-6 uppercase">
-              Make <span className="text-brutal-blue" style={{ textShadow: '4px 4px 0 #000' }}>Trailers</span><br />
-              In Seconds.
+              Showcase <span className="text-brutal-blue" style={{ textShadow: '4px 4px 0 #000' }}>Your App,</span><br />
+              Vibe Coder.
             </h1>
             <p className="text-xl sm:text-2xl font-medium mb-10 max-w-2xl border-l-4 border-black pl-4">
-              Turn your images, videos, and text into cinematic trailers with AI-driven transitions, effects, and music.
+              Turn your screenshots and code into cinematic trailers with AI-driven kinetic motion, depth effects, and elite tech vibes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button onClick={onStart} className="brutal-button bg-brutal-green px-8 py-4 text-lg flex items-center justify-center gap-2">
@@ -65,7 +65,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <div className="flex gap-2">
               <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><ImageIcon size={20} /></div>
               <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><Video size={20} /></div>
-              <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><Music size={20} /></div>
+              <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><Sparkles size={20} /></div>
             </div>
           </motion.div>
 
@@ -103,7 +103,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               {
                 step: "02",
                 title: "Write Script",
-                desc: "Add text captions for each scene. Our system automatically times them to the beat of the music.",
+                desc: "Add text captions for each scene. Our system automatically synchronizes them with smooth kinetic motion paths.",
                 icon: <Type size={32} />,
                 color: "bg-brutal-blue"
               },
@@ -146,13 +146,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <span className="bg-brutal-green px-2 brutal-border inline-block transform -rotate-2 mt-2">Effects</span>
             </h2>
             <p className="text-xl font-medium mb-8">
-              Go beyond simple slideshows. KasperMotion adds real 3D camera movements, depth of field, chromatic aberration, and motion blur to make your static images feel alive.
+              Go beyond basic screen recordings. VibeTrailer adds real 3D camera movements, depth of field, chromatic aberration, and motion blur to make your app look like a masterpiece.
             </p>
             <ul className="space-y-4 font-mono font-bold uppercase text-sm">
               <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-purple brutal-border"></div> 3D Parallax & Depth</li>
               <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-orange brutal-border"></div> Dynamic Text Animations</li>
               <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-blue brutal-border"></div> Film Grain & Vignette</li>
-              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-pink brutal-border"></div> Beat-synced Transitions</li>
+              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-pink brutal-border"></div> Kinetic-synced Transitions</li>
             </ul>
           </div>
           <div className="flex-1 w-full">
@@ -202,7 +202,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
       {/* Footer */}
       <footer className="bg-black text-white py-8 border-t-4 border-black text-center font-mono text-sm uppercase">
-        <p>© {new Date().getFullYear()} KasperMotion. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} VibeTrailer. All rights reserved.</p>
       </footer>
     </div>
   );
