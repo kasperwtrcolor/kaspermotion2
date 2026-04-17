@@ -2480,7 +2480,7 @@ export default function App() {
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
       const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, backgroundStyles[0] || 'black', m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
+      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, loadedBackgrounds, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
       newComps.push(comp);
       prev = comp;
     });
@@ -3055,7 +3055,7 @@ export default function App() {
         prev,
         isTextOnly,
         preset,
-        backgroundStyle,
+        backgroundStyles,
         undefined, // Dedicated Giphy scenes handled below
         fontFamily,
         textColor,
@@ -3083,9 +3083,9 @@ export default function App() {
               'zoom', 
               transitionDuration, 
               prev,
-              true, // isTextOnly logic
+              isTextOnly, // isTextOnly logic
               preset,
-              backgroundStyle,
+              backgroundStyles,
               stickerUrl,
               fontFamily,
               textColor,
@@ -3127,7 +3127,7 @@ export default function App() {
         transitionDuration: 1.5,
         isTextOnly: false,
         preset,
-        backgroundStyle,
+        backgroundStyles,
         websiteScreenshot,
         websiteUrl: scrapeUrl,
         fontFamily,
@@ -3160,7 +3160,7 @@ export default function App() {
         prev,
         false,
         preset,
-        backgroundStyle
+        backgroundStyles
       );
       newComps.push(comp);
       prev = comp;
