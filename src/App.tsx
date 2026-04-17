@@ -1818,7 +1818,9 @@ const CompositionNode = ({
   status, 
   fontSizeOverride,
   globalTextColor,
-  globalIsMultiColor
+  globalIsMultiColor,
+  worldX,
+  worldY
 }: { 
   key?: string; 
   comp: Composition; 
