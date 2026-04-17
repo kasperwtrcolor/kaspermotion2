@@ -34,13 +34,19 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // Allow update: user can only update their own doc
-      // Credits can only be decremented or set by the owner (no self-inflation)
+      // Enforce security: client-side balance can only be DECREMENTED, 
+      // unless it's a daily reward increment (lastRewardDate changed).
       allow update: if isOwner(userId) && (
-        // Allow credit updates: new credits must be <= existing credits OR it's a daily reward
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits', 'lastRewardDate']))
+        // 1. Service Usage: User is spending credits (new balance < current balance)
+        (request.resource.data.credits < resource.data.credits && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits']))
         ||
-        // Allow full profile updates
-        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt'])
+        // 2. Daily Rewards: Balancing allowed ONLY when lastRewardDate also changes
+        (request.resource.data.lastRewardDate != resource.data.lastRewardDate && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits', 'lastRewardDate']))
+        ||
+        // 3. Full metadata sync (on login)
+        (request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']))
       );
     }
 

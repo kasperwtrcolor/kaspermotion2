@@ -10,6 +10,7 @@ import { GiphyFetch } from '@giphy/js-fetch-api';
 import LandingPage from './components/LandingPage';
 import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
+import PricingModal from './components/PricingModal';
 import VideoCanvas from './components/VideoCanvas';
 import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
@@ -2151,6 +2152,7 @@ export default function App() {
   const [giphySearchQuery, setGiphySearchQuery] = useState('');
   const [giphySearchResults, setGiphySearchResults] = useState<any[]>([]);
   const [isSearchingGiphy, setIsSearchingGiphy] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
 
   // Firebase Auth & Firestore Connection Test
   useEffect(() => {
@@ -2207,9 +2209,15 @@ export default function App() {
           if (userSnap.exists()) {
             const userData = userSnap.data();
             if (userData.lastRewardDate !== today) {
-              const newCredits = (userData.credits || 0) + 5;
-              await setDoc(userRef, { credits: newCredits, lastRewardDate: today }, { merge: true });
-              setToastMessage("You received 5 daily credits!");
+              // Refresh to 5 credits if below 5
+              const currentCredits = userData.credits || 0;
+              if (currentCredits < 5) {
+                await setDoc(userRef, { credits: 5, lastRewardDate: today }, { merge: true });
+                setToastMessage("Daily Refresh: Your credits have been topped up to 5!");
+              } else {
+                // Just update the date so they don't get topped up again today if they spend it
+                await setDoc(userRef, { lastRewardDate: today }, { merge: true });
+              }
               setDailyCreditsClaimed(true);
             } else {
               setDailyCreditsClaimed(true);
@@ -2285,7 +2293,7 @@ export default function App() {
   const generateAIImage = async () => {
     if (!aiPrompt) return;
     if (credits < 3) {
-      setToastMessage("Not enough credits. You need 3 credits to generate an image.");
+      setShowPricing(true);
       return;
     }
     setIsGeneratingImage(true);
@@ -2826,7 +2834,8 @@ export default function App() {
       // Base GSAP animation duration is 4s; adjusted by speed multiplier
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
       // Scene stays at least long enough for text animation to finish + small buffer
-      const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 200 : 0);
+      // Scene switches exactly 0.5s after text animation or immediately if no text
+      const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
       
       timer = setTimeout(() => {
         setCurrentIndex(prev => {
@@ -3031,7 +3040,7 @@ export default function App() {
     const isAdmin = user?.email === 'philipsimmons67@gmail.com';
 
     if (!isAdmin && credits < 1) {
-      setToastMessage("Not enough credits. You need 1 credit to generate a trailer.");
+      setShowPricing(true);
       return;
     }
 
@@ -3064,19 +3073,8 @@ export default function App() {
       }
       
       // Advanced Combination Logic
+      // Ensure we always cycle through the user's selected effects pool for all scenes
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
-      
-      if (isTextOnly) {
-        // Text-only scenes favor explosive/advanced GSAP effects but respect the pool if they are in it
-        const textOnlyPref = ['gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack'] as TextEffect[];
-        const availableTextOnly = effectsPool.filter(e => textOnlyPref.includes(e));
-        if (availableTextOnly.length > 0) {
-          activeEffect = availableTextOnly[Math.floor(Math.random() * availableTextOnly.length)];
-        } else {
-          // Fallback to textOnly list if nothing selected
-          activeEffect = textOnlyPref[Math.floor(Math.random() * textOnlyPref.length)];
-        }
-      }
 
       const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
@@ -3267,7 +3265,7 @@ export default function App() {
   const startRecording = async () => {
     const isAdmin = user?.email === 'philipsimmons67@gmail.com';
     if (!isAdmin && credits < 2) {
-      setToastMessage("Not enough credits. You need 2 credits to export.");
+      setShowPricing(true);
       return;
     }
     try {
@@ -3442,6 +3440,7 @@ export default function App() {
             setSetupStep(1);
           }}
           notifications={notifications}
+          onShowPricing={() => setShowPricing(true)}
         />
       );
     }
@@ -4369,6 +4368,7 @@ export default function App() {
         onLogin={handleLogin}
         onLogout={handleLogout}
         onNewProject={handleStartOver}
+        onRefill={() => setShowPricing(true)}
         onExport={() => setShowExportExplainer(true)}
         onStudio={() => setAppMode('setup')}
         onStickers={() => setShowGiphyModal(true)}
@@ -4378,6 +4378,12 @@ export default function App() {
       />
       
       {renderContent()}
+      
+      <PricingModal 
+        isOpen={showPricing} 
+        onClose={() => setShowPricing(false)} 
+        user={user} 
+      />
 
       {/* Global Overlays Layer */}
       {/* Export Explainer Modal */}

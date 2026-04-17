@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, Download } from 'lucide-react';
+import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, CreditCard, Sparkles, Zap } from 'lucide-react';
 
 interface ProfilePageProps {
   user: any;
@@ -12,6 +12,7 @@ interface ProfilePageProps {
   onDeleteAsset: (e: React.MouseEvent, asset: any) => void;
   onUseAssetInProject: (assets: any[]) => void;
   notifications: string[];
+  onShowPricing: () => void;
 }
 
 type ProfileTab = 'videos' | 'assets' | 'account';
@@ -26,6 +27,7 @@ export default function ProfilePage({
   onDeleteAsset,
   onUseAssetInProject,
   notifications,
+  onShowPricing,
 }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('videos');
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
@@ -314,29 +316,78 @@ export default function ProfilePage({
                 </div>
               </div>
 
-              {/* Credits Info */}
-              <div className="brutal-card p-6">
+              {/* Credit Economy Explainer */}
+              <div className="brutal-card p-6 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                 <h3 className="font-display text-xl font-bold uppercase mb-6 flex items-center gap-3 border-b-2 border-black pb-3">
-                  <Coins size={20} /> Credits
+                  <Zap size={20} className="text-brutal-orange" /> Credit Economy Guide
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center bg-brutal-blue/10 p-3 brutal-border">
+                      <span className="font-mono text-xs font-bold uppercase">AI Visual Gen</span>
+                      <span className="font-display font-bold text-lg text-brutal-blue">3 pts</span>
+                    </div>
+                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
+                      Use Gemini 2.5 Flash to generate custom cinematic assets from text prompts.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center bg-brutal-purple/10 p-3 brutal-border">
+                      <span className="font-mono text-xs font-bold uppercase">Trailer Draft</span>
+                      <span className="font-display font-bold text-lg text-brutal-purple">1 pt</span>
+                    </div>
+                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
+                      Compile your scenes, scripts, and media into a full cinematic preview.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center bg-brutal-green/10 p-3 brutal-border">
+                      <span className="font-mono text-xs font-bold uppercase">4K / HD Export</span>
+                      <span className="font-display font-bold text-lg text-brutal-green">2 pts</span>
+                    </div>
+                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
+                      Render and download high-bitrate WebM or MP4 files for distribution.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mt-6 bg-black text-white p-4 brutal-border flex items-center gap-4">
+                  <Award size={24} className="text-brutal-yellow" />
+                  <div>
+                    <h4 className="font-display font-bold text-sm uppercase">Loyalty Reward</h4>
+                    <p className="font-mono text-[10px] uppercase font-bold opacity-80">
+                      Vibe Coders receive 5 complementary credits every single day just for showing up.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Credits Balance & Top-up */}
+              <div className="brutal-card p-6">
+                <div className="flex justify-between items-center mb-6 border-b-2 border-black pb-3">
+                  <h3 className="font-display text-xl font-bold uppercase flex items-center gap-3">
+                    <Coins size={20} /> Current Balance
+                  </h3>
+                  <button 
+                    onClick={onShowPricing}
+                    className="brutal-button bg-brutal-orange px-4 py-2 text-xs flex items-center gap-2"
+                  >
+                    <CreditCard size={14} /> Refill Credits
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-brutal-orange brutal-border p-6 text-center">
                     <p className="font-display text-4xl font-bold">{credits}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Available</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Available Credits</p>
                   </div>
                   <div className="bg-brutal-green brutal-border p-6 text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Award size={20} />
                     </div>
                     <p className="font-display text-xl font-bold">+5 Daily</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Daily Reward</p>
-                  </div>
-                  <div className="bg-brutal-purple brutal-border p-6 text-center">
-                    <p className="font-mono text-xs font-bold uppercase mb-2">Credit Costs</p>
-                    <div className="space-y-1 text-[11px] font-mono">
-                      <p>AI Image: <strong>3 credits</strong></p>
-                      <p>Trailer: <strong>5 credits</strong></p>
-                    </div>
+                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Next Reward in 24h</p>
                   </div>
                 </div>
               </div>

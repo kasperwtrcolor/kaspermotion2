@@ -1,12 +1,12 @@
-import React from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type } from 'lucide-react';
+import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard } from 'lucide-react';
+import { PricingPlans } from './PricingModal';
 
 interface LandingPageProps {
   onStart: () => void;
+  onSelectTier: (tier: any) => void;
 }
 
-export default function LandingPage({ onStart }: LandingPageProps) {
+export default function LandingPage({ onStart, onSelectTier }: LandingPageProps) {
   const { scrollYProgress } = useScroll();
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -400]);
@@ -187,6 +187,34 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-4 border-black">
+        <div className="text-center mb-16">
+          <div className="inline-block bg-brutal-orange brutal-border px-4 py-1.5 mb-6 font-mono text-sm font-bold uppercase transform -rotate-2">
+            Pricing Plans
+          </div>
+          <h2 className="text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter mb-4">Choose Your Vibe</h2>
+          <p className="text-xl font-mono text-black/60 font-bold uppercase">No subscriptions. Pay as you go.</p>
+        </div>
+
+        <PricingPlans onSelect={onSelectTier} />
+        
+        <div className="mt-16 bg-white brutal-border p-8 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-brutal-green brutal-border flex items-center justify-center shrink-0">
+              <CreditCard size={32} />
+            </div>
+            <div>
+              <h3 className="font-display text-2xl font-bold uppercase">Enterprise & Custom</h3>
+              <p className="font-mono text-sm font-bold uppercase text-black/60">Need more than 500 credits per month or custom cinematic presets? We've got you.</p>
+            </div>
+          </div>
+          <button onClick={onStart} className="brutal-button bg-black text-white px-8 py-4 text-lg">
+            Contact Support
+          </button>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ interface AppHeaderProps {
   onLogin: () => void;
   onLogout: () => void;
   onNewProject: () => void;
+  onRefill: () => void;
   // Studio Controls for Playing Mode
   onExport?: () => void;
   onStudio?: () => void;
@@ -23,7 +24,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ 
   appMode, user, credits, 
-  onNavigate, onLogin, onLogout, onNewProject,
+  onNavigate, onLogin, onLogout, onNewProject, onRefill,
   onExport, onStudio, onStickers, onResetCamera,
   isRendering, renderProgress = 0
 }: AppHeaderProps) {
@@ -170,13 +171,22 @@ export default function AppHeader({
           <div className="flex items-center gap-2">
             {/* Credits Badge */}
             {user && (
-              <button
-                onClick={() => onNavigate('profile')}
-                className="flex items-center gap-1.5 bg-brutal-orange brutal-border px-3 py-1.5 hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-              >
-                <Coins size={14} />
-                <span className="font-mono text-xs font-bold">{credits}</span>
-              </button>
+              <div className="flex items-center">
+                <button
+                  onClick={() => onNavigate('profile')}
+                  className="flex items-center gap-1.5 bg-brutal-orange brutal-border px-3 py-1.5 hover:bg-white transition-colors h-9"
+                >
+                  <Coins size={14} />
+                  <span className="font-mono text-xs font-bold">{credits}</span>
+                </button>
+                <button
+                  onClick={onRefill}
+                  className="bg-brutal-pink brutal-border p-1.5 h-9 w-9 flex items-center justify-center hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ml-[-2px]"
+                  title="Buy Credits"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
             )}
 
             {/* User Avatar / Login */}

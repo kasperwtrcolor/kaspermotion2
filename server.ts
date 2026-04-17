@@ -3,12 +3,77 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
+import Stripe from 'stripe';
+import * as admin from 'firebase-admin';
+import 'dotenv/config';
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+
+// Initialize Firebase Admin
+if (process.env.FIREBASE_PROJECT_ID) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+} else {
+  // Try default initialization for local/dev
+  try {
+    admin.initializeApp();
+  } catch (e) {
+    console.warn("Firebase Admin not initialized. Webhooks will fail to update credits.");
+  }
+}
+const db = admin.firestore();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Webhook for Stripe must use raw body
+  app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET || ''
+      );
+    } catch (err: any) {
+      console.error(`Webhook signature verification failed: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle the event
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.metadata?.userId;
+      const credits = parseInt(session.metadata?.credits || '0', 10);
+
+      if (userId && credits > 0) {
+        try {
+          const userRef = db.collection('users').doc(userId);
+          await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const currentCredits = userDoc.exists ? (userDoc.data()?.credits || 0) : 0;
+            transaction.set(userRef, { credits: currentCredits + credits }, { merge: true });
+          });
+          console.log(`Successfully added ${credits} credits to user ${userId}`);
+        } catch (error) {
+          console.error(`Failed to update credits for user ${userId}:`, error);
+        }
+      }
+    }
+
+    res.json({ received: true });
+  });
 
   app.use(express.json());
 
@@ -122,6 +187,46 @@ H2 Tags: ${h2s.join(' | ')}
     } catch (error: any) {
       console.error('Screenshot error:', error);
       res.status(500).json({ error: error.message || 'Failed to generate screenshot' });
+    }
+  });
+
+  // Stripe Checkout Session Creation
+  app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+      const { userId, credits, amount } = req.body;
+
+      if (!userId || !credits || !amount) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${credits} Credits for VibeTrailer`,
+                description: `Add ${credits} credits to your account.`,
+              },
+              unit_amount: Math.round(amount * 100), // amount in cents
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.APP_URL || 'http://localhost:3000'}/profile?success=true`,
+        cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/profile?canceled=true`,
+        metadata: {
+          userId,
+          credits: credits.toString(),
+        },
+      });
+
+      res.json({ id: session.id });
+    } catch (error: any) {
+      console.error('Stripe session error:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
