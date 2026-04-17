@@ -23,7 +23,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
 type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'gsap-split' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
@@ -72,7 +72,7 @@ type Composition = {
   transitionDuration: number;
   isTextOnly?: boolean;
   preset?: string;
-  backgroundStyle?: string;
+  backgroundStyles?: string[];
   giphyStickerUrl?: string;
   stickerScale?: number;
   stickerX?: number;
@@ -95,7 +95,7 @@ const generateComposition = (
   prevComp?: Composition,
   isTextOnly?: boolean,
   preset?: string,
-  backgroundStyle?: string,
+  backgroundStyles?: string[],
   giphyStickerUrl?: string,
   fontFamily?: FontFamily,
   textColor?: string,
@@ -168,7 +168,7 @@ const generateComposition = (
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
-    backgroundStyle,
+    backgroundStyles,
     giphyStickerUrl,
     fontFamily,
     textColor,
@@ -1039,6 +1039,99 @@ const MotionTileBackground = () => {
           }}
         />
       ))}
+    </div>
+  );
+};
+
+const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundStyle, worldX: any, worldY: any }) => {
+  const layer1X = useTransform(worldX, (x: number) => x * 0.15);
+  const layer1Y = useTransform(worldY, (y: number) => y * 0.15);
+  const layer2X = useTransform(worldX, (x: number) => x * 0.4);
+  const layer2Y = useTransform(worldY, (y: number) => y * 0.4);
+  const layer3X = useTransform(worldX, (x: number) => x * 0.7);
+  const layer3Y = useTransform(worldY, (y: number) => y * 0.7);
+
+  const getTheme = () => {
+    switch (type) {
+      case 'pastel-dream':
+        return {
+          base: 'bg-gradient-to-b from-[#A5D8FF] to-[#FFD1DC]',
+          layer1: 'bg-white/20',
+          layer2: 'bg-white/40',
+          layer3: 'bg-white/60',
+          shapes: 'rounded-full'
+        };
+      case 'lavender-mist':
+        return {
+          base: 'bg-gradient-to-tr from-[#E0BBE4] via-[#957DAD] to-[#D291BC]',
+          layer1: 'bg-purple-100/10',
+          layer2: 'bg-purple-200/30',
+          layer3: 'bg-purple-300/50',
+          shapes: 'rotate-45'
+        };
+      case 'mint-echo':
+        return {
+          base: 'bg-gradient-to-br from-[#B5EAD7] to-[#C7CEEA]',
+          layer1: 'bg-teal-50/10',
+          layer2: 'bg-teal-100/30',
+          layer3: 'bg-teal-200/50',
+          shapes: 'rounded-xl'
+        };
+      case 'sunset-haze':
+        return {
+          base: 'bg-gradient-to-b from-[#FFDAC1] to-[#FF9AA2]',
+          layer1: 'bg-orange-50/10',
+          layer2: 'bg-orange-100/30',
+          layer3: 'bg-orange-200/50',
+          shapes: 'scale-y-[0.2]'
+        };
+      case 'morning-dew':
+        return {
+          base: 'bg-gradient-to-tr from-[#E2F0CB] to-[#B5EAD7]',
+          layer1: 'bg-cyan-50/10',
+          layer2: 'bg-cyan-100/30',
+          layer3: 'bg-cyan-200/50',
+          shapes: 'scale-[0.5] blur-[1px]'
+        };
+      default:
+        return { base: 'bg-white', layer1: 'bg-gray-100', layer2: 'bg-gray-200', layer3: 'bg-gray-300', shapes: 'rounded-full' };
+    }
+  };
+
+  const theme = getTheme();
+
+  return (
+    <div className={`absolute inset-[-400px] pointer-events-none ${theme.base}`} style={{ transformStyle: 'preserve-3d' }}>
+      <motion.div style={{ x: layer1X, y: layer1Y, z: -800 }} className="absolute inset-0">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
+            width: Math.random() * 400 + 200, 
+            height: Math.random() * 400 + 200, 
+            left: `${Math.random() * 100}%`, 
+            top: `${Math.random() * 100}%` 
+          }} />
+        ))}
+      </motion.div>
+      <motion.div style={{ x: layer2X, y: layer2Y, z: -400 }} className="absolute inset-0">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className={`absolute ${theme.layer2} ${theme.shapes}`} style={{ 
+            width: Math.random() * 300 + 150, 
+            height: Math.random() * 300 + 150, 
+            left: `${Math.random() * 100}%`, 
+            top: `${Math.random() * 100}%` 
+          }} />
+        ))}
+      </motion.div>
+      <motion.div style={{ x: layer3X, y: layer3Y, z: -100 }} className="absolute inset-0">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className={`absolute ${theme.layer3} ${theme.shapes}`} style={{ 
+            width: Math.random() * 10, 
+            height: Math.random() * 10, 
+            left: `${Math.random() * 100}%`, 
+            top: `${Math.random() * 100}%` 
+          }} />
+        ))}
+      </motion.div>
     </div>
   );
 };
@@ -1974,7 +2067,6 @@ export default function App() {
   const [websiteSiteName, setWebsiteSiteName] = useState<string>('');
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
-  const [backgroundStyle, setBackgroundStyle] = useState<BackgroundStyle>('black');
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#000000');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
@@ -1988,6 +2080,7 @@ export default function App() {
   const [showPathLines, setShowPathLines] = useState(false);
   const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
   const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
+  const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
@@ -2314,7 +2407,7 @@ export default function App() {
         script: scriptText,
         settings: {
           fontStyle,
-          backgroundStyle,
+          backgroundStyles,
           textEffect,
           selectedEffects,
           transitionType,
@@ -2356,7 +2449,10 @@ export default function App() {
     setCurrentProjectId(project.id);
     setScriptText(project.script);
     setFontStyle(project.settings.fontStyle);
-    setBackgroundStyle(project.settings.backgroundStyle);
+    const loadedBackgrounds = Array.isArray(project.settings.backgroundStyles) 
+      ? project.settings.backgroundStyles 
+      : (project.settings.backgroundStyle ? [project.settings.backgroundStyle] : ['black']);
+    setBackgroundStyles(loadedBackgrounds);
     setTextEffect(project.settings.textEffect || 'gsap-split');
     setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-split']);
     setTransitionType(project.settings.transitionType);
@@ -2384,7 +2480,7 @@ export default function App() {
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
       const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, project.settings.backgroundStyle, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
+      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, backgroundStyles[0] || 'black', m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
       newComps.push(comp);
       prev = comp;
     });
@@ -3092,7 +3188,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyle?: string, giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -3122,7 +3218,7 @@ export default function App() {
       transitionDuration: tDur,
       isTextOnly,
       preset,
-      backgroundStyle,
+      backgroundStyles,
       giphyStickerUrl,
       stickerScale,
       stickerX,
@@ -3692,13 +3788,20 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph', 'radio-waves', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph', 'radio-waves', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
-                        onClick={() => setBackgroundStyle(bg)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${backgroundStyle === bg ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
+                        onClick={() => {
+                          setBackgroundStyles(prev => 
+                            prev.includes(bg) ? prev.filter(s => s !== bg) : [...prev, bg]
+                          );
+                        }}
+                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black relative ${backgroundStyles.includes(bg) ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
                       >
                         {bg.replace('-', ' ')}
+                        {backgroundStyles.includes(bg) && (
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-black rounded-full shadow-[0_0_5px_white]" />
+                        )}
                       </button>
                     ))}
                   </div>
@@ -4037,30 +4140,42 @@ export default function App() {
 
     if (appMode === 'playing') {
       const getBackgroundClass = () => {
-        switch (backgroundStyle) {
-          case 'gradient-blue': return 'bg-gradient-to-br from-brutal-blue via-white to-brutal-blue animate-pulse';
-          case 'gradient-purple': return 'bg-gradient-to-tr from-brutal-purple via-brutal-pink to-white animate-pulse';
-          case 'gradient-teal': return 'bg-gradient-to-br from-teal-400 via-cyan-500 to-teal-700 animate-gradient-slow';
-          case 'gradient-rose': return 'bg-gradient-to-br from-rose-400 via-pink-500 to-rose-700 animate-gradient-slow';
-          case 'gradient-amber': return 'bg-gradient-to-br from-amber-300 via-orange-500 to-red-600 animate-gradient-slow';
-          case 'gradient-emerald': return 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 animate-gradient-slow';
-          case 'gradient-indigo': return 'bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-700 animate-gradient-slow';
-          case 'gradient-slate': return 'bg-gradient-to-br from-slate-600 via-gray-700 to-slate-900 animate-gradient-slow';
-          case 'deep-ocean': return 'bg-gradient-to-b from-blue-950 via-cyan-900 to-teal-950 animate-gradient-slow';
-          case 'sunset-fire': return 'bg-gradient-to-br from-yellow-400 via-red-500 to-purple-700 animate-gradient-slow';
-          case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
-          case 'grid': return 'bg-isometric-grid bg-white';
-          case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
-          case 'black': 
-          case 'radio-waves':
-          case 'motion-tile':
-          case 'premium-parallax':
-          case 'fluid-displace':
-            return 'bg-black';
-          case 'textured-paper':
-            return 'bg-[#f4f1ea]';
-          default: return 'bg-brutal-bg';
+        if (!backgroundStyles.length) return 'bg-black';
+        
+        // Find first style that provides a base background class
+        for (const style of backgroundStyles) {
+          switch (style) {
+            case 'gradient-blue': return 'bg-gradient-to-br from-brutal-blue via-white to-brutal-blue animate-pulse';
+            case 'gradient-purple': return 'bg-gradient-to-tr from-brutal-purple via-brutal-pink to-white animate-pulse';
+            case 'gradient-teal': return 'bg-gradient-to-br from-teal-400 via-cyan-500 to-teal-700 animate-gradient-slow';
+            case 'gradient-rose': return 'bg-gradient-to-br from-rose-400 via-pink-500 to-rose-700 animate-gradient-slow';
+            case 'gradient-amber': return 'bg-gradient-to-br from-amber-300 via-orange-500 to-red-600 animate-gradient-slow';
+            case 'gradient-emerald': return 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-600 animate-gradient-slow';
+            case 'gradient-indigo': return 'bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-700 animate-gradient-slow';
+            case 'gradient-slate': return 'bg-gradient-to-br from-slate-600 via-gray-700 to-slate-900 animate-gradient-slow';
+            case 'deep-ocean': return 'bg-gradient-to-b from-blue-950 via-cyan-900 to-teal-950 animate-gradient-slow';
+            case 'sunset-fire': return 'bg-gradient-to-br from-yellow-400 via-red-500 to-purple-700 animate-gradient-slow';
+            case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
+            case 'grid': return 'bg-isometric-grid bg-white';
+            case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
+            case 'pastel-dream':
+            case 'lavender-mist':
+            case 'mint-echo':
+            case 'sunset-haze':
+            case 'morning-dew':
+              // These define their own base colors in-component, so we return empty to avoid overlap
+              return ''; 
+            case 'black': 
+            case 'radio-waves':
+            case 'motion-tile':
+            case 'premium-parallax':
+            case 'fluid-displace':
+              return 'bg-black';
+            case 'textured-paper':
+              return 'bg-[#f4f1ea]';
+          }
         }
+        return 'bg-black';
       };
 
       const getTextPositionClass = (pos: TextPosition) => {
@@ -4089,14 +4204,21 @@ export default function App() {
       
       {/* The 3D World */}
       <VideoCanvas key={recordingKey} isRecording={isRecording}>
-        {backgroundStyle === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
-        {backgroundStyle === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX} worldY={worldY} />}
-        {backgroundStyle === 'particles' && <ParticleTrails />}
-        {backgroundStyle === 'geometry-morph' && <GeometryMorphBackground />}
-        {backgroundStyle === 'radio-waves' && <RadioWavesBackground />}
-        {backgroundStyle === 'fluid-displace' && <FluidDisplaceBackground />}
-        {backgroundStyle === 'motion-tile' && <MotionTileBackground />}
-        {backgroundStyle === 'textured-paper' && <TexturePaperBackground />}
+        {backgroundStyles.map(style => (
+          <React.Fragment key={style}>
+            {style === 'parallax' && <ParallaxBackground worldX={worldX} worldY={worldY} />}
+            {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX} worldY={worldY} />}
+            {style === 'particles' && <ParticleTrails />}
+            {style === 'geometry-morph' && <GeometryMorphBackground />}
+            {style === 'radio-waves' && <RadioWavesBackground />}
+            {style === 'fluid-displace' && <FluidDisplaceBackground />}
+            {style === 'motion-tile' && <MotionTileBackground />}
+            {style === 'textured-paper' && <TexturePaperBackground />}
+            {['pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'].includes(style) && (
+              <PastelParallaxBackground type={style} worldX={worldX} worldY={worldY} />
+            )}
+          </React.Fragment>
+        ))}
       <motion.div
         className="absolute top-0 left-0 w-full h-full overflow-visible"
         style={{ 
