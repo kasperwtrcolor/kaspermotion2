@@ -1,3 +1,4 @@
+import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard } from 'lucide-react';
 import { PricingPlans } from './PricingModal';
 
