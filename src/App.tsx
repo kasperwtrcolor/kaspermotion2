@@ -2982,28 +2982,27 @@ export default function App() {
         body: JSON.stringify({ url: scrapeUrl })
       });
       const data = await res.json();
+      
+      // Decouple screenshot from script so we see it even if AI fails
+      if (data.screenshotUrl) {
+        setWebsiteScreenshot(data.screenshotUrl);
+        const newScreenshotItem: MediaItem = {
+          id: `screenshot-${Date.now()}`,
+          type: 'image',
+          url: data.screenshotUrl,
+          file: null as any
+        };
+        setMediaFiles(prev => [...prev, newScreenshotItem]);
+      }
+
       if (data.script) {
         handleScriptChange(data.script);
-        
-        // Capture screenshot URL
-        if (data.screenshotUrl) {
-          setWebsiteScreenshot(data.screenshotUrl);
-          
-          const newScreenshotItem: MediaItem = {
-            id: `screenshot-${Date.now()}`,
-            type: 'image',
-            url: data.screenshotUrl,
-            file: null as any
-          };
-          setMediaFiles(prev => [...prev, newScreenshotItem]);
-        }
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
-        
         setToastMessage("Content fetched — script, screenshot & assets ready!");
       } else {
-        setToastMessage(data.error || "Failed to generate script.");
+        setToastMessage(data.error || "Failed to generate script — but captured the visual.");
       }
     } catch (err) {
       setToastMessage("Error connecting to scraper.");
