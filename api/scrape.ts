@@ -74,13 +74,12 @@ H2 Tags: ${h2s.join(' | ')}
     Extracted Content:
     ${extractedData}`;
     
-    const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: prompt,
-    });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const aiResult = await model.generateContent(prompt);
+    const aiResponseText = aiResult.response.text();
 
     res.status(200).json({ 
-      script: aiResponse.text?.trim(),
+      script: aiResponseText.trim(),
       screenshotUrl,
       pageImages: pageImages.slice(0, 6),
       siteName: title
