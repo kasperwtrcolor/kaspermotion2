@@ -111,14 +111,12 @@ const generateComposition = (
     sceneType = 'text-morph';
   }
   
-  // Tighter clustering for "Unified Canvas" look (distance reduced from 2000 to 1200)
-  const angle = prevComp ? prevComp.angle + (Math.random() * 1.8 - 0.9) : 0;
-  const distance = 1200;
+  const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
+  const distance = 2000;
 
-  // Add Z-layering to the world path to allow for "whizz-throughs"
   const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
   const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
-  const z = prevComp ? prevComp.z + (Math.random() * 800 - 400) : 0;
+  const z = 0;
 
   const positions: Exclude<TextPosition, 'random'>[] = items.length > 0 
     ? ['left', 'right'] 
@@ -1897,45 +1895,34 @@ const CompositionNode = ({
 
   const transitionVariants = getTransitionVariants(comp.transitionType);
 
-  // 3D Kinetic Spin and Diving Effects (AE Style)
+  // 3D Spin, Dissolve, and Morphing Effects
   const mediaVariants = {
-    future: {
-      ...transitionVariants.future,
-      rotateY: 45,
-      rotateX: 20,
-      scale: 0.2,
-      z: -1000,
-    },
+    future: transitionVariants.future,
     active: isMorph ? {
       opacity: [0, 1, 1],
-      scale: [0.9, 1, 1.2],
-      rotateY: [15, 0, -5], 
-      rotateX: [10, 0, 5],
-      z: [0, 200, 400],
-      filter: ['blur(20px)', 'blur(5px)', 'blur(0px)'],
+      scale: [0.9, 1, 1],
+      rotateY: 0, 
+      rotateX: 0,
+      z: 0,
+      filter: ['blur(20px)', 'blur(10px)', 'blur(0px)'],
       transition: { times: [0, 0.3, 1], duration: 4, ease: 'easeOut' }
     } : { 
       ...transitionVariants.active,
-      rotateY: [35, -15], 
-      rotateX: [20, -10],
-      rotateZ: [10, -5],
-      z: [0, 400], 
-      scale: [0.8, 1.1],
+      rotateY: [15, -5], 
+      rotateX: [10, 5],
+      z: [0, 200], // Zoom in effect
       transition: { 
-        z: { duration: 6, ease: "easeOut" },
-        scale: { duration: 8, ease: "linear" },
-        rotateY: { duration: 12, ease: "linear", repeat: Infinity, repeatType: "reverse" },
-        rotateX: { duration: 15, ease: "linear", repeat: Infinity, repeatType: "reverse" },
-        default: { type: 'spring', damping: 20, stiffness: 80, mass: 1 }
+        z: { duration: 8, ease: "easeOut" },
+        filter: { duration: 0.4 },
+        default: { type: 'spring', damping: 15, stiffness: 100, mass: 1, delay: 0.1 }
       }
     },
     past: {
       ...transitionVariants.past,
-      rotateY: -45,
-      rotateZ: 20,
-      scale: 2,
-      z: 1000,
-      transition: { duration: 1, ease: "easeIn" }
+      rotateZ: 0,
+      scale: 0,
+      z: 400,
+      transition: { duration: 1.5, ease: "easeInOut" }
     }
   };
 
@@ -2730,30 +2717,18 @@ export default function App() {
   const isDraggingRef = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  // Handle camera movement with "Whizz-Through" logic
+  // Handle camera movement
   useEffect(() => {
     if (appMode === 'playing' && currentComp) {
-      // Whizz-through logic: temporarily pull camera back in Z before diving into the next target
-      // This creates the "After Effects" fly-back-and-dive feel
-      const pullBackZ = -currentComp.z - 800;
-      
-      // We set the targets which the useSpring values will follow
+      // Force immediate update of motion values to trigger springs
       camX.set(windowSize.w / 2 - currentComp.x);
       camY.set(windowSize.h / 2 - currentComp.y);
-      
-      // Briefly pull back before settling on target Z
-      camZ.set(pullBackZ);
-      const timer = setTimeout(() => {
-        camZ.set(-currentComp.z);
-      }, 150); // Fast snap back then dive
-      
+      camZ.set(-currentComp.z);
       setSceneStartTime(Date.now());
       // Reset artistry for clean start
       artistryX.set(0);
       artistryY.set(0);
       artistryZ.set(0);
-      
-      return () => clearTimeout(timer);
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
 
@@ -2982,27 +2957,28 @@ export default function App() {
         body: JSON.stringify({ url: scrapeUrl })
       });
       const data = await res.json();
-      
-      // Decouple screenshot from script so we see it even if AI fails
-      if (data.screenshotUrl) {
-        setWebsiteScreenshot(data.screenshotUrl);
-        const newScreenshotItem: MediaItem = {
-          id: `screenshot-${Date.now()}`,
-          type: 'image',
-          url: data.screenshotUrl,
-          file: null as any
-        };
-        setMediaFiles(prev => [...prev, newScreenshotItem]);
-      }
-
       if (data.script) {
         handleScriptChange(data.script);
+        
+        // Capture screenshot URL
+        if (data.screenshotUrl) {
+          setWebsiteScreenshot(data.screenshotUrl);
+          
+          const newScreenshotItem: MediaItem = {
+            id: `screenshot-${Date.now()}`,
+            type: 'image',
+            url: data.screenshotUrl,
+            file: null as any
+          };
+          setMediaFiles(prev => [...prev, newScreenshotItem]);
+        }
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
+        
         setToastMessage("Content fetched — script, screenshot & assets ready!");
       } else {
-        setToastMessage(data.error || "Failed to generate script — but captured the visual.");
+        setToastMessage(data.error || "Failed to generate script.");
       }
     } catch (err) {
       setToastMessage("Error connecting to scraper.");
@@ -4300,16 +4276,11 @@ export default function App() {
         {/* Pro Atmospheric Layer (V2) */}
         <ForegroundAtmosphere />
 
-        {/* Compositions (Unified World) */}
+        {/* Compositions */}
         {compositions.map((comp, index) => {
           let status: 'past' | 'active' | 'future' = 'future';
           if (index === currentIndex) status = 'active';
           else if (index < currentIndex) status = 'past';
-
-          // Always render neighbors for that "After Effects" unified canvas feel
-          // We only hide stuff that is significantly far in the index to save performance
-          const distanceIdx = Math.abs(index - currentIndex);
-          if (distanceIdx > 3) return null;
 
           // Randomize text size for text-only scenes
           const randomFontSize = comp.isTextOnly 
@@ -4317,15 +4288,7 @@ export default function App() {
             : 'text-4xl md:text-6xl';
 
           return (
-            <div 
-              key={comp.id} 
-              className="absolute inset-0 pointer-events-none" 
-              style={{ 
-                transformStyle: 'preserve-3d',
-                opacity: status === 'active' ? 1 : 0.4 / distanceIdx, // Dim distant scenes
-                zIndex: status === 'active' ? 100 : 10 - distanceIdx
-              }}
-            >
+            <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
               <FlashOverlay status={status} />
               <CompositionNode 
                 comp={comp} 
