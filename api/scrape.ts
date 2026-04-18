@@ -1,7 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+import { ai } from './_utils/init';
 import * as cheerio from 'cheerio';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -48,6 +46,21 @@ export default async function handler(req: any, res: any) {
       h2s.push($(el).text().trim());
     });
 
+    const pageImages: string[] = [];
+    $('img').each((_, el) => {
+      const src = $(el).attr('src');
+      if (src && !src.startsWith('data:') && !src.includes('icon') && !src.includes('favicon') && pageImages.length < 8) {
+        try {
+          const resolved = new URL(src, targetUrl).href;
+          if (!pageImages.includes(resolved)) {
+            pageImages.push(resolved);
+          }
+        } catch {}
+      }
+    });
+
+    const screenshotUrl = `https://image.thum.io/get/width/1920/crop/1080/noanimate/${encodeURIComponent(targetUrl)}`;
+
     const extractedData = `
 Title: ${title}
 Meta Description: ${metaDescription}
@@ -62,11 +75,16 @@ H2 Tags: ${h2s.join(' | ')}
     ${extractedData}`;
     
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
     });
 
-    res.status(200).json({ script: aiResponse.text?.trim() });
+    res.status(200).json({ 
+      script: aiResponse.text?.trim(),
+      screenshotUrl,
+      pageImages: pageImages.slice(0, 6),
+      siteName: title
+    });
   } catch (error: any) {
     console.error('Scraping error:', error);
     res.status(500).json({ error: error.message || 'Failed to scrape URL or generate script' });
