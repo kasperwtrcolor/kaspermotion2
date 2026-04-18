@@ -1,4 +1,4 @@
-import { db, stripe } from './_utils/init';
+import { getDb, getStripe } from './_utils/init';
 
 // Special logic for capturing raw body in Vercel Node functions
 export const config = {
@@ -26,6 +26,7 @@ export default async function handler(req: any, res: any) {
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(
       buf,
       sig,
@@ -44,8 +45,9 @@ export default async function handler(req: any, res: any) {
 
     if (userId && credits > 0) {
       try {
+        const db = getDb();
         const userRef = db.collection('users').doc(userId);
-        await db.runTransaction(async (transaction) => {
+        await db.runTransaction(async (transaction: any) => {
           const userDoc = await transaction.get(userRef);
           const currentCredits = userDoc.exists ? (userDoc.data()?.credits || 0) : 0;
           transaction.set(userRef, { credits: currentCredits + credits }, { merge: true });

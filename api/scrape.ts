@@ -1,4 +1,4 @@
-import { ai } from './_utils/init';
+import { getAi } from './_utils/init';
 import * as cheerio from 'cheerio';
 
 export default async function handler(req: any, res: any) {
@@ -64,6 +64,7 @@ export default async function handler(req: any, res: any) {
     
     try {
       // Trying 1.5-flash as it's more standard if 2.0 isn't live in this region/sdk
+      const ai = getAi();
       const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const aiResult = await model.generateContent(prompt);
       const aiResponseText = aiResult.response.text();
