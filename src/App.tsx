@@ -27,7 +27,10 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
 type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random';
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
+  | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' 
+  | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' 
+  | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 type CameraArtistry = 'natural' | 'orbit' | 'plunge' | 'drift' | 'side-scroller';
 
@@ -179,7 +182,11 @@ const generateComposition = (
     textPosition,
     sceneType,
     textEffect: preferredEffect,
-    transitionType: preferredTransition,
+    transitionType: preferredTransition === 'random' 
+      ? (Math.random() > 0.4 
+          ? (['domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'][Math.floor(Math.random() * 14)] as TransitionType)
+          : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
+      : preferredTransition,
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
@@ -1967,6 +1974,8 @@ const CompositionNode = ({
         };
       case 'fade':
       default:
+        // For shader transitions, we just do a simple crossfade of the underlying scenes
+        // while the shader overlay does the heavy lifting.
         return {
           future: { opacity: 0, transition: baseTransition },
           active: { opacity: 1, transition: baseTransition },
@@ -2230,6 +2239,13 @@ export default function App() {
   const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
+  const [activeShaderTransition, setActiveShaderTransition] = useState<{
+    name: string;
+    fromUrl: string;
+    toUrl: string;
+    isActive: boolean;
+    progress: number;
+  }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -2949,14 +2965,44 @@ export default function App() {
       const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
       
       timer = setTimeout(() => {
-        setCurrentIndex(prev => {
-          if (prev < compositions.length - 1) {
-            setActiveFilmBurn(true);
-            setTimeout(() => setActiveFilmBurn(false), 800);
-            return prev + 1;
-          }
-          return 0;
-        });
+        const nextIdx = (currentIndex + 1) % compositions.length;
+        const currentComp = compositions[currentIndex];
+        const nextComp = compositions[nextIdx];
+        const shaderList = [
+          'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens',
+          'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion',
+          'flash-through-white', 'cross-warp-morph', 'light-leak'
+        ];
+        
+        const isShaderTrans = shaderList.includes(nextComp.transitionType);
+
+        if (isShaderTrans) {
+          // Trigger Shader Transition
+          setActiveShaderTransition({
+            name: nextComp.transitionType,
+            fromUrl: currentComp.media[0]?.url || '',
+            toUrl: nextComp.media[0]?.url || '',
+            isActive: true,
+            progress: 0
+          });
+
+          // GSAP Animation for the shader
+          gsap.to({}, {
+            duration: (nextComp.transitionDuration || 1200) / 1000,
+            onUpdate: function() {
+              setActiveShaderTransition(prev => ({ ...prev, progress: this.progress() }));
+            },
+            onComplete: () => {
+              setActiveShaderTransition(prev => ({ ...prev, isActive: false, progress: 0 }));
+            }
+          });
+        } else {
+          // Standard Film Burn
+          setActiveFilmBurn(true);
+          setTimeout(() => setActiveFilmBurn(false), 800);
+        }
+
+        setCurrentIndex(nextIdx);
       }, effectiveSceneDuration); 
     }
     return () => clearTimeout(timer);
@@ -3187,7 +3233,7 @@ export default function App() {
       // Ensure we always cycle through the user's selected effects pool for all scenes
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
-      const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'];
+      const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
 
       const comp = generateComposition(
@@ -4107,7 +4153,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'random'] as TransitionType[]).map(type => (
+                    {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'random', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
                       <button
                         key={type}
                         onClick={() => setTransitionType(type)}
