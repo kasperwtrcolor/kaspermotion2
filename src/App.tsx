@@ -2758,6 +2758,8 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
 
+  const [addingAssetToSceneIdx, setAddingAssetToSceneIdx] = useState<number | null>(null);
+  
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
@@ -2804,6 +2806,24 @@ export default function App() {
   };
 
   const toggleLibraryAssetSelection = (id: string) => {
+    // If we are targeted a specific scene (e.g. from Step 4)
+    if (addingAssetToSceneIdx !== null) {
+      const asset = libraryAssets.find(a => a.id === id);
+      if (asset) {
+        setCompositions(prev => prev.map((c, i) => {
+          if (i !== addingAssetToSceneIdx) return c;
+          return {
+            ...c,
+            media: [...c.media, { id: asset.id, url: asset.url, type: asset.type, name: asset.name }]
+          };
+        }));
+        setAddingAssetToSceneIdx(null);
+        setShowLibrary(false);
+        setToastMessage("Layer added to scene from library!");
+      }
+      return;
+    }
+
     setSelectedLibraryAssets(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -3336,7 +3356,6 @@ export default function App() {
                   <div className="w-16 h-16 border-8 border-black border-t-brutal-pink rounded-full animate-spin mb-6"></div>
                   <p className="text-black font-display font-bold uppercase text-xl bg-white px-4 py-2 brutal-border">
                     {isUploading && "Uploading assets..."}
-                    {isGeneratingImage && "Generating AI image..."}
                     {isSaving && "Saving project..."}
                   </p>
                 </motion.div>
@@ -3920,39 +3939,11 @@ export default function App() {
                           </div>
                           <button 
                             onClick={() => {
-                              const input = document.createElement('input');
-                              input.type = 'file';
-                              input.accept = 'image/*,video/*';
-                              input.onchange = async (e: any) => {
-                                const file = e.target.files?.[0];
-                                if (!file || !user) return;
-                                
-                                setIsUploading(true);
-                                try {
-                                  const storageRef = ref(storage, `trailers/${user.uid}/${Date.now()}_${file.name}`);
-                                  const snapshot = await uploadBytes(storageRef, file);
-                                  const url = await getDownloadURL(snapshot.ref);
-                                  
-                                  setCompositions(prev => prev.map((c, i) => {
-                                    if (i !== idx) return c;
-                                    return {
-                                      ...c,
-                                      media: [...c.media, { id: Math.random().toString(), url, type: file.type.startsWith('video') ? 'video' : 'image', name: file.name }]
-                                    };
-                                  }));
-                                  
-                                  setToastMessage("Premium asset added to scene!");
-                                } catch (error) {
-                                  console.error("Upload failed", error);
-                                  setToastMessage("Failed to upload asset.");
-                                } finally {
-                                  setIsUploading(false);
-                                }
-                              };
-                              input.click();
+                              setAddingAssetToSceneIdx(idx);
+                              setShowLibrary(true);
                             }}
                             className="w-12 h-8 bg-brutal-green text-black flex items-center justify-center brutal-border hover:-translate-y-0.5 transition-transform shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                            title="Add Media to this Scene"
+                            title="Add Media from Library"
                           >
                             <Plus size={16} />
                           </button>
