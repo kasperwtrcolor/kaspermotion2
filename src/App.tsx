@@ -1941,6 +1941,13 @@ const CinematicOverlay = ({ useGrainEffect, intensity = 0.15, mood = 'standard' 
   );
 };
 
+const AUDIO_TRACKS: Record<string, string> = {
+  'mood-cinematic': 'https://cdn.pixabay.com/audio/2022/03/23/audio_07b5b5c5e8.mp3',
+  'mood-energetic': 'https://cdn.pixabay.com/audio/2021/11/25/audio_91b10694e1.mp3',
+  'mood-lofi': 'https://cdn.pixabay.com/audio/2022/05/27/audio_18bb04f759.mp3',
+  'mood-ambient': 'https://cdn.pixabay.com/audio/2022/01/21/audio_31b814a04d.mp3'
+};
+
 const CompositionNode = ({ 
   comp, 
   status, 
@@ -2193,22 +2200,35 @@ const CompositionNode = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
+            {/* Cinematic Letterboxing */}
+            <motion.div 
+              initial={{ height: 0 }}
+              animate={{ height: '12vh' }}
+              className="absolute top-0 inset-x-0 bg-black z-[510]"
+            />
+            <motion.div 
+              initial={{ height: 0 }}
+              animate={{ height: '12vh' }}
+              className="absolute bottom-0 inset-x-0 bg-black z-[510]"
+            />
+
             <motion.div
-              initial={{ scale: 0.5, opacity: 0, rotateX: 45 }}
-              animate={{ scale: 1, opacity: 1, rotateX: 0 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
+              initial={{ scale: 0.8, opacity: 0, y: 100 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-[520] text-center"
             >
-               <h2 className={`text-8xl md:text-[12rem] font-black uppercase tracking-tighter text-white leading-none ${globalFontFamily}`}>
+               <h2 className={`text-8xl md:text-[14rem] font-black uppercase tracking-tighter text-white leading-none ${globalFontFamily} drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]`}>
                  {comp.caption?.split(' ')[0] || "START"}
                </h2>
-               <div className="absolute -inset-4 bg-white/10 blur-3xl rounded-full mix-blend-overlay" />
+               <div className="absolute -inset-10 bg-white/10 blur-[100px] rounded-full mix-blend-overlay animate-pulse" />
             </motion.div>
+            
             <motion.div
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="mt-4 bg-white text-black px-6 py-2 brutal-border font-mono font-bold text-xl uppercase"
+              initial={{ letterSpacing: '0.5em', opacity: 0 }}
+              animate={{ letterSpacing: '0.1em', opacity: 1 }}
+              transition={{ delay: 0.8, duration: 1.2 }}
+              className="mt-6 bg-white text-black px-10 py-3 brutal-border-large font-mono font-black text-2xl uppercase relative z-[520]"
             >
               KasperMotion Ultra
             </motion.div>
@@ -2223,19 +2243,22 @@ const CompositionNode = ({
             animate={{ opacity: 1 }}
           >
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              className="bg-black/60 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-12 max-w-2xl w-full text-center shadow-[0_50px_100px_rgba(0,0,0,0.8)]"
+              initial={{ y: 50, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-black/70 backdrop-blur-[40px] border border-white/20 rounded-[4rem] p-16 max-w-2xl w-full text-center shadow-[0_100px_200px_rgba(0,0,0,1)] relative overflow-hidden group"
             >
-               <div className="w-24 h-24 bg-white rounded-full mx-auto mb-8 flex items-center justify-center shadow-xl">
+               {/* Shimmer Effect */}
+               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+               
+               <div className="w-28 h-28 bg-white rounded-full mx-auto mb-10 flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.3)] relative z-10 transition-transform hover:scale-110">
                  <Video className="text-black w-14 h-14" />
                </div>
-               <h2 className={`text-5xl font-black mb-4 text-white tracking-tighter ${globalFontFamily}`}>
+               <h2 className={`text-6xl font-black mb-6 text-white tracking-tighter ${globalFontFamily} leading-tight`}>
                  {comp.caption || "READY TO CREATE?"}
                </h2>
-               <p className="text-xl text-white/60 mb-10 font-bold uppercase tracking-widest">{socialHandle}</p>
-               <button className="w-full py-5 bg-brutal-green brutal-border-large text-black font-black text-2xl uppercase hover:scale-105 transition-transform">
+               <p className="text-2xl text-white/50 mb-12 font-black uppercase tracking-[0.2em]">{socialHandle}</p>
+               <button className="w-full py-6 bg-brutal-green brutal-border-large text-black font-black text-3xl uppercase hover:brightness-110 active:scale-95 transition-all shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
                  Start Your Journey
                </button>
             </motion.div>
@@ -2362,6 +2385,19 @@ export default function App() {
     progress: number;
   }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
   const [audioTrack, setAudioTrack] = useState('mood-cinematic');
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (appMode === 'playing') {
+      audioRef.current?.play().catch(e => console.log("Audio play deferred until interaction", e));
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    }
+  }, [appMode, audioTrack]);
+
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -3486,22 +3522,28 @@ export default function App() {
     setCurrentIndex(0);
     
     if (newComps.length > 0) {
-      const isAdmin = user?.email === 'philipsimmons67@gmail.com';
-      if (user && !isAdmin) {
-        const userRef = doc(db, 'users', user.uid);
-        // Deduct 1 credit for generation
-        await setDoc(userRef, { credits: Math.max(0, credits - 1) }, { merge: true });
-        setToastMessage("Trailer generated! 1 credit used.");
-      } else if (isAdmin) {
-        setToastMessage("Admin access: Trailer generated without credit deduction!");
-      }
-      
-      // Delay to ensure hydration
-      setTimeout(() => {
+      try {
+        const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+        if (user && !isAdmin) {
+          const userRef = doc(db, 'users', user.uid);
+          // Deduct 1 credit for generation ONLY on success
+          await setDoc(userRef, { credits: Math.max(0, credits - 1) }, { merge: true });
+          setToastMessage("Trailer generated! 1 credit used.");
+        } else if (isAdmin) {
+          setToastMessage("Admin access: Trailer generated without credit deduction!");
+        }
+        
+        // Delay to ensure hydration
+        setTimeout(() => {
+          setIsRenderingTrailer(false);
+          setAppMode('playing');
+          setCurrentIndex(0);
+        }, 800);
+      } catch (err) {
+        console.error("Credit deduction failed:", err);
         setIsRenderingTrailer(false);
-        setAppMode('playing');
-        setCurrentIndex(0);
-      }, 800);
+        setToastMessage("Generation error. No credits used.");
+      }
     } else {
       setIsRenderingTrailer(false);
       setToastMessage("Failed to generate trailer.");
@@ -4705,6 +4747,13 @@ export default function App() {
       />
       
       {renderContent()}
+      
+      <audio 
+        ref={audioRef} 
+        src={AUDIO_TRACKS[audioTrack]} 
+        loop
+        className="hidden"
+      />
       
       <PricingModal 
         isOpen={showPricing} 
