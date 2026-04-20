@@ -1230,12 +1230,12 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
   return (
     <motion.div 
       className="absolute inset-[-10000px] pointer-events-none overflow-hidden"
-      style={{ transformStyle: 'preserve-3d', z: -1000 }}
+      style={{ transformStyle: 'preserve-3d', z: -5000 }}
       animate={{ 
-        opacity: status === 'active' ? 1 : 0.3,
-        filter: status === 'active' ? 'blur(0px)' : 'blur(20px)'
+        opacity: status === 'active' ? 1 : 0.8,
+        filter: status === 'active' ? 'blur(0px)' : 'blur(5px)'
       }}
-      transition={{ duration: 1.5 }}
+      transition={{ duration: 0.5 }}
     >
       {style === 'parallax' && <ParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
       {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
@@ -1339,15 +1339,15 @@ const ParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) =>
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]">
       <motion.div 
-        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/stars/1920/1080')] bg-repeat opacity-20 mix-blend-screen"
+        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/stars/1920/1080')] bg-repeat opacity-20 mix-blend-screen"
         style={{ x: bgX1, y: bgY1, backgroundSize: '500px 500px' }}
       />
       <motion.div 
-        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/nebula/1920/1080')] bg-repeat opacity-30 mix-blend-screen"
+        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/nebula/1920/1080')] bg-repeat opacity-30 mix-blend-screen"
         style={{ x: bgX2, y: bgY2, backgroundSize: '800px 800px' }}
       />
       <motion.div 
-        className="absolute inset-[-50%] bg-[url('https://picsum.photos/seed/dust/1920/1080')] bg-repeat opacity-40 mix-blend-screen"
+        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/dust/1920/1080')] bg-repeat opacity-40 mix-blend-screen"
         style={{ x: bgX3, y: bgY3, backgroundSize: '1200px 1200px' }}
       />
     </div>
@@ -1996,6 +1996,7 @@ const CompositionNode = ({
                 caption={comp.caption}
                 accentColor={accentColor}
                 handle={socialHandle}
+                name={websiteSiteName || "KasperMotion"}
               />
             )}
           </div>
@@ -3896,8 +3897,14 @@ export default function App() {
                               input.accept = 'image/*,video/*';
                               input.onchange = async (e: any) => {
                                 const file = e.target.files?.[0];
-                                if (file) {
-                                  const url = URL.createObjectURL(file);
+                                if (!file || !user) return;
+                                
+                                setIsUploading(true);
+                                try {
+                                  const storageRef = ref(storage, `trailers/${user.uid}/${Date.now()}_${file.name}`);
+                                  const snapshot = await uploadBytes(storageRef, file);
+                                  const url = await getDownloadURL(snapshot.ref);
+                                  
                                   setCompositions(prev => prev.map((c, i) => {
                                     if (i !== idx) return c;
                                     return {
@@ -3905,6 +3912,13 @@ export default function App() {
                                       media: [...c.media, { id: Math.random().toString(), url, type: file.type.startsWith('video') ? 'video' : 'image', name: file.name }]
                                     };
                                   }));
+                                  
+                                  setToastMessage("Premium asset added to scene!");
+                                } catch (error) {
+                                  console.error("Upload failed", error);
+                                  setToastMessage("Failed to upload asset.");
+                                } finally {
+                                  setIsUploading(false);
                                 }
                               };
                               input.click();

@@ -12,6 +12,7 @@ interface BlockProps {
     handle: string;
     avatar?: string;
   };
+  name?: string;
 }
 
 export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6", handle }: BlockProps) => {
@@ -68,7 +69,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
   );
 };
 
-export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle }: BlockProps) => {
+export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle, name }: BlockProps) => {
   return (
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
@@ -102,7 +103,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle 
 
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-1.5">
-              <span className="text-white font-black text-2xl tracking-tighter">KasperMotion</span>
+              <span className="text-white font-black text-2xl tracking-tighter">{name || "KasperMotion"}</span>
               {/* Premium Verified Badge */}
               <div className="flex items-center bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">
                  <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.1em]">Verified</span>
