@@ -26,7 +26,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'pastel-aurora' | 'pastel-solar' | 'pastel-galactic' | 'pastel-oceanic' | 'pastel-rose';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
@@ -1070,45 +1070,45 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
 
   const getTheme = () => {
     switch (type) {
-      case 'pastel-dream':
+      case 'pastel-aurora':
         return {
-          base: 'bg-gradient-to-b from-[#A5D8FF] to-[#FFD1DC]',
-          layer1: 'bg-white/20',
-          layer2: 'bg-white/40',
-          layer3: 'bg-white/60',
-          shapes: 'rounded-full'
+          base: 'bg-gradient-to-tr from-[#D1FAE5] via-[#A5B4FC] to-[#FCE7F3]',
+          layer1: 'bg-emerald-100/20',
+          layer2: 'bg-indigo-100/30',
+          layer3: 'bg-pink-100/40',
+          shapes: 'rounded-full scale-[1.5] blur-3xl'
         };
-      case 'lavender-mist':
+      case 'pastel-solar':
         return {
-          base: 'bg-gradient-to-tr from-[#E0BBE4] via-[#957DAD] to-[#D291BC]',
-          layer1: 'bg-purple-100/10',
-          layer2: 'bg-purple-200/30',
-          layer3: 'bg-purple-300/50',
-          shapes: 'rotate-45'
+          base: 'bg-gradient-to-b from-[#FEF3C7] via-[#FFD6A5] to-[#FF9AA2]',
+          layer1: 'bg-yellow-100/20',
+          layer2: 'bg-orange-200/30',
+          layer3: 'bg-red-200/40',
+          shapes: 'rounded-full scale-[2] blur-3xl'
         };
-      case 'mint-echo':
+      case 'pastel-galactic':
         return {
-          base: 'bg-gradient-to-br from-[#B5EAD7] to-[#C7CEEA]',
-          layer1: 'bg-teal-50/10',
+          base: 'bg-gradient-to-tr from-[#C7CEEA] via-[#B5EAD7] to-[#E2F0CB]',
+          layer1: 'bg-purple-100/20',
           layer2: 'bg-teal-100/30',
-          layer3: 'bg-teal-200/50',
-          shapes: 'rounded-xl'
+          layer3: 'bg-green-100/40',
+          shapes: 'rounded-[100px] scale-[1.2] blur-3xl'
         };
-      case 'sunset-haze':
+      case 'pastel-oceanic':
         return {
-          base: 'bg-gradient-to-b from-[#FFDAC1] to-[#FF9AA2]',
-          layer1: 'bg-orange-50/10',
-          layer2: 'bg-orange-100/30',
-          layer3: 'bg-orange-200/50',
-          shapes: 'scale-y-[0.2]'
+          base: 'bg-gradient-to-br from-[#A2D2FF] via-[#BDE0FE] to-[#FFAFCC]',
+          layer1: 'bg-blue-100/20',
+          layer2: 'bg-sky-200/30',
+          layer3: 'bg-pink-100/40',
+          shapes: 'rounded-full scale-[1.8] blur-3xl'
         };
-      case 'morning-dew':
+      case 'pastel-rose':
         return {
-          base: 'bg-gradient-to-tr from-[#E2F0CB] to-[#B5EAD7]',
-          layer1: 'bg-cyan-50/10',
-          layer2: 'bg-cyan-100/30',
-          layer3: 'bg-cyan-200/50',
-          shapes: 'scale-[0.5] blur-[1px]'
+          base: 'bg-gradient-to-b from-[#FAD0C4] to-[#FFD1DC]',
+          layer1: 'bg-rose-50/20',
+          layer2: 'bg-rose-100/30',
+          layer3: 'bg-rose-200/40',
+          shapes: 'rounded-full scale-[2.2] blur-3xl'
         };
       default:
         return { base: 'bg-white', layer1: 'bg-gray-100', layer2: 'bg-gray-200', layer3: 'bg-gray-300', shapes: 'rounded-full' };
@@ -1168,7 +1168,7 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
     >
       {style === 'particles' && <ParticleTrails />}
       {style === 'textured-paper' && <TexturePaperBackground />}
-      {['pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'].includes(style) && (
+      {['pastel-aurora', 'pastel-solar', 'pastel-galactic', 'pastel-oceanic', 'pastel-rose'].includes(style) && (
         <PastelParallaxBackground type={style} />
       )}
     </motion.div>
@@ -3617,7 +3617,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper', 'pastel-aurora', 'pastel-solar', 'pastel-galactic', 'pastel-oceanic', 'pastel-rose'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => {
