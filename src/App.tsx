@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -16,6 +16,8 @@ import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
+import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 
 gsap.registerPlugin(useGSAP);
 
@@ -72,7 +74,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: Exclude<TextPosition, 'random'>;
-  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'website-showcase';
+  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'website-showcase' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -116,9 +118,14 @@ const generateComposition = (
 ): Composition => {
   // Determine scene type
   let sceneType: Composition['sceneType'] = 'standard';
+  const rand = Math.random();
+  
   if (items.length > 1) {
-    sceneType = Math.random() > 0.5 ? 'grid' : 'split';
-  } else if (caption && Math.random() > 0.4) {
+    sceneType = rand > 0.5 ? 'grid' : 'split';
+  } else if (caption && rand > 0.85) { // 15% chance for social block if caption exists
+    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart'];
+    sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
+  } else if (caption && rand > 0.4) {
     sceneType = 'text-morph';
   }
   
@@ -2044,52 +2051,6 @@ const CompositionNode = ({
         
         {/* Kinetic Scene Background */}
         <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
-        {isMorph && status === 'active' && (
-          <motion.div
-            className="absolute z-20 w-[80vw] text-center pointer-events-none"
-            variants={textMorphVariants}
-            initial="future"
-            animate="active"
-            style={{ 
-              transformStyle: 'preserve-3d',
-              mixBlendMode: 'difference' // Magic overlay effect
-            }}
-          >
-            <AnimatedCaption 
-              text={comp.caption} 
-              effect={comp.textEffect} 
-              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || globalFontFamily}`} 
-              textColor={comp.textColor || globalTextColor}
-              isMulti={false} // Complex colors might look weird in difference mode
-            />
-          </motion.div>
-        )}
-
-        {/* Standard Caption rendering inside 3D space for consistent quality */}
-        {!isMorph && comp.caption && status === 'active' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-            className={`fixed z-40 flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
-            style={{ 
-              transformStyle: 'preserve-3d',
-              mixBlendMode: 'difference'
-            }}
-          >
-            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]`}>
-              <AnimatedCaption 
-                text={comp.caption} 
-                effect={comp.textEffect} 
-                className={fontSizeOverride || "text-4xl md:text-6xl"}
-                textColor={comp.textColor || globalTextColor}
-                isMulti={comp.isMultiColor || globalIsMultiColor}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Cinematic media display */}
         {comp.giphyStickerUrl && (
           <motion.div
             className="absolute z-50 flex items-center justify-center"
@@ -2187,6 +2148,61 @@ const CompositionNode = ({
             </motion.div>
           );
         })}
+        {/* Premium Social Overlays Layer */}
+        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+          <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
+            <PremiumSocialOverlays
+              type={comp.sceneType}
+              status={status}
+              caption={comp.caption}
+              accentColor={accentColor}
+            />
+          </div>
+        )}
+
+        {/* CAPTIONS RENDERED LAST TO STAY ON TOP */}
+        {isMorph && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+          <motion.div
+            className="absolute z-[300] w-[80vw] text-center pointer-events-none"
+            variants={textMorphVariants}
+            initial="future"
+            animate="active"
+            style={{ 
+              mixBlendMode: 'difference',
+              z: 1000 // Significantly in front of the media
+            }}
+          >
+            <AnimatedCaption 
+              text={comp.caption} 
+              effect={comp.textEffect} 
+              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || globalFontFamily}`} 
+              textColor={comp.textColor || globalTextColor}
+              isMulti={false}
+            />
+          </motion.div>
+        )}
+
+        {!isMorph && comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, filter: 'blur(10px)', z: 1000 }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)', z: 1000 }}
+            exit={{ opacity: 0, y: -20, filter: 'blur(10px)', z: 1000 }}
+            className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
+            style={{ 
+              mixBlendMode: 'difference'
+            }}
+          >
+            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_10px_rgba(30,30,30,0.5)]`}>
+              <AnimatedCaption 
+                text={comp.caption} 
+                effect={comp.textEffect} 
+                className={fontSizeOverride || "text-4xl md:text-6xl"}
+                textColor={comp.textColor || globalTextColor}
+                isMulti={comp.isMultiColor || globalIsMultiColor}
+              />
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
@@ -4473,6 +4489,54 @@ export default function App() {
           className="absolute w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(255,100,0,0.3)_0%,transparent_70%)] blur-xl"
         />
       </div>
+
+      {/* Global Shader Transition Layer - Ported from Hyperframes */}
+      <ShaderTransitionCanvas 
+        active={activeShaderTransition.isActive}
+        fromTexture={activeShaderTransition.fromUrl}
+        toTexture={activeShaderTransition.toUrl}
+        type={activeShaderTransition.name}
+        progress={activeShaderTransition.progress}
+      />
+
+      {/* Manual Scene Layout Picker Toolbar */}
+      {!isRecording && (
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[600] flex items-center gap-2 bg-black/90 backdrop-blur-xl brutal-border p-2 shadow-2xl"
+        >
+          <div className="px-3 border-r border-white/20">
+            <span className="text-[10px] font-mono font-bold text-gray-500 uppercase tracking-tighter block leading-none">Layout</span>
+            <span className="text-white font-bold text-xs uppercase leading-none">{currentComp.sceneType}</span>
+          </div>
+          <div className="flex gap-1">
+            {[
+              { id: 'standard', icon: <ImageIcon size={14} />, label: 'Standard' },
+              { id: 'text-morph', icon: <Sparkles size={14} />, label: 'Morph' },
+              { id: 'grid', icon: <Grid size={14} />, label: 'Grid' },
+              { id: 'split', icon: <Columns size={14} />, label: 'Split' },
+              { id: 'instagram-follow', icon: <Instagram size={14} />, label: 'Instagram' },
+              { id: 'x-post', icon: <Twitter size={14} />, label: 'Twitter' },
+              { id: 'macos-notification', icon: <Bell size={14} />, label: 'macOS' },
+              { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' }
+            ].map(type => (
+              <button
+                key={type.id}
+                onClick={() => {
+                  setCompositions(prev => prev.map((c, i) => 
+                    i === currentIndex ? { ...c, sceneType: type.id as any } : c
+                  ));
+                }}
+                className={`p-2 brutal-border transition-all flex flex-col items-center gap-1 group ${currentComp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
+                title={type.label}
+              >
+                {type.icon}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
         </VideoCanvas>
       </div>
