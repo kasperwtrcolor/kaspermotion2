@@ -4282,7 +4282,6 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-              </div>
 
                 <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
                   <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-4 text-center tracking-tight text-black">Social Media Customization</h3>
