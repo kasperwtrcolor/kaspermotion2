@@ -1273,7 +1273,7 @@ const PremiumParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: an
       <motion.div style={{ x: layer3X, y: layer3Y, z: -200 }} className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:200px_100%] opacity-30" />
       
       {/* Dynamic Forefront - Parallax particles */}
-      <motion.div style={{ x: layer4X, y: layer4Y, z: 200 }} className="absolute inset-0">
+      <motion.div style={{ x: layer4X, y: layer4Y, z: -100 }} className="absolute inset-0">
          {[...Array(20)].map((_, i) => (
           <div key={i} className="absolute w-2 h-2 bg-brutal-green rounded-full shadow-[0_0_10px_#88ff00]" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }} />
         ))}
@@ -1337,7 +1337,7 @@ const ParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) =>
   const bgY3 = useTransform(worldY, v => Number(v) * 0.3);
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ z: -100 }}>
       <motion.div 
         className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/stars/1920/1080')] bg-repeat opacity-20 mix-blend-screen"
         style={{ x: bgX1, y: bgY1, backgroundSize: '500px 500px' }}
@@ -1365,7 +1365,7 @@ const ParticleTrails = () => {
           animate={{
             x: (Math.random() - 0.5) * 1000,
             y: (Math.random() - 0.5) * 1000,
-            z: (Math.random() - 0.5) * 500,
+            z: (Math.random() * -450) - 50,
             opacity: [0, 1, 0],
             scale: [0, Math.random() * 2 + 1, 0],
           }}
