@@ -1915,6 +1915,7 @@ const CompositionNode = ({
   globalTextColor,
   globalIsMultiColor,
   globalFontFamily,
+  socialHandle,
   worldX,
   worldY
 }: { 
@@ -1925,6 +1926,7 @@ const CompositionNode = ({
   globalTextColor: string;
   globalIsMultiColor: boolean;
   globalFontFamily: string;
+  socialHandle: string;
   worldX: any;
   worldY: any;
 }) => {
@@ -2082,7 +2084,8 @@ const CompositionNode = ({
           />
         )}
 
-        {comp.media.map((m, i) => {
+        {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
+        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && comp.media.map((m, i) => {
           const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
           
           const mediaElement = m.url && (
@@ -2157,6 +2160,7 @@ const CompositionNode = ({
               status={status}
               caption={comp.caption}
               accentColor={accentColor}
+              handle={socialHandle}
             />
           </div>
         )}
@@ -2276,6 +2280,7 @@ export default function App() {
   const [useGrainEffect, setUseGrainEffect] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
 
+  const [socialHandle, setSocialHandle] = useState('@Handle');
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sceneStartTime, setSceneStartTime] = useState(Date.now());
@@ -4279,8 +4284,68 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="mb-8 md:mb-12">
-                <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Video Effects</h3>
+                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
+                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-4 text-center tracking-tight text-black">Social Media Customization</h3>
+                  <div className="max-w-md mx-auto">
+                    <label className="block text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Your @ Handle</label>
+                    <input 
+                      type="text" 
+                      value={socialHandle}
+                      onChange={(e) => setSocialHandle(e.target.value)}
+                      placeholder="@yourhandle"
+                      className="w-full brutal-input px-4 py-3 text-lg font-bold bg-white text-black"
+                    />
+                    <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase text-center">
+                      This handle will be shown on all Instagram, X, and Notification layouts.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
+                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-6 text-center tracking-tight text-black">Scene-by-Scene Designer</h3>
+                  <div className="space-y-4">
+                    {compositions.map((comp, idx) => (
+                      <div key={comp.id} className="brutal-border p-4 bg-white flex flex-col md:flex-row items-center gap-4 group hover:bg-gray-50 transition-colors">
+                        <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
+                          <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-1 justify-center md:justify-end">
+                          {[
+                            { id: 'standard', icon: <ImageIcon size={14} />, label: 'Standard' },
+                            { id: 'text-morph', icon: <Sparkles size={14} />, label: 'Morph' },
+                            { id: 'grid', icon: <Grid size={14} />, label: 'Grid' },
+                            { id: 'split', icon: <Columns size={14} />, label: 'Split' },
+                            { id: 'instagram-follow', icon: <Instagram size={14} />, label: 'Insta' },
+                            { id: 'x-post', icon: <Twitter size={14} />, label: 'X' },
+                            { id: 'macos-notification', icon: <Bell size={14} />, label: 'Notif' },
+                            { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' }
+                          ].map(type => (
+                            <button
+                              key={type.id}
+                              onClick={() => {
+                                setCompositions(prev => prev.map((c, i) => 
+                                  i === idx ? { ...c, sceneType: type.id as any } : c
+                                ));
+                              }}
+                              className={`p-2 brutal-border transition-all flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
+                            >
+                              {type.icon}
+                              <span className="text-[7px] font-mono font-bold uppercase">{type.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8 md:mb-12 mt-8 pt-8 border-t-2 border-black/5">
+                <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Master Video Effects</h3>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setUseGrainEffect(!useGrainEffect)}
@@ -4461,6 +4526,7 @@ export default function App() {
                 globalTextColor={textColor}
                 globalIsMultiColor={isMultiColor}
                 globalFontFamily={fontFamily}
+                socialHandle={socialHandle}
                 worldX={worldX}
                 worldY={worldY}
               />
@@ -4503,44 +4569,7 @@ export default function App() {
         />
       )}
 
-      {/* Manual Scene Layout Picker Toolbar */}
-      {!isRecording && (
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[600] flex items-center gap-2 bg-black/90 backdrop-blur-xl brutal-border p-2 shadow-2xl"
-        >
-          <div className="px-3 border-r border-white/20">
-            <span className="text-[10px] font-mono font-bold text-gray-500 uppercase tracking-tighter block leading-none">Layout</span>
-            <span className="text-white font-bold text-xs uppercase leading-none">{currentComp.sceneType}</span>
-          </div>
-          <div className="flex gap-1">
-            {[
-              { id: 'standard', icon: <ImageIcon size={14} />, label: 'Standard' },
-              { id: 'text-morph', icon: <Sparkles size={14} />, label: 'Morph' },
-              { id: 'grid', icon: <Grid size={14} />, label: 'Grid' },
-              { id: 'split', icon: <Columns size={14} />, label: 'Split' },
-              { id: 'instagram-follow', icon: <Instagram size={14} />, label: 'Instagram' },
-              { id: 'x-post', icon: <Twitter size={14} />, label: 'Twitter' },
-              { id: 'macos-notification', icon: <Bell size={14} />, label: 'macOS' },
-              { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' }
-            ].map(type => (
-              <button
-                key={type.id}
-                onClick={() => {
-                  setCompositions(prev => prev.map((c, i) => 
-                    i === currentIndex ? { ...c, sceneType: type.id as any } : c
-                  ));
-                }}
-                className={`p-2 brutal-border transition-all flex flex-col items-center gap-1 group ${currentComp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
-                title={type.label}
-              >
-                {type.icon}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      {/* Manual Scene Layout Picker Toolbar Moved to Step 4 */}
 
         </VideoCanvas>
       </div>

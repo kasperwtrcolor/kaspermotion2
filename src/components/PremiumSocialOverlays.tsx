@@ -6,6 +6,7 @@ interface BlockProps {
   status: 'past' | 'active' | 'future';
   caption?: string;
   accentColor?: string;
+  handle?: string;
   userData?: {
     name: string;
     handle: string;
@@ -44,7 +45,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
           <span className="text-white font-bold text-2xl tracking-tight">{caption || "HeyGen"}</span>
           <CheckCircle2 size={20} className="text-blue-500 fill-blue-500" />
         </div>
-        <span className="text-gray-400 text-lg">@heygen_official</span>
+        <span className="text-gray-400 text-lg">{handle || "@heygen_official"}</span>
       </div>
 
       <motion.button
@@ -82,7 +83,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0" }: Block
               <span className="text-white font-bold text-lg">KasperMotion</span>
               <CheckCircle2 size={18} className="text-blue-400 fill-blue-400" />
             </div>
-            <span className="text-gray-500">@kaspermotion</span>
+            <span className="text-gray-500">{handle || "@kaspermotion"}</span>
           </div>
         </div>
         <Twitter className="text-white w-6 h-6 opacity-30" />
