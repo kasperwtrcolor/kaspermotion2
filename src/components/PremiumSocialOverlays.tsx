@@ -73,7 +73,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle 
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-10 w-[620px] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-hidden"
+      className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-10 w-[620px] max-w-[90vw] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-visible"
     >
       {/* Subtle Branding Background */}
       <div className="absolute -top-10 -right-10 opacity-[0.03] rotate-12">
