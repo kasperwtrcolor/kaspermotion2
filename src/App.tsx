@@ -664,8 +664,8 @@ const GSAPExpandText = ({ text, className = "", style = {}, textColor, isMulti }
       keyframes: {
         "0%": { scale: 0.1, opacity: 0 },
         "15%": { scale: 1, opacity: 1 },
-        "70%": { scale: 1.1, opacity: 1 },
-        "100%": { scale: 30, opacity: 0 }
+        "60%": { scale: 1.2, opacity: 0.2 },
+        "100%": { scale: 3.5, opacity: 0 }
       },
       duration: 4,
       stagger: { each: 0.05, from: "center" },
@@ -1942,10 +1942,10 @@ const CinematicOverlay = ({ useGrainEffect, intensity = 0.15, mood = 'standard' 
 };
 
 const AUDIO_TRACKS: Record<string, string> = {
-  'mood-cinematic': 'https://cdn.pixabay.com/audio/2022/03/23/audio_07b5b5c5e8.mp3',
-  'mood-energetic': 'https://cdn.pixabay.com/audio/2021/11/25/audio_91b10694e1.mp3',
-  'mood-lofi': 'https://cdn.pixabay.com/audio/2022/05/27/audio_18bb04f759.mp3',
-  'mood-ambient': 'https://cdn.pixabay.com/audio/2022/01/21/audio_31b814a04d.mp3'
+  'mood-cinematic': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/cinematic.mp3',
+  'mood-energetic': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/energetic.mp3',
+  'mood-lofi': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/lofi.mp3',
+  'mood-ambient': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/ambient.mp3'
 };
 
 const CompositionNode = ({ 
@@ -2176,9 +2176,15 @@ const CompositionNode = ({
               }}
             >
               {hasError ? (
-                <div className={`${shapeStyle.className} flex flex-col items-center justify-center gap-4 bg-gray-800`} style={shapeStyle.style}>
-                  <AlertCircle size={48} className="text-white opacity-20" />
-                  <p className="text-[10px] font-mono font-bold text-white uppercase tracking-widest opacity-20">Error</p>
+                <div className={`${shapeStyle.className} flex flex-col items-center justify-center bg-white/5 backdrop-blur-xl border border-white/10`} style={shapeStyle.style}>
+                  <motion.div 
+                    animate={{ opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center"
+                  >
+                    <ImageIcon size={24} className="text-white opacity-20" />
+                  </motion.div>
+                  <p className="text-[10px] font-mono font-bold text-white/20 uppercase tracking-[0.2em] mt-4">Media Loading</p>
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
@@ -3390,23 +3396,31 @@ export default function App() {
       const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
 
+      // Persistence Logic: Reuse existing composition settings if they exist
+      const existingComp = compositions[sceneIdx];
+      
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
         caption, 
-        preferredTextPosition, 
-        activeEffect, 
-        activeTransition, 
-        transitionDuration, 
+        existingComp?.textPosition || preferredTextPosition, 
+        existingComp?.textEffect || activeEffect, 
+        existingComp?.transitionType || activeTransition, 
+        existingComp?.transitionDuration || transitionDuration, 
         prev,
         isTextOnly,
-        preset,
-        backgroundStyles,
-        undefined, // Dedicated Giphy scenes handled below
-        fontFamily,
-        textColor,
-        isMultiColor
+        existingComp?.preset || preset,
+        existingComp?.backgroundStyles || backgroundStyles,
+        existingComp?.giphyStickerUrl, // Keep manual stickers
+        existingComp?.fontFamily || fontFamily,
+        existingComp?.textColor || textColor,
+        existingComp?.isMultiColor || isMultiColor
       );
+      
+      // Manually assigned Scene Type persistence
+      if (existingComp) {
+        comp.sceneType = existingComp.sceneType;
+      }
       
       newComps.push(comp);
       prev = comp;

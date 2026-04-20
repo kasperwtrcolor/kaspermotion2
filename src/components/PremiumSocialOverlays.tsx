@@ -20,7 +20,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
       initial={{ y: 300, opacity: 0 }}
       animate={status === 'active' ? { y: 0, opacity: 1 } : { y: 300, opacity: 0 }}
       transition={{ type: 'spring', damping: 15, stiffness: 100 }}
-      className="bg-black/60 backdrop-blur-3xl rounded-[3rem] pr-10 pl-6 py-6 flex items-center gap-8 shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-white/10 group"
+      className="bg-black/70 backdrop-blur-3xl rounded-[1.5rem] pr-10 pl-6 py-6 flex items-center gap-8 shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-white/15 group"
     >
       <div className="relative">
         <div className="w-28 h-28 rounded-full overflow-hidden border border-white/10 p-1 bg-white/5">
@@ -73,7 +73,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle 
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      className="bg-black/85 backdrop-blur-[40px] border border-white/15 rounded-[2.5rem] p-10 w-[580px] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-hidden"
+      className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-10 w-[620px] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-hidden"
     >
       {/* Subtle Branding Background */}
       <div className="absolute -top-10 -right-10 opacity-[0.03] rotate-12">
@@ -177,38 +177,78 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
   const bars = [80, 65, 90, 45, 75];
   return (
     <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={status === 'active' ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
-      className="bg-black/60 backdrop-blur-3xl rounded-[2.5rem] p-10 w-[650px] border border-white/10 shadow-[0_60px_150px_rgba(0,0,0,0.7)]"
+      initial={{ scale: 0.9, opacity: 0, rotateX: 20 }}
+      animate={status === 'active' ? { scale: 1, opacity: 1, rotateX: 0 } : { scale: 0.9, opacity: 0, rotateX: 20 }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-black/80 backdrop-blur-[40px] rounded-[3rem] p-12 w-[700px] border border-white/20 shadow-[0_80px_200px_rgba(0,0,0,0.8)] relative overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-10">
-        <div>
-          <h4 className="text-white font-black text-3xl mb-1 tracking-tight">{caption || "Performance Metrics"}</h4>
-          <p className="text-white/30 text-xs uppercase tracking-[0.2em] font-black">AI Reality Visualization</p>
-        </div>
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
-          <TrendingUp className="text-white" style={{ color: accentColor }} />
-        </div>
+      {/* Background Heartbeat Grid */}
+      <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <motion.div 
+          animate={{ x: ['100%', '-100%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white to-transparent"
+        />
       </div>
 
-      <div className="flex items-end justify-between gap-6 h-56 px-2">
+      <div className="flex items-center justify-between mb-12 relative z-10">
+        <div>
+          <motion.h4 
+            initial={{ x: -20, opacity: 0 }}
+            animate={status === 'active' ? { x: 0, opacity: 1 } : {}}
+            transition={{ delay: 0.3 }}
+            className="text-white font-black text-4xl mb-2 tracking-tighter"
+          >
+            {caption || "Performance Metrics"}
+          </motion.h4>
+          <motion.p 
+            initial={{ x: -20, opacity: 0 }}
+            animate={status === 'active' ? { x: 0, opacity: 1 } : {}}
+            transition={{ delay: 0.4 }}
+            className="text-white/40 text-[10px] uppercase font-mono font-black tracking-[0.4em]"
+          >
+            Real-time Logic Visualization
+          </motion.p>
+        </div>
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="p-5 rounded-2xl bg-white/5 border border-white/10 shadow-2xl"
+        >
+          <TrendingUp className="text-white w-8 h-8" style={{ color: accentColor }} />
+        </motion.div>
+      </div>
+
+      <div className="flex items-end justify-between gap-6 h-64 px-4 relative z-10">
         {bars.map((h, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-4">
-            <motion.div
-              initial={{ height: 0 }}
-              animate={status === 'active' ? { height: `${h}%` } : { height: 0 }}
-              transition={{ delay: i * 0.1 + 0.5, type: 'spring', damping: 15 }}
-              style={{ backgroundColor: accentColor }}
-              className="w-full rounded-2xl relative group overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-white/10"
-            >
-               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/20" />
-               <motion.div 
-                 animate={{ y: [0, -100] }}
-                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                 className="absolute inset-x-0 h-10 bg-white/10 blur-xl"
-               />
-            </motion.div>
-            <span className="text-white/20 text-[10px] font-black font-mono tracking-widest mt-2 uppercase">Node {i + 1}</span>
+          <div key={i} className="flex-1 flex flex-col items-center gap-6">
+            <div className="relative w-full h-full flex flex-col justify-end">
+              <motion.div
+                initial={{ height: 0 }}
+                animate={status === 'active' ? { height: `${h}%` } : { height: 0 }}
+                transition={{ delay: i * 0.15 + 0.6, type: 'spring', damping: 12, stiffness: 80 }}
+                style={{ backgroundColor: accentColor }}
+                className="w-full rounded-t-xl rounded-b-md relative group overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-white/20"
+              >
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/30" />
+                 <motion.div 
+                   animate={{ y: ['200%', '-100%'] }}
+                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: i * 0.2 }}
+                   className="absolute inset-x-0 h-10 bg-white/20 blur-xl"
+                 />
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={status === 'active' ? { opacity: [0, 1, 0.5, 1] } : { opacity: 0 }}
+                transition={{ delay: i * 0.15 + 1.2, duration: 2, repeat: Infinity }}
+                className="absolute -top-10 left-1/2 -translate-x-1/2 text-white font-mono font-black text-xs"
+              >
+                {h}%
+              </motion.div>
+            </div>
+            <span className="text-white/30 text-[10px] font-black font-mono tracking-widest uppercase">Node.0{i + 1}</span>
           </div>
         ))}
       </div>
