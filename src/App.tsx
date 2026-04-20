@@ -1836,6 +1836,17 @@ const ForegroundAtmosphere = () => {
   );
 };
 
+const getTextPositionClass = (pos: TextPosition) => {
+  switch (pos) {
+    case 'top': return 'top-16 md:top-24 inset-x-0';
+    case 'bottom': return 'bottom-16 md:bottom-24 inset-x-0';
+    case 'center': return 'top-1/2 -translate-y-1/2 inset-x-0';
+    case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-left';
+    case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-right';
+    default: return 'bottom-16 md:bottom-24 inset-x-0';
+  }
+};
+
 const CinematicOverlay = ({ useGrainEffect, mood = 'standard' }: { useGrainEffect: boolean, mood?: CinematicMood }) => {
   const getMoodFilter = () => {
     switch (mood) {
@@ -1889,6 +1900,7 @@ const CompositionNode = ({
   fontSizeOverride,
   globalTextColor,
   globalIsMultiColor,
+  globalFontFamily,
   worldX,
   worldY
 }: { 
@@ -1898,6 +1910,7 @@ const CompositionNode = ({
   fontSizeOverride?: string;
   globalTextColor: string;
   globalIsMultiColor: boolean;
+  globalFontFamily: string;
   worldX: any;
   worldY: any;
 }) => {
@@ -2036,10 +2049,34 @@ const CompositionNode = ({
             <AnimatedCaption 
               text={comp.caption} 
               effect={comp.textEffect} 
-              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || 'font-display'}`} 
-              textColor="#FFFFFF" // White in difference mode will invert based on background
+              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || globalFontFamily}`} 
+              textColor={comp.textColor || globalTextColor}
               isMulti={false} // Complex colors might look weird in difference mode
             />
+          </motion.div>
+        )}
+
+        {/* Standard Caption rendering inside 3D space for consistent quality */}
+        {!isMorph && comp.caption && status === 'active' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+            className={`fixed z-40 flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
+            style={{ 
+              transformStyle: 'preserve-3d',
+              mixBlendMode: 'difference'
+            }}
+          >
+            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]`}>
+              <AnimatedCaption 
+                text={comp.caption} 
+                effect={comp.textEffect} 
+                className={fontSizeOverride || "text-4xl md:text-6xl"}
+                textColor={comp.textColor || globalTextColor}
+                isMulti={comp.isMultiColor || globalIsMultiColor}
+              />
+            </div>
           </motion.div>
         )}
 
@@ -2179,7 +2216,7 @@ export default function App() {
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
-  const [textColor, setTextColor] = useState<string>('#000000');
+  const [textColor, setTextColor] = useState<string>('#FFFFFF');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
   const [textEffect, setTextEffect] = useState<TextEffect>('gsap-glow'); // Kept for legacy compatibility
@@ -4289,16 +4326,6 @@ export default function App() {
         return 'bg-black';
       };
 
-      const getTextPositionClass = (pos: TextPosition) => {
-        switch (pos) {
-          case 'top': return 'top-16 md:top-24 inset-x-0';
-          case 'bottom': return 'bottom-16 md:bottom-24 inset-x-0';
-          case 'center': return 'top-1/2 -translate-y-1/2 inset-x-0';
-          case 'left': return 'left-4 md:left-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-left';
-          case 'right': return 'right-4 md:right-16 top-1/2 -translate-y-1/2 max-w-[90vw] md:max-w-lg text-right';
-          default: return 'bottom-16 md:bottom-24 inset-x-0';
-        }
-      };
 
       const camera = currentComp ? { x: currentComp.x, y: currentComp.y, z: currentComp.z } : { x: 0, y: 0, z: 0 };
       
@@ -4370,6 +4397,7 @@ export default function App() {
                 fontSizeOverride={randomFontSize} 
                 globalTextColor={textColor}
                 globalIsMultiColor={isMultiColor}
+                globalFontFamily={fontFamily}
                 worldX={worldX}
                 worldY={worldY}
               />
@@ -4400,29 +4428,6 @@ export default function App() {
         />
       </div>
 
-      {/* Global HUD Layer for Typography */}
-      <AnimatePresence mode="wait">
-        {currentComp && currentComp.caption && currentComp.sceneType !== 'text-morph' && (
-          <motion.div
-            key={currentComp.id}
-            initial={{ opacity: 0, scale: 0.5, filter: 'blur(20px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.5, filter: 'blur(20px)' }}
-            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-            className={`pointer-events-none fixed z-40 flex flex-col items-center justify-center text-center px-8 ${getTextPositionClass(currentComp.textPosition)}`}
-          >
-            <div className={`transform -rotate-2 ${fontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]`}>
-              <AnimatedCaption 
-                text={currentComp.caption} 
-                effect={currentComp.textEffect} 
-                className="text-4xl md:text-6xl"
-                textColor={currentComp.textColor || textColor}
-                isMulti={currentComp.isMultiColor || isMultiColor}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
         </VideoCanvas>
       </div>
     );
