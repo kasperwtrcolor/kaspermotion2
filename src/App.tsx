@@ -1256,7 +1256,7 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
       {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
       {style === 'particles' && <ParticleTrails />}
       {style === 'geometry-morph' && <GeometryMorphBackground />}
-      {style === 'radio-waves' && <RadioWavesBackground />}
+      {(style === 'grid' || style === 'radio-waves') && <TechGridBackground />}
       {style === 'fluid-displace' && <FluidDisplaceBackground />}
       {style === 'motion-tile' && <MotionTileBackground />}
       {style === 'textured-paper' && <TexturePaperBackground />}
@@ -1348,51 +1348,86 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
 };
 
 const GeometryMorphBackground = () => {
-  const shapes = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
+  const shards = useMemo(() => Array.from({ length: 12 }).map((_, i) => ({
     id: i,
-    type: ['rect', 'circle', 'triangle', 'plus'][Math.floor(Math.random() * 4)],
-    size: Math.random() * 200 + 100,
-    x: Math.random() * 2000 - 1000,
-    y: Math.random() * 2000 - 1000,
-    z: Math.random() * -1000 - 500,
-    color: ['bg-brutal-blue', 'bg-brutal-pink', 'bg-brutal-green', 'bg-white', 'bg-brutal-purple'][Math.floor(Math.random() * 5)],
-    duration: Math.random() * 20 + 20,
-    delay: Math.random() * -20
+    size: Math.random() * 400 + 200,
+    x: Math.random() * 3000 - 1500,
+    y: Math.random() * 3000 - 1500,
+    z: Math.random() * -2000 - 1000,
+    rot: Math.random() * 360,
+    speed: 30 + Math.random() * 40
   })), []);
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]" style={{ transformStyle: 'preserve-3d' }}>
-      {shapes.map(s => (
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-black" />
+      {shards.map(s => (
         <motion.div
           key={s.id}
-          className={`absolute brutal-border opacity-20 ${s.color} ${s.type === 'circle' ? 'rounded-full' : s.type === 'rect' ? 'rounded-xl' : ''}`}
+          className="absolute bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem]"
           style={{ 
             width: s.size, 
-            height: s.type === 'plus' ? s.size / 4 : s.size,
+            height: s.size * 0.7,
             x: s.x, y: s.y, z: s.z,
-            transformStyle: 'preserve-3d'
+            transformStyle: 'preserve-3d',
+            boxShadow: 'inset 0 0 40px rgba(255,255,255,0.05), 0 30px 100px rgba(0,0,0,0.5)'
           }}
           animate={{
-            rotateZ: [0, 360],
-            x: [s.x, s.x + (Math.random() * 400 - 200)],
-            y: [s.y, s.y + (Math.random() * 400 - 200)],
-            scale: [1, 1.2, 1]
+            rotateX: [s.rot, s.rot + 360],
+            rotateY: [s.rot, s.rot - 360],
+            y: [s.y, s.y - 400, s.y]
           }}
-          transition={{
-            duration: s.duration,
-            repeat: Infinity,
-            ease: "linear",
-            times: [0, 1]
+          transition={{ 
+            duration: s.speed, 
+            repeat: Infinity, 
+            ease: "linear" 
           }}
-        >
-          {s.type === 'triangle' && (
-            <div className="w-full h-full clip-path-triangle bg-inherit" />
-          )}
-          {s.type === 'plus' && (
-            <div className="absolute inset-0 bg-inherit rotate-90" />
-          )}
-        </motion.div>
+        />
       ))}
+      <div className="absolute inset-0 opacity-40 mix-blend-plus-lighter bg-[radial-gradient(ellipse_at_30%_30%,rgba(63,94,251,0.2)_0%,transparent_70%)]" />
+    </div>
+  );
+};
+
+const TechGridBackground = () => {
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1] bg-black">
+      <div 
+        className="absolute w-[400%] h-[400%] left-[-150%] top-[-150%] opacity-20"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(59,130,246,0.3) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(59,130,246,0.3) 1px, transparent 1px)
+          `,
+          backgroundSize: '120px 120px',
+          transform: 'perspective(1500px) rotateX(65deg) translateY(400px)',
+          transformOrigin: 'center center'
+        }}
+      />
+      
+      <div className="absolute inset-0">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-blue-500 rounded-full blur-[2px] shadow-[0_0_20px_#3b82f6]"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ 
+              opacity: [0, 1, 0],
+              scale: [0, 1.5, 0],
+              x: Math.random() * 2000 - 1000,
+              y: Math.random() * 2000 - 1000
+            }}
+            transition={{ 
+              duration: 3 + Math.random() * 5, 
+              repeat: Infinity, 
+              delay: Math.random() * 10
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/90" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,black_100%)]" />
     </div>
   );
 };
@@ -1754,7 +1789,83 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
   );
 };
 
-// Helper components formerly here (icons/shapes) have been decommissioned for a cleaner cinematic look.
+const FilmBurnTransition = ({ active }: { active: boolean }) => (
+  <AnimatePresence>
+    {active && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0.8, 0] }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 1.5, ease: "easeInOut" }}
+        className="fixed inset-0 z-[1100] pointer-events-none overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/40 via-yellow-400/20 to-red-600/40 mix-blend-screen blur-3xl animate-pulse" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,165,0,0.5),transparent_70%)] mix-blend-plus-lighter" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,69,0,0.4),transparent_70%)] mix-blend-overlay" />
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
+  if (style === 'geometry-morph') {
+    return (
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl"
+            initial={{ 
+              x: Math.random() * 2000 - 1000, 
+              y: Math.random() * 2000 - 1000, 
+              rotate: Math.random() * 360,
+              scale: 0.5 + Math.random()
+            }}
+            animate={{
+              x: [null, Math.random() * 2000 - 1000],
+              y: [null, Math.random() * 2000 - 1000],
+              rotate: [null, Math.random() * 360],
+            }}
+            transition={{ 
+              duration: 20 + Math.random() * 20, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+            style={{ 
+              width: 200 + Math.random() * 400, 
+              height: 200 + Math.random() * 400,
+              boxShadow: '0 0 50px rgba(255,255,255,0.05)'
+            }}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-black/40 to-purple-900/40 mix-blend-overlay" />
+      </div>
+    );
+  }
+
+  if (style === 'grid' || style === 'radio-waves') {
+    return (
+      <div className="absolute inset-0 z-0 overflow-hidden opacity-30">
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+            backgroundSize: '80px 80px',
+            transform: 'perspective(1000px) rotateX(60deg) translateY(-200px) scale(2)',
+            transformOrigin: 'top center'
+          }}
+        />
+        <motion.div 
+          animate={{ opacity: [0.1, 0.3, 0.1] }}
+          transition={{ duration: 4, repeat: Infinity }}
+          className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent"
+        />
+      </div>
+    );
+  }
+
+  return null;
+};
 
 const getTextPositionClass = (pos: TextPosition) => {
   switch (pos) {

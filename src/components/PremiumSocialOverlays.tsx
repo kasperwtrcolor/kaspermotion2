@@ -73,46 +73,78 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle 
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      className="bg-black/80 backdrop-blur-3xl border border-white/20 rounded-[2.5rem] p-8 w-[550px] shadow-[0_50px_120px_rgba(0,0,0,0.8)] flex flex-col gap-6 font-sans relative overflow-hidden"
+      className="bg-black/85 backdrop-blur-[40px] border border-white/15 rounded-[2.5rem] p-10 w-[580px] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 p-8 opacity-10">
-        <Twitter className="text-white w-24 h-24" />
+      {/* Subtle Branding Background */}
+      <div className="absolute -top-10 -right-10 opacity-[0.03] rotate-12">
+        <Twitter className="text-white w-64 h-64" />
       </div>
 
       <div className="flex items-start justify-between relative z-10">
-        <div className="flex gap-4">
-          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border-2 border-white/10 shadow-xl">
-             <span className="text-black font-black text-3xl">X</span>
+        <div className="flex gap-5">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-gray-200 to-white flex items-center justify-center p-0.5 shadow-2xl">
+               <div className="w-full h-full rounded-full bg-black flex items-center justify-center border border-white/10">
+                  <span className="text-white font-black text-4xl italic tracking-tighter">X</span>
+               </div>
+            </div>
+            <motion.div 
+               initial={{ scale: 0 }}
+               animate={{ scale: 1 }}
+               transition={{ delay: 1, type: 'spring' }}
+               className="absolute -bottom-1 -right-1 bg-[#1d9bf0] rounded-full p-1.5 border-4 border-black"
+            >
+               <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-current">
+                 <path d="M22.5 12.5c0-1.58-.88-2.97-2.18-3.7 1.3-1.4 1.3-3.61 0-5.01-1.4-1.3-3.61-1.3-5.01 0-.73-1.3-2.12-2.18-3.7-2.18s-2.97.88-3.7 2.18c-1.4-1.3-3.61-1.3-5.01 0-1.3 1.4-1.3 3.61 0 5.01-.73-1.3-2.12-2.18-3.7-2.18-3.7 0-3.7 2.97-3.7 4.5s.88 2.97 2.18 3.7c-1.3 1.4-1.3 3.61 0 5.01 1.4 1.3 3.61 1.3 5.01 0 .73 1.3 2.12 2.18 3.7 2.18s2.97-.88 3.7-2.18c1.4 1.3 3.61 1.3 5.01 0 1.3-1.4 1.3-3.61 0-5.01.73 1.3 2.12 2.18 3.7 2.18zM10.7 17.5l-4-4 1.4-1.4 2.6 2.6 6.6-6.6 1.4 1.4-8 8z" />
+               </svg>
+            </motion.div>
           </div>
-          <div className="flex flex-col">
+
+          <div className="flex flex-col justify-center">
             <div className="flex items-center gap-1.5">
-              <span className="text-white font-bold text-2xl tracking-tight">KasperMotion</span>
-              <div className="bg-blue-400 rounded-full p-0.5">
-                <CheckCircle2 size={14} className="text-white fill-white" />
+              <span className="text-white font-black text-2xl tracking-tighter">KasperMotion</span>
+              {/* Premium Verified Badge */}
+              <div className="flex items-center bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">
+                 <span className="text-blue-400 text-[10px] font-black uppercase tracking-[0.1em]">Verified</span>
               </div>
             </div>
-            <span className="text-white/40 text-lg font-medium">{handle || "@kaspermotion"}</span>
+            <span className="text-white/40 text-[18px] font-bold tracking-tight">{handle || "@kaspermotion"}</span>
           </div>
+        </div>
+        
+        <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
+           <Twitter className="text-white w-6 h-6 opacity-30" />
         </div>
       </div>
 
-      <p className="text-white text-2xl font-medium leading-[1.4] relative z-10 px-2">
+      <p className="text-white text-[28px] font-bold leading-[1.3] relative z-10 px-1 tracking-tight">
         {caption || "Bringing cinematic shader transitions to the masses with KasperMotion 2.0. Write scripts, generate magic. 🚀"}
       </p>
 
-      <div className="flex items-center justify-between text-white/40 border-t border-white/10 pt-6 px-2 relative z-10">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-blue-400 transition-colors">
-            <MessageSquare size={22} /> <span className="font-bold">42</span>
+      <div className="flex items-center justify-between text-white/30 border-t border-white/10 pt-8 px-2 relative z-10">
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-3 group cursor-pointer hover:text-blue-400 transition-all">
+            <div className="p-2 rounded-full group-hover:bg-blue-400/10 transition-colors">
+              <MessageSquare size={24} />
+            </div>
+            <span className="font-bold text-lg italic">42</span>
           </div>
-          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-green-400 transition-colors">
-            <TrendingUp size={22} /> <span className="font-bold">128</span>
+          <div className="flex items-center gap-3 group cursor-pointer hover:text-green-400 transition-all">
+            <div className="p-2 rounded-full group-hover:bg-green-400/10 transition-colors">
+              <TrendingUp size={24} />
+            </div>
+            <span className="font-bold text-lg italic">128</span>
           </div>
-          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-red-400 transition-colors">
-            <Heart size={22} fill={status === 'active' ? accentColor : "none"} className={status === 'active' ? "text-transparent" : ""} /> <span className="font-bold">1.2k</span>
+          <div className="flex items-center gap-3 group cursor-pointer hover:text-red-400 transition-all">
+            <div className="p-2 rounded-full group-hover:bg-red-400/10 transition-colors">
+              <Heart size={24} fill={status === 'active' ? accentColor : "none"} className={status === 'active' ? "text-transparent" : ""} />
+            </div>
+            <span className="font-bold text-lg italic">1.2k</span>
           </div>
         </div>
-        <Share2 size={22} className="hover:text-white transition-colors cursor-pointer" />
+        <div className="p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
+           <Share2 size={24} />
+        </div>
       </div>
     </motion.div>
   );
