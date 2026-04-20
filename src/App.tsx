@@ -26,7 +26,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
@@ -1065,79 +1065,8 @@ const RadioWavesBackground = () => {
   );
 };
 
-const FluidDisplaceBackground = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="hidden">
-        <filter id="fluid-filter">
-          <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="3" result="noise">
-            <animate attributeName="baseFrequency" values="0.01;0.015;0.01" dur="10s" repeatCount="indefinity" />
-          </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="50" />
-        </filter>
-      </svg>
-      <motion.div 
-        className="absolute inset-[-100px] bg-gradient-to-br from-purple-900 via-blue-900 to-black z-0"
-        style={{ filter: 'url(#fluid-filter)' }}
-        animate={{
-          scale: [1, 1.1, 1],
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-      >
-        {[...Array(10)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-white opacity-10 blur-3xl"
-            style={{
-              width: Math.random() * 600 + 400,
-              height: Math.random() * 600 + 400,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 200 - 100, 0],
-              y: [0, Math.random() * 200 - 100, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{ duration: Math.random() * 10 + 10, repeat: Infinity }}
-          />
-        ))}
-      </motion.div>
-    </div>
-  );
-};
 
-const MotionTileBackground = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none grid grid-cols-12 grid-rows-8 gap-4 opacity-10">
-      {[...Array(96)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="w-full h-full border-2 border-white rounded-lg"
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-            opacity: [0.1, 0.4, 0.1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            delay: (i % 12) * 0.2 + Math.floor(i / 8) * 0.3,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundStyle, worldX: any, worldY: any }) => {
-  const layer1X = useTransform(worldX, (x: number) => x * 0.15);
-  const layer1Y = useTransform(worldY, (y: number) => y * 0.15);
-  const layer2X = useTransform(worldX, (x: number) => x * 0.4);
-  const layer2Y = useTransform(worldY, (y: number) => y * 0.4);
-  const layer3X = useTransform(worldX, (x: number) => x * 0.7);
-  const layer3Y = useTransform(worldY, (y: number) => y * 0.7);
+const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
 
   const getTheme = () => {
     switch (type) {
@@ -1190,7 +1119,7 @@ const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundSt
 
   return (
     <div className={`absolute inset-[-400px] pointer-events-none ${theme.base}`} style={{ transformStyle: 'preserve-3d' }}>
-      <motion.div style={{ x: layer1X, y: layer1Y, z: -800 }} className="absolute inset-0">
+      <div style={{ z: -800 }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
             width: Math.random() * 400 + 200, 
@@ -1199,8 +1128,8 @@ const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundSt
             top: `${Math.random() * 100}%` 
           }} />
         ))}
-      </motion.div>
-      <motion.div style={{ x: layer2X, y: layer2Y, z: -400 }} className="absolute inset-0">
+      </div>
+      <div style={{ z: -400 }} className="absolute inset-0">
         {[...Array(10)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer2} ${theme.shapes}`} style={{ 
             width: Math.random() * 300 + 150, 
@@ -1209,8 +1138,8 @@ const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundSt
             top: `${Math.random() * 100}%` 
           }} />
         ))}
-      </motion.div>
-      <motion.div style={{ x: layer3X, y: layer3Y, z: -100 }} className="absolute inset-0">
+      </div>
+      <div style={{ z: -100 }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer3} ${theme.shapes}`} style={{ 
             width: Math.random() * 10, 
@@ -1219,7 +1148,7 @@ const PastelParallaxBackground = ({ type, worldX, worldY }: { type: BackgroundSt
             top: `${Math.random() * 100}%` 
           }} />
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 };
@@ -1237,14 +1166,10 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
       }}
       transition={{ duration: 0.5 }}
     >
-      {style === 'parallax' && <ParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
-      {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
       {style === 'particles' && <ParticleTrails />}
-      {style === 'fluid-displace' && <FluidDisplaceBackground />}
-      {style === 'motion-tile' && <MotionTileBackground />}
       {style === 'textured-paper' && <TexturePaperBackground />}
       {['pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'].includes(style) && (
-        <PastelParallaxBackground type={style} worldX={worldX || 0} worldY={worldY || 0} />
+        <PastelParallaxBackground type={style} />
       )}
     </motion.div>
   );
@@ -1328,52 +1253,27 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
 };
 
 
-const ParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) => {
-  const bgX1 = useTransform(worldX, v => Number(v) * 0.1);
-  const bgY1 = useTransform(worldY, v => Number(v) * 0.1);
-  const bgX2 = useTransform(worldX, v => Number(v) * 0.2);
-  const bgY2 = useTransform(worldY, v => Number(v) * 0.2);
-  const bgX3 = useTransform(worldX, v => Number(v) * 0.3);
-  const bgY3 = useTransform(worldY, v => Number(v) * 0.3);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ z: -100 }}>
-      <motion.div 
-        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/stars/1920/1080')] bg-repeat opacity-20 mix-blend-screen"
-        style={{ x: bgX1, y: bgY1, backgroundSize: '500px 500px' }}
-      />
-      <motion.div 
-        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/nebula/1920/1080')] bg-repeat opacity-30 mix-blend-screen"
-        style={{ x: bgX2, y: bgY2, backgroundSize: '800px 800px' }}
-      />
-      <motion.div 
-        className="absolute inset-[-150%] bg-[url('https://picsum.photos/seed/dust/1920/1080')] bg-repeat opacity-40 mix-blend-screen"
-        style={{ x: bgX3, y: bgY3, backgroundSize: '1200px 1200px' }}
-      />
-    </div>
-  );
-};
 
 const ParticleTrails = () => {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-visible" style={{ transformStyle: 'preserve-3d' }}>
-      {[...Array(15)].map((_, i) => (
+      {[...Array(60)].map((_, i) => (
         <motion.div
           key={`particle-${i}`}
-          className="absolute w-2 h-2 rounded-full bg-gradient-to-tr from-white to-blue-400 blur-[1px]"
+          className="absolute w-4 h-4 rounded-full bg-gradient-to-tr from-white via-cyan-400 to-blue-500 shadow-[0_0_20px_rgba(255,255,255,0.5)]"
           initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
           animate={{
-            x: (Math.random() - 0.5) * 1000,
-            y: (Math.random() - 0.5) * 1000,
-            z: (Math.random() * -450) - 50,
-            opacity: [0, 1, 0],
-            scale: [0, Math.random() * 2 + 1, 0],
+            x: (Math.random() - 0.5) * 2000,
+            y: (Math.random() - 0.5) * 2000,
+            z: (Math.random() * -800) - 100,
+            opacity: [0, 1, 1, 0],
+            scale: [0, Math.random() * 3 + 1, 0],
           }}
           transition={{
-            duration: Math.random() * 3 + 2,
+            duration: Math.random() * 5 + 3,
             repeat: Infinity,
-            ease: "easeOut",
-            delay: Math.random() * 2
+            ease: "easeInOut",
+            delay: Math.random() * 5
           }}
           style={{ transformStyle: 'preserve-3d' }}
         />
@@ -3715,7 +3615,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'vibrant-glow', 'particles', 'parallax', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => {
