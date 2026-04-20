@@ -45,6 +45,7 @@ type MediaItem = {
   url?: string;
   type: 'image' | 'video';
   name: string;
+  m3Shape?: string;
 };
 
 type Composition = {
@@ -57,6 +58,7 @@ type Composition = {
     xOffset?: number;
     yOffset?: number;
     scale?: number;
+    m3Shape?: string;
   }[];
   x: number;
   y: number;
@@ -85,6 +87,12 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
 };
+
+const M3_SHAPES = [
+  'circle', 'triangle', 'square', 'hexagon', 'star', 'sunflower', 'pill', 'rhombus', 'leaf', 'flower', 'heart', 'letter', 'blob', 'organic', 'cutout'
+];
+
+const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 const generateComposition = (
   items: MediaItem[],
@@ -143,6 +151,10 @@ const generateComposition = (
       scale = 0.9;
     }
 
+    // Randomly assign a shape if none exists
+    const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
+    const m3Shape = item.m3Shape || (randomShape === 'letter' ? `letter-${M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}` : randomShape);
+
     return {
       file: item.file,
       url: item.url || "",
@@ -150,7 +162,8 @@ const generateComposition = (
       name: item.name,
       xOffset,
       yOffset,
-      scale
+      scale,
+      m3Shape
     };
   });
 
@@ -176,6 +189,62 @@ const generateComposition = (
     fontFamily,
     textColor,
     isMultiColor
+  };
+};
+
+const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
+  const base = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-cover shadow-[0_30px_90px_rgba(0,0,0,0.5)]";
+  
+  // Resolve dynamic letter from caption if it's a letter shape
+  let resolvedShape = shape;
+  if (shape === 'letter') {
+    const firstLetter = caption.trim().charAt(0).toUpperCase();
+    resolvedShape = `letter-${firstLetter.match(/[A-Z]/) ? firstLetter : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
+  }
+
+  if (resolvedShape.startsWith('letter-')) {
+    const letter = resolvedShape.split('-')[1];
+    return {
+      className: base,
+      style: {
+        maskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='60%' font-size='380' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' alignment-baseline='middle'>${letter}</text></svg>")`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='60%' font-size='380' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' alignment-baseline='middle'>${letter}</text></svg>")`,
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center'
+      }
+    };
+  }
+
+  const paths: Record<string, string> = {
+    circle: 'circle(50% at 50% 50%)',
+    triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+    hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+    star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+    sunflower: 'polygon(50% 0%, 55% 17%, 71% 10%, 68% 27%, 85% 26%, 76% 40%, 93% 50%, 76% 60%, 85% 74%, 68% 73%, 71% 90%, 55% 83%, 50% 100%, 45% 83%, 29% 90%, 32% 73%, 15% 74%, 24% 60%, 7% 50%, 24% 40%, 15% 26%, 32% 27%, 29% 10%, 45% 17%)',
+    pill: 'inset(0% round 100vw)',
+    rhombus: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+    flower: 'polygon(50% 0%, 65% 15%, 85% 15%, 85% 35%, 100% 50%, 85% 65%, 85% 85%, 65% 85%, 50% 100%, 35% 85%, 15% 85%, 15% 65%, 0% 50%, 15% 35%, 15% 15%, 35% 15%)',
+    heart: 'polygon(50% 15%, 75% 0%, 100% 30%, 50% 95%, 0% 30%, 25% 0%)', // Reliable polygon approximation
+    blob: 'polygon(30% 0%, 70% 10%, 100% 30%, 90% 70%, 70% 100%, 30% 90%, 0% 70%, 10% 20%)',
+    organic: 'polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 20% 80%, 0% 50%, 20% 20%)',
+    cutout: 'polygon(0% 15%, 15% 15%, 15% 0%, 85% 0%, 85% 15%, 100% 15%, 100% 85%, 85% 85%, 85% 100%, 15% 100%, 15% 85%, 0% 85%)',
+  };
+
+  // Special handling for Leaf and more organic M3 shapes
+  if (resolvedShape === 'leaf') {
+    return { className: base, style: { borderRadius: '50% 0 50% 0' } };
+  }
+  if (resolvedShape === 'square') {
+    return { className: base, style: { borderRadius: '2.5rem' } };
+  }
+
+  return {
+    className: base,
+    style: { clipPath: paths[resolvedShape] || 'none', WebkitClipPath: paths[resolvedShape] || 'none' }
   };
 };
 
@@ -1959,14 +2028,17 @@ const CompositionNode = ({
             variants={textMorphVariants}
             initial="future"
             animate="active"
-            style={{ transformStyle: 'preserve-3d' }}
+            style={{ 
+              transformStyle: 'preserve-3d',
+              mixBlendMode: 'difference' // Magic overlay effect
+            }}
           >
             <AnimatedCaption 
               text={comp.caption} 
               effect={comp.textEffect} 
-              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight drop-shadow-2xl ${comp.fontFamily || 'font-display'}`} 
-              textColor={comp.textColor || globalTextColor}
-              isMulti={comp.isMultiColor || globalIsMultiColor}
+              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || 'font-display'}`} 
+              textColor="#FFFFFF" // White in difference mode will invert based on background
+              isMulti={false} // Complex colors might look weird in difference mode
             />
           </motion.div>
         )}
@@ -2003,6 +2075,8 @@ const CompositionNode = ({
         )}
 
         {comp.media.map((m, i) => {
+          const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
+          
           const mediaElement = m.url && (
             m.type === 'video' ? (
               <motion.video
@@ -2011,27 +2085,27 @@ const CompositionNode = ({
                 loop
                 muted
                 playsInline
-                className={isMulti ? multiMediaClass : mediaClass}
+                className={shapeStyle.className}
+                style={shapeStyle.style}
                 onError={() => setHasError(true)}
                 animate={status === 'active' ? {
                   scale: [1, 1.05],
-                  x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
-                  y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
-                } : { scale: 1, x: 0, y: 0 }}
-                transition={{ duration: 10, ease: "linear" }}
+                  rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                } : { scale: 1, rotate: 0 }}
+                transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
               />
             ) : (
               <motion.img
                 src={m.url}
                 alt={comp.caption}
-                className={isMulti ? multiMediaClass : mediaClass}
+                className={shapeStyle.className}
+                style={shapeStyle.style}
                 onError={() => setHasError(true)}
                 animate={status === 'active' ? {
                   scale: [1, 1.05],
-                  x: [0, (comp.caption.length + i) % 2 === 0 ? 15 : -15],
-                  y: [0, (comp.caption.length + i) % 3 === 0 ? 15 : -15]
-                } : { scale: 1, x: 0, y: 0 }}
-                transition={{ duration: 10, ease: "linear" }}
+                  rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                } : { scale: 1, rotate: 0 }}
+                transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
               />
             )
           );
@@ -2051,9 +2125,9 @@ const CompositionNode = ({
               }}
             >
               {hasError ? (
-                <div className={`${isMulti ? multiMediaClass : mediaClass} flex flex-col items-center justify-center gap-4 bg-brutal-pink brutal-border`}>
-                  <AlertCircle size={isMulti ? 24 : 48} className="text-black" />
-                  <p className="text-[10px] font-mono font-bold text-black uppercase tracking-widest">Error</p>
+                <div className={`${shapeStyle.className} flex flex-col items-center justify-center gap-4 bg-gray-800`} style={shapeStyle.style}>
+                  <AlertCircle size={48} className="text-white opacity-20" />
+                  <p className="text-[10px] font-mono font-bold text-white uppercase tracking-widest opacity-20">Error</p>
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
