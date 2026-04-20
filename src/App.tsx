@@ -12,7 +12,6 @@ import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
 import PricingModal from './components/PricingModal';
 import VideoCanvas from './components/VideoCanvas';
-import WebsiteShowcaseScene from './components/WebsiteShowcaseScene';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -73,7 +72,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: Exclude<TextPosition, 'random'>;
-  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'website-showcase' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart';
+  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -85,7 +84,6 @@ type Composition = {
   stickerScale?: number;
   stickerX?: number;
   stickerY?: number;
-  websiteScreenshot?: string;
   websiteUrl?: string;
   fontFamily?: FontFamily;
   textColor?: string;
@@ -2050,13 +2048,6 @@ const CompositionNode = ({
             />
           </motion.div>
         )}
-        {comp.sceneType === 'website-showcase' && comp.websiteScreenshot && (
-          <WebsiteShowcaseScene
-            screenshotUrl={comp.websiteScreenshot}
-            websiteUrl={comp.websiteUrl || ''}
-            status={status}
-          />
-        )}
 
         {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
         {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && comp.media.map((m, i) => {
@@ -2298,7 +2289,6 @@ export default function App() {
 
   const [scrapeUrl, setScrapeUrl] = useState("https://");
   const [isScraping, setIsScraping] = useState(false);
-  const [websiteScreenshot, setWebsiteScreenshot] = useState<string | null>(null);
   const [websiteSiteName, setWebsiteSiteName] = useState<string>('');
   
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
@@ -3158,23 +3148,11 @@ export default function App() {
       if (data.script) {
         handleScriptChange(data.script);
         
-        // Capture screenshot URL
-        if (data.screenshotUrl) {
-          setWebsiteScreenshot(data.screenshotUrl);
-          
-          const newScreenshotItem: MediaItem = {
-            id: `screenshot-${Date.now()}`,
-            type: 'image',
-            url: data.screenshotUrl,
-            file: null as any
-          };
-          setMediaFiles(prev => [...prev, newScreenshotItem]);
-        }
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
         
-        setToastMessage("Content fetched — script, screenshot & assets ready!");
+        setToastMessage("Content fetched — script & assets ready!");
       } else {
         setToastMessage(data.error || "Failed to generate script.");
       }
@@ -3342,44 +3320,6 @@ export default function App() {
       await new Promise(r => setTimeout(r, 100));
     }
 
-    // Inject Website Showcase scene if screenshot is available
-    if (websiteScreenshot) {
-      const showcaseCaption = websiteSiteName || scrapeUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
-      const showcaseAngle = prev ? prev.angle + (Math.random() * 1.5 - 0.75) : 0;
-      const distance = 2000;
-      const showcaseX = prev ? prev.x + Math.cos(showcaseAngle) * distance : 0;
-      const showcaseY = prev ? prev.y + Math.sin(showcaseAngle) * distance : 0;
-      
-      const websiteComp: Composition = {
-        id: Math.random().toString(36).substr(2, 9),
-        media: [],
-        x: showcaseX,
-        y: showcaseY,
-        z: 0,
-        rotX: 0, rotY: 0, rotZ: 0,
-        angle: showcaseAngle,
-        caption: `Visit ${showcaseCaption}`,
-        textPosition: 'bottom',
-        sceneType: 'website-showcase',
-        textEffect: effectsPool[0] || 'gsap-glow',
-        transitionType: 'zoom',
-        transitionDuration: 1.5,
-        isTextOnly: false,
-        preset,
-        backgroundStyles,
-        websiteScreenshot,
-        websiteUrl: scrapeUrl,
-        fontFamily,
-        textColor,
-        isMultiColor
-      };
-      
-      // Insert website scene early in the trailer (after scene 1)
-      if (newComps.length > 1) {
-        newComps.splice(1, 0, websiteComp);
-      } else {
-        newComps.push(websiteComp);
-      }
     }
 
     // Add any unmapped media at the end
