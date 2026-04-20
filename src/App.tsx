@@ -3252,6 +3252,7 @@ export default function App() {
     const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
     
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
+      const existingComp = compositions[sceneIdx];
       let caption = scriptLines[sceneIdx] || '';
       let isTextOnly = textOnlyLines.has(sceneIdx);
       
