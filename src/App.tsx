@@ -3448,7 +3448,7 @@ export default function App() {
         '4K': { width: 3840, height: 2160 },
         '1080p': { width: 1920, height: 1080 },
         '720p': { width: 1280, height: 720 }
-      }[exportResolution];
+      }[exportResolution] || { width: 1920, height: 1080 };
 
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { 
@@ -4492,13 +4492,16 @@ export default function App() {
       </div>
 
       {/* Global Shader Transition Layer - Ported from Hyperframes */}
-      <ShaderTransitionCanvas 
-        active={activeShaderTransition.isActive}
-        fromTexture={activeShaderTransition.fromUrl}
-        toTexture={activeShaderTransition.toUrl}
-        type={activeShaderTransition.name}
-        progress={activeShaderTransition.progress}
-      />
+      {activeShaderTransition.isActive && (
+        <ShaderTransitionCanvas 
+          fromImage={activeShaderTransition.fromUrl}
+          toImage={activeShaderTransition.toUrl}
+          shaderName={activeShaderTransition.name}
+          progress={activeShaderTransition.progress}
+          resolution={{ width: windowSize.w, height: windowSize.h }}
+          accentColor={textColor || '#A855F7'}
+        />
+      )}
 
       {/* Manual Scene Layout Picker Toolbar */}
       {!isRecording && (
