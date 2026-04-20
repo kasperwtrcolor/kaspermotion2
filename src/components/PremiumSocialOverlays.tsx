@@ -14,19 +14,19 @@ interface BlockProps {
   };
 }
 
-export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6" }: BlockProps) => {
+export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6", handle }: BlockProps) => {
   return (
     <motion.div
       initial={{ y: 300, opacity: 0 }}
       animate={status === 'active' ? { y: 0, opacity: 1 } : { y: 300, opacity: 0 }}
       transition={{ type: 'spring', damping: 15, stiffness: 100 }}
-      className="bg-[#1a1a1a] rounded-[75px] pr-8 pl-4 py-4 flex items-center gap-6 shadow-2xl brutal-border group"
+      className="bg-black/60 backdrop-blur-3xl rounded-[3rem] pr-10 pl-6 py-6 flex items-center gap-8 shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-white/10 group"
     >
       <div className="relative">
-        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/20 p-1">
-          <div className="w-full h-full rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 p-1">
+        <div className="w-28 h-28 rounded-full overflow-hidden border border-white/10 p-1 bg-white/5">
+          <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] p-1">
             <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
-              <Instagram className="text-white w-12 h-12" />
+              <Instagram className="text-white w-14 h-14" />
             </div>
           </div>
         </div>
@@ -34,25 +34,27 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
           initial={{ scale: 0 }}
           animate={status === 'active' ? { scale: 1 } : { scale: 0 }}
           transition={{ delay: 0.8, type: 'spring' }}
-          className="absolute -bottom-2 -right-2 bg-blue-500 rounded-full p-1 border-2 border-black"
+          className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 border-4 border-black"
         >
-          <UserPlus size={16} className="text-white" />
+          <UserPlus size={18} className="text-white" />
         </motion.div>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-white font-bold text-2xl tracking-tight">{caption || "HeyGen"}</span>
-          <CheckCircle2 size={20} className="text-blue-500 fill-blue-500" />
+          <span className="text-white font-black text-3xl tracking-tighter">{caption || "HeyGen"}</span>
+          <div className="bg-blue-500 rounded-full p-1">
+            <CheckCircle2 size={16} className="text-white fill-white" />
+          </div>
         </div>
-        <span className="text-gray-400 text-lg">{handle || "@heygen_official"}</span>
+        <span className="text-white/50 text-xl font-medium">{handle || "@heygen_official"}</span>
       </div>
 
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         style={{ backgroundColor: accentColor }}
-        className="px-8 py-3 rounded-full text-white font-bold text-lg shadow-lg"
+        className="px-10 py-4 rounded-2xl text-white font-black text-xl shadow-[0_10px_30px_rgba(0,0,0,0.3)] ml-4"
       >
         <motion.span
           initial={{ opacity: 1 }}
@@ -66,44 +68,51 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
   );
 };
 
-export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0" }: BlockProps) => {
+export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle }: BlockProps) => {
   return (
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      className="bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 w-[500px] shadow-2xl flex flex-col gap-4 font-sans"
+      className="bg-black/80 backdrop-blur-3xl border border-white/20 rounded-[2.5rem] p-8 w-[550px] shadow-[0_50px_120px_rgba(0,0,0,0.8)] flex flex-col gap-6 font-sans relative overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex gap-3">
-          <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center border border-white/10 overflow-hidden">
-             <div className="w-full h-full bg-white flex items-center justify-center text-black font-black text-2xl">X</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <span className="text-white font-bold text-lg">KasperMotion</span>
-              <CheckCircle2 size={18} className="text-blue-400 fill-blue-400" />
-            </div>
-            <span className="text-gray-500">{handle || "@kaspermotion"}</span>
-          </div>
-        </div>
-        <Twitter className="text-white w-6 h-6 opacity-30" />
+      <div className="absolute top-0 right-0 p-8 opacity-10">
+        <Twitter className="text-white w-24 h-24" />
       </div>
 
-      <p className="text-white text-xl leading-relaxed">
+      <div className="flex items-start justify-between relative z-10">
+        <div className="flex gap-4">
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center border-2 border-white/10 shadow-xl">
+             <span className="text-black font-black text-3xl">X</span>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="text-white font-bold text-2xl tracking-tight">KasperMotion</span>
+              <div className="bg-blue-400 rounded-full p-0.5">
+                <CheckCircle2 size={14} className="text-white fill-white" />
+              </div>
+            </div>
+            <span className="text-white/40 text-lg font-medium">{handle || "@kaspermotion"}</span>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-white text-2xl font-medium leading-[1.4] relative z-10 px-2">
         {caption || "Bringing cinematic shader transitions to the masses with KasperMotion 2.0. Write scripts, generate magic. 🚀"}
       </p>
 
-      <div className="flex items-center gap-6 text-gray-500 border-t border-white/10 pt-4">
-        <div className="flex items-center gap-2 group cursor-pointer hover:text-blue-400 transition-colors">
-          <MessageSquare size={18} /> <span>42</span>
+      <div className="flex items-center justify-between text-white/40 border-t border-white/10 pt-6 px-2 relative z-10">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-blue-400 transition-colors">
+            <MessageSquare size={22} /> <span className="font-bold">42</span>
+          </div>
+          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-green-400 transition-colors">
+            <TrendingUp size={22} /> <span className="font-bold">128</span>
+          </div>
+          <div className="flex items-center gap-2.5 group cursor-pointer hover:text-red-400 transition-colors">
+            <Heart size={22} fill={status === 'active' ? accentColor : "none"} className={status === 'active' ? "text-transparent" : ""} /> <span className="font-bold">1.2k</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 group cursor-pointer hover:text-green-400 transition-colors">
-          <TrendingUp size={18} /> <span>128</span>
-        </div>
-        <div className="flex items-center gap-2 group cursor-pointer hover:text-red-400 transition-colors">
-          <Heart size={18} fill={status === 'active' ? accentColor : "none"} className={status === 'active' ? "text-transparent" : ""} /> <span>1.2k</span>
-        </div>
-        <Share2 size={18} />
+        <Share2 size={22} className="hover:text-white transition-colors cursor-pointer" />
       </div>
     </motion.div>
   );
@@ -114,17 +123,17 @@ export const MacosNotificationOverlay = ({ status, caption }: BlockProps) => {
     <motion.div
       initial={{ x: 400, opacity: 0 }}
       animate={status === 'active' ? { x: 0, opacity: 1 } : { x: 400, opacity: 0 }}
-      className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl p-4 w-[350px] shadow-2xl flex items-start gap-4 mb-4 fixed top-8 right-8 z-[1000]"
+      className="bg-[#1d1d1d]/70 backdrop-blur-3xl border border-white/10 rounded-[1.5rem] p-5 w-[380px] shadow-[0_30px_70px_rgba(0,0,0,0.5)] flex items-start gap-5 mb-4 fixed top-10 right-10 z-[1000]"
     >
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-        <Bell className="text-white w-6 h-6" />
+      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8E2DE2] to-[#4A00E0] flex items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.3)] shrink-0">
+        <Bell className="text-white w-8 h-8" />
       </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-white font-bold text-sm tracking-wide uppercase">System Analytics</span>
-          <span className="text-white/40 text-[10px]">Now</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-center mb-1.5">
+          <span className="text-white/50 font-bold text-[10px] tracking-[0.1em] uppercase">System Notification</span>
+          <span className="text-white/20 text-[10px] font-bold">Just Now</span>
         </div>
-        <p className="text-white/90 text-sm font-medium leading-normal">
+        <p className="text-white/95 text-base font-semibold leading-relaxed line-clamp-2">
           {caption || "Project rendering complete. Performance increased by 42% using the new shader pipeline."}
         </p>
       </div>
@@ -138,31 +147,36 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
       animate={status === 'active' ? { scale: 1, opacity: 1 } : { scale: 0.8, opacity: 0 }}
-      className="bg-black/60 backdrop-blur-2xl rounded-3xl p-8 w-[600px] border border-white/10 shadow-2xl"
+      className="bg-black/60 backdrop-blur-3xl rounded-[2.5rem] p-10 w-[650px] border border-white/10 shadow-[0_60px_150px_rgba(0,0,0,0.7)]"
     >
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-10">
         <div>
-          <h4 className="text-white font-bold text-2xl mb-1">{caption || "Performance Metrics"}</h4>
-          <p className="text-white/40 text-sm uppercase tracking-widest font-bold">Real-time Visualization</p>
+          <h4 className="text-white font-black text-3xl mb-1 tracking-tight">{caption || "Performance Metrics"}</h4>
+          <p className="text-white/30 text-xs uppercase tracking-[0.2em] font-black">AI Reality Visualization</p>
         </div>
-        <div className="p-3 rounded-2xl bg-white/5">
+        <div className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-inner">
           <TrendingUp className="text-white" style={{ color: accentColor }} />
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-4 h-48">
+      <div className="flex items-end justify-between gap-6 h-56 px-2">
         {bars.map((h, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-3">
+          <div key={i} className="flex-1 flex flex-col items-center gap-4">
             <motion.div
               initial={{ height: 0 }}
               animate={status === 'active' ? { height: `${h}%` } : { height: 0 }}
               transition={{ delay: i * 0.1 + 0.5, type: 'spring', damping: 15 }}
               style={{ backgroundColor: accentColor }}
-              className="w-full rounded-t-xl relative group overflow-hidden"
+              className="w-full rounded-2xl relative group overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-white/10"
             >
-               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/20" />
+               <motion.div 
+                 animate={{ y: [0, -100] }}
+                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                 className="absolute inset-x-0 h-10 bg-white/10 blur-xl"
+               />
             </motion.div>
-            <span className="text-white/30 text-xs font-mono">Q{i + 1}</span>
+            <span className="text-white/20 text-[10px] font-black font-mono tracking-widest mt-2 uppercase">Node {i + 1}</span>
           </div>
         ))}
       </div>

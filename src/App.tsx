@@ -228,11 +228,11 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
     return {
       className: base,
       style: {
-        maskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='60%' font-size='380' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' alignment-baseline='middle'>${letter}</text></svg>")`,
+        maskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='50%' font-size='350' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' dominant-baseline='central'>${letter}</text></svg>")`,
         maskSize: 'contain',
         maskRepeat: 'no-repeat',
         maskPosition: 'center',
-        WebkitMaskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='60%' font-size='380' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' alignment-baseline='middle'>${letter}</text></svg>")`,
+        WebkitMaskImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><text x='50%' y='50%' font-size='350' font-family='Arial Black, Impact, sans-serif' font-weight='900' text-anchor='middle' dominant-baseline='central'>${letter}</text></svg>")`,
         WebkitMaskSize: 'contain',
         WebkitMaskRepeat: 'no-repeat',
         WebkitMaskPosition: 'center'
