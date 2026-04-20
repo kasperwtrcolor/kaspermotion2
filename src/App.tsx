@@ -3320,7 +3320,7 @@ export default function App() {
       await new Promise(r => setTimeout(r, 100));
     }
 
-    }
+
 
     // Add any unmapped media at the end
     const mappedMediaIds = new Set(Object.values(mediaMapping));
