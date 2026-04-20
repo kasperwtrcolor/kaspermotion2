@@ -1227,7 +1227,7 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
 
   return (
     <motion.div 
-      className="absolute inset-[-2000px] pointer-events-none overflow-hidden"
+      className="absolute inset-[-10000px] pointer-events-none overflow-hidden"
       style={{ transformStyle: 'preserve-3d', z: -1000 }}
       animate={{ 
         opacity: status === 'active' ? 1 : 0.3,
@@ -1312,51 +1312,6 @@ const TexturePaperBackground = () => {
            }}
            animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
            transition={{ duration: 40 + i * 10, repeat: Infinity, ease: "linear" }}
-        />
-      ))}
-    </div>
-  );
-};
-
-const FloatingParticles = () => {
-  const [particles, setParticles] = useState<any[]>([]);
-  useEffect(() => {
-    setParticles(Array.from({ length: 80 }).map((_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 15000,
-      y: (Math.random() - 0.5) * 10000,
-      z: (Math.random() - 0.5) * 20000,
-      size: Math.random() * 15 + 5,
-      color: ['bg-white', 'bg-blue-300', 'bg-green-300', 'bg-yellow-300'][Math.floor(Math.random() * 4)],
-      duration: Math.random() * 30 + 30
-    })));
-  }, []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
-      {particles.map(p => (
-        <motion.div
-          key={p.id}
-          className={`absolute rounded-sm ${p.color} shadow-[0_0_15px_rgba(255,255,255,0.4)]`}
-          style={{
-            width: p.size,
-            height: p.size,
-            left: '50%',
-            top: '50%',
-            x: p.x,
-            y: p.y,
-            z: p.z,
-            rotateZ: 45,
-            transformStyle: 'preserve-3d'
-          }}
-          animate={{
-            z: [p.z, p.z + 5000, p.z],
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            ease: "linear",
-          }}
         />
       ))}
     </div>
@@ -1783,72 +1738,6 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
 };
 
 // Helper components formerly here (icons/shapes) have been decommissioned for a cleaner cinematic look.
-const FlashOverlay = ({ status }: { status: string }) => {
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={status === 'active' ? { opacity: [0, 0.4, 0] } : { opacity: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="fixed inset-0 z-[1000] bg-white pointer-events-none"
-    />
-  );
-};
-
-const FilmBurnTransition = ({ active }: { active: boolean }) => {
-  return (
-    <AnimatePresence>
-      {active && (
-        <motion.div
-          initial={{ opacity: 0, x: '-100%' }}
-          animate={{ opacity: [0, 1, 0], x: ['-100%', '0%', '100%'] }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="fixed inset-0 z-[1100] pointer-events-none bg-gradient-to-r from-transparent via-orange-500/40 to-transparent mix-blend-screen overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,100,0,0.6)_0%,transparent_70%)] blur-3xl scale-150" />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const ForegroundAtmosphere = () => {
-  const particles = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * 2000 - 1000,
-    y: Math.random() * 2000 - 1000,
-    z: Math.random() * 500 - 250,
-    size: Math.random() * 10 + 5,
-    duration: Math.random() * 10 + 10,
-    delay: Math.random() * 5
-  })), []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d', zIndex: 1000 }}>
-      {particles.map(p => (
-        <motion.div
-          key={p.id}
-          className="absolute rounded-full bg-white/20 blur-[1px]"
-          style={{ 
-            width: p.size, height: p.size,
-            x: p.x, y: p.y, z: p.z + 500, // Very close to camera
-          }}
-          animate={{ 
-            y: [p.y, p.y - 400],
-            x: [p.x, p.x + 200],
-            opacity: [0, 0.3, 0]
-          }}
-          transition={{ 
-            duration: p.duration, 
-            repeat: Infinity, 
-            delay: p.delay,
-            ease: "linear" 
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
 const getTextPositionClass = (pos: TextPosition) => {
   switch (pos) {
@@ -2255,7 +2144,7 @@ export default function App() {
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
-  const [showPathLines, setShowPathLines] = useState(false);
+
   const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
   const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
@@ -2607,7 +2496,7 @@ export default function App() {
           transitionDuration,
           textAnimationSpeed,
           sceneDuration,
-          showPathLines,
+          useGrainEffect,
           cinematicMood,
           cameraArtistry,
           preset: preset || 'custom',
@@ -2652,7 +2541,7 @@ export default function App() {
     setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setSceneDuration(project.settings.sceneDuration || 5.0);
-    setShowPathLines(project.settings.showPathLines || false);
+
     setCinematicMood(project.settings.cinematicMood || 'standard');
     setCameraArtistry(project.settings.cameraArtistry || 'natural');
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
@@ -4235,20 +4124,7 @@ export default function App() {
                       <span>LONG (15s)</span>
                     </div>
 
-                    <h4 className="text-xs font-mono font-bold uppercase mt-6 mb-3 text-black border-t-2 border-black pt-4">Path Trajectory</h4>
-                    <label className="flex items-center gap-3 cursor-pointer select-none group">
-                      <div className="relative">
-                        <input 
-                          type="checkbox" 
-                          checked={showPathLines}
-                          onChange={(e) => setShowPathLines(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <div className={`w-12 h-6 brutal-border transition-colors ${showPathLines ? 'bg-brutal-green' : 'bg-gray-200'}`} />
-                        <div className={`absolute top-1 left-1 w-4 h-4 brutal-border bg-white transition-transform ${showPathLines ? 'translate-x-6' : 'translate-x-0'}`} />
-                      </div>
-                      <span className="text-[10px] font-mono font-bold uppercase group-hover:text-brutal-blue transition-colors">Show Path Lines</span>
-                    </label>
+
                   </div>
                 </div>
               </div>
@@ -4481,28 +4357,7 @@ export default function App() {
           filter: cameraFilter
         }}
       >
-        {/* Cinematic Light Leaks */}
-        <div className="absolute inset-0 pointer-events-none z-[102] overflow-hidden">
-          <motion.div 
-            className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(255,100,0,0.15)_0%,transparent_60%)]"
-            animate={{ x: [0, 100, 0], y: [0, -50, 0], rotate: [0, 10, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div 
-            className="absolute -bottom-1/2 -right-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle,rgba(0,150,255,0.1)_0%,transparent_50%)]"
-            animate={{ x: [0, -100, 0], y: [0, 50, 0], rotate: [0, -10, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
 
-        {/* Floating Particles Background */}
-        <FloatingParticles />
-
-        {/* Cinematic Path Guidance */}
-        {showPathLines && <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />}
-
-        {/* Pro Atmospheric Layer (V2) */}
-        <ForegroundAtmosphere />
 
         {/* Compositions */}
         {compositions.map((comp, index) => {
@@ -4517,7 +4372,7 @@ export default function App() {
 
           return (
             <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
-              <FlashOverlay status={status} />
+
               <CompositionNode 
                 comp={comp} 
                 status={status} 
@@ -4540,21 +4395,7 @@ export default function App() {
       {/* V2 Transition Effects */}
       <FilmBurnTransition active={activeFilmBurn} />
 
-      {/* Global Lens Flare (AE Style) */}
-      <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden mix-blend-screen opacity-40">
-        <motion.div 
-          style={{ x: worldX, y: worldY }}
-          className="absolute w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.8)_0%,transparent_70%)] blur-3xl"
-        />
-        <motion.div 
-          style={{ x: flareX1, y: flareY1 }}
-          className="absolute w-32 h-32 rounded-full bg-[radial-gradient(circle,rgba(0,100,255,0.4)_0%,transparent_70%)] blur-2xl"
-        />
-        <motion.div 
-          style={{ x: flareX2, y: flareY2 }}
-          className="absolute w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(255,100,0,0.3)_0%,transparent_70%)] blur-xl"
-        />
-      </div>
+
 
       {/* Global Shader Transition Layer - Ported from Hyperframes */}
       {activeShaderTransition.isActive && (
