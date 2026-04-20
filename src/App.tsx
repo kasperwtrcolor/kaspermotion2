@@ -1928,6 +1928,7 @@ const CompositionNode = ({
   worldX: any;
   worldY: any;
 }) => {
+  const accentColor = globalTextColor || '#A855F7';
   const isMorph = comp.sceneType === 'text-morph';
   const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
   const duration = comp.transitionDuration;
