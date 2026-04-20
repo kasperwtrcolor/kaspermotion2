@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star } from 'lucide-react';
+import TestimonialBlock from './components/TestimonialBlock';
+import ComparisonSliderBlock from './components/ComparisonSliderBlock';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -71,7 +73,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: Exclude<TextPosition, 'random'>;
-  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart';
+  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'testimonial' | 'comparison-slider';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -1677,8 +1679,6 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
           </div>
         )}
       </div>
-      {/* Glare effect */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none z-30"></div>
     </motion.div>
   );
 };
@@ -1715,7 +1715,6 @@ const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-black/40 to-purple-900/40 mix-blend-overlay" />
       </div>
     );
   }
@@ -1908,7 +1907,7 @@ const CompositionNode = ({
         )}
 
         {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
-        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && comp.media.map((m, i) => {
+        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && comp.media.map((m, i) => {
           const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
           
           const mediaElement = m.url && (
@@ -1975,30 +1974,41 @@ const CompositionNode = ({
         })}
 
 
-        {/* Premium Social Overlays Layer */}
-        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+        {/* Premium Social & Feature Overlays Layer */}
+        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
           <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
-            <PremiumSocialOverlays
-              type={comp.sceneType}
-              status={status}
-              caption={comp.caption}
-              accentColor={accentColor}
-              handle={socialHandle}
-            />
+            {comp.sceneType === 'testimonial' ? (
+              <TestimonialBlock
+                status={status}
+                caption={comp.caption}
+                accentColor={accentColor}
+              />
+            ) : comp.sceneType === 'comparison-slider' ? (
+              <ComparisonSliderBlock
+                status={status}
+                assets={comp.media.map(m => m.url)}
+                accentColor={accentColor}
+              />
+            ) : (
+              <PremiumSocialOverlays
+                type={comp.sceneType}
+                status={status}
+                caption={comp.caption}
+                accentColor={accentColor}
+                handle={socialHandle}
+              />
+            )}
           </div>
         )}
 
         {/* CAPTIONS RENDERED LAST TO STAY ON TOP */}
-        {isMorph && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+        {isMorph && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
           <motion.div
             className="absolute z-[300] w-[80vw] text-center pointer-events-none"
             variants={textMorphVariants}
             initial="future"
             animate="active"
             style={{ 
-              mixBlendMode: 'difference',
-              backdropFilter: 'blur(2px)',
-              WebkitBackdropFilter: 'blur(2px)',
               z: 1000 // Significantly in front of the media
             }}
           >
@@ -2012,19 +2022,15 @@ const CompositionNode = ({
           </motion.div>
         )}
 
-        {!isMorph && comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
+        {!isMorph && comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
           <motion.div
             initial={{ opacity: 0, y: 20, filter: 'blur(10px)', z: 1000 }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)', z: 1000 }}
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)', z: 1000 }}
             className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
-            style={{ 
-              mixBlendMode: 'difference',
-              backdropFilter: 'blur(2px)',
-              WebkitBackdropFilter: 'blur(2px)'
-            }}
+            style={{ }}
           >
-            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_10px_rgba(30,30,30,0.5)]`}>
+            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]`}>
               <AnimatedCaption 
                 text={comp.caption} 
                 effect={comp.textEffect} 
@@ -3895,7 +3901,9 @@ export default function App() {
                             { id: 'instagram-follow', icon: <Instagram size={14} />, label: 'Insta' },
                             { id: 'x-post', icon: <Twitter size={14} />, label: 'X' },
                             { id: 'macos-notification', icon: <Bell size={14} />, label: 'Notif' },
-                            { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' }
+                            { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' },
+                            { id: 'testimonial', icon: <Quote size={14} />, label: 'Quote' },
+                            { id: 'comparison-slider', icon: <Columns size={14} />, label: 'Compare' }
                           ].map(type => (
                             <button
                               key={type.id}
