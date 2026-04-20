@@ -1745,6 +1745,7 @@ const CompositionNode = ({
   globalIsMultiColor,
   globalFontFamily,
   socialHandle,
+  websiteSiteName,
   worldX,
   worldY
 }: { 
@@ -1756,6 +1757,7 @@ const CompositionNode = ({
   globalIsMultiColor: boolean;
   globalFontFamily: string;
   socialHandle: string;
+  websiteSiteName: string;
   worldX: any;
   worldY: any;
 }) => {
@@ -3392,6 +3394,32 @@ export default function App() {
                 </div>
               </div>
 
+              <div className="mb-8">
+                <label className="block text-sm font-mono font-bold uppercase mb-2 text-black/60">Brand / Site Name</label>
+                <div className="relative group">
+                  <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 group-focus-within:text-brutal-purple transition-colors" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="e.g. KasperMotion" 
+                    className="brutal-input w-full py-4 pl-12 pr-6 text-lg font-bold bg-white"
+                    value={websiteSiteName}
+                    onChange={(e) => setWebsiteSiteName(e.target.value)}
+                  />
+                  <div className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
+                    This name will appear on X cards, testimonials, and other branded layouts.
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-8">
+                <button 
+                  onClick={() => setSetupStep(2)}
+                  className="brutal-button bg-brutal-orange px-10 py-4 text-xl flex items-center gap-3 transition-all hover:translate-x-1"
+                >
+                  Next: Add Caption <ArrowRight size={24} />
+                </button>
+              </div>
+
               {/* Library Modal */}
               <AnimatePresence>
                 {showLibrary && (
@@ -4152,6 +4180,7 @@ export default function App() {
                 globalIsMultiColor={isMultiColor}
                 globalFontFamily={fontFamily}
                 socialHandle={socialHandle}
+                websiteSiteName={websiteSiteName}
                 worldX={worldX}
                 worldY={worldY}
               />
