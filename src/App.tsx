@@ -94,7 +94,7 @@ type Composition = {
 };
 
 const M3_SHAPES = [
-  'circle', 'triangle', 'square', 'hexagon', 'star', 'sunflower', 'pill', 'rhombus', 'leaf', 'flower', 'heart', 'letter', 'blob', 'organic', 'cutout'
+  'circle', 'triangle', 'square', 'rounded-rect', 'hexagon', 'star', 'sunflower', 'pill', 'rhombus', 'leaf', 'flower', 'heart', 'letter', 'blob', 'organic', 'cutout', 'octogon', 'banner', 'bevel'
 ];
 
 const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -162,8 +162,15 @@ const generateComposition = (
     }
 
     // Randomly assign a shape if none exists
+    // Randomly assign a unique shape for more variety
     const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
-    const m3Shape = item.m3Shape || (randomShape === 'letter' ? `letter-${M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}` : randomShape);
+    let m3Shape = item.m3Shape || randomShape;
+    
+    // Improved letter selection logic (use caption start letter)
+    if (m3Shape === 'letter') {
+      const firstChar = (caption || 'K').trim().charAt(0).toUpperCase();
+      m3Shape = `letter-${firstChar.match(/[A-Z]/) ? firstChar : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
+    }
 
     return {
       file: item.file,
@@ -207,7 +214,7 @@ const generateComposition = (
 };
 
 const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
-  const base = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-cover shadow-[0_30px_90px_rgba(0,0,0,0.5)]";
+  const base = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-cover shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-700";
   
   // Resolve dynamic letter from caption if it's a letter shape
   let resolvedShape = shape;
@@ -238,14 +245,18 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
     triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
     hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
     star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-    sunflower: 'polygon(50% 0%, 55% 17%, 71% 10%, 68% 27%, 85% 26%, 76% 40%, 93% 50%, 76% 60%, 85% 74%, 68% 73%, 71% 90%, 55% 83%, 50% 100%, 45% 83%, 29% 90%, 32% 73%, 15% 74%, 24% 60%, 7% 50%, 24% 40%, 15% 26%, 32% 27%, 29% 10%, 45% 17%)',
+    sunflower: 'polygon(50% 0%, 55% 10%, 70% 3%, 68% 18%, 84% 17%, 78% 32%, 93% 40%, 82% 50%, 93% 60%, 78% 68%, 84% 83%, 68% 82%, 70% 97%, 55% 90%, 50% 100%, 45% 90%, 30% 97%, 32% 82%, 16% 83%, 22% 68%, 7% 60%, 18% 50%, 7% 40%, 22% 32%, 16% 17%, 32% 18%, 30% 3%, 45% 10%)',
     pill: 'inset(0% round 100vw)',
     rhombus: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
     flower: 'polygon(50% 0%, 65% 15%, 85% 15%, 85% 35%, 100% 50%, 85% 65%, 85% 85%, 65% 85%, 50% 100%, 35% 85%, 15% 85%, 15% 65%, 0% 50%, 15% 35%, 15% 15%, 35% 15%)',
-    heart: 'polygon(50% 15%, 75% 0%, 100% 30%, 50% 95%, 0% 30%, 25% 0%)', // Reliable polygon approximation
+    heart: 'polygon(50% 15%, 75% 0%, 100% 30%, 50% 95%, 0% 30%, 25% 0%)',
     blob: 'polygon(30% 0%, 70% 10%, 100% 30%, 90% 70%, 70% 100%, 30% 90%, 0% 70%, 10% 20%)',
     organic: 'polygon(50% 0%, 80% 20%, 100% 50%, 80% 80%, 50% 100%, 20% 80%, 0% 50%, 20% 20%)',
     cutout: 'polygon(0% 15%, 15% 15%, 15% 0%, 85% 0%, 85% 15%, 100% 15%, 100% 85%, 85% 85%, 85% 100%, 15% 100%, 15% 85%, 0% 85%)',
+    octogon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
+    banner: 'polygon(0% 0%, 100% 0%, 100% 100%, 50% 85%, 0% 100%)',
+    bevel: 'polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%)',
+    'rounded-rect': 'inset(0% round 15%)',
   };
 
   // Special handling for Leaf and more organic M3 shapes
@@ -253,12 +264,18 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
     return { className: base, style: { borderRadius: '50% 0 50% 0' } };
   }
   if (resolvedShape === 'square') {
-    return { className: base, style: { borderRadius: '2.5rem' } };
+    return { className: base, style: { borderRadius: '0.5rem' } }; // Sleek square
+  }
+  if (resolvedShape === 'rounded-large' || resolvedShape === 'rounded-rect') {
+    return { className: base, style: { borderRadius: '2.5rem' } }; // Premium rounded corners
   }
 
   return {
     className: base,
-    style: { clipPath: paths[resolvedShape] || 'none', WebkitClipPath: paths[resolvedShape] || 'none' }
+    style: { 
+      clipPath: paths[resolvedShape] || 'none', 
+      WebkitClipPath: paths[resolvedShape] || 'none'
+    }
   };
 };
 
@@ -2063,6 +2080,8 @@ const CompositionNode = ({
             animate="active"
             style={{ 
               mixBlendMode: 'difference',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
               z: 1000 // Significantly in front of the media
             }}
           >
@@ -2083,7 +2102,9 @@ const CompositionNode = ({
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)', z: 1000 }}
             className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
             style={{ 
-              mixBlendMode: 'difference'
+              mixBlendMode: 'difference',
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)'
             }}
           >
             <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_4px_10px_rgba(30,30,30,0.5)]`}>
@@ -4371,7 +4392,7 @@ export default function App() {
             : 'text-4xl md:text-6xl';
 
           return (
-            <div key={comp.id} className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d', isolation: 'isolate' }}>
 
               <CompositionNode 
                 comp={comp} 
