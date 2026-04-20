@@ -1118,8 +1118,8 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
   const theme = getTheme();
 
   return (
-    <div className={`absolute inset-[-400px] pointer-events-none ${theme.base}`} style={{ transformStyle: 'preserve-3d' }}>
-      <div style={{ z: -800 }} className="absolute inset-0">
+    <div className={`absolute inset-[-400px] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d' }}>
+      <div style={{ transform: 'translateZ(-4000px)' }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
             width: Math.random() * 400 + 200, 
@@ -1129,7 +1129,7 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
           }} />
         ))}
       </div>
-      <div style={{ z: -400 }} className="absolute inset-0">
+      <div style={{ transform: 'translateZ(-2000px)' }} className="absolute inset-0">
         {[...Array(10)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer2} ${theme.shapes}`} style={{ 
             width: Math.random() * 300 + 150, 
@@ -1139,7 +1139,7 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
           }} />
         ))}
       </div>
-      <div style={{ z: -100 }} className="absolute inset-0">
+      <div style={{ transform: 'translateZ(-1000px)' }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer3} ${theme.shapes}`} style={{ 
             width: Math.random() * 10, 
@@ -1158,8 +1158,8 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
 
   return (
     <motion.div 
-      className="absolute inset-[-10000px] pointer-events-none overflow-hidden"
-      style={{ transformStyle: 'preserve-3d', z: -5000 }}
+      className="absolute inset-[-10000px] pointer-events-none"
+      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-10000px)', zIndex: -10 }}
       animate={{ 
         opacity: status === 'active' ? 1 : 0.8,
         filter: status === 'active' ? 'blur(0px)' : 'blur(5px)'
@@ -1809,6 +1809,7 @@ const CompositionNode = ({
         )}
 
         {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
         {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && comp.media.map((m, i) => {
           const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
           
@@ -1874,6 +1875,7 @@ const CompositionNode = ({
             </motion.div>
           );
         })}
+        </div>
 
 
         {/* Premium Social & Feature Overlays Layer */}
