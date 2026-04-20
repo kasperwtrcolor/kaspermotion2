@@ -221,4 +221,58 @@ export const SHADER_LIBRARY: Record<string, string> = {
     overexposed=aces(overexposed);
     gl_FragColor=vec4(mix(overexposed,B.rgb,smoothstep(.15,.85,u_progress)),1.);
   }`,
+  
+  "fade": H + `void main(){
+    gl_FragColor = mix(texture2D(u_from, v_uv), texture2D(u_to, v_uv), u_progress);
+  }`,
+  
+  "zoom": H + `void main(){
+    vec2 center = vec2(0.5);
+    vec2 fromUv = center + (v_uv - center) * (1.0 - u_progress * 0.5);
+    vec2 toUv = center + (v_uv - center) * (1.5 - u_progress * 0.5);
+    gl_FragColor = mix(texture2D(u_from, clamp(fromUv, 0.0, 1.0)), texture2D(u_to, clamp(toUv, 0.0, 1.0)), u_progress);
+  }`,
+  
+  "slide": H + `void main(){
+    vec2 uv = v_uv;
+    uv.x += u_progress;
+    if(uv.x < 1.0) {
+      gl_FragColor = texture2D(u_from, uv);
+    } else {
+      gl_FragColor = texture2D(u_to, uv - vec2(1.0, 0.0));
+    }
+  }`,
+
+  "dissolve": H + NQ + `void main(){
+    float n = fbm(v_uv * 10.0);
+    float threshold = smoothstep(0.0, 1.0, u_progress);
+    if(n < threshold) gl_FragColor = texture2D(u_to, v_uv);
+    else gl_FragColor = texture2D(u_from, v_uv);
+  }`,
+
+  "expand": H + `void main(){
+    vec2 uv = (v_uv - 0.5) * (1.0 - u_progress) + 0.5;
+    gl_FragColor = mix(texture2D(u_from, v_uv), texture2D(u_to, v_uv), u_progress);
+  }`,
+
+  "contract": H + `void main(){
+    vec2 uv = (v_uv - 0.5) * (1.0 + u_progress) + 0.5;
+    gl_FragColor = mix(texture2D(u_from, v_uv), texture2D(u_to, v_uv), u_progress);
+  }`,
+
+  "explode": H + NQ + `void main(){
+    vec2 center = vec2(0.5);
+    vec2 uv = center + (v_uv - center) * (1.0 - u_progress * 1.5);
+    float n = fbm(v_uv * 5.0 + u_progress);
+    vec4 col = texture2D(u_from, clamp(uv, 0.0, 1.0));
+    gl_FragColor = mix(col, texture2D(u_to, v_uv), smoothstep(0.1, 0.9, u_progress + n * 0.2));
+  }`,
+
+  "spin": H + `void main(){
+    vec2 uv = v_uv - 0.5;
+    float angle = u_progress * 3.14159;
+    float s = sin(angle), c = cos(angle);
+    vec2 rotUv = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c) + 0.5;
+    gl_FragColor = mix(texture2D(u_from, clamp(rotUv, 0.0, 1.0)), texture2D(u_to, v_uv), u_progress);
+  }`,
 };

@@ -12,7 +12,6 @@ import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
 import PricingModal from './components/PricingModal';
 import VideoCanvas from './components/VideoCanvas';
-import WorldNavigationPaths from './components/WorldNavigationPaths';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
@@ -25,8 +24,8 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'grid' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'geometry-morph' | 'radio-waves' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
-type TextEffect = 'gsap-glow' | 'gsap-focus-flash' | 'typewriter' | 'fade' | 'kinetic' | 'bounce' | 'glitch' | 'reveal' | 'zoom' | 'blur' | 'neon' | 'wave' | 'shake' | 'slide' | 'perspective' | 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack';
+type BackgroundStyle = 'black' | 'gradient-blue' | 'gradient-purple' | 'vibrant-glow' | 'particles' | 'parallax' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'fluid-displace' | 'motion-tile' | 'premium-parallax' | 'textured-paper' | 'pastel-dream' | 'lavender-mist' | 'mint-echo' | 'sunset-haze' | 'morning-dew';
+type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
   | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' 
@@ -1016,19 +1015,6 @@ const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }:
 const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
   const props = { text, className, style, textColor, isMulti };
   switch (effect) {
-    case 'typewriter': return <TypewriterText {...props} />;
-    case 'fade': return <FadeText {...props} />;
-    case 'kinetic': return <KineticText {...props} />;
-    case 'bounce': return <BounceText {...props} />;
-    case 'glitch': return <GlitchText {...props} />;
-    case 'reveal': return <RevealText {...props} />;
-    case 'zoom': return <ZoomText {...props} />;
-    case 'blur': return <BlurText {...props} />;
-    case 'neon': return <NeonText {...props} />;
-    case 'wave': return <WaveText {...props} />;
-    case 'shake': return <ShakeText {...props} />;
-    case 'slide': return <SlideText {...props} />;
-    case 'perspective': return <PerspectiveText {...props} />;
     case 'gsap-glow': return <GSAPGlowText {...props} />;
     case 'gsap-cascade': return <GSAPCascadeText {...props} />;
     case 'gsap-3d-roll': return <GSAP3DRollText {...props} />;
@@ -1254,8 +1240,6 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
       {style === 'parallax' && <ParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
       {style === 'premium-parallax' && <PremiumParallaxBackground worldX={worldX || 0} worldY={worldY || 0} />}
       {style === 'particles' && <ParticleTrails />}
-      {style === 'geometry-morph' && <GeometryMorphBackground />}
-      {(style === 'grid' || style === 'radio-waves') && <TechGridBackground />}
       {style === 'fluid-displace' && <FluidDisplaceBackground />}
       {style === 'motion-tile' && <MotionTileBackground />}
       {style === 'textured-paper' && <TexturePaperBackground />}
@@ -1281,11 +1265,8 @@ const PremiumParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: an
       {/* Deep Background - Distant stars/nodes */}
       <motion.div style={{ x: layer1X, y: layer1Y, z: -1000 }} className="absolute inset-0 bg-[radial-gradient(circle,white_1px,transparent_1px)] bg-[length:50px_50px]" />
       
-      {/* Mid Background - Floating semi-transparent planes */}
+      {/* Mid Background - Removed distracting center squares */}
       <motion.div style={{ x: layer2X, y: layer2Y, z: -500 }} className="absolute inset-0 flex items-center justify-center">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="w-[800px] h-[800px] border-4 border-white/20 absolute" style={{ transform: `rotate(${i * 45}deg)` }} />
-        ))}
       </motion.div>
 
       {/* Front Elements - Technical lines */}
@@ -1346,90 +1327,6 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
   );
 };
 
-const GeometryMorphBackground = () => {
-  const shards = useMemo(() => Array.from({ length: 12 }).map((_, i) => ({
-    id: i,
-    size: Math.random() * 400 + 200,
-    x: Math.random() * 3000 - 1500,
-    y: Math.random() * 3000 - 1500,
-    z: Math.random() * -2000 - 1000,
-    rot: Math.random() * 360,
-    speed: 30 + Math.random() * 40
-  })), []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1]" style={{ transformStyle: 'preserve-3d' }}>
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-black" />
-      {shards.map(s => (
-        <motion.div
-          key={s.id}
-          className="absolute bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem]"
-          style={{ 
-            width: s.size, 
-            height: s.size * 0.7,
-            x: s.x, y: s.y, z: s.z,
-            transformStyle: 'preserve-3d',
-            boxShadow: 'inset 0 0 40px rgba(255,255,255,0.05), 0 30px 100px rgba(0,0,0,0.5)'
-          }}
-          animate={{
-            rotateX: [s.rot, s.rot + 360],
-            rotateY: [s.rot, s.rot - 360],
-            y: [s.y, s.y - 400, s.y]
-          }}
-          transition={{ 
-            duration: s.speed, 
-            repeat: Infinity, 
-            ease: "linear" 
-          }}
-        />
-      ))}
-      <div className="absolute inset-0 opacity-40 mix-blend-plus-lighter bg-[radial-gradient(ellipse_at_30%_30%,rgba(63,94,251,0.2)_0%,transparent_70%)]" />
-    </div>
-  );
-};
-
-const TechGridBackground = () => {
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-[-1] bg-black">
-      <div 
-        className="absolute w-[400%] h-[400%] left-[-150%] top-[-150%] opacity-20"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(59,130,246,0.3) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(59,130,246,0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '120px 120px',
-          transform: 'perspective(1500px) rotateX(65deg) translateY(400px)',
-          transformOrigin: 'center center'
-        }}
-      />
-      
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-blue-500 rounded-full blur-[2px] shadow-[0_0_20px_#3b82f6]"
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ 
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-              x: Math.random() * 2000 - 1000,
-              y: Math.random() * 2000 - 1000
-            }}
-            transition={{ 
-              duration: 3 + Math.random() * 5, 
-              repeat: Infinity, 
-              delay: Math.random() * 10
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/90" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,black_100%)]" />
-    </div>
-  );
-};
 
 const ParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: any }) => {
   const bgX1 = useTransform(worldX, v => Number(v) * 0.1);
@@ -1788,23 +1685,6 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
   );
 };
 
-const FilmBurnTransition = ({ active }: { active: boolean }) => (
-  <AnimatePresence>
-    {active && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 1, 0.8, 0] }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 1.5, ease: "easeInOut" }}
-        className="fixed inset-0 z-[1100] pointer-events-none overflow-hidden"
-      >
-        <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/40 via-yellow-400/20 to-red-600/40 mix-blend-screen blur-3xl animate-pulse" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,165,0,0.5),transparent_70%)] mix-blend-plus-lighter" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,69,0,0.4),transparent_70%)] mix-blend-overlay" />
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
 
 const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
   if (style === 'geometry-morph') {
@@ -1842,26 +1722,6 @@ const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
     );
   }
 
-  if (style === 'grid' || style === 'radio-waves') {
-    return (
-      <div className="absolute inset-0 z-0 overflow-hidden opacity-30">
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)`,
-            backgroundSize: '80px 80px',
-            transform: 'perspective(1000px) rotateX(60deg) translateY(-200px) scale(2)',
-            transformOrigin: 'top center'
-          }}
-        />
-        <motion.div 
-          animate={{ opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute inset-0 bg-gradient-to-t from-blue-500/10 to-transparent"
-        />
-      </div>
-    );
-  }
 
   return null;
 };
@@ -2101,15 +1961,7 @@ const CompositionNode = ({
               }}
             >
               {hasError ? (
-                <div className={`${shapeStyle.className} flex flex-col items-center justify-center bg-white/5 backdrop-blur-xl border border-white/10`} style={shapeStyle.style}>
-                  <motion.div 
-                    animate={{ opacity: [0.2, 0.5, 0.2] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center"
-                  >
-                    <ImageIcon size={24} className="text-white opacity-20" />
-                  </motion.div>
-                  <p className="text-[10px] font-mono font-bold text-white/20 uppercase tracking-[0.2em] mt-4">Media Loading</p>
+                <div className={shapeStyle.className} style={shapeStyle.style}>
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
@@ -2268,8 +2120,6 @@ export default function App() {
   const [userTrailers, setUserTrailers] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState("https://");
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isRenderingTrailer, setIsRenderingTrailer] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
@@ -2305,7 +2155,6 @@ export default function App() {
   const [preset, setPreset] = useState<string>('custom');
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
-  const [activeFilmBurn, setActiveFilmBurn] = useState(false);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
     name: string;
     fromUrl: string;
@@ -2479,69 +2328,6 @@ export default function App() {
     }
   };
 
-  const generateAIImage = async () => {
-    if (!aiPrompt) return;
-    if (credits < 3) {
-      setShowPricing(true);
-      return;
-    }
-    setIsGeneratingImage(true);
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: [{ parts: [{ text: aiPrompt }] }],
-        config: {
-          imageConfig: {
-            aspectRatio: "16:9"
-          }
-        }
-      });
-
-      let imageUrl = "";
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          break;
-        }
-      }
-
-      if (imageUrl) {
-        // Convert base64 to File
-        const res = await fetch(imageUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `ai_gen_${Date.now()}.png`, { type: "image/png" });
-        
-        const { url, uploaded } = await uploadAssetToLibrary(file);
-
-        const newItem: MediaItem = {
-          id: Math.random().toString(36).substr(2, 9),
-          file: uploaded ? undefined : file,
-          url,
-          type: 'image',
-          name: file.name
-        };
-        
-        setMediaFiles(prev => [...prev, newItem]);
-        setAiPrompt("");
-        
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, { credits: Math.max(0, credits - 3) }, { merge: true });
-          setToastMessage("Image generated! 3 credits used.");
-        } else {
-          setToastMessage("Image generated locally.");
-        }
-      } else {
-        setToastMessage("Failed to generate image. Try a different prompt.");
-      }
-    } catch (err) {
-      console.error(err);
-      setToastMessage("AI Generation error. Please try again.");
-    } finally {
-      setIsGeneratingImage(false);
-      setTimeout(() => setToastMessage(null), 3000);
-    }
-  };
 
   const saveProject = async (isAutoSave = false) => {
     if (!user) {
@@ -3000,6 +2786,7 @@ export default function App() {
         const currentComp = compositions[currentIndex];
         const nextComp = compositions[nextIdx];
         const shaderList = [
+          'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'random',
           'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens',
           'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion',
           'flash-through-white', 'cross-warp-morph', 'light-leak'
@@ -3027,10 +2814,6 @@ export default function App() {
               setActiveShaderTransition(prev => ({ ...prev, isActive: false, progress: 0 }));
             }
           });
-        } else {
-          // Standard Film Burn
-          setActiveFilmBurn(true);
-          setTimeout(() => setActiveFilmBurn(false), 800);
         }
 
         setCurrentIndex(nextIdx);
@@ -3185,22 +2968,22 @@ export default function App() {
         break;
       case 'documentary':
         setFontStyle('font-serif');
-        setBackgroundStyles(['grid']);
-        setTextEffect('fade');
+        setBackgroundStyles(['particles']);
+        setTextEffect('gsap-glow');
         setTransitionType('dissolve');
         setTransitionDuration(2.0);
         break;
       case 'product-vibe':
         setFontStyle('font-mono');
         setBackgroundStyles(['vibrant-glow']);
-        setTextEffect('kinetic');
+        setTextEffect('gsap-expand');
         setTransitionType('spin');
         setTransitionDuration(0.6);
         break;
       case 'app-showcase':
         setFontStyle('font-sans');
-        setBackgroundStyles(['grid']);
-        setTextEffect('kinetic');
+        setBackgroundStyles(['premium-parallax']);
+        setTextEffect('gsap-cascade');
         setTransitionType('slide');
         setTransitionDuration(1.0);
         break;
@@ -3611,7 +3394,7 @@ export default function App() {
           <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
             {/* Loading Overlays (Excluding Generation) */}
             <AnimatePresence>
-              {(isUploading || isGeneratingImage || isSaving) && (
+              {(isUploading || isSaving) && (
                 <motion.div 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
@@ -3763,36 +3546,6 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              {/* AI Generation Tool */}
-              <div className="bg-brutal-blue/20 brutal-border p-4 md:p-6 mb-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-brutal-blue text-black font-mono text-[10px] font-bold px-2 py-1 brutal-border border-t-0 border-r-0">BETA</div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-brutal-blue brutal-border flex items-center justify-center text-black">
-                    <Sparkles size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-lg uppercase">AI Visual Generator</h3>
-                    <p className="text-xs font-mono font-bold uppercase">Create unique motion assets</p>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="Describe the visual you want (e.g. 'Cyberpunk city at night, cinematic lighting')"
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    className="brutal-input flex-1 px-4 py-3 text-sm"
-                  />
-                  <button 
-                    onClick={generateAIImage}
-                    disabled={isGeneratingImage || !aiPrompt}
-                    className="brutal-button bg-brutal-green px-6 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isGeneratingImage ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
-                    <span className="hidden sm:inline">CREATE IMAGE</span>
-                  </button>
-                </div>
-              </div>
 
               <div className="flex justify-end">
                 <button 
@@ -3985,7 +3738,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'grid', 'vibrant-glow', 'particles', 'parallax', 'geometry-morph', 'radio-waves', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'gradient-blue', 'gradient-purple', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'vibrant-glow', 'particles', 'parallax', 'fluid-displace', 'motion-tile', 'premium-parallax', 'textured-paper', 'pastel-dream', 'lavender-mist', 'mint-echo', 'sunset-haze', 'morning-dew'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => {
@@ -4012,7 +3765,7 @@ export default function App() {
                   
                   <div className="flex flex-wrap gap-2 mb-4">
                     <button 
-                      onClick={() => setSelectedEffects(['typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
+                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
                       className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
                     >
                       Select All
@@ -4055,27 +3808,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Standard Effects</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {[
-                          'typewriter', 'fade', 'kinetic', 'bounce', 'glitch', 'reveal', 
-                          'zoom', 'blur', 'neon', 'wave', 'shake', 'slide', 'perspective'
-                        ].map((effect: any) => (
-                          <button
-                            key={effect}
-                            onClick={() => {
-                              setSelectedEffects(prev => 
-                                prev.includes(effect) ? prev.filter(e => e !== effect) : [...prev, effect]
-                              );
-                            }}
-                            className={`px-2 py-2 text-[10px] font-bold uppercase brutal-border transition-all ${selectedEffects.includes(effect) ? 'bg-brutal-green' : 'bg-white hover:bg-gray-50'}`}
-                          >
-                            {effect.replace('-', ' ')}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                   
                   {selectedEffects.length === 0 && (
@@ -4426,7 +4158,6 @@ export default function App() {
 
 
       {/* V2 Transition Effects */}
-      <FilmBurnTransition active={activeFilmBurn} />
 
 
 
