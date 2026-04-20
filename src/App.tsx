@@ -4058,7 +4058,8 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
+                </div>
+              </div>
 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
@@ -4319,7 +4320,7 @@ export default function App() {
 
 
 
-              </div>
+
 
               <div className="flex justify-center gap-4">
                 <button 
