@@ -2326,6 +2326,9 @@ export default function App() {
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
+  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
+  const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
+
   const [socialHandle, setSocialHandle] = useState('@Handle');
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
