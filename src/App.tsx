@@ -2312,6 +2312,7 @@ export default function App() {
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
+  const [preset, setPreset] = useState<string>('custom');
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
