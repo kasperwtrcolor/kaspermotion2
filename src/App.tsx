@@ -34,7 +34,6 @@ type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin
   | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' 
   | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
-type CameraArtistry = 'natural' | 'orbit' | 'plunge' | 'drift' | 'side-scroller';
 
 type LibraryAsset = {
   id: string;
@@ -1880,73 +1879,8 @@ const getTextPositionClass = (pos: TextPosition) => {
   }
 };
 
-const CinematicOverlay = ({ useGrainEffect, intensity = 0.15, mood = 'standard' }: { useGrainEffect: boolean, intensity?: number, mood?: CinematicMood }) => {
-  const getMoodFilter = () => {
-    switch (mood) {
-      case 'golden-hour':
-        return 'sepia(0.3) saturate(1.4) brightness(1.1) contrast(1.1) hue-rotate(-10deg)';
-      case 'cyberpunk':
-        return 'contrast(1.2) saturate(1.8) hue-rotate(160deg) brightness(0.9)';
-      case 'noir':
-        return 'grayscale(1) contrast(1.5) brightness(0.9)';
-      case 'teal-and-orange':
-        return 'contrast(1.1) saturate(1.3) hue-rotate(-20deg) brightness(1.05)';
-      default:
-        return 'none';
-    }
-  };
 
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden" style={{ filter: getMoodFilter() }}>
-      <style>
-        {`
-          @keyframes film-grain {
-            0%, 100% { transform: translate(0, 0); }
-            10% { transform: translate(-5%, -10%); }
-            30% { transform: translate(7%, -15%); }
-            50% { transform: translate(-15%, 10%); }
-            70% { transform: translate(10%, 15%); }
-            90% { transform: translate(-10%, 5%); }
-          }
-        `}
-      </style>
-      {/* Premium Multi-Layer Filter */}
-      {useGrainEffect && (
-        <>
-          {/* Layer 1: Fine Precision Noise (Sensor Noise) */}
-          <div 
-            className="absolute mix-blend-overlay pointer-events-none" 
-            style={{ 
-              top: '-50%', left: '-50%', width: '200%', height: '200%',
-              opacity: intensity,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='fineNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23fineNoise)'/%3E%3C/svg%3E")`,
-              animation: 'film-grain 8s steps(10) infinite'
-            }}
-          ></div>
-          {/* Layer 2: Coarse Organic Noise (Film Grain Crystals) */}
-          <div 
-            className="absolute mix-blend-soft-light pointer-events-none" 
-            style={{ 
-              top: '-50%', left: '-50%', width: '200%', height: '200%',
-              opacity: intensity * 0.7,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='coarseNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23coarseNoise)'/%3E%3C/svg%3E")`,
-              animation: 'film-grain 12s steps(8) infinite reverse'
-            }}
-          ></div>
-        </>
-      )}
-      {/* Vignette */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_10%,rgba(0,0,0,0.8)_120%)] mix-blend-multiply pointer-events-none"></div>
-    </div>
-  );
-};
 
-const AUDIO_TRACKS: Record<string, string> = {
-  'mood-cinematic': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/cinematic.mp3',
-  'mood-energetic': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/energetic.mp3',
-  'mood-lofi': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/lofi.mp3',
-  'mood-ambient': 'https://raw.githubusercontent.com/heygen-official/heygen-demos/main/assets/audio/ambient.mp3'
-};
 
 const CompositionNode = ({ 
   comp, 
@@ -2379,8 +2313,6 @@ export default function App() {
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
   const [sceneDuration, setSceneDuration] = useState<number>(5.0);
 
-  const [cinematicMood, setCinematicMood] = useState<CinematicMood>('standard');
-  const [cameraArtistry, setCameraArtistry] = useState<CameraArtistry>('natural');
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeFilmBurn, setActiveFilmBurn] = useState(false);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
@@ -2390,32 +2322,8 @@ export default function App() {
     isActive: boolean;
     progress: number;
   }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
-  const [audioTrack, setAudioTrack] = useState('mood-cinematic');
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    if (appMode === 'playing') {
-      audioRef.current?.play().catch(e => console.log("Audio play deferred until interaction", e));
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-    }
-  }, [appMode, audioTrack]);
 
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
-
-  useEffect(() => {
-    gsap.globalTimeline.timeScale(textAnimationSpeed);
-  }, [textAnimationSpeed]);
-
-  const [preset, setPreset] = useState<string>('custom');
-  
-  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
-  const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
-  const [useGrainEffect, setUseGrainEffect] = useState(true);
-  const [grainIntensity, setGrainIntensity] = useState(0.15);
   const [showProfile, setShowProfile] = useState(false);
 
   const [socialHandle, setSocialHandle] = useState('@Handle');
@@ -2745,9 +2653,7 @@ export default function App() {
           transitionDuration,
           textAnimationSpeed,
           sceneDuration,
-          useGrainEffect,
-          cinematicMood,
-          cameraArtistry,
+          backgroundStyles,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -2791,8 +2697,7 @@ export default function App() {
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setSceneDuration(project.settings.sceneDuration || 5.0);
 
-    setCinematicMood(project.settings.cinematicMood || 'standard');
-    setCameraArtistry(project.settings.cameraArtistry || 'natural');
+
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
@@ -2939,38 +2844,10 @@ export default function App() {
         const time = now / 2000;
         userPanX.set(Math.sin(time) * 15);
         userPanY.set(Math.cos(time * 0.8) * 15);
-
-        // --- 2. Camera Artistry Patterns ---
-        switch (cameraArtistry) {
-          case 'orbit':
-            artistryX.set(Math.cos(elapsed * 0.5) * 200);
-            artistryY.set(Math.sin(elapsed * 0.5) * 200);
-            artistryZ.set(Math.sin(elapsed * 0.3) * 100);
-            break;
-          case 'plunge':
-            artistryZ.set(elapsed * 150); // Deep push-in
-            artistryX.set(Math.sin(elapsed * 0.8) * 30);
-            break;
-          case 'drift':
-            artistryX.set(Math.sin(elapsed * 0.4) * 150 + Math.cos(elapsed * 0.7) * 50);
-            artistryY.set(Math.cos(elapsed * 0.3) * 120 + Math.sin(elapsed * 0.6) * 40);
-            artistryZ.set(Math.sin(elapsed * 0.2) * 80);
-            break;
-          case 'side-scroller':
-            artistryX.set(elapsed * 180); // Constant pan
-            artistryY.set(Math.sin(elapsed * 1.5) * 10); // Subtle vertical bob
-            break;
-          case 'natural':
-          default:
-            artistryX.set(0);
-            artistryY.set(0);
-            artistryZ.set(0);
-            break;
-        }
       }, 150);
       return () => clearInterval(interval);
     }
-  }, [appMode, cameraArtistry, sceneStartTime]);
+  }, [appMode, sceneStartTime]);
 
   const smoothWiggleX = useSpring(wiggleX, { damping: 20, stiffness: 50 });
   const smoothWiggleY = useSpring(wiggleY, { damping: 20, stiffness: 50 });
@@ -3390,31 +3267,28 @@ export default function App() {
       }
       
       // Advanced Combination Logic
-      // Ensure we always cycle through the user's selected effects pool for all scenes
+      // Cycle through effects - reset if main generation
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
-      const transitions: TransitionType[] = ['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
-      const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * transitions.length)] : transitionType;
+      const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
+      const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
 
-      // Persistence Logic: Reuse existing composition settings if they exist
-      const existingComp = compositions[sceneIdx];
-      
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
         caption, 
-        existingComp?.textPosition || preferredTextPosition, 
-        existingComp?.textEffect || activeEffect, 
-        existingComp?.transitionType || activeTransition, 
-        existingComp?.transitionDuration || transitionDuration, 
+        preferredTextPosition, 
+        activeEffect, 
+        activeTransition, 
+        transitionDuration, 
         prev,
         isTextOnly,
-        existingComp?.preset || preset,
-        existingComp?.backgroundStyles || backgroundStyles,
-        existingComp?.giphyStickerUrl, // Keep manual stickers
-        existingComp?.fontFamily || fontFamily,
-        existingComp?.textColor || textColor,
-        existingComp?.isMultiColor || isMultiColor
+        preset,
+        backgroundStyles,
+        undefined, // Dedicated Giphy scenes handled below
+        fontFamily,
+        textColor,
+        isMultiColor
       );
       
       // Manually assigned Scene Type persistence
@@ -4185,55 +4059,6 @@ export default function App() {
                   </div>
                 </div>
                 <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Cinematic Mood (LUTs)</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                    {[
-                      { id: 'standard', label: 'Classic', color: 'bg-white' },
-                      { id: 'golden-hour', label: 'Golden Hour', color: 'bg-[#FFD700]' },
-                      { id: 'cyberpunk', label: 'Cyberpunk', color: 'bg-[#FF00FF]' },
-                      { id: 'noir', label: 'Noir (B&W)', color: 'bg-[#333333] text-white' },
-                      { id: 'teal-and-orange', label: 'Hollywood', color: 'bg-[#008080] text-white' }
-                    ].map(mood => (
-                      <button
-                        key={mood.id}
-                        onClick={() => setCinematicMood(mood.id as CinematicMood)}
-                        className={`p-3 brutal-border transition-all flex flex-col items-center gap-2 ${cinematicMood === mood.id ? 'translate-x-1 translate-y-1 shadow-none bg-brutal-blue text-white' : 'hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white'}`}
-                      >
-                        <div className={`w-8 h-8 rounded-full brutal-border ${mood.color}`} />
-                        <span className="text-[10px] font-mono font-bold uppercase">{mood.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
-                    Moods apply global color grading, atmospheric lighting, and emotional contrast.
-                  </p>
-                </div>
-
-                <div className="md:col-span-2 mt-4 pt-4 border-t-2 border-black/5">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Camera Artistry (Patterns)</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                    {[
-                      { id: 'natural', label: 'Natural', icon: '🍃' },
-                      { id: 'orbit', label: 'Focal Orbit', icon: '🔄' },
-                      { id: 'plunge', label: 'The Plunge', icon: '⬇️' },
-                      { id: 'drift', label: 'Floating Drift', icon: '☁️' },
-                      { id: 'side-scroller', label: 'Side-Scroller', icon: '➡️' }
-                    ].map(pattern => (
-                      <button
-                        key={pattern.id}
-                        onClick={() => setCameraArtistry(pattern.id as CameraArtistry)}
-                        className={`p-3 brutal-border transition-all flex flex-col items-center gap-2 ${cameraArtistry === pattern.id ? 'translate-x-1 translate-y-1 shadow-none bg-brutal-orange text-black' : 'hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white'}`}
-                      >
-                        <span className="text-2xl">{pattern.icon}</span>
-                        <span className="text-[10px] font-mono font-bold uppercase">{pattern.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
-                    Patterns overlay professional camera movements on top of your trailer transitions.
-                  </p>
-                </div>
-              </div>
 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
@@ -4337,7 +4162,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'random', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
+                    {(['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
                       <button
                         key={type}
                         onClick={() => setTransitionType(type)}
@@ -4492,65 +4317,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="mb-8 md:mb-12 mt-8 pt-8 border-t-2 border-black/5">
-                <h3 className="text-sm font-mono font-bold uppercase mb-4 inline-block text-black">Master Video Effects</h3>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => setUseGrainEffect(!useGrainEffect)}
-                      className={`w-12 h-6 brutal-border relative transition-colors ${useGrainEffect ? 'bg-brutal-green' : 'bg-white'}`}
-                    >
-                      <div className={`absolute top-0.5 w-4 h-4 bg-black transition-all ${useGrainEffect ? 'left-7' : 'left-1'}`} />
-                    </button>
-                    <span className="text-xs font-mono font-bold uppercase tracking-widest text-black">Film Grain Overlay</span>
-                  </div>
 
-                  {useGrainEffect && (
-                    <div className="max-w-xs">
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-mono font-bold uppercase text-gray-500">Grain Density</label>
-                        <span className="text-[10px] font-mono font-bold text-black">{Math.round(grainIntensity * 100)}%</span>
-                      </div>
-                      <input 
-                        type="range"
-                        min="0"
-                        max="0.5"
-                        step="0.01"
-                        value={grainIntensity}
-                        onChange={(e) => setGrainIntensity(parseFloat(e.target.value))}
-                        className="w-full h-1 bg-black/10 appearance-none cursor-pointer accent-black"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              <div className="mb-8 md:mb-12 mt-8 pt-8 border-t-2 border-black/5">
-                <h3 className="text-sm font-mono font-bold uppercase mb-4 inline-block text-black">Master Audio Selection</h3>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {[
-                    { id: 'mood-cinematic', name: 'Cinematic Orchestral', color: 'bg-brutal-purple' },
-                    { id: 'mood-energetic', name: 'High Energy Beat', color: 'bg-brutal-orange' },
-                    { id: 'mood-lofi', name: 'Chill Lofi Vibes', color: 'bg-brutal-green' },
-                    { id: 'mood-ambient', name: 'Deep Ambient', color: 'bg-brutal-blue' }
-                  ].map(track => (
-                    <button
-                      key={track.id}
-                      onClick={() => setAudioTrack(track.id)}
-                      className={`p-4 brutal-border flex flex-col items-center gap-2 transition-all ${audioTrack === track.id ? `${track.color} text-white` : 'bg-white hover:bg-gray-50 text-black'}`}
-                    >
-                      <div className={`p-2 rounded-full ${audioTrack === track.id ? 'bg-white/20' : 'bg-black/5'}`}>
-                        <Play size={16} fill={audioTrack === track.id ? "currentColor" : "none"} />
-                      </div>
-                      <span className="text-[9px] font-mono font-bold uppercase text-center leading-tight">{track.name}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-3 text-[9px] font-mono font-bold text-gray-400 uppercase">
-                  Selected: <span className="text-black">{audioTrack.replace('mood-', '').replace('-', ' ')}</span>. This audio will be embedded in your final render.
-                </p>
               </div>
 
               <div className="flex justify-center gap-4">
@@ -4710,8 +4478,7 @@ export default function App() {
         })}
       </motion.div>
 
-      {/* Cinematic Overlay (Film Grain, Vignette, Chromatic Aberration) */}
-      <CinematicOverlay useGrainEffect={useGrainEffect} intensity={grainIntensity} mood={cinematicMood} />
+
 
       {/* V2 Transition Effects */}
       <FilmBurnTransition active={activeFilmBurn} />
@@ -4762,12 +4529,7 @@ export default function App() {
       
       {renderContent()}
       
-      <audio 
-        ref={audioRef} 
-        src={AUDIO_TRACKS[audioTrack]} 
-        loop
-        className="hidden"
-      />
+
       
       <PricingModal 
         isOpen={showPricing} 

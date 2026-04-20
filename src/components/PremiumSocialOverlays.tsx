@@ -180,7 +180,7 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
       initial={{ scale: 0.9, opacity: 0, rotateX: 20 }}
       animate={status === 'active' ? { scale: 1, opacity: 1, rotateX: 0 } : { scale: 0.9, opacity: 0, rotateX: 20 }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-black/80 backdrop-blur-[40px] rounded-[3rem] p-12 w-[700px] border border-white/20 shadow-[0_80px_200px_rgba(0,0,0,0.8)] relative overflow-hidden"
+      className="bg-black/90 backdrop-blur-[50px] rounded-[1.5rem] p-10 md:p-14 w-[850px] max-w-[95vw] border border-white/20 shadow-[0_80px_200px_rgba(0,0,0,0.9)] relative overflow-visible"
     >
       {/* Background Heartbeat Grid */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
