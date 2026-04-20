@@ -87,8 +87,6 @@ type Composition = {
   fontFamily?: FontFamily;
   textColor?: string;
   isMultiColor?: boolean;
-  isIntro?: boolean;
-  isOutro?: boolean;
 };
 
 const M3_SHAPES = [
@@ -1976,76 +1974,6 @@ const CompositionNode = ({
           );
         })}
 
-        {/* STATE-OF-THE-ART INTRO OVERLAY */}
-        {comp.isIntro && status === 'active' && (
-          <motion.div 
-            className="absolute inset-0 z-[500] flex flex-col items-center justify-center p-10 overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {/* Cinematic Letterboxing */}
-            <motion.div 
-              initial={{ height: 0 }}
-              animate={{ height: '12vh' }}
-              className="absolute top-0 inset-x-0 bg-black z-[510]"
-            />
-            <motion.div 
-              initial={{ height: 0 }}
-              animate={{ height: '12vh' }}
-              className="absolute bottom-0 inset-x-0 bg-black z-[510]"
-            />
-
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 100 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative z-[520] text-center"
-            >
-               <h2 className={`text-8xl md:text-[14rem] font-black uppercase tracking-tighter text-white leading-none ${globalFontFamily} drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]`}>
-                 {comp.caption?.split(' ')[0] || "START"}
-               </h2>
-            </motion.div>
-            
-            <motion.div
-              initial={{ letterSpacing: '0.5em', opacity: 0 }}
-              animate={{ letterSpacing: '0.1em', opacity: 1 }}
-              transition={{ delay: 0.8, duration: 1.2 }}
-              className="mt-6 bg-white text-black px-10 py-3 brutal-border-large font-mono font-black text-2xl uppercase relative z-[520]"
-            >
-              KasperMotion Ultra
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STATE-OF-THE-ART OUTRO OVERLAY */}
-        {comp.isOutro && status === 'active' && (
-          <motion.div 
-            className="absolute inset-0 z-[500] flex flex-col items-center justify-center p-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <motion.div
-              initial={{ y: 50, opacity: 0, scale: 0.9 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-black/70 backdrop-blur-[40px] border border-white/20 rounded-[4rem] p-16 max-w-2xl w-full text-center shadow-[0_100px_200px_rgba(0,0,0,1)] relative overflow-hidden group"
-            >
-               {/* Shimmer Effect */}
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-               
-               <div className="mx-auto mb-10 flex items-center justify-center relative z-10 transition-transform hover:scale-110">
-                 <Video className="text-white w-20 h-20 shadow-[0_0_50px_rgba(255,255,255,0.3)]" />
-               </div>
-               <h2 className={`text-6xl font-black mb-6 text-white tracking-tighter ${globalFontFamily} leading-tight`}>
-                 {comp.caption || "READY TO CREATE?"}
-               </h2>
-               <p className="text-2xl text-white/50 mb-12 font-black uppercase tracking-[0.2em]">{socialHandle}</p>
-               <button className="w-full py-6 bg-brutal-green brutal-border-large text-black font-black text-3xl uppercase hover:brightness-110 active:scale-95 transition-all shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-                 Start Your Journey
-               </button>
-            </motion.div>
-          </motion.div>
-        )}
 
         {/* Premium Social Overlays Layer */}
         {['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
@@ -3128,10 +3056,6 @@ export default function App() {
     }
 
     // Flag Intro and Outro for state-of-the-art rendering
-    if (newComps.length > 0) {
-      newComps[0].isIntro = true;
-      newComps[newComps.length - 1].isOutro = true;
-    }
 
     setCompositions(newComps);
     setCurrentIndex(0);
