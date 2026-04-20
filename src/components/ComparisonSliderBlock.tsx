@@ -30,7 +30,7 @@ export const ComparisonSliderBlock: React.FC<ComparisonSliderProps> = ({
       initial={{ scale: 0.9, opacity: 0 }}
       animate={status === 'active' ? { scale: 1, opacity: 1 } : { scale: 0.9, opacity: 0 }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-      className="w-[900px] h-[600px] max-w-[90vw] max-h-[70vh] bg-black rounded-[2.5rem] relative overflow-hidden brutal-border-large shadow-[0_80px_150px_rgba(0,0,0,0.6)]"
+      className="w-[900px] max-w-[85vw] h-[600px] max-h-[70vh] bg-black rounded-[2.5rem] relative overflow-hidden brutal-border-large shadow-[0_80px_150px_rgba(0,0,0,0.6)]"
     >
       {/* After Image (Full Background) */}
       <img 

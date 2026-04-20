@@ -3885,8 +3885,35 @@ export default function App() {
                   <div className="space-y-4">
                     {compositions.map((comp, idx) => (
                       <div key={comp.id} className="brutal-border p-4 bg-white flex flex-col md:flex-row items-center gap-4 group hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border shrink-0">
-                          {idx + 1}
+                        <div className="flex flex-col gap-2 shrink-0">
+                          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border">
+                            {idx + 1}
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*,video/*';
+                              input.onchange = async (e: any) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const url = URL.createObjectURL(file);
+                                  setCompositions(prev => prev.map((c, i) => {
+                                    if (i !== idx) return c;
+                                    return {
+                                      ...c,
+                                      media: [...c.media, { id: Math.random().toString(), url, type: file.type.startsWith('video') ? 'video' : 'image', name: file.name }]
+                                    };
+                                  }));
+                                }
+                              };
+                              input.click();
+                            }}
+                            className="w-12 h-8 bg-brutal-green text-black flex items-center justify-center brutal-border hover:-translate-y-0.5 transition-transform shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                            title="Add Media to this Scene"
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
@@ -3908,9 +3935,42 @@ export default function App() {
                             <button
                               key={type.id}
                               onClick={() => {
-                                setCompositions(prev => prev.map((c, i) => 
-                                  i === idx ? { ...c, sceneType: type.id as any } : c
-                                ));
+                                setCompositions(prev => prev.map((c, i) => {
+                                  if (i !== idx) return c;
+                                  
+                                  const newType = type.id as any;
+                                  let updatedMedia = [...c.media];
+                                  
+                                  // Apply Specific Layout Positioning
+                                  if (newType === 'grid') {
+                                    updatedMedia = updatedMedia.map((m, mi) => ({
+                                      ...m,
+                                      xOffset: (mi % 2 === 0 ? -400 : 400),
+                                      yOffset: (mi < 2 ? -300 : 300),
+                                      scale: 0.8
+                                    }));
+                                  } else if (newType === 'split') {
+                                    updatedMedia = updatedMedia.map((m, mi) => ({
+                                      ...m,
+                                      xOffset: mi === 0 ? -450 : 450,
+                                      yOffset: 0,
+                                      scale: 0.9
+                                    }));
+                                  } else if (['standard', 'testimonial', 'comparison-slider'].includes(newType)) {
+                                    updatedMedia = updatedMedia.map(m => ({
+                                      ...m,
+                                      xOffset: 0,
+                                      yOffset: 0,
+                                      scale: 1
+                                    }));
+                                  }
+                                  
+                                  return { 
+                                    ...c, 
+                                    sceneType: newType,
+                                    media: updatedMedia
+                                  };
+                                }));
                               }}
                               className={`p-2 brutal-border transition-all flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
                             >

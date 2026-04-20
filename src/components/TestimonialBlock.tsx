@@ -34,7 +34,7 @@ export const TestimonialBlock: React.FC<TestimonialProps> = ({
         rotateY: 20 
       }}
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white/95 backdrop-blur-2xl rounded-[3rem] p-12 md:p-16 w-[800px] max-w-[90vw] brutal-border-large shadow-[0_60px_120px_rgba(0,0,0,0.4)] flex flex-col items-center text-center gap-8 relative overflow-hidden"
+      className="bg-white/95 backdrop-blur-2xl rounded-[3rem] p-12 md:p-16 w-full max-w-[85vw] h-auto brutal-border-large shadow-[0_60px_120px_rgba(0,0,0,0.4)] flex flex-col items-center text-center gap-8 relative overflow-hidden pb-16"
     >
       {/* Decorative Brand Accent */}
       <div 
