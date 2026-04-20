@@ -91,6 +91,8 @@ type Composition = {
   fontFamily?: FontFamily;
   textColor?: string;
   isMultiColor?: boolean;
+  isIntro?: boolean;
+  isOutro?: boolean;
 };
 
 const M3_SHAPES = [
@@ -2183,6 +2185,63 @@ const CompositionNode = ({
             </motion.div>
           );
         })}
+
+        {/* STATE-OF-THE-ART INTRO OVERLAY */}
+        {comp.isIntro && status === 'active' && (
+          <motion.div 
+            className="absolute inset-0 z-[500] flex flex-col items-center justify-center p-10 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0, rotateX: 45 }}
+              animate={{ scale: 1, opacity: 1, rotateX: 0 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              className="relative"
+            >
+               <h2 className={`text-8xl md:text-[12rem] font-black uppercase tracking-tighter text-white leading-none ${globalFontFamily}`}>
+                 {comp.caption?.split(' ')[0] || "START"}
+               </h2>
+               <div className="absolute -inset-4 bg-white/10 blur-3xl rounded-full mix-blend-overlay" />
+            </motion.div>
+            <motion.div
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="mt-4 bg-white text-black px-6 py-2 brutal-border font-mono font-bold text-xl uppercase"
+            >
+              KasperMotion Ultra
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* STATE-OF-THE-ART OUTRO OVERLAY */}
+        {comp.isOutro && status === 'active' && (
+          <motion.div 
+            className="absolute inset-0 z-[500] flex flex-col items-center justify-center p-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className="bg-black/60 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-12 max-w-2xl w-full text-center shadow-[0_50px_100px_rgba(0,0,0,0.8)]"
+            >
+               <div className="w-24 h-24 bg-white rounded-full mx-auto mb-8 flex items-center justify-center shadow-xl">
+                 <Video className="text-black w-14 h-14" />
+               </div>
+               <h2 className={`text-5xl font-black mb-4 text-white tracking-tighter ${globalFontFamily}`}>
+                 {comp.caption || "READY TO CREATE?"}
+               </h2>
+               <p className="text-xl text-white/60 mb-10 font-bold uppercase tracking-widest">{socialHandle}</p>
+               <button className="w-full py-5 bg-brutal-green brutal-border-large text-black font-black text-2xl uppercase hover:scale-105 transition-transform">
+                 Start Your Journey
+               </button>
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* Premium Social Overlays Layer */}
         {['instagram-follow', 'x-post', 'macos-notification', 'data-chart'].includes(comp.sceneType) && (
           <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
@@ -2302,6 +2361,7 @@ export default function App() {
     isActive: boolean;
     progress: number;
   }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
+  const [audioTrack, setAudioTrack] = useState('mood-cinematic');
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
 
   useEffect(() => {
@@ -3416,6 +3476,12 @@ export default function App() {
       prev = comp;
     }
 
+    // Flag Intro and Outro for state-of-the-art rendering
+    if (newComps.length > 0) {
+      newComps[0].isIntro = true;
+      newComps[newComps.length - 1].isOutro = true;
+    }
+
     setCompositions(newComps);
     setCurrentIndex(0);
     
@@ -3423,15 +3489,19 @@ export default function App() {
       const isAdmin = user?.email === 'philipsimmons67@gmail.com';
       if (user && !isAdmin) {
         const userRef = doc(db, 'users', user.uid);
+        // Deduct 1 credit for generation
         await setDoc(userRef, { credits: Math.max(0, credits - 1) }, { merge: true });
         setToastMessage("Trailer generated! 1 credit used.");
       } else if (isAdmin) {
         setToastMessage("Admin access: Trailer generated without credit deduction!");
       }
+      
+      // Delay to ensure hydration
       setTimeout(() => {
         setIsRenderingTrailer(false);
         setAppMode('playing');
-      }, 500);
+        setCurrentIndex(0);
+      }, 800);
     } else {
       setIsRenderingTrailer(false);
       setToastMessage("Failed to generate trailer.");
@@ -4398,6 +4468,33 @@ export default function App() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="mb-8 md:mb-12 mt-8 pt-8 border-t-2 border-black/5">
+                <h3 className="text-sm font-mono font-bold uppercase mb-4 inline-block text-black">Master Audio Selection</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { id: 'mood-cinematic', name: 'Cinematic Orchestral', color: 'bg-brutal-purple' },
+                    { id: 'mood-energetic', name: 'High Energy Beat', color: 'bg-brutal-orange' },
+                    { id: 'mood-lofi', name: 'Chill Lofi Vibes', color: 'bg-brutal-green' },
+                    { id: 'mood-ambient', name: 'Deep Ambient', color: 'bg-brutal-blue' }
+                  ].map(track => (
+                    <button
+                      key={track.id}
+                      onClick={() => setAudioTrack(track.id)}
+                      className={`p-4 brutal-border flex flex-col items-center gap-2 transition-all ${audioTrack === track.id ? `${track.color} text-white` : 'bg-white hover:bg-gray-50 text-black'}`}
+                    >
+                      <div className={`p-2 rounded-full ${audioTrack === track.id ? 'bg-white/20' : 'bg-black/5'}`}>
+                        <Play size={16} fill={audioTrack === track.id ? "currentColor" : "none"} />
+                      </div>
+                      <span className="text-[9px] font-mono font-bold uppercase text-center leading-tight">{track.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-3 text-[9px] font-mono font-bold text-gray-400 uppercase">
+                  Selected: <span className="text-black">{audioTrack.replace('mood-', '').replace('-', ' ')}</span>. This audio will be embedded in your final render.
+                </p>
               </div>
 
               <div className="flex justify-center gap-4">
