@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus } from 'lucide-react';
 import TestimonialBlock from './components/TestimonialBlock';
 import ComparisonSliderBlock from './components/ComparisonSliderBlock';
 import { auth, db, storage } from './firebase';
