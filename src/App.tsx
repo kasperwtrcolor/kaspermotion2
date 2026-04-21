@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -24,7 +24,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'world-flowers' | 'world-sunset' | 'world-cartoon-animals' | 'world-forest' | 'world-spaceship' | 'world-tech' | 'world-people' | 'world-vr' | 'world-sports' | 'world-tennis' | 'world-football';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' 
@@ -1021,6 +1021,60 @@ const FilmGrainOverlay = () => {
   );
 };
 
+const ThemedParallaxWorld = ({ theme, worldX, worldY }: { theme: string, worldX: any, worldY: any }) => {
+  const images: Record<string, string> = {
+    'world-flowers': '/worlds/flowers.png',
+    'world-sunset': '/worlds/sunset.png',
+    'world-cartoon-animals': '/worlds/animals.png',
+    'world-forest': '/worlds/forest.png',
+    'world-spaceship': '/worlds/spaceship.png',
+    'world-tech': '/worlds/tech.png',
+    'world-people': '/worlds/people.png',
+    'world-vr': '/worlds/vr.png',
+    'world-sports': '/worlds/sports.png',
+    'world-tennis': '/worlds/tennis.png',
+    'world-football': '/worlds/football.png'
+  };
+
+  const url = images[theme];
+  if (!url) return null;
+
+  const bgX = useTransform(worldX, (x: number) => x * 0.1);
+  const bgY = useTransform(worldY, (y: number) => y * 0.1);
+  const midX = useTransform(worldX, (x: number) => x * 0.4);
+  const midY = useTransform(worldY, (y: number) => y * 0.4);
+  const fgX = useTransform(worldX, (x: number) => x * 0.9);
+  const fgY = useTransform(worldY, (y: number) => y * 0.9);
+
+  return (
+    <div className="absolute inset-[-1000px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+      {/* Background Layer (Far) */}
+      <motion.div 
+        style={{ x: bgX, y: bgY, z: -1500, scale: 12 }} 
+        className="absolute inset-0 flex items-center justify-center"
+      >
+        <img src={url} className="w-full h-full object-cover opacity-40 blur-[2px]" alt="far" />
+      </motion.div>
+
+      {/* Mid Layer (Horizon) */}
+      <motion.div 
+        style={{ x: midX, y: midY, z: -800, scale: 8 }} 
+        className="absolute inset-0 flex items-center justify-center"
+      >
+        <img src={url} className="w-full h-full object-cover opacity-80" alt="mid" />
+      </motion.div>
+
+      {/* Foreground Layer (Focus) */}
+      <motion.div 
+        style={{ x: fgX, y: fgY, z: -200, scale: 4 }} 
+        className="absolute inset-0 flex items-center justify-center"
+      >
+        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" />
+      </motion.div>
+    </div>
+  );
+};
+
 const SceneBackground = ({ style, status, worldX, worldY }: { style?: BackgroundStyle, status: string, worldX?: any, worldY?: any }) => {
   if (!style || style === 'black') return (
     <>
@@ -1028,19 +1082,25 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
     </>
   );
 
+  const isThemedWorld = style.startsWith('world-');
+
   return (
     <>
       <FilmGrainOverlay />
-      <motion.div 
-        className="absolute inset-[-1000%] pointer-events-none"
-        style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
-        animate={{ 
-          opacity: status === 'active' ? 1 : 0.8
-        }}
-        transition={{ duration: 0.5 }}
-      >
-        {style === 'particles' && <ParticleTrails />}
-      </motion.div>
+      {isThemedWorld ? (
+         <ThemedParallaxWorld theme={style} worldX={worldX} worldY={worldY} />
+      ) : (
+        <motion.div 
+          className="absolute inset-[-1000%] pointer-events-none"
+          style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
+          animate={{ 
+            opacity: status === 'active' ? 1 : 0.8
+          }}
+          transition={{ duration: 0.5 }}
+        >
+          {style === 'particles' && <ParticleTrails />}
+        </motion.div>
+      )}
     </>
   );
 };
@@ -3505,6 +3565,39 @@ export default function App() {
                         <div className="flex-1 min-w-0">
                           <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
                           <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
+                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
+                            {[
+                              { id: 'black', label: 'Black', icon: <Square size={16} /> },
+                              { id: 'vibrant-glow', label: 'Vibrant', icon: <Sparkles size={16} /> },
+                              { id: 'particles', label: 'Stars', icon: <Star size={16} /> },
+                              { id: 'premium-parallax', label: 'Grid', icon: <Grid size={16} /> },
+                              { id: 'textured-paper', label: 'Paper', icon: <FileText size={16} /> },
+                              { id: 'world-flowers', label: 'Flowers', icon: <Flower2 size={16} /> },
+                              { id: 'world-sunset', label: 'Sunset', icon: <Sunrise size={16} /> },
+                              { id: 'world-cartoon-animals', label: 'Animals', icon: <Sparkles size={16} /> },
+                              { id: 'world-forest', label: 'Forest', icon: <Trees size={16} /> },
+                              { id: 'world-spaceship', label: 'Spaceship', icon: <Rocket size={16} /> },
+                              { id: 'world-tech', label: 'Tech', icon: <Cpu size={16} /> },
+                              { id: 'world-people', label: 'People', icon: <Users size={16} /> },
+                              { id: 'world-vr', label: 'VR UI', icon: <Glasses size={16} /> },
+                              { id: 'world-sports', label: 'Sports', icon: <Trophy size={16} /> },
+                              { id: 'world-tennis', label: 'Tennis', icon: <Target size={16} /> },
+                              { id: 'world-football', label: 'Football', icon: <Dribbble size={16} /> }
+                            ].map(style => (
+                              <button
+                                key={style.id}
+                                onClick={() => {
+                                  setCompositions(prev => prev.map((c, i) => {
+                                    if (i !== idx) return c;
+                                    return { ...c, activeBackground: style.id as any };
+                                  }));
+                                }}
+                                className={`p-1.5 brutal-border ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white'}`}
+                              >
+                                {style.icon}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
                           {[
