@@ -157,6 +157,8 @@ const generateComposition = (
     };
   });
 
+  const transitionItemAsset = findBestTransitionItem(caption) || undefined;
+
   return {
     id: Math.random().toString(36).substr(2, 9),
     media: processedMedia,
@@ -2794,7 +2796,8 @@ export default function App() {
       giphyStickerUrl,
       stickerScale,
       stickerX,
-      stickerY
+      stickerY,
+      transitionItemAsset: findBestTransitionItem(media[0]?.caption || '') || undefined
     };
   };
 
