@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
 import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
@@ -16,6 +16,8 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
+import TransitionFiller from './components/TransitionFiller';
+import { findBestTransitionItem } from './constants/transitionAssets';
 
 gsap.registerPlugin(useGSAP);
 
@@ -87,6 +89,7 @@ type Composition = {
   fontFamily?: FontFamily;
   textColor?: string;
   isMultiColor?: boolean;
+  transitionItemAsset?: string;
 };
 
 const M3_SHAPES = [
@@ -175,11 +178,12 @@ const generateComposition = (
     isTextOnly,
     preset,
     backgroundStyles,
-    activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[index % backgroundStyles.length] as BackgroundStyle) : 'black',
+    activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[Math.floor(Math.random() * backgroundStyles.length)] as BackgroundStyle) : 'black',
     giphyStickerUrl,
     fontFamily,
     textColor,
-    isMultiColor
+    isMultiColor,
+    transitionItemAsset
   };
 };
 
@@ -1823,6 +1827,8 @@ export default function App() {
     progress: number;
   }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
 
+  const globalTransitionProgress = useMotionValue(0);
+
   const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -2420,6 +2426,7 @@ export default function App() {
         const isShaderTrans = shaderList.includes(nextComp.transitionType);
 
         if (isShaderTrans) {
+          globalTransitionProgress.set(0);
           setActiveShaderTransition({
             name: nextComp.transitionType,
             fromUrl: currentComp.media[0]?.url || '',
@@ -2431,7 +2438,9 @@ export default function App() {
           gsap.to({}, {
             duration: (nextComp.transitionDuration || 1200) / 1000,
             onUpdate: function() {
-              setActiveShaderTransition(prev => ({ ...prev, progress: this.progress() }));
+              const p = this.progress();
+              globalTransitionProgress.set(p);
+              setActiveShaderTransition(prev => ({ ...prev, progress: p }));
             },
             onComplete: () => {
               setActiveShaderTransition(prev => ({ ...prev, isActive: false, progress: 0 }));
@@ -3566,6 +3575,7 @@ export default function App() {
                           <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
                           <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
                           <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
+                            {/* Background Styles */}
                             {[
                               { id: 'black', label: 'Black', icon: <Square size={16} /> },
                               { id: 'vibrant-glow', label: 'Vibrant', icon: <Sparkles size={16} /> },
@@ -3594,7 +3604,7 @@ export default function App() {
                                     return { ...c, activeBackground: style.id as any };
                                   }));
                                 }}
-                                className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white hover:bg-gray-50'}`}
+                                className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white hover:bg-gray-100'}`}
                                 title={style.label}
                               >
                                 <div className="pointer-events-none">
@@ -3602,6 +3612,40 @@ export default function App() {
                                 </div>
                               </button>
                             ))}
+                          </div>
+
+                          {/* 3D Transition Item Selector */}
+                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3 pt-3 border-t border-gray-100">
+                             <p className="w-full text-[8px] font-mono font-bold uppercase text-gray-400 mb-1 text-left">Transition Item</p>
+                             <button
+                                type="button"
+                                onClick={() => {
+                                  setCompositions(prev => prev.map((c, i) => {
+                                    if (i !== idx) return c;
+                                    return { ...c, transitionItemAsset: findBestTransitionItem(c.caption) || undefined };
+                                  }));
+                                }}
+                                className="p-2 brutal-border bg-brutal-green hover:bg-green-400 transition-colors"
+                                title="AI Suggest Item"
+                             >
+                                <Wand2 size={14} />
+                             </button>
+                             {Object.entries(TRANSITION_ITEM_LIB).slice(0, 8).map(([key, url]) => (
+                               <button
+                                 type="button"
+                                 key={key}
+                                 onClick={() => {
+                                   setCompositions(prev => prev.map((c, i) => {
+                                     if (i !== idx) return c;
+                                     return { ...c, transitionItemAsset: url };
+                                   }));
+                                 }}
+                                 className={`w-10 h-10 p-1 brutal-border transition-all hover:scale-110 active:scale-95 ${comp.transitionItemAsset === url ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-50'}`}
+                                 title={key}
+                               >
+                                 <img src={url} className="w-full h-full object-contain pointer-events-none" alt={key} />
+                               </button>
+                             ))}
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
@@ -3817,11 +3861,7 @@ export default function App() {
 
 
 
-      {/* V2 Transition Effects */}
-
-
-
-      {/* Global Shader Transition Layer - Ported from Hyperframes */}
+      {/* Global Shader Transition Layer */}
       {activeShaderTransition.isActive && (
         <ShaderTransitionCanvas 
           fromImage={activeShaderTransition.fromUrl}
@@ -3830,6 +3870,16 @@ export default function App() {
           progress={activeShaderTransition.progress}
           resolution={{ width: windowSize.w, height: windowSize.h }}
           accentColor={textColor || '#A855F7'}
+        />
+      )}
+
+      {/* 3D Transition Filler Overlay */}
+      {activeShaderTransition.isActive && compositions[currentIndex]?.transitionItemAsset && (
+        <TransitionFiller 
+          assetUrl={compositions[currentIndex].transitionItemAsset!}
+          progress={globalTransitionProgress}
+          isActive={true}
+          accentColor={textColor || '#ff3e88'}
         />
       )}
 
