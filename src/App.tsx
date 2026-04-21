@@ -1118,7 +1118,7 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
   const theme = getTheme();
 
   return (
-    <div className={`absolute inset-[-500%] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
+    <div className={`absolute inset-[-1000%] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
       <div style={{ transform: 'translateZ(-300px)' }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
@@ -1158,8 +1158,8 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
 
   return (
     <motion.div 
-      className="absolute inset-[-500%] pointer-events-none"
-      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px)', zIndex: -10, willChange: 'transform' }}
+      className="absolute inset-[-1000%] pointer-events-none"
+      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
       animate={{ 
         opacity: status === 'active' ? 1 : 0.8
       }}
