@@ -92,11 +92,61 @@ type Composition = {
   transitionItemAsset?: string;
 };
 
-const M3_SHAPES = [
-  'circle', 'triangle', 'square', 'rounded-rect', 'hexagon', 'star', 'sunflower', 'pill', 'rhombus', 'leaf', 'flower', 'heart', 'letter', 'blob', 'organic', 'cutout', 'octogon', 'banner', 'bevel'
-];
+const M3_SHAPES = ['circle', 'rounded-rect', 'square'];
 
 const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// AI Director: analyzes script content and determines the creative profile for the entire trailer
+const AI_EFFECTS_POOL: TextEffect[] = ['gsap-glow', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-focus-flash', 'gsap-stack'];
+const AI_TRANSITIONS_POOL: TransitionType[] = ['whip-pan', 'flash-through-white', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'light-leak', 'cross-warp-morph', 'ripple-waves', 'domain-warp', 'sdf-iris', 'thermal-distortion'];
+const AI_BACKGROUNDS_POOL: BackgroundStyle[] = ['black', 'vibrant-glow', 'particles', 'premium-parallax', 'world-flowers', 'world-sunset', 'world-forest', 'world-spaceship', 'world-tech', 'world-people', 'world-vr', 'world-sports'];
+const AI_FONTS_POOL: FontFamily[] = ['font-display', 'font-bebas', 'font-outfit', 'font-montserrat', 'font-bangers', 'font-righteous', 'font-space-tech'];
+
+const analyzeTheme = (fullScript: string): { backgrounds: BackgroundStyle[], font: FontFamily, textColor: string } => {
+  const lower = fullScript.toLowerCase();
+  // Tech / Digital
+  if (lower.includes('tech') || lower.includes('ai') || lower.includes('code') || lower.includes('digital') || lower.includes('software')) {
+    return { backgrounds: ['black', 'vibrant-glow', 'world-tech', 'world-vr', 'particles'], font: 'font-space-tech', textColor: '#00ff88' };
+  }
+  // Nature / Wellness
+  if (lower.includes('nature') || lower.includes('garden') || lower.includes('health') || lower.includes('organic') || lower.includes('eco')) {
+    return { backgrounds: ['world-flowers', 'world-forest', 'world-sunset', 'particles'], font: 'font-outfit', textColor: '#90EE90' };
+  }
+  // Social / Community
+  if (lower.includes('social') || lower.includes('community') || lower.includes('follow') || lower.includes('share') || lower.includes('connect')) {
+    return { backgrounds: ['vibrant-glow', 'world-people', 'particles', 'premium-parallax'], font: 'font-montserrat', textColor: '#ff6bcb' };
+  }
+  // Sports / Energy
+  if (lower.includes('sport') || lower.includes('fitness') || lower.includes('run') || lower.includes('win') || lower.includes('champion')) {
+    return { backgrounds: ['world-sports', 'world-football', 'vibrant-glow', 'black'], font: 'font-bangers', textColor: '#FFD700' };
+  }
+  // Business / Finance
+  if (lower.includes('business') || lower.includes('growth') || lower.includes('revenue') || lower.includes('invest') || lower.includes('startup')) {
+    return { backgrounds: ['black', 'premium-parallax', 'vibrant-glow', 'particles'], font: 'font-display', textColor: '#FFFFFF' };
+  }
+  // Creative / Design
+  if (lower.includes('design') || lower.includes('creative') || lower.includes('art') || lower.includes('brand') || lower.includes('visual')) {
+    return { backgrounds: ['vibrant-glow', 'particles', 'world-sunset', 'premium-parallax'], font: 'font-righteous', textColor: '#FF6B2B' };
+  }
+  // Default: high energy cinematic
+  return { backgrounds: ['black', 'vibrant-glow', 'particles', 'premium-parallax'], font: 'font-display', textColor: '#FFFFFF' };
+};
+
+const pickSceneType = (caption: string, index: number): Composition['sceneType'] => {
+  const lower = caption.toLowerCase();
+  if (lower.includes('follow') || lower.includes('instagram') || lower.includes('subscribe')) return 'instagram-follow';
+  if (lower.includes('tweet') || lower.includes('post') || lower.includes('thread')) return 'x-post';
+  if (lower.includes('alert') || lower.includes('notification') || lower.includes('update')) return 'macos-notification';
+  if (lower.includes('data') || lower.includes('chart') || lower.includes('stat') || lower.includes('growth') || lower.includes('metric')) return 'data-chart';
+  if (lower.includes('listen') || lower.includes('music') || lower.includes('spotify') || lower.includes('podcast')) return 'spotify-card';
+  if (lower.includes('reddit') || lower.includes('discussion') || lower.includes('upvote')) return 'reddit-post';
+  // Every 5th scene, sprinkle in a social overlay for variety
+  if (index > 0 && index % 5 === 0) {
+    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart'];
+    return socialTypes[Math.floor(Math.random() * socialTypes.length)];
+  }
+  return 'standard';
+};
 
 const generateComposition = (
   items: MediaItem[],
@@ -115,76 +165,60 @@ const generateComposition = (
   textColor?: string,
   isMultiColor?: boolean
 ): Composition => {
-  let sceneType: Composition['sceneType'] = 'standard';
-  const rand = Math.random();
-  
-  if (caption && rand > 0.85) {
-    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'];
-    sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
-  }
+  const sceneType = pickSceneType(caption, index);
   
   const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
   const distance = 2000;
-
   const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
   const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
   const z = 0;
 
-  const textPosition = preferredPosition;
+  const textPosition = preferredPosition === 'random'
+    ? (['bottom', 'top', 'center', 'left', 'right'] as TextPosition[])[Math.floor(Math.random() * 5)]
+    : preferredPosition;
 
-  const processedMedia = items.map((item, i) => {
-    let xOffset = 0;
-    let yOffset = 0;
-    let scale = 1;
-
-    const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
-    let m3Shape = item.m3Shape || randomShape;
-    
-    if (m3Shape === 'letter') {
-      const firstChar = (caption || 'K').trim().charAt(0).toUpperCase();
-      m3Shape = `letter-${firstChar.match(/[A-Z]/) ? firstChar : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
-    }
-
-    return {
-      file: item.file,
-      url: item.url || "",
-      type: item.type,
-      name: item.name,
-      xOffset,
-      yOffset,
-      scale,
-      m3Shape
-    };
-  });
+  // Clean modern shapes only
+  const cleanShapes = ['rounded-rect', 'circle', 'square'];
+  const processedMedia = items.map((item) => ({
+    file: item.file,
+    url: item.url || "",
+    type: item.type,
+    name: item.name,
+    xOffset: 0,
+    yOffset: 0,
+    scale: 1,
+    m3Shape: cleanShapes[Math.floor(Math.random() * cleanShapes.length)]
+  }));
 
   const transitionItemAsset = findBestTransitionItem(caption) || undefined;
 
+  // AI picks transition — always use high-energy shader transitions
+  const aiTransition = AI_TRANSITIONS_POOL[Math.floor(Math.random() * AI_TRANSITIONS_POOL.length)];
+
+  // AI picks background from theme-appropriate pool
+  const bgPool = backgroundStyles && backgroundStyles.length > 0 ? backgroundStyles : AI_BACKGROUNDS_POOL;
+  const activeBackground = (bgPool[Math.floor(Math.random() * bgPool.length)] as BackgroundStyle) || 'black';
+
   return {
-    id: Math.random().toString(36).substr(2, 9),
+    id: `comp-${index}-${Date.now()}`,
     media: processedMedia,
     x, y, z,
-    rotX: 0,
-    rotY: 0,
-    rotZ: 0,
+    rotX: 0, rotY: 0, rotZ: 0,
     angle,
     caption,
     textPosition,
     sceneType,
     textEffect: preferredEffect,
-    transitionType: preferredTransition === 'random' 
-      ? (Math.random() > 0.4 
-          ? (['domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'][Math.floor(Math.random() * 14)] as TransitionType)
-          : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
-      : preferredTransition,
+    transitionType: aiTransition,
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
     backgroundStyles,
-    activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[Math.floor(Math.random() * backgroundStyles.length)] as BackgroundStyle) : 'black',
+    activeBackground,
     giphyStickerUrl,
     fontFamily,
     textColor,
-    isMultiColor,
+    isMultiColor: true,
     transitionItemAsset
   };
 };
@@ -1795,7 +1829,7 @@ export default function App() {
   const [useGiphy, setUseGiphy] = useState(false);
 
   const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile'>('landing');
-  const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
+  const [setupStep, setSetupStep] = useState<1 | 2>(1);
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
   const [libraryAssets, setLibraryAssets] = useState<LibraryAsset[]>([]);
@@ -2090,7 +2124,6 @@ export default function App() {
           transitionDuration,
           textAnimationSpeed,
           sceneDuration,
-          backgroundStyles,
           preset: preset || 'custom',
           textOnlyLines: Array.from(textOnlyLines),
           mediaMapping,
@@ -2568,7 +2601,7 @@ export default function App() {
     });
     
     setMediaMapping(newMapping);
-    setSetupStep(3);
+    setSetupStep(2);
   };
 
   const handleScrape = async () => {
@@ -2615,121 +2648,91 @@ export default function App() {
 
     setIsRenderingTrailer(true);
     setRenderProgress(0);
+
+    // ===== AI Director: Analyze full script and make all creative decisions =====
+    const theme = analyzeTheme(scriptText);
+    const themedBackgrounds = theme.backgrounds;
+    const themedFont = theme.font;
+    const themedTextColor = theme.textColor;
+    const fastTransitionDuration = 0.8; // Fast, punchy transitions
     
     const scriptLines = scriptText.split('\n').filter(line => line.trim() !== '');
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
-    const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
+    // AI auto-maps media to scenes: distribute evenly
+    const autoMediaMapping: { [key: number]: MediaItem } = {};
+    if (mediaFiles.length > 0) {
+      scriptLines.forEach((_, idx) => {
+        autoMediaMapping[idx] = mediaFiles[idx % mediaFiles.length];
+      });
+    }
     
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
-      const existingComp = compositions[sceneIdx];
-      let caption = scriptLines[sceneIdx] || '';
-      let isTextOnly = textOnlyLines.has(sceneIdx);
+      const caption = scriptLines[sceneIdx] || '';
       
-      let sceneItems: MediaItem[] = [];
-      if (!isTextOnly) {
-        const mappedMediaId = mediaMapping[sceneIdx];
-        if (mappedMediaId) {
-          const mediaItem = mediaFiles.find(m => m.id === mappedMediaId);
-          if (mediaItem) {
-            sceneItems = [mediaItem];
-          } else {
-            isTextOnly = true;
-          }
-        } else {
-          isTextOnly = true;
-        }
-      }
+      // AI decides: text-only if no media available
+      const mappedMedia = autoMediaMapping[sceneIdx];
+      const sceneItems: MediaItem[] = mappedMedia ? [mappedMedia] : [];
+      const isTextOnly = !mappedMedia;
       
-      let activeEffect = effectsPool[sceneIdx % effectsPool.length];
-
-      const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
-      const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
+      // AI cycles through effects for variety
+      const activeEffect = AI_EFFECTS_POOL[sceneIdx % AI_EFFECTS_POOL.length];
 
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
         caption, 
-        preferredTextPosition, 
-        activeEffect, 
-        activeTransition, 
-        transitionDuration, 
+        'random',    // AI handles position
+        activeEffect,
+        'random',    // AI handles transition inside generateComposition
+        fastTransitionDuration, 
         prev,
         isTextOnly,
         preset,
-        backgroundStyles,
+        themedBackgrounds as string[],
         undefined,
-        fontFamily,
-        textColor,
-        isMultiColor
+        themedFont,
+        themedTextColor,
+        true // Always multi-color for dynamic feel
       );
-      
-      if (existingComp) {
-        comp.sceneType = existingComp.sceneType;
-      }
       
       newComps.push(comp);
       prev = comp;
-
-      if (useGiphy && caption && sceneIdx % 3 === 0) {
-        try {
-          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
-          const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
-          const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
-          
-          if (data && data.length > 0) {
-            const stickerUrl = data[0].images.original.url;
-            const giphyComp = generateComposition(
-              [],
-              sceneIdx + 100, 
-              searchTerm.toUpperCase(), 
-              'center', 
-              effectsPool[(sceneIdx + 1) % effectsPool.length], 
-              'zoom', 
-              transitionDuration, 
-              prev,
-              isTextOnly,
-              preset,
-              backgroundStyles,
-              stickerUrl,
-              fontFamily,
-              textColor,
-              isMultiColor
-            );
-            newComps.push(giphyComp);
-            prev = giphyComp;
-          }
-        } catch (err) {
-          console.error("Giphy logic error:", err);
-        }
-      }
       
       setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 50));
     }
 
-    const mappedMediaIds = new Set(Object.values(mediaMapping));
-    const unmappedMedia = mediaFiles.filter(m => !mappedMediaIds.has(m.id));
-    
-    for (let i = 0; i < unmappedMedia.length; i++) {
-      const m = unmappedMedia[i];
+    // Add any extra unmapped media as bonus scenes
+    const usedMediaIds = new Set(Object.values(autoMediaMapping).map(m => m?.id));
+    const extraMedia = mediaFiles.filter(m => !usedMediaIds.has(m.id));
+    for (let i = 0; i < extraMedia.length; i++) {
+      const m = extraMedia[i];
       const comp = generateComposition(
         [m], 
         scriptLines.length + i, 
         '', 
-        preferredTextPosition, 
-        effectsPool[i % effectsPool.length], 
-        transitionType, 
-        transitionDuration, 
+        'random',
+        AI_EFFECTS_POOL[(scriptLines.length + i) % AI_EFFECTS_POOL.length], 
+        'random', 
+        fastTransitionDuration, 
         prev,
         false,
         preset,
-        backgroundStyles
+        themedBackgrounds as string[]
       );
       newComps.push(comp);
       prev = comp;
     }
+
+    // Apply AI-picked global settings
+    setFontFamily(themedFont);
+    setTextColor(themedTextColor);
+    setIsMultiColor(true);
+    setBackgroundStyles(themedBackgrounds);
+    setTextAnimationSpeed(1.5); // Fast text for energy
+    setTransitionDuration(fastTransitionDuration);
 
     setCompositions(newComps);
     setCurrentIndex(0);
@@ -2760,6 +2763,7 @@ export default function App() {
       setToastMessage("Failed to generate trailer.");
     }
   };
+
 
   const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
@@ -2997,10 +3001,10 @@ export default function App() {
             <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
               <div>
                 <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
-                <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 4</p>
+                <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 2</p>
               </div>
               <div className="flex gap-2">
-                {[1, 2, 3, 4].map(step => (
+                {[1, 2].map(step => (
                   <div 
                     key={step} 
                     className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
@@ -3167,7 +3171,7 @@ export default function App() {
           {setupStep === 2 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-brutal-green brutal-border flex items-center justify-center"><FileText size={16} /></div> Step 2: Add Script
+                <div className="w-8 h-8 bg-brutal-green brutal-border flex items-center justify-center"><Wand2 size={16} /></div> Step 2: Script & Generate
               </h2>
               
               <div className="mb-6 bg-brutal-pink/20 brutal-border p-4">
@@ -3193,321 +3197,27 @@ export default function App() {
                 </div>
               </div>
 
-              <p className="text-black/70 text-sm mb-4 font-medium">Each line of text will be displayed as a caption for the corresponding media file.</p>
+              <p className="text-black/70 text-sm mb-4 font-medium">Each line becomes a scene. The AI will automatically pick backgrounds, transitions, animations, and fonts.
+              </p>
               
               <textarea
                 className="brutal-input w-full p-6 font-mono text-sm resize-none h-48 mb-4"
-                placeholder="Line 1: Welcome to the presentation&#10;Line 2: Here is our first product&#10;Line 3: Notice the sleek design..."
+                placeholder="Line 1: Welcome to something amazing&#10;Line 2: Built for speed and simplicity&#10;Line 3: Try it now..."
                 value={scriptText}
                 onChange={(e) => handleScriptChange(e.target.value)}
               />
 
-              <div className="flex justify-between mt-8">
-                <button 
-                  onClick={() => setSetupStep(1)}
-                  className="brutal-button bg-white px-6 py-3"
-                >
-                  Back
-                </button>
-                <button 
-                  onClick={handleGoToMapping}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
-                >
-                  Next <ArrowRight size={18} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {setupStep === 3 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-              <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center"><LinkIcon size={16} /></div> Step 3: Link Media to Text
-              </h2>
-              
-              <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
-                  <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white brutal-border p-3">
-                    <div className="flex-1 text-sm text-black font-medium flex items-center">
-                      <span className="bg-brutal-blue brutal-border text-black px-2 py-0.5 font-mono font-bold text-xs mr-3">{idx + 1}</span>
-                      {line}
-                    </div>
-                    <div className="flex items-center gap-3 md:w-1/3">
-                      <label className="flex items-center gap-2 text-xs font-mono font-bold uppercase whitespace-nowrap cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={textOnlyLines.has(idx)}
-                          onChange={() => toggleTextOnly(idx)}
-                          className="w-4 h-4 border-2 border-black rounded-none text-brutal-blue focus:ring-0 focus:ring-offset-0"
-                        />
-                        Text Only
-                      </label>
-                      
-                      {!textOnlyLines.has(idx) && (
-                        <select
-                          value={mediaMapping[idx] || ''}
-                          onChange={(e) => setMediaMapping(prev => ({ ...prev, [idx]: e.target.value }))}
-                          className="brutal-input flex-1 px-2 py-1.5 text-xs font-mono"
-                        >
-                          <option value="">Select Media...</option>
-                          {mediaFiles.map(m => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-between mt-8">
-                <button 
-                  onClick={() => setSetupStep(2)}
-                  className="brutal-button bg-white px-6 py-3"
-                >
-                  Back
-                </button>
-                <button 
-                  onClick={() => setSetupStep(4)}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
-                >
-                  Next <ArrowRight size={18} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {setupStep === 4 && (
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-green brutal-border flex items-center justify-center mx-auto mb-4 transform -rotate-6">
-                <CheckCircle2 size={24} className="md:w-8 md:h-8 text-black" />
-              </div>
-              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter text-black">Style & Generate</h2>
-              <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography Style</h3>
-                  <select 
-                    value={fontFamily}
-                    onChange={(e) => setFontFamily(e.target.value as FontFamily)}
-                    className="w-full brutal-input px-3 py-3 text-sm font-bold uppercase transition-all"
-                  >
-                    {[
-                      { val: 'font-display', label: 'Space Grotesk' },
-                      { val: 'font-sans', label: 'Inter' },
-                      { val: 'font-serif', label: 'Playfair Display' },
-                      { val: 'font-mono', label: 'JetBrains Mono' },
-                      { val: 'font-archivo', label: 'Archivo Black' },
-                      { val: 'font-bebas', label: 'Bebas Neue' },
-                      { val: 'font-outfit', label: 'Outfit' },
-                      { val: 'font-syne', label: 'Syne' },
-                      { val: 'font-unbounded', label: 'Unbounded' },
-                      { val: 'font-kanit', label: 'Kanit' },
-                      { val: 'font-public', label: 'Public Sans' },
-                      { val: 'font-work', label: 'Work Sans' },
-                      { val: 'font-montserrat', label: 'Montserrat' },
-                      { val: 'font-impact', label: 'Impact Display' },
-                      { val: 'font-pixel', label: 'Pixel Press (8-bit)' },
-                      { val: 'font-pixel-arcade', label: 'Arcade Silk' },
-                      { val: 'font-righteous', label: 'Retro Righteous' },
-                      { val: 'font-space-tech', label: 'Space Technical' },
-                      { val: 'font-bangers', label: 'Bangers Comic' }
-                    ].map(f => (
-                      <option key={f.val} value={f.val} className={f.val}>{f.label}</option>
-                    ))}
-                  </select>
+                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Social Handle</h3>
+                  <input 
+                    type="text" 
+                    value={socialHandle}
+                    onChange={(e) => setSocialHandle(e.target.value)}
+                    placeholder="@yourhandle"
+                    className="w-full brutal-input px-4 py-3 text-lg font-bold bg-white text-black"
+                  />
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Font Color</h3>
-                  <div className="flex gap-4">
-                    <input 
-                      type="color" 
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="w-12 h-12 brutal-border cursor-pointer bg-white p-1"
-                    />
-                    <label className="flex items-center gap-2 cursor-pointer flex-1 brutal-border px-3 bg-white">
-                      <input 
-                        type="checkbox" 
-                        checked={isMultiColor}
-                        onChange={(e) => setIsMultiColor(e.target.checked)}
-                        className="w-5 h-5 border-2 border-black rounded-none text-brutal-green focus:ring-0"
-                      />
-                      <span className="text-[10px] font-mono font-bold uppercase">Multicolors</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper'] as BackgroundStyle[]).map(bg => (
-                      <button
-                        key={bg}
-                        onClick={() => {
-                          setBackgroundStyles(prev => 
-                            prev.includes(bg) ? prev.filter(s => s !== bg) : [...prev, bg]
-                          );
-                        }}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black relative ${backgroundStyles.includes(bg) ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {bg.replace('-', ' ')}
-                        {backgroundStyles.includes(bg) && (
-                          <div className="absolute top-1 right-1 w-2 h-2 bg-black rounded-full shadow-[0_0_5px_white]" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div className="md:col-span-2">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation Combination</h3>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <button 
-                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
-                    >
-                      Select All
-                    </button>
-                    <button 
-                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-purple text-white"
-                    >
-                      Pure GSAP
-                    </button>
-                    <button 
-                      onClick={() => setSelectedEffects([])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-white hover:bg-gray-100"
-                    >
-                      Clear
-                    </button>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Advanced Cinematic (GSAP)</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {[
-                          'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 
-                          'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 
-                          'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'
-                        ].map((effect: any) => (
-                          <button
-                            key={effect}
-                            onClick={() => {
-                              setSelectedEffects(prev => 
-                                prev.includes(effect) ? prev.filter(e => e !== effect) : [...prev, effect]
-                              );
-                            }}
-                            className={`px-2 py-2 text-[10px] font-bold uppercase brutal-border transition-all ${selectedEffects.includes(effect) ? 'bg-brutal-purple text-white' : 'bg-white hover:bg-gray-50'}`}
-                          >
-                            {effect.replace('gsap-', '').replace('-', ' ')}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-                  
-                  {selectedEffects.length === 0 && (
-                    <p className="mt-3 text-[10px] font-mono font-bold text-red-500 uppercase animate-pulse">
-                      Warning: No animations selected. Defaulting to GSAP Glow.
-                    </p>
-                  )}
-                  <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
-                    The engine will cycle through your {selectedEffects.length} selected animations across your trailer scenes.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Position</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['random', 'top', 'bottom', 'center', 'left', 'right'] as TextPosition[]).map(pos => (
-                      <button
-                        key={pos}
-                        onClick={() => setPreferredTextPosition(pos)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${preferredTextPosition === pos ? 'bg-brutal-purple' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {pos}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => setTransitionType(type)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${transitionType === type ? 'bg-brutal-green' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Speed</h3>
-                  <div className="flex flex-col gap-4 px-2 bg-white brutal-border p-4">
-                    <input 
-                      type="range" 
-                      min="0.2" 
-                      max="3" 
-                      step="0.1" 
-                      value={transitionDuration}
-                      onChange={(e) => setTransitionDuration(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>FAST ({transitionDuration}s)</span>
-                      <span>SLOW</span>
-                    </div>
-                    
-                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Text Anim Speed</h4>
-                    <input 
-                      type="range" 
-                      min="0.5" 
-                      max="2" 
-                      step="0.1" 
-                      value={textAnimationSpeed}
-                      onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>SLOWER (0.5x)</span>
-                      <span>{textAnimationSpeed}x</span>
-                      <span>FASTER (2x)</span>
-                    </div>
-
-                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Scene Length</h4>
-                    <input 
-                      type="range" 
-                      min="2" 
-                      max="15" 
-                      step="0.5" 
-                      value={sceneDuration}
-                      onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>SHORT (2s)</span>
-                      <span>{sceneDuration}s</span>
-                      <span>LONG (15s)</span>
-                    </div>
-
-
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Format</h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -3522,194 +3232,11 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Resolution</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['720p', '1080p', '4K'] as const).map(r => (
-                      <button
-                        key={r}
-                        onClick={() => setExportResolution(r)}
-                        className={`px-3 py-2 text-center brutal-border transition-colors uppercase text-[10px] font-mono font-bold text-black ${exportResolution === r ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
-                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-4 text-center tracking-tight text-black">Social Media Customization</h3>
-                  <div className="max-w-md mx-auto">
-                    <label className="block text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Your @ Handle</label>
-                    <input 
-                      type="text" 
-                      value={socialHandle}
-                      onChange={(e) => setSocialHandle(e.target.value)}
-                      placeholder="@yourhandle"
-                      className="w-full brutal-input px-4 py-3 text-lg font-bold bg-white text-black"
-                    />
-                    <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase text-center">
-                      This handle will be shown on all Instagram, X, and Notification layouts.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
-                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-6 text-center tracking-tight text-black">Scene-by-Scene Designer</h3>
-                  <div className="space-y-4">
-                    {compositions.map((comp, idx) => (
-                      <div key={comp.id} className="brutal-border p-4 bg-white flex flex-col md:flex-row items-center gap-4 group hover:bg-gray-50 transition-colors">
-                        <div className="flex flex-col gap-2 shrink-0">
-                          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border">
-                            {idx + 1}
-                          </div>
-                          <button 
-                            onClick={() => {
-                              setAddingAssetToSceneIdx(idx);
-                              setShowLibrary(true);
-                            }}
-                            className="w-12 h-8 bg-brutal-green text-black flex items-center justify-center brutal-border hover:-translate-y-0.5 transition-transform shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                            title="Add Media from Library"
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
-                          <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
-                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
-                            {/* Background Styles */}
-                            {[
-                              { id: 'black', label: 'Black', icon: <Square size={16} /> },
-                              { id: 'vibrant-glow', label: 'Vibrant', icon: <Sparkles size={16} /> },
-                              { id: 'particles', label: 'Stars', icon: <Star size={16} /> },
-                              { id: 'premium-parallax', label: 'Grid', icon: <Grid size={16} /> },
-                              { id: 'textured-paper', label: 'Paper', icon: <FileText size={16} /> },
-                              { id: 'world-flowers', label: 'Flowers', icon: <Flower2 size={16} /> },
-                              { id: 'world-sunset', label: 'Sunset', icon: <Sunrise size={16} /> },
-                              { id: 'world-cartoon-animals', label: 'Animals', icon: <Sparkles size={16} /> },
-                              { id: 'world-forest', label: 'Forest', icon: <Trees size={16} /> },
-                              { id: 'world-spaceship', label: 'Spaceship', icon: <Rocket size={16} /> },
-                              { id: 'world-tech', label: 'Tech', icon: <Cpu size={16} /> },
-                              { id: 'world-people', label: 'People', icon: <Users size={16} /> },
-                              { id: 'world-vr', label: 'VR UI', icon: <Glasses size={16} /> },
-                              { id: 'world-sports', label: 'Sports', icon: <Trophy size={16} /> },
-                              { id: 'world-tennis', label: 'Tennis', icon: <Target size={16} /> },
-                              { id: 'world-football', label: 'Football', icon: <Dribbble size={16} /> }
-                            ].map(style => (
-                              <button
-                                type="button"
-                                key={style.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCompositions(prev => prev.map((c, i) => {
-                                    if (i !== idx) return c;
-                                    return { ...c, activeBackground: style.id as any };
-                                  }));
-                                }}
-                                className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white hover:bg-gray-100'}`}
-                                title={style.label}
-                              >
-                                <div className="pointer-events-none">
-                                  {style.icon}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* 3D Transition Item Selector */}
-                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3 pt-3 border-t border-gray-100">
-                             <p className="w-full text-[8px] font-mono font-bold uppercase text-gray-400 mb-1 text-left">Transition Item</p>
-                             <button
-                                type="button"
-                                onClick={() => {
-                                  setCompositions(prev => prev.map((c, i) => {
-                                    if (i !== idx) return c;
-                                    return { ...c, transitionItemAsset: findBestTransitionItem(c.caption) || undefined };
-                                  }));
-                                }}
-                                className="p-2 brutal-border bg-brutal-green hover:bg-green-400 transition-colors"
-                                title="AI Suggest Item"
-                             >
-                                <Wand2 size={14} />
-                             </button>
-                             {Object.entries(TRANSITION_ITEM_LIB).slice(0, 8).map(([key, url]) => (
-                               <button
-                                 type="button"
-                                 key={key}
-                                 onClick={() => {
-                                   setCompositions(prev => prev.map((c, i) => {
-                                     if (i !== idx) return c;
-                                     return { ...c, transitionItemAsset: url };
-                                   }));
-                                 }}
-                                 className={`w-10 h-10 p-1 brutal-border transition-all hover:scale-110 active:scale-95 ${comp.transitionItemAsset === url ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-50'}`}
-                                 title={key}
-                               >
-                                 <img src={url} className="w-full h-full object-contain pointer-events-none" alt={key} />
-                               </button>
-                             ))}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1 justify-center md:justify-end">
-                          {[
-                            { id: 'standard', label: 'Standard', icon: <Square size={16} /> },
-                            { id: 'instagram-follow', label: 'IG Follow', icon: <Instagram size={16} /> },
-                            { id: 'x-post', label: 'X Post', icon: <Twitter size={16} /> },
-                            { id: 'macos-notification', label: 'Notify', icon: <Bell size={16} /> },
-                            { id: 'data-chart', label: 'Chart', icon: <TrendingUp size={16} /> },
-                            { id: 'spotify-card', label: 'Spotify', icon: <Music size={16} /> },
-                            { id: 'reddit-post', label: 'Reddit', icon: <Hash size={16} /> }
-                          ].map(type => (
-                            <button
-                              type="button"
-                              key={type.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCompositions(prev => prev.map((c, i) => {
-                                  if (i !== idx) return c;
-                                  
-                                  const newType = type.id as any;
-                                  let updatedMedia = [...c.media];
-                                  
-                                  if (['standard'].includes(newType)) {
-                                    updatedMedia = updatedMedia.map(m => ({
-                                      ...m,
-                                      xOffset: 0,
-                                      yOffset: 0,
-                                      scale: 1
-                                    }));
-                                  }
-                                  
-                                  return { 
-                                    ...c, 
-                                    sceneType: newType,
-                                    media: updatedMedia
-                                  };
-                                }));
-                              }}
-                              className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
-                            >
-                              <div className="pointer-events-none flex flex-col items-center gap-1">
-                                {type.icon}
-                                <span className="text-[7px] font-mono font-bold uppercase">{type.label}</span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
-
-
-
-
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-4 mt-8">
                 <button 
-                  onClick={() => setSetupStep(3)}
+                  onClick={() => setSetupStep(1)}
                   className="brutal-button bg-white px-6 py-3"
                 >
                   Back
@@ -3721,15 +3248,15 @@ export default function App() {
                     className="brutal-button bg-brutal-blue px-8 py-4 text-lg flex items-center gap-3 disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                    SAVE DRAFT
+                    SAVE
                   </button>
                 )}
                 <button 
                   onClick={generateWorld}
-                  className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3"
+                  className="brutal-button bg-brutal-green px-10 py-4 text-xl flex items-center gap-3 group"
                 >
-                  <Play size={20} fill="currentColor" />
-                  GENERATE PREVIEW
+                  <Sparkles size={20} className="group-hover:animate-spin" />
+                  AI GENERATE TRAILER
                 </button>
               </div>
 
