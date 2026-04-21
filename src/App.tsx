@@ -96,11 +96,42 @@ const M3_SHAPES = ['circle', 'rounded-rect', 'square'];
 
 const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// AI Director: analyzes script content and determines the creative profile for the entire trailer
+// AI Director: Hyperframes-aligned choreography system
+// Maps to Hyperframes block categories: transitions-3d, transitions-blur, transitions-cover, etc.
 const AI_EFFECTS_POOL: TextEffect[] = ['gsap-glow', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-focus-flash', 'gsap-stack'];
-const AI_TRANSITIONS_POOL: TransitionType[] = ['whip-pan', 'flash-through-white', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'light-leak', 'cross-warp-morph', 'ripple-waves', 'domain-warp', 'sdf-iris', 'thermal-distortion'];
+
+// Choreography categories from Hyperframes — organized by energy/mood
+const HF_TRANSITIONS = {
+  // High-energy: destruction, distortion (for action, tech, sports)
+  highEnergy: ['glitch', 'chromatic-split', 'thermal-distortion', 'swirl-vortex', 'domain-warp'] as TransitionType[],
+  // Smooth: blur, dissolve, light (for emotional, nature, creative)
+  smooth: ['cross-warp-morph', 'light-leak', 'ripple-waves', 'sdf-iris'] as TransitionType[],
+  // Cinematic: 3d, scale, cover (for business, premium)
+  cinematic: ['cinematic-zoom', 'flash-through-white', 'whip-pan', 'gravitational-lens'] as TransitionType[],
+};
+
+const AI_TRANSITIONS_POOL: TransitionType[] = [...HF_TRANSITIONS.highEnergy, ...HF_TRANSITIONS.smooth, ...HF_TRANSITIONS.cinematic];
 const AI_BACKGROUNDS_POOL: BackgroundStyle[] = ['black', 'vibrant-glow', 'particles', 'premium-parallax', 'world-flowers', 'world-sunset', 'world-forest', 'world-spaceship', 'world-tech', 'world-people', 'world-vr', 'world-sports'];
 const AI_FONTS_POOL: FontFamily[] = ['font-display', 'font-bebas', 'font-outfit', 'font-montserrat', 'font-bangers', 'font-righteous', 'font-space-tech'];
+
+// Pick transition based on Hyperframes choreography category matching content energy
+const pickTransitionForCaption = (caption: string, index: number): TransitionType => {
+  const lower = caption.toLowerCase();
+  // High energy content → destruction/distortion transitions
+  if (lower.includes('fast') || lower.includes('power') || lower.includes('action') || lower.includes('launch') || lower.includes('break') || lower.includes('win')) {
+    return HF_TRANSITIONS.highEnergy[index % HF_TRANSITIONS.highEnergy.length];
+  }
+  // Emotional/nature content → smooth/blur transitions
+  if (lower.includes('feel') || lower.includes('love') || lower.includes('peace') || lower.includes('beauty') || lower.includes('nature')) {
+    return HF_TRANSITIONS.smooth[index % HF_TRANSITIONS.smooth.length];
+  }
+  // Business/premium content → cinematic transitions
+  if (lower.includes('business') || lower.includes('premium') || lower.includes('growth') || lower.includes('invest') || lower.includes('revenue')) {
+    return HF_TRANSITIONS.cinematic[index % HF_TRANSITIONS.cinematic.length];
+  }
+  // Default: cycle through ALL transitions for variety
+  return AI_TRANSITIONS_POOL[index % AI_TRANSITIONS_POOL.length];
+};
 
 const analyzeTheme = (fullScript: string): { backgrounds: BackgroundStyle[], font: FontFamily, textColor: string } => {
   const lower = fullScript.toLowerCase();
@@ -192,8 +223,8 @@ const generateComposition = (
 
   const transitionItemAsset = findBestTransitionItem(caption) || undefined;
 
-  // AI picks transition — always use high-energy shader transitions
-  const aiTransition = AI_TRANSITIONS_POOL[Math.floor(Math.random() * AI_TRANSITIONS_POOL.length)];
+  // AI picks transition using Hyperframes choreography categories based on content
+  const aiTransition = pickTransitionForCaption(caption, index);
 
   // AI picks background from theme-appropriate pool
   const bgPool = backgroundStyles && backgroundStyles.length > 0 ? backgroundStyles : AI_BACKGROUNDS_POOL;
@@ -218,7 +249,7 @@ const generateComposition = (
     giphyStickerUrl,
     fontFamily,
     textColor,
-    isMultiColor: true,
+    isMultiColor: true, // AI enables multi-color word highlighting for dynamic feel
     transitionItemAsset
   };
 };
@@ -292,13 +323,16 @@ const getWordStyle = (word: string, index: number, customColor?: string, isMulti
   const hash = cleanWord.length + index;
   
   if (isMulti) {
-    if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
-    if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
-    if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
-    if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
+    // Highlight key words in vibrant colors — NO backgrounds, just colored text with glow
+    if (hash % 7 === 0) return { color: '#FF2A6D', textShadow: '0 0 20px rgba(255,42,109,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
+    if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 20px rgba(5,217,232,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
+    if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 20px rgba(255,194,0,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
+    if (hash % 13 === 0) return { color: '#01FFC3', textShadow: '0 0 20px rgba(1,255,195,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
+    if (hash % 9 === 0) return { color: '#A78BFA', textShadow: '0 0 20px rgba(167,139,250,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
+    if (hash % 3 === 0) return { color: '#FF6B2B', textShadow: '0 0 20px rgba(255,107,43,0.6), 0 2px 4px rgba(0,0,0,0.5)' };
   }
   
-  return customColor ? { color: customColor } : {};
+  return customColor ? { color: customColor, textShadow: '0 2px 8px rgba(0,0,0,0.5)' } : { textShadow: '0 2px 8px rgba(0,0,0,0.5)' };
 };
 
 const SplitText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
@@ -1079,38 +1113,33 @@ const ThemedParallaxWorld = ({ theme, worldX, worldY }: { theme: string, worldX:
   const url = images[theme];
   if (!url) return null;
 
-  const bgX = useTransform(worldX, (x: number) => x * 0.1);
-  const bgY = useTransform(worldY, (y: number) => y * 0.1);
-  const midX = useTransform(worldX, (x: number) => x * 0.4);
-  const midY = useTransform(worldY, (y: number) => y * 0.4);
-  const fgX = useTransform(worldX, (x: number) => x * 0.9);
-  const fgY = useTransform(worldY, (y: number) => y * 0.9);
+  const bgX = useTransform(worldX, (x: number) => x * 0.05);
+  const bgY = useTransform(worldY, (y: number) => y * 0.05);
+  const midX = useTransform(worldX, (x: number) => x * 0.15);
+  const midY = useTransform(worldY, (y: number) => y * 0.15);
 
   return (
-    <div className="absolute inset-[-1000px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
-      {/* Background Layer (Far) */}
+    <div className="absolute inset-[-200px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+      {/* Background Layer — full cover, crisp */}
       <motion.div 
-        style={{ x: bgX, y: bgY, z: -1500, scale: 12 }} 
+        style={{ x: bgX, y: bgY, z: -500, scale: 2.5 }} 
         className="absolute inset-0 flex items-center justify-center"
       >
-        <img src={url} className="w-full h-full object-cover opacity-40 blur-[2px]" alt="far" />
+        <img src={url} className="w-full h-full object-cover opacity-50" style={{ imageRendering: 'auto' }} alt="far" />
       </motion.div>
 
-      {/* Mid Layer (Horizon) */}
+      {/* Main Visible Layer — sharp and prominent */}
       <motion.div 
-        style={{ x: midX, y: midY, z: -800, scale: 8 }} 
+        style={{ x: midX, y: midY, z: -200, scale: 1.8 }} 
         className="absolute inset-0 flex items-center justify-center"
       >
-        <img src={url} className="w-full h-full object-cover opacity-80" alt="mid" />
+        <img src={url} className="w-full h-full object-cover opacity-90" style={{ imageRendering: 'auto' }} alt="mid" />
       </motion.div>
 
-      {/* Foreground Layer (Focus) */}
-      <motion.div 
-        style={{ x: fgX, y: fgY, z: -200, scale: 4 }} 
-        className="absolute inset-0 flex items-center justify-center"
-      >
-        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" />
-      </motion.div>
+      {/* Gradient overlay for depth & contrast */}
+      <div className="absolute inset-0 z-10" style={{ 
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%)',
+      }} />
     </div>
   );
 };
