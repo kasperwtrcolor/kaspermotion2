@@ -2275,6 +2275,13 @@ export default function App() {
     isDraggingRef.current = false;
   };
 
+  const resetCamera = () => {
+    userRotX.set(0);
+    userRotY.set(0);
+    userPanX.set(0);
+    userPanY.set(0);
+  };
+
   enum OperationType {
     CREATE = 'create',
     UPDATE = 'update',
