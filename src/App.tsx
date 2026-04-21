@@ -71,7 +71,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: TextPosition;
-  sceneType: 'standard' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post';
+  sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -115,9 +115,7 @@ const generateComposition = (
   let sceneType: Composition['sceneType'] = 'standard';
   const rand = Math.random();
   
-  if (items.length > 1) {
-    sceneType = 'split';
-  } else if (caption && rand > 0.85) {
+  if (caption && rand > 0.85) {
     const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'];
     sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
   }
@@ -135,11 +133,6 @@ const generateComposition = (
     let xOffset = 0;
     let yOffset = 0;
     let scale = 1;
-
-    if (sceneType === 'split') {
-      xOffset = i === 0 ? -450 : 450;
-      scale = 0.9;
-    }
 
     const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
     let m3Shape = item.m3Shape || randomShape;
@@ -1509,7 +1502,6 @@ const CompositionNode = ({
   worldY: any;
 }) => {
   const accentColor = globalTextColor || '#A855F7';
-  const isMulti = comp.sceneType === 'split';
   const duration = comp.transitionDuration;
   const [hasError, setHasError] = useState(false);
 
@@ -1567,8 +1559,6 @@ const CompositionNode = ({
         };
       case 'fade':
       default:
-        // For shader transitions, we just do a simple crossfade of the underlying scenes
-        // while the shader overlay does the heavy lifting.
         return {
           future: { opacity: 0, transition: baseTransition },
           active: { opacity: 1, transition: baseTransition },
@@ -1579,32 +1569,6 @@ const CompositionNode = ({
 
   const transitionVariants = getTransitionVariants(comp.transitionType);
 
-  // 3D Spin, Dissolve, and Morphing Effects
-  const mediaVariants = {
-    future: transitionVariants.future,
-    active: { 
-      ...transitionVariants.active,
-      rotateY: [15, -5], 
-      rotateX: [10, 5],
-      z: [0, 200],
-      transition: { 
-        z: { duration: 8, ease: "easeOut" },
-        filter: { duration: 0.4 },
-        default: { type: 'spring', damping: 15, stiffness: 100, mass: 1, delay: 0.1 }
-      }
-    },
-    past: {
-      ...transitionVariants.past,
-      rotateZ: 0,
-      scale: 0,
-      z: 400,
-      transition: { duration: 1.5, ease: "easeInOut" }
-    }
-  };
-
-  const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-2";
-  const multiMediaClass = "max-w-[40vw] max-h-[40vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1";
-
   return (
     <div
       className="absolute left-0 top-0"
@@ -1613,9 +1577,14 @@ const CompositionNode = ({
         transformStyle: 'preserve-3d'
       }}
     >
-      <div className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
+      <motion.div 
+        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center" 
+        style={{ transformStyle: 'preserve-3d' }}
+        variants={transitionVariants}
+        initial="future"
+        animate={status}
+      >
         
-        {/* Kinetic Scene Background */}
         <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
         {comp.giphyStickerUrl && (
           <motion.div
@@ -1640,7 +1609,6 @@ const CompositionNode = ({
           </motion.div>
         )}
 
-        {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
         {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
           const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
@@ -1682,9 +1650,6 @@ const CompositionNode = ({
             <motion.div
               key={i}
               className="absolute z-10"
-              variants={mediaVariants}
-              initial="future"
-              animate={status}
               style={{ 
                 transformStyle: 'preserve-3d',
                 x: m.xOffset || 0,
@@ -1697,8 +1662,10 @@ const CompositionNode = ({
                 </div>
               ) : (
                 comp.preset === 'app-showcase' ? (
-                  <MobileMockup status={status} variant={index} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
-                    <MobileMockupContent m={m} caption={comp.caption} setHasError={setHasError} />
+                  <MobileMockup status={status} variant={i} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
+                    <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
+                      {mediaElement}
+                    </div>
                   </MobileMockup>
                 ) : (
                   mediaElement
@@ -1710,7 +1677,6 @@ const CompositionNode = ({
         </div>
 
 
-        {/* Premium Social & Feature Overlays Layer */}
         {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && (
           <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
             <PremiumSocialOverlays
@@ -1730,7 +1696,6 @@ const CompositionNode = ({
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)', z: 1000 }}
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)', z: 1000 }}
             className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
-            style={{ }}
           >
             <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]`}>
               <AnimatedCaption 
@@ -1743,7 +1708,7 @@ const CompositionNode = ({
             </div>
           </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -1781,7 +1746,7 @@ export default function App() {
   const [textColor, setTextColor] = useState<string>('#FFFFFF');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
-  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-glow'); // Kept for legacy compatibility
+  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-glow');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
@@ -1827,13 +1792,11 @@ export default function App() {
   const [isSearchingGiphy, setIsSearchingGiphy] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
 
-  // Firebase Auth & Firestore Connection Test
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setIsAuthReady(true);
       if (u) {
-        // Test connection
         try {
           await getDocFromServer(doc(db, 'test', 'connection'));
         } catch (error) {
@@ -1842,7 +1805,6 @@ export default function App() {
           }
         }
 
-        // Sync user profile
         await setDoc(doc(db, 'users', u.uid), {
           uid: u.uid,
           email: u.email,
@@ -1855,7 +1817,6 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Sync user trailers
   useEffect(() => {
     if (user) {
       const q = query(collection(db, 'trailers'), where('userId', '==', user.uid));
@@ -1882,13 +1843,11 @@ export default function App() {
           if (userSnap.exists()) {
             const userData = userSnap.data();
             if (userData.lastRewardDate !== today) {
-              // Refresh to 5 credits if below 5
               const currentCredits = userData.credits || 0;
               if (currentCredits < 5) {
                 await setDoc(userRef, { credits: 5, lastRewardDate: today }, { merge: true });
                 setToastMessage("Daily Refresh: Your credits have been topped up to 5!");
               } else {
-                // Just update the date so they don't get topped up again today if they spend it
                 await setDoc(userRef, { lastRewardDate: today }, { merge: true });
               }
               setDailyCreditsClaimed(true);
@@ -1940,10 +1899,9 @@ export default function App() {
     try {
       const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
       
-      // Add a timeout to the upload to prevent hanging on CORS/Permission errors
       const uploadPromise = uploadBytes(storageRef, file);
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Upload timed out. This may be due to missing CORS configuration on your Firebase Storage bucket.")), 10000);
+        setTimeout(() => reject(new Error("Upload timed out.")), 10000);
       });
       
       await Promise.race([uploadPromise, timeoutPromise]);
@@ -1980,7 +1938,6 @@ export default function App() {
       let updatedMediaFiles = false;
       const newMediaFiles = [...mediaFiles];
 
-      // 1. Upload media if they are local files and add to library
       const mediaData = await Promise.all(mediaFiles.map(async (item, i) => {
         const compForMedia = compositions.find(c => c.media.some(m => m.url === item.url));
         const giphyStickerUrl = compForMedia?.giphyStickerUrl;
@@ -2000,7 +1957,6 @@ export default function App() {
             await Promise.race([uploadPromise, timeoutPromise]);
             const url = await getDownloadURL(storageRef);
             
-            // Add to library metadata
             await addDoc(collection(db, 'assets'), {
               userId: user.uid,
               url,
@@ -2024,7 +1980,6 @@ export default function App() {
             };
           } catch (uploadErr) {
             console.error("File upload failed for:", item.name, uploadErr);
-            // Fallback to current URL if upload fails (might be a blob but better than nothing)
             return {
               url: item.url,
               type: item.type,
@@ -2054,7 +2009,6 @@ export default function App() {
         setMediaFiles(newMediaFiles);
       }
 
-      // 2. Save the trailer project
       const trailerData: any = {
         userId: user.uid,
         name: `Trailer ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}${isAutoSave ? ' (Auto-saved)' : ''}`,
@@ -2125,8 +2079,6 @@ export default function App() {
     }));
     setMediaFiles(loadedMedia);
     
-    // We can't easily convert URLs back to File objects for the current setup
-    // So we'll need to modify generateWorld to handle URLs directly
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
@@ -2214,7 +2166,6 @@ export default function App() {
     }
   };
 
-  // Motion Blur & Camera Tracking
   const camX = useMotionValue(0);
   const camY = useMotionValue(0);
   const camZ = useMotionValue(0);
@@ -2223,7 +2174,6 @@ export default function App() {
   const artistryY = useMotionValue(0);
   const artistryZ = useMotionValue(0);
   
-  // Interactive Offsets
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
   const userPanX = useMotionValue(0);
@@ -2242,7 +2192,6 @@ export default function App() {
   const smoothPanX = useSpring(userPanX, { damping: 50, stiffness: 150 });
   const smoothPanY = useSpring(userPanY, { damping: 50, stiffness: 150 });
 
-  // AE-inspired "Wiggle" Expression for Camera
   const wiggleX = useMotionValue(0);
   const wiggleY = useMotionValue(0);
 
@@ -2250,9 +2199,6 @@ export default function App() {
     if (appMode === 'playing') {
       const interval = setInterval(() => {
         const now = Date.now();
-        const elapsed = (now - sceneStartTime) / 1000;
-        
-        // --- 1. Breathing & Wiggle (Natural) ---
         wiggleX.set((Math.random() - 0.5) * 40);
         wiggleY.set((Math.random() - 0.5) * 40);
         
@@ -2274,7 +2220,7 @@ export default function App() {
   const cameraFilter = useTransform([velX, velY, velZ], ([vx, vy, vz]) => {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
     const blurAmount = Math.min(speed / 120, 15); 
-    const caAmount = Math.min(speed / 80, 8); // Chromatic aberration spread
+    const caAmount = Math.min(speed / 80, 8);
     
     if (speed < 5) return `blur(0px)`;
     
@@ -2285,26 +2231,18 @@ export default function App() {
   const worldY = useTransform([smoothY, smoothPanY, smoothWiggleY, smoothArtY], ([y, py, wy, ay]) => Number(y) + Number(py) + Number(wy) + Number(ay));
   const worldZ = useTransform([smoothZ, smoothArtZ], ([z, az]) => Number(z) + Number(az));
 
-  const flareX1 = useTransform(worldX, v => Number(v) * -0.5);
-  const flareY1 = useTransform(worldY, v => Number(v) * -0.5);
-  const flareX2 = useTransform(worldX, v => Number(v) * 1.5);
-  const flareY2 = useTransform(worldY, v => Number(v) * 1.5);
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const sequenceActiveRef = useRef(false);
   const isDraggingRef = useRef(false);
   const lastMousePos = useRef({ x: 0, y: 0 });
 
-  // Handle camera movement
   useEffect(() => {
     if (appMode === 'playing' && currentComp) {
-      // Force immediate update of motion values to trigger springs
       camX.set(windowSize.w / 2 - currentComp.x);
       camY.set(windowSize.h / 2 - currentComp.y);
       camZ.set(-currentComp.z);
       setSceneStartTime(Date.now());
-      // Reset artistry for clean start
       artistryX.set(0);
       artistryY.set(0);
       artistryZ.set(0);
@@ -2323,11 +2261,9 @@ export default function App() {
     const dy = e.clientY - lastMousePos.current.y;
     
     if (e.shiftKey) {
-      // Pan
       userPanX.set(userPanX.get() + dx * 2);
       userPanY.set(userPanY.get() + dy * 2);
     } else {
-      // Rotate
       userRotY.set(userRotY.get() + dx * 0.2);
       userRotX.set(userRotX.get() - dy * 0.2);
     }
@@ -2339,7 +2275,6 @@ export default function App() {
     isDraggingRef.current = false;
   };
 
-  // --- ERROR HANDLING ---
   enum OperationType {
     CREATE = 'create',
     UPDATE = 'update',
@@ -2391,29 +2326,17 @@ export default function App() {
     throw new Error(JSON.stringify(errInfo));
   }
 
-  const resetCamera = () => {
-    userRotX.set(0);
-    userRotY.set(0);
-    userPanX.set(0);
-    userPanY.set(0);
-  };
-
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-play logic — scene duration accounts for text animation time if text exists
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (appMode === 'playing' && !isRecording && compositions.length > 0) {
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
-      // Base GSAP animation duration is 4s; adjusted by speed multiplier
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      // Scene stays at least long enough for text animation to finish + small buffer
-      // Scene switches exactly 0.5s after text animation or immediately if no text
       const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
       
       timer = setTimeout(() => {
@@ -2430,7 +2353,6 @@ export default function App() {
         const isShaderTrans = shaderList.includes(nextComp.transitionType);
 
         if (isShaderTrans) {
-          // Trigger Shader Transition
           setActiveShaderTransition({
             name: nextComp.transitionType,
             fromUrl: currentComp.media[0]?.url || '',
@@ -2439,7 +2361,6 @@ export default function App() {
             progress: 0
           });
 
-          // GSAP Animation for the shader
           gsap.to({}, {
             duration: (nextComp.transitionDuration || 1200) / 1000,
             onUpdate: function() {
@@ -2505,7 +2426,6 @@ export default function App() {
   };
 
   const toggleLibraryAssetSelection = (id: string) => {
-    // If we are targeted a specific scene (e.g. from Step 4)
     if (addingAssetToSceneIdx !== null) {
       const asset = libraryAssets.find(a => a.id === id);
       if (asset) {
@@ -2602,49 +2522,6 @@ export default function App() {
     }
   };
 
-  const applyPreset = (p: 'blockbuster' | 'documentary' | 'product-vibe' | 'app-showcase') => {
-    if (preset === p) {
-      setPreset(undefined as any);
-      // Reset to defaults
-      setFontStyle('font-display');
-      setBackgroundStyles(['black']);
-      setTextEffect('gsap-glow');
-      setTransitionType('dissolve');
-      return;
-    }
-    setPreset(p);
-    switch (p) {
-      case 'blockbuster':
-        setFontStyle('font-display');
-        setBackgroundStyles(['black']);
-        setTextEffect('gsap-glow');
-        setTransitionType('explode');
-        setTransitionDuration(0.8);
-        break;
-      case 'documentary':
-        setFontStyle('font-serif');
-        setBackgroundStyles(['particles']);
-        setTextEffect('gsap-glow');
-        setTransitionType('dissolve');
-        setTransitionDuration(2.0);
-        break;
-      case 'product-vibe':
-        setFontStyle('font-mono');
-        setBackgroundStyles(['vibrant-glow']);
-        setTextEffect('gsap-expand');
-        setTransitionType('spin');
-        setTransitionDuration(0.6);
-        break;
-      case 'app-showcase':
-        setFontStyle('font-sans');
-        setBackgroundStyles(['premium-parallax']);
-        setTextEffect('gsap-cascade');
-        setTransitionType('slide');
-        setTransitionDuration(1.0);
-        break;
-    }
-  };
-
   const generateWorld = async () => {
     if (mediaFiles.length === 0 && !scriptText.trim()) {
       setToastMessage("Please add some media files or write a script first.");
@@ -2687,8 +2564,6 @@ export default function App() {
         }
       }
       
-      // Advanced Combination Logic
-      // Cycle through effects - reset if main generation
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
       const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
@@ -2706,13 +2581,12 @@ export default function App() {
         isTextOnly,
         preset,
         backgroundStyles,
-        undefined, // Dedicated Giphy scenes handled below
+        undefined,
         fontFamily,
         textColor,
         isMultiColor
       );
       
-      // Manually assigned Scene Type persistence
       if (existingComp) {
         comp.sceneType = existingComp.sceneType;
       }
@@ -2720,7 +2594,6 @@ export default function App() {
       newComps.push(comp);
       prev = comp;
 
-      // Dedicated Giphy Scene Insertion
       if (useGiphy && caption && sceneIdx % 3 === 0) {
         try {
           const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
@@ -2730,7 +2603,7 @@ export default function App() {
           if (data && data.length > 0) {
             const stickerUrl = data[0].images.original.url;
             const giphyComp = generateComposition(
-              [], // No media, focus on sticker
+              [],
               sceneIdx + 100, 
               searchTerm.toUpperCase(), 
               'center', 
@@ -2738,7 +2611,7 @@ export default function App() {
               'zoom', 
               transitionDuration, 
               prev,
-              isTextOnly, // isTextOnly logic
+              isTextOnly,
               preset,
               backgroundStyles,
               stickerUrl,
@@ -2758,9 +2631,6 @@ export default function App() {
       await new Promise(r => setTimeout(r, 100));
     }
 
-
-
-    // Add any unmapped media at the end
     const mappedMediaIds = new Set(Object.values(mediaMapping));
     const unmappedMedia = mediaFiles.filter(m => !mappedMediaIds.has(m.id));
     
@@ -2783,8 +2653,6 @@ export default function App() {
       prev = comp;
     }
 
-    // Flag Intro and Outro for state-of-the-art rendering
-
     setCompositions(newComps);
     setCurrentIndex(0);
     
@@ -2793,14 +2661,12 @@ export default function App() {
         const isAdmin = user?.email === 'philipsimmons67@gmail.com';
         if (user && !isAdmin) {
           const userRef = doc(db, 'users', user.uid);
-          // Deduct 1 credit for generation ONLY on success
           await setDoc(userRef, { credits: Math.max(0, credits - 1) }, { merge: true });
           setToastMessage("Trailer generated! 1 credit used.");
         } else if (isAdmin) {
           setToastMessage("Admin access: Trailer generated without credit deduction!");
         }
         
-        // Delay to ensure hydration
         setTimeout(() => {
           setIsRenderingTrailer(false);
           setAppMode('playing');
@@ -2841,7 +2707,7 @@ export default function App() {
       angle,
       caption: media[0]?.caption || '',
       textPosition: 'bottom',
-      sceneType: media.length > 1 ? 'grid' : 'standard',
+      sceneType: 'standard',
       textEffect: effect,
       transitionType: tType,
       transitionDuration: tDur,
@@ -2932,12 +2798,10 @@ export default function App() {
         }
       };
 
-      // Hide cursor, header, and show countdown before recording
       document.body.style.cursor = 'none';
       const header = document.querySelector('header');
       if (header) (header as HTMLElement).style.display = 'none';
       
-      // Countdown overlay
       const countdownEl = document.createElement('div');
       countdownEl.className = 'recording-countdown';
       countdownEl.innerHTML = '<span>3</span>';
@@ -2949,44 +2813,36 @@ export default function App() {
       await new Promise(r => setTimeout(r, 1000));
       countdownEl.remove();
       
-      // 1-second buffer where no countdown is shown before recording starts
       await new Promise(r => setTimeout(r, 1000));
 
-      // Start actual recording and remount scene 0
       setIsRecording(true);
       setRecordingKey(prev => prev + 1);
       setCurrentIndex(0);
       setRecordingProgress(0);
 
-      // Brief delay for React flush
       await new Promise(r => setTimeout(r, 100));
       mediaRecorder.start();
       
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
         
-        // Update index
         setCurrentIndex(i);
         setRecordingProgress((i / compositions.length) * 100);
         
-        // Calculate duration per scene dynamically
         const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
         const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
         const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
 
-        // Wait for current scene duration
         await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
       }
 
       if (sequenceActiveRef.current) {
         setRecordingProgress(100);
-        // Final wait for the last scene to settle
         const finalAnimDuration = (4 / textAnimationSpeed) * 1000;
         await new Promise(r => setTimeout(r, Math.max(2000, finalAnimDuration))); 
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
-        // Deduct export credits
         if (user && !isAdmin) {
           const userRef = doc(db, 'users', user.uid);
           await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
@@ -3001,7 +2857,6 @@ export default function App() {
     }
   };
 
-  // --- RENDER MAIN CONTENT ---
   const renderContent = () => {
     if (appMode === 'landing') {
       return (
@@ -3043,7 +2898,6 @@ export default function App() {
       return (
         <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-16 overflow-y-auto">
           <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
-            {/* Loading Overlays (Excluding Generation) */}
             <AnimatePresence>
               {(isUploading || isSaving) && (
                 <motion.div 
@@ -3061,7 +2915,6 @@ export default function App() {
               )}
             </AnimatePresence>
             
-            {/* Card Header */}
             <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
               <div>
                 <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
@@ -3077,7 +2930,6 @@ export default function App() {
               </div>
             </div>
 
-          {/* Step 1: Media */}
           {setupStep === 1 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
@@ -3138,7 +2990,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Library Modal */}
               <AnimatePresence>
                 {showLibrary && (
                   <motion.div 
@@ -3234,7 +3085,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Step 2: Script */}
           {setupStep === 2 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
@@ -3290,7 +3140,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Step 3: Link Media to Text */}
           {setupStep === 3 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
@@ -3349,7 +3198,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* Step 4: Ready & Styling */}
           {setupStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
               <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-green brutal-border flex items-center justify-center mx-auto mb-4 transform -rotate-6">
@@ -3653,8 +3501,7 @@ export default function App() {
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
                           {[
-                            { id: 'standard', label: 'Classic', icon: <Square size={16} /> },
-                            { id: 'split', label: 'Split', icon: <Columns size={16} /> },
+                            { id: 'standard', label: 'Standard', icon: <Square size={16} /> },
                             { id: 'instagram-follow', label: 'IG Follow', icon: <Instagram size={16} /> },
                             { id: 'x-post', label: 'X Post', icon: <Twitter size={16} /> },
                             { id: 'macos-notification', label: 'Notify', icon: <Bell size={16} /> },
@@ -3671,22 +3518,7 @@ export default function App() {
                                   const newType = type.id as any;
                                   let updatedMedia = [...c.media];
                                   
-                                  // Apply Specific Layout Positioning
-                                  if (newType === 'grid') {
-                                    updatedMedia = updatedMedia.map((m, mi) => ({
-                                      ...m,
-                                      xOffset: (mi % 2 === 0 ? -400 : 400),
-                                      yOffset: (mi < 2 ? -300 : 300),
-                                      scale: 0.8
-                                    }));
-                                  } else if (newType === 'split') {
-                                    updatedMedia = updatedMedia.map((m, mi) => ({
-                                      ...m,
-                                      xOffset: mi === 0 ? -450 : 450,
-                                      yOffset: 0,
-                                      scale: 0.9
-                                    }));
-                                  } else if (['standard'].includes(newType)) {
+                                  if (['standard'].includes(newType)) {
                                     updatedMedia = updatedMedia.map(m => ({
                                       ...m,
                                       xOffset: 0,

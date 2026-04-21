@@ -263,25 +263,34 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
     <motion.div
       initial={{ y: 100, opacity: 0, scale: 0.9 }}
       animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
-      className="bg-[#282828] border border-white/5 rounded-[1.5rem] p-6 md:p-8 w-[92vw] max-w-[620px] shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex flex-col md:flex-row items-center gap-6 md:gap-8 relative overflow-hidden"
+      className="bg-[#121212] border border-white/10 rounded-[1.25rem] p-5 md:p-6 w-[94vw] max-w-[580px] shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-5 md:gap-7 relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Music size={120} className="text-white" />
+      <div className="absolute top-0 right-0 p-3 opacity-5">
+        <Music size={100} className="text-white" />
       </div>
-      <div className="w-40 h-40 bg-gradient-to-br from-gray-700 to-black rounded-xl shadow-2xl flex items-center justify-center border border-white/10 shrink-0">
-        <Music size={60} className="text-white/20" />
+      <div className="w-32 h-32 md:w-36 md:h-36 bg-gradient-to-br from-gray-800 to-black rounded-lg shadow-2xl flex items-center justify-center border border-white/5 shrink-0">
+        <Music size={40} className="text-white/10" />
       </div>
-      <div className="flex flex-col gap-2 relative z-10">
-        <span className="text-[#1DB954] text-xs font-black uppercase tracking-[0.3em]">Now Playing</span>
-        <h3 className="text-white text-3xl font-black tracking-tighter leading-tight">{caption || "Cinematic Masterpiece"}</h3>
-        <p className="text-white/60 text-lg font-bold">KasperMotion & HyperFrames</p>
-        <div className="mt-4 flex items-center gap-1 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={status === 'active' ? { width: '65%' } : { width: 0 }}
-            transition={{ duration: 5, ease: "linear" }}
-            className="h-full bg-[#1DB954]" 
-          />
+      <div className="flex-1 flex flex-col gap-1.5 relative z-10 w-full">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-[#1DB954] rounded-full animate-pulse" />
+          <span className="text-[#1DB954] text-[10px] font-black uppercase tracking-[0.4em]">Now Playing</span>
+        </div>
+        <h3 className="text-white text-2xl md:text-3xl font-black tracking-tighter leading-tight truncate">{caption || "Cinematic Masterpiece"}</h3>
+        <p className="text-white/50 text-base md:text-lg font-bold">KasperMotion & HyperFrames</p>
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={status === 'active' ? { width: '72%' } : { width: 0 }}
+              transition={{ duration: 5, ease: "linear" }}
+              className="h-full bg-[#1DB954]" 
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-mono font-bold text-white/20 uppercase tracking-widest">
+            <span>2:42</span>
+            <span>3:45</span>
+          </div>
         </div>
       </div>
     </motion.div>
