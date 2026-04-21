@@ -17,7 +17,7 @@ import { useGSAP } from '@gsap/react';
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
-import { findBestTransitionItem } from './constants/transitionAssets';
+import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
 
 gsap.registerPlugin(useGSAP);
 
