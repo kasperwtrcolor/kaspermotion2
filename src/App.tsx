@@ -1118,8 +1118,8 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
   const theme = getTheme();
 
   return (
-    <div className={`absolute inset-[-400px] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d' }}>
-      <div style={{ transform: 'translateZ(-4000px)' }} className="absolute inset-0">
+    <div className={`absolute inset-[-500%] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
+      <div style={{ transform: 'translateZ(-300px)' }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
             width: Math.random() * 400 + 200, 
@@ -1129,7 +1129,7 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
           }} />
         ))}
       </div>
-      <div style={{ transform: 'translateZ(-2000px)' }} className="absolute inset-0">
+      <div style={{ transform: 'translateZ(-200px)' }} className="absolute inset-0">
         {[...Array(10)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer2} ${theme.shapes}`} style={{ 
             width: Math.random() * 300 + 150, 
@@ -1139,7 +1139,7 @@ const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
           }} />
         ))}
       </div>
-      <div style={{ transform: 'translateZ(-1000px)' }} className="absolute inset-0">
+      <div style={{ transform: 'translateZ(-100px)' }} className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
           <div key={i} className={`absolute ${theme.layer3} ${theme.shapes}`} style={{ 
             width: Math.random() * 10, 
@@ -1158,11 +1158,10 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
 
   return (
     <motion.div 
-      className="absolute inset-[-10000px] pointer-events-none"
-      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-10000px)', zIndex: -10 }}
+      className="absolute inset-[-500%] pointer-events-none"
+      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px)', zIndex: -10, willChange: 'transform' }}
       animate={{ 
-        opacity: status === 'active' ? 1 : 0.8,
-        filter: status === 'active' ? 'blur(0px)' : 'blur(5px)'
+        opacity: status === 'active' ? 1 : 0.8
       }}
       transition={{ duration: 0.5 }}
     >
