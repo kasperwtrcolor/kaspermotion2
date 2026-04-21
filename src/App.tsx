@@ -3585,16 +3585,21 @@ export default function App() {
                               { id: 'world-football', label: 'Football', icon: <Dribbble size={16} /> }
                             ].map(style => (
                               <button
+                                type="button"
                                 key={style.id}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setCompositions(prev => prev.map((c, i) => {
                                     if (i !== idx) return c;
                                     return { ...c, activeBackground: style.id as any };
                                   }));
                                 }}
-                                className={`p-1.5 brutal-border ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white'}`}
+                                className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white hover:bg-gray-50'}`}
+                                title={style.label}
                               >
-                                {style.icon}
+                                <div className="pointer-events-none">
+                                  {style.icon}
+                                </div>
                               </button>
                             ))}
                           </div>
@@ -3610,8 +3615,10 @@ export default function App() {
                             { id: 'reddit-post', label: 'Reddit', icon: <Hash size={16} /> }
                           ].map(type => (
                             <button
+                              type="button"
                               key={type.id}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setCompositions(prev => prev.map((c, i) => {
                                   if (i !== idx) return c;
                                   
@@ -3634,10 +3641,12 @@ export default function App() {
                                   };
                                 }));
                               }}
-                              className={`p-2 brutal-border transition-all flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
+                              className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
                             >
-                              {type.icon}
-                              <span className="text-[7px] font-mono font-bold uppercase">{type.label}</span>
+                              <div className="pointer-events-none flex flex-col items-center gap-1">
+                                {type.icon}
+                                <span className="text-[7px] font-mono font-bold uppercase">{type.label}</span>
+                              </div>
                             </button>
                           ))}
                         </div>
