@@ -26,7 +26,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'pastel-aurora' | 'pastel-solar' | 'pastel-galactic' | 'pastel-oceanic' | 'pastel-rose';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
@@ -72,8 +72,8 @@ type Composition = {
   rotZ: number;
   angle: number;
   caption: string;
-  textPosition: Exclude<TextPosition, 'random'>;
-  sceneType: 'standard' | 'text-morph' | 'grid' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'testimonial' | 'comparison-slider';
+  textPosition: TextPosition;
+  sceneType: 'standard' | 'split' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -114,17 +114,14 @@ const generateComposition = (
   textColor?: string,
   isMultiColor?: boolean
 ): Composition => {
-  // Determine scene type
   let sceneType: Composition['sceneType'] = 'standard';
   const rand = Math.random();
   
   if (items.length > 1) {
-    sceneType = rand > 0.5 ? 'grid' : 'split';
-  } else if (caption && rand > 0.85) { // 15% chance for social block if caption exists
-    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart'];
+    sceneType = 'split';
+  } else if (caption && rand > 0.85) {
+    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'];
     sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
-  } else if (caption && rand > 0.4) {
-    sceneType = 'text-morph';
   }
   
   const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
@@ -134,37 +131,21 @@ const generateComposition = (
   const y = prevComp ? prevComp.y + Math.sin(angle) * distance : 0;
   const z = 0;
 
-  const positions: Exclude<TextPosition, 'random'>[] = items.length > 0 
-    ? ['left', 'right'] 
-    : ['bottom', 'top', 'center', 'left', 'right'];
-    
-  const textPosition = preferredPosition === 'random' 
-    ? positions[Math.floor(Math.random() * positions.length)]
-    : (items.length > 0 && (preferredPosition === 'center' || preferredPosition === 'top' || preferredPosition === 'bottom'))
-      ? (Math.random() > 0.5 ? 'left' : 'right')
-      : preferredPosition as Exclude<TextPosition, 'random'>;
+  const textPosition = preferredPosition;
 
-  // Process media items with offsets for multi-image scenes
   const processedMedia = items.map((item, i) => {
     let xOffset = 0;
     let yOffset = 0;
     let scale = 1;
 
-    if (sceneType === 'grid') {
-      xOffset = (i % 2 === 0 ? -400 : 400);
-      yOffset = (i < 2 ? -300 : 300);
-      scale = 0.8;
-    } else if (sceneType === 'split') {
+    if (sceneType === 'split') {
       xOffset = i === 0 ? -450 : 450;
       scale = 0.9;
     }
 
-    // Randomly assign a shape if none exists
-    // Randomly assign a unique shape for more variety
     const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
     let m3Shape = item.m3Shape || randomShape;
     
-    // Improved letter selection logic (use caption start letter)
     if (m3Shape === 'letter') {
       const firstChar = (caption || 'K').trim().charAt(0).toUpperCase();
       m3Shape = `letter-${firstChar.match(/[A-Z]/) ? firstChar : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
@@ -214,7 +195,6 @@ const generateComposition = (
 const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
   const base = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-cover shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-700";
   
-  // Resolve dynamic letter from caption if it's a letter shape
   let resolvedShape = shape;
   if (shape === 'letter') {
     const firstLetter = caption.trim().charAt(0).toUpperCase();
@@ -257,15 +237,14 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
     'rounded-rect': 'inset(0% round 15%)',
   };
 
-  // Special handling for Leaf and more organic M3 shapes
   if (resolvedShape === 'leaf') {
     return { className: base, style: { borderRadius: '50% 0 50% 0' } };
   }
   if (resolvedShape === 'square') {
-    return { className: base, style: { borderRadius: '0.5rem' } }; // Sleek square
+    return { className: base, style: { borderRadius: '0.5rem' } };
   }
   if (resolvedShape === 'rounded-large' || resolvedShape === 'rounded-rect') {
-    return { className: base, style: { borderRadius: '2.5rem' } }; // Premium rounded corners
+    return { className: base, style: { borderRadius: '2.5rem' } };
   }
 
   return {
@@ -1027,150 +1006,51 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-square': return <GSAPSquareText {...props} />;
     case 'gsap-heart': return <GSAPHeartText {...props} />;
     case 'gsap-stack': return <GSAPStackText {...props} />;
-    case 'gsap-glow': return <GSAPGlowText {...props} />;
     case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
     default: return <SplitText {...props} />;
   }
 };
 
-const RadioWavesBackground = () => {
+const FilmGrainOverlay = () => {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
-      <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-        {[...Array(8)].map((_, i) => (
-          <motion.circle
-            key={i}
-            cx="500"
-            cy="500"
-            r="0"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            initial={{ r: 0, opacity: 0.8 }}
-            animate={{ 
-              r: 800, 
-              opacity: 0,
-              strokeWidth: [2, 0.5]
-            }}
-            transition={{ 
-              duration: 6, 
-              repeat: Infinity, 
-              delay: i * 0.75,
-              ease: "easeOut" 
-            }}
-          />
-        ))}
+    <div className="absolute inset-0 pointer-events-none z-[100] opacity-[0.035] mix-blend-overlay overflow-hidden">
+      <svg className="w-full h-full">
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain)" />
       </svg>
-    </div>
-  );
-};
-
-
-const PastelParallaxBackground = ({ type }: { type: BackgroundStyle }) => {
-
-  const getTheme = () => {
-    switch (type) {
-      case 'pastel-aurora':
-        return {
-          base: 'bg-gradient-to-tr from-[#D1FAE5] via-[#A5B4FC] to-[#FCE7F3]',
-          layer1: 'bg-emerald-100/20',
-          layer2: 'bg-indigo-100/30',
-          layer3: 'bg-pink-100/40',
-          shapes: 'rounded-full scale-[1.5] blur-3xl'
-        };
-      case 'pastel-solar':
-        return {
-          base: 'bg-gradient-to-b from-[#FEF3C7] via-[#FFD6A5] to-[#FF9AA2]',
-          layer1: 'bg-yellow-100/20',
-          layer2: 'bg-orange-200/30',
-          layer3: 'bg-red-200/40',
-          shapes: 'rounded-full scale-[2] blur-3xl'
-        };
-      case 'pastel-galactic':
-        return {
-          base: 'bg-gradient-to-tr from-[#C7CEEA] via-[#B5EAD7] to-[#E2F0CB]',
-          layer1: 'bg-purple-100/20',
-          layer2: 'bg-teal-100/30',
-          layer3: 'bg-green-100/40',
-          shapes: 'rounded-[100px] scale-[1.2] blur-3xl'
-        };
-      case 'pastel-oceanic':
-        return {
-          base: 'bg-gradient-to-br from-[#A2D2FF] via-[#BDE0FE] to-[#FFAFCC]',
-          layer1: 'bg-blue-100/20',
-          layer2: 'bg-sky-200/30',
-          layer3: 'bg-pink-100/40',
-          shapes: 'rounded-full scale-[1.8] blur-3xl'
-        };
-      case 'pastel-rose':
-        return {
-          base: 'bg-gradient-to-b from-[#FAD0C4] to-[#FFD1DC]',
-          layer1: 'bg-rose-50/20',
-          layer2: 'bg-rose-100/30',
-          layer3: 'bg-rose-200/40',
-          shapes: 'rounded-full scale-[2.2] blur-3xl'
-        };
-      default:
-        return { base: 'bg-white', layer1: 'bg-gray-100', layer2: 'bg-gray-200', layer3: 'bg-gray-300', shapes: 'rounded-full' };
-    }
-  };
-
-  const theme = getTheme();
-
-  return (
-    <div className={`absolute inset-[-1000%] pointer-events-none z-[-1] ${theme.base}`} style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}>
-      <div style={{ transform: 'translateZ(-300px)' }} className="absolute inset-0">
-        {[...Array(15)].map((_, i) => (
-          <div key={i} className={`absolute ${theme.layer1} ${theme.shapes}`} style={{ 
-            width: Math.random() * 400 + 200, 
-            height: Math.random() * 400 + 200, 
-            left: `${Math.random() * 100}%`, 
-            top: `${Math.random() * 100}%` 
-          }} />
-        ))}
-      </div>
-      <div style={{ transform: 'translateZ(-200px)' }} className="absolute inset-0">
-        {[...Array(10)].map((_, i) => (
-          <div key={i} className={`absolute ${theme.layer2} ${theme.shapes}`} style={{ 
-            width: Math.random() * 300 + 150, 
-            height: Math.random() * 300 + 150, 
-            left: `${Math.random() * 100}%`, 
-            top: `${Math.random() * 100}%` 
-          }} />
-        ))}
-      </div>
-      <div style={{ transform: 'translateZ(-100px)' }} className="absolute inset-0">
-        {[...Array(15)].map((_, i) => (
-          <div key={i} className={`absolute ${theme.layer3} ${theme.shapes}`} style={{ 
-            width: Math.random() * 10, 
-            height: Math.random() * 10, 
-            left: `${Math.random() * 100}%`, 
-            top: `${Math.random() * 100}%` 
-          }} />
-        ))}
-      </div>
+      <motion.div 
+        animate={{ x: [0, -100, 100, -50, 0], y: [0, 50, -50, 100, 0] }}
+        transition={{ duration: 0.2, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-[-100%] bg-white/5 opacity-20"
+      />
     </div>
   );
 };
 
 const SceneBackground = ({ style, status, worldX, worldY }: { style?: BackgroundStyle, status: string, worldX?: any, worldY?: any }) => {
-  if (!style || style === 'black') return null;
+  if (!style || style === 'black') return (
+    <>
+      <FilmGrainOverlay />
+    </>
+  );
 
   return (
-    <motion.div 
-      className="absolute inset-[-1000%] pointer-events-none"
-      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
-      animate={{ 
-        opacity: status === 'active' ? 1 : 0.8
-      }}
-      transition={{ duration: 0.5 }}
-    >
-      {style === 'particles' && <ParticleTrails />}
-      {style === 'textured-paper' && <TexturePaperBackground />}
-      {['pastel-aurora', 'pastel-solar', 'pastel-galactic', 'pastel-oceanic', 'pastel-rose'].includes(style) && (
-        <PastelParallaxBackground type={style} />
-      )}
-    </motion.div>
+    <>
+      <FilmGrainOverlay />
+      <motion.div 
+        className="absolute inset-[-1000%] pointer-events-none"
+        style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
+        animate={{ 
+          opacity: status === 'active' ? 1 : 0.8
+        }}
+        transition={{ duration: 0.5 }}
+      >
+        {style === 'particles' && <ParticleTrails />}
+      </motion.div>
+    </>
   );
 };
 
@@ -1186,55 +1066,15 @@ const PremiumParallaxBackground = ({ worldX, worldY }: { worldX: any, worldY: an
 
   return (
     <div className="absolute inset-[-500px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
-      {/* Deep Background - Distant stars/nodes */}
       <motion.div style={{ x: layer1X, y: layer1Y, z: -1000 }} className="absolute inset-0 bg-[radial-gradient(circle,white_1px,transparent_1px)] bg-[length:50px_50px]" />
-      
-      {/* Mid Background - Removed distracting center squares */}
       <motion.div style={{ x: layer2X, y: layer2Y, z: -500 }} className="absolute inset-0 flex items-center justify-center">
       </motion.div>
-
-      {/* Front Elements - Technical lines */}
       <motion.div style={{ x: layer3X, y: layer3Y, z: -200 }} className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[length:200px_100%] opacity-30" />
-      
-      {/* Dynamic Forefront - Parallax particles */}
       <motion.div style={{ x: layer4X, y: layer4Y, z: -100 }} className="absolute inset-0">
          {[...Array(20)].map((_, i) => (
           <div key={i} className="absolute w-2 h-2 bg-brutal-green rounded-full shadow-[0_0_10px_#88ff00]" style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }} />
         ))}
       </motion.div>
-    </div>
-  );
-};
-
-const TexturePaperBackground = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#f4f1ea]">
-      <svg className="hidden">
-        <filter id="paper-grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-          <feComponentTransfer>
-            <feFuncA type="linear" slope="0.1" />
-          </feComponentTransfer>
-        </filter>
-      </svg>
-      <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{ filter: 'url(#paper-grain)' }} />
-      <div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/10" />
-      {/* Artistic "Coffee Stains" / Organic shapes */}
-      {[...Array(3)].map((_, i) => (
-        <motion.div
-           key={i}
-           className="absolute bg-black/5 rounded-full blur-3xl"
-           style={{ 
-              width: 800 + i * 200, 
-              height: 600 + i * 150, 
-              left: `${Math.random() * 50}%`, 
-              top: `${Math.random() * 50}%` 
-           }}
-           animate={{ rotate: [0, 360], scale: [1, 1.1, 1] }}
-           transition={{ duration: 40 + i * 10, repeat: Infinity, ease: "linear" }}
-        />
-      ))}
     </div>
   );
 };
@@ -1250,8 +1090,6 @@ const MediaThumbnail = ({ item }: { item: MediaItem }) => {
     <img src={url} className="w-full h-full object-cover opacity-70" alt="thumbnail" />
   );
 };
-
-
 
 const ParticleTrails = () => {
   return (
@@ -1528,25 +1366,21 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
 
 const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { children: React.ReactNode, status: string, variant?: number, isLandscape?: boolean }) => {
   const animations = [
-    // Variant 0: Standard Perspective Tilt
     { 
       rotateY: [-20, 20, -20], 
       rotateX: [10, -5, 10], 
       scale: [0.8, 1.1, 0.8] 
     },
-    // Variant 1: Spin & Reveal
     {
       rotateY: [0, 360],
       scale: [0.7, 1.2, 0.7],
       rotateZ: [0, 5, -5, 0]
     },
-    // Variant 2: Zoom Dive
     {
       z: [0, 400, 0],
       rotateY: [-10, 10, -10],
       scale: [0.8, 1.5, 0.8]
     },
-    // Variant 3: Kinetic Shake
     {
       x: [0, 20, -20, 0],
       rotateY: [-15, 15],
@@ -1562,7 +1396,6 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
       className="relative bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
       style={{ transformStyle: 'preserve-3d', width: 320, height: 650 }}
     >
-      {/* Dynamic Island */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black z-20 flex items-center justify-between px-2 brutal-border">
         <div className="w-2 h-2 bg-white brutal-border"></div>
         <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
@@ -1661,8 +1494,7 @@ const CompositionNode = ({
   worldY: any;
 }) => {
   const accentColor = globalTextColor || '#A855F7';
-  const isMorph = comp.sceneType === 'text-morph';
-  const isMulti = comp.sceneType === 'grid' || comp.sceneType === 'split';
+  const isMulti = comp.sceneType === 'split';
   const duration = comp.transitionDuration;
   const [hasError, setHasError] = useState(false);
 
@@ -1729,19 +1561,11 @@ const CompositionNode = ({
   // 3D Spin, Dissolve, and Morphing Effects
   const mediaVariants = {
     future: transitionVariants.future,
-    active: isMorph ? {
-      opacity: [0, 1, 1],
-      scale: [0.9, 1, 1],
-      rotateY: 0, 
-      rotateX: 0,
-      z: 0,
-      filter: ['blur(20px)', 'blur(10px)', 'blur(0px)'],
-      transition: { times: [0, 0.3, 1], duration: 4, ease: 'easeOut' }
-    } : { 
+    active: { 
       ...transitionVariants.active,
       rotateY: [15, -5], 
       rotateX: [10, 5],
-      z: [0, 200], // Zoom in effect
+      z: [0, 200],
       transition: { 
         z: { duration: 8, ease: "easeOut" },
         filter: { duration: 0.4 },
@@ -1755,18 +1579,6 @@ const CompositionNode = ({
       z: 400,
       transition: { duration: 1.5, ease: "easeInOut" }
     }
-  };
-
-  const textMorphVariants = {
-    future: { opacity: 0, scale: 0.5, z: 200 },
-    active: {
-      opacity: [0, 1, 1, 0],
-      scale: [0.5, 1, 1.1, 5],
-      z: [200, 200, 200, 800],
-      filter: ['blur(20px)', 'blur(0px)', 'blur(0px)', 'blur(40px)'],
-      transition: { times: [0, 0.15, 0.6, 1], duration: 4, ease: 'easeInOut' }
-    },
-    past: { opacity: 0 }
   };
 
   const mediaClass = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-contain brutal-border bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transform rotate-2";
@@ -1809,7 +1621,7 @@ const CompositionNode = ({
 
         {/* ASSET LAYER - Hidden if Social Layout is active to prevent overlap */}
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && comp.media.map((m, i) => {
+        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
           const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
           
           const mediaElement = m.url && (
@@ -1878,55 +1690,20 @@ const CompositionNode = ({
 
 
         {/* Premium Social & Feature Overlays Layer */}
-        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
+        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && (
           <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
-            {comp.sceneType === 'testimonial' ? (
-              <TestimonialBlock
-                status={status}
-                caption={comp.caption}
-                accentColor={accentColor}
-              />
-            ) : comp.sceneType === 'comparison-slider' ? (
-              <ComparisonSliderBlock
-                status={status}
-                assets={comp.media.map(m => m.url)}
-                accentColor={accentColor}
-              />
-            ) : (
-              <PremiumSocialOverlays
-                type={comp.sceneType}
-                status={status}
-                caption={comp.caption}
-                accentColor={accentColor}
-                handle={socialHandle}
-                name={websiteSiteName || "KasperMotion"}
-              />
-            )}
+            <PremiumSocialOverlays
+              type={comp.sceneType}
+              status={status}
+              caption={comp.caption}
+              accentColor={accentColor}
+              handle={socialHandle}
+              name={websiteSiteName || "KasperMotion"}
+            />
           </div>
         )}
 
-        {/* CAPTIONS RENDERED LAST TO STAY ON TOP */}
-        {isMorph && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
-          <motion.div
-            className="absolute z-[300] w-[80vw] text-center pointer-events-none"
-            variants={textMorphVariants}
-            initial="future"
-            animate="active"
-            style={{ 
-              z: 1000 // Significantly in front of the media
-            }}
-          >
-            <AnimatedCaption 
-              text={comp.caption} 
-              effect={comp.textEffect} 
-              className={`${fontSizeOverride || "text-5xl md:text-7xl"} font-bold tracking-tight ${comp.fontFamily || globalFontFamily}`} 
-              textColor={comp.textColor || globalTextColor}
-              isMulti={false}
-            />
-          </motion.div>
-        )}
-
-        {!isMorph && comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'testimonial', 'comparison-slider'].includes(comp.sceneType) && (
+        {comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && (
           <motion.div
             initial={{ opacity: 0, y: 20, filter: 'blur(10px)', z: 1000 }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)', z: 1000 }}
@@ -3326,7 +3103,7 @@ export default function App() {
                     onChange={(e) => setWebsiteSiteName(e.target.value)}
                   />
                   <div className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase">
-                    This name will appear on X cards, testimonials, and other branded layouts.
+                    This name will appear on social cards and other branded layouts.
                   </div>
                 </div>
               </div>
@@ -3855,16 +3632,14 @@ export default function App() {
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
                           {[
-                            { id: 'standard', icon: <ImageIcon size={14} />, label: 'Standard' },
-                            { id: 'text-morph', icon: <Sparkles size={14} />, label: 'Morph' },
-                            { id: 'grid', icon: <Grid size={14} />, label: 'Grid' },
-                            { id: 'split', icon: <Columns size={14} />, label: 'Split' },
-                            { id: 'instagram-follow', icon: <Instagram size={14} />, label: 'Insta' },
-                            { id: 'x-post', icon: <Twitter size={14} />, label: 'X' },
-                            { id: 'macos-notification', icon: <Bell size={14} />, label: 'Notif' },
-                            { id: 'data-chart', icon: <TrendingUp size={14} />, label: 'Chart' },
-                            { id: 'testimonial', icon: <Quote size={14} />, label: 'Quote' },
-                            { id: 'comparison-slider', icon: <Columns size={14} />, label: 'Compare' }
+                            { id: 'standard', label: 'Classic', icon: <Square size={16} /> },
+                            { id: 'split', label: 'Split', icon: <Columns size={16} /> },
+                            { id: 'instagram-follow', label: 'IG Follow', icon: <Instagram size={16} /> },
+                            { id: 'x-post', label: 'X Post', icon: <Twitter size={16} /> },
+                            { id: 'macos-notification', label: 'Notify', icon: <Bell size={16} /> },
+                            { id: 'data-chart', label: 'Chart', icon: <TrendingUp size={16} /> },
+                            { id: 'spotify-card', label: 'Spotify', icon: <Music size={16} /> },
+                            { id: 'reddit-post', label: 'Reddit', icon: <Hash size={16} /> }
                           ].map(type => (
                             <button
                               key={type.id}
@@ -3890,7 +3665,7 @@ export default function App() {
                                       yOffset: 0,
                                       scale: 0.9
                                     }));
-                                  } else if (['standard', 'testimonial', 'comparison-slider'].includes(newType)) {
+                                  } else if (['standard'].includes(newType)) {
                                     updatedMedia = updatedMedia.map(m => ({
                                       ...m,
                                       xOffset: 0,

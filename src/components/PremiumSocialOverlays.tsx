@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2 } from 'lucide-react';
+import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface BlockProps {
   status: 'past' | 'active' | 'future';
@@ -257,12 +257,78 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
   );
 };
 
+
+export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }: BlockProps) => {
+  return (
+    <motion.div
+      initial={{ y: 100, opacity: 0, scale: 0.9 }}
+      animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
+      className="bg-[#282828] border border-white/5 rounded-[1.5rem] p-8 w-[600px] shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex items-center gap-8 relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 p-4 opacity-10">
+        <Music size={120} className="text-white" />
+      </div>
+      <div className="w-40 h-40 bg-gradient-to-br from-gray-700 to-black rounded-xl shadow-2xl flex items-center justify-center border border-white/10 shrink-0">
+        <Music size={60} className="text-white/20" />
+      </div>
+      <div className="flex flex-col gap-2 relative z-10">
+        <span className="text-[#1DB954] text-xs font-black uppercase tracking-[0.3em]">Now Playing</span>
+        <h3 className="text-white text-3xl font-black tracking-tighter leading-tight">{caption || "Cinematic Masterpiece"}</h3>
+        <p className="text-white/60 text-lg font-bold">KasperMotion & HyperFrames</p>
+        <div className="mt-4 flex items-center gap-1 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={status === 'active' ? { width: '65%' } : { width: 0 }}
+            transition={{ duration: 5, ease: "linear" }}
+            className="h-full bg-[#1DB954]" 
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export const RedditPostOverlay = ({ status, caption, handle = "r/cinematic" }: BlockProps) => {
+  return (
+    <motion.div
+      initial={{ x: 100, opacity: 0 }}
+      animate={status === 'active' ? { x: 0, opacity: 1 } : { x: 100, opacity: 0 }}
+      className="bg-[#1A1A1B] border border-[#343536] rounded-xl p-6 w-[550px] shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex gap-4"
+    >
+      <div className="flex flex-col items-center gap-2 bg-[#151516] p-2 rounded-lg h-fit">
+        <ArrowUp size={20} className="text-[#FF4500]" />
+        <span className="text-white font-black text-xs">4.2k</span>
+        <ArrowDown size={20} className="text-white/20" />
+      </div>
+      <div className="flex-1 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-[#FF4500] flex items-center justify-center">
+            <Hash size={12} className="text-white" />
+          </div>
+          <span className="text-white font-bold text-sm tracking-tight">{handle}</span>
+          <span className="text-white/30 text-xs">• Posted by u/director</span>
+        </div>
+        <p className="text-white text-xl font-bold leading-snug">
+          {caption || "Is this the new gold standard for AI-driven cinematic engines?"}
+        </p>
+        <div className="flex items-center gap-6 text-white/40 text-[10px] font-black uppercase tracking-widest">
+          <span>42 Comments</span>
+          <span>Share</span>
+          <span>Save</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function PremiumSocialOverlays({ type, ...props }: any) {
   switch (type) {
     case 'instagram-follow': return <InstagramFollowOverlay {...props} />;
     case 'x-post': return <XPostOverlay {...props} />;
     case 'macos-notification': return <MacosNotificationOverlay {...props} />;
     case 'data-chart': return <DataChartOverlay {...props} />;
+    case 'spotify-card': return <SpotifyCardOverlay {...props} />;
+    case 'reddit-post': return <RedditPostOverlay {...props} />;
     default: return null;
   }
 }
