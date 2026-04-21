@@ -263,7 +263,7 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
     <motion.div
       initial={{ y: 100, opacity: 0, scale: 0.9 }}
       animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
-      className="bg-[#282828] border border-white/5 rounded-[1.5rem] p-8 w-[600px] shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex items-center gap-8 relative overflow-hidden"
+      className="bg-[#282828] border border-white/5 rounded-[1.5rem] p-6 md:p-8 w-[92vw] max-w-[620px] shadow-[0_40px_100px_rgba(0,0,0,0.8)] flex flex-col md:flex-row items-center gap-6 md:gap-8 relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 p-4 opacity-10">
         <Music size={120} className="text-white" />

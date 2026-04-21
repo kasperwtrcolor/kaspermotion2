@@ -27,7 +27,7 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | 'random' 
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' 
   | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' 
   | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' 
   | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
@@ -1365,35 +1365,51 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
 const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { children: React.ReactNode, status: string, variant?: number, isLandscape?: boolean }) => {
   const animations = [
     { 
-      rotateY: [-20, 20, -20], 
-      rotateX: [10, -5, 10], 
-      scale: [0.8, 1.1, 0.8] 
+      rotateY: [-30, 30, -30], 
+      rotateX: [15, -10, 15], 
+      z: [0, 150, 0],
+      transition: { duration: 15, repeat: Infinity, ease: "easeInOut" }
     },
     {
       rotateY: [0, 360],
-      scale: [0.7, 1.2, 0.7],
-      rotateZ: [0, 5, -5, 0]
+      scale: [0.8, 1.1, 0.8],
+      transition: { duration: 20, repeat: Infinity, ease: "linear" }
     },
     {
-      z: [0, 400, 0],
-      rotateY: [-10, 10, -10],
-      scale: [0.8, 1.5, 0.8]
+      z: [0, 300, 0],
+      rotateY: [-20, 20, -20],
+      rotateX: [-10, 10, -10],
+      transition: { duration: 12, repeat: Infinity, ease: "easeInOut" }
     },
     {
-      x: [0, 20, -20, 0],
-      rotateY: [-15, 15],
-      scale: [0.9, 1.1]
+      x: [0, 40, -40, 0],
+      rotateY: [-25, 25],
+      transition: { duration: 8, repeat: Infinity, ease: "easeInOut" }
     }
   ];
 
+  const currentAnim = animations[variant % animations.length];
+
   return (
-    <motion.div
-      initial={{ rotateY: -20, rotateX: 10, scale: 0.8 }}
-      animate={status === 'active' ? animations[variant % animations.length] : { rotateY: -20, rotateX: 10, scale: 0.8 }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      className="relative bg-white brutal-border shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
-      style={{ transformStyle: 'preserve-3d', width: 320, height: 650 }}
-    >
+    <div className="perspective-container" style={{ perspective: '2000px', transformStyle: 'preserve-3d' }}>
+      <motion.div
+        initial={{ rotateY: 90, opacity: 0, scale: 0.5, z: -500 }}
+        animate={status === 'active' ? { 
+          rotateY: currentAnim.rotateY,
+          rotateX: currentAnim.rotateX,
+          scale: 1, 
+          opacity: 1, 
+          z: 0 
+        } : { rotateY: 90, opacity: 0, scale: 0.5, z: -500 }}
+        transition={status === 'active' ? {
+          rotateY: { type: 'spring', damping: 20, stiffness: 40 },
+          scale: { duration: 1, ease: 'easeOut' },
+          opacity: { duration: 0.8 },
+          default: currentAnim.transition
+        } : { duration: 0.5 }}
+        className="relative bg-white brutal-border shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] overflow-hidden"
+        style={{ transformStyle: 'preserve-3d', width: 320, height: 650 }}
+      >
       <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black z-20 flex items-center justify-between px-2 brutal-border">
         <div className="w-2 h-2 bg-white brutal-border"></div>
         <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
@@ -1410,6 +1426,7 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
         )}
       </div>
     </motion.div>
+    </div>
   );
 };
 
@@ -1541,6 +1558,12 @@ const CompositionNode = ({
           future: { scale: 1.2, opacity: 0, transition: baseTransition },
           active: { scale: 1, opacity: 1, transition: baseTransition },
           past: { scale: 0.8, opacity: 0, transition: baseTransition }
+        };
+      case '3d-flip':
+        return {
+          future: { rotateY: 90, scale: 0.8, opacity: 0, x: 500, transition: baseTransition },
+          active: { rotateY: 0, scale: 1, opacity: 1, x: 0, transition: baseTransition },
+          past: { rotateY: -90, scale: 0.8, opacity: 0, x: -500, transition: baseTransition }
         };
       case 'fade':
       default:
@@ -2668,7 +2691,7 @@ export default function App() {
       // Cycle through effects - reset if main generation
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
-      const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
+      const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
 
       const comp = generateComposition(
@@ -3391,7 +3414,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper', 'pastel-aurora', 'pastel-solar', 'pastel-galactic', 'pastel-oceanic', 'pastel-rose'] as BackgroundStyle[]).map(bg => (
+                    {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
                         onClick={() => {
@@ -3492,7 +3515,7 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
                   <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
+                    {(['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
                       <button
                         key={type}
                         onClick={() => setTransitionType(type)}
@@ -3773,9 +3796,6 @@ export default function App() {
             case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
             case 'grid': return 'bg-isometric-grid bg-white';
             case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
-            case 'pastel-dream':
-            case 'lavender-mist':
-            case 'mint-echo':
             case 'sunset-haze':
             case 'morning-dew':
               // These define their own base colors in-component, so we return empty to avoid overlap
