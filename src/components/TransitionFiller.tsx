@@ -9,15 +9,15 @@ interface TransitionFillerProps {
 }
 
 const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress, accentColor = '#ff3e88', isActive }) => {
-  // Only visible between 0.1 and 0.9 of the transition
-  const opacity = useTransform(progress, [0, 0.2, 0.4, 0.8, 1], [0, 0, 1, 1, 0]);
+  // Visibility curve: fade in early, stay bright, fade out at end
+  const opacity = useTransform(progress, [0, 0.1, 0.3, 0.7, 1], [0, 0, 1, 1, 0]);
   
-  // High-energy trajectory
-  const x = useTransform(progress, [0.2, 0.9], [-600, 1600]);
-  const y = useTransform(progress, [0.2, 0.9], [800, -400]);
-  const z = useTransform(progress, [0.2, 0.9], [-500, 100]);
-  const rotate = useTransform(progress, [0.2, 0.9], [0, 720]);
-  const scale = useTransform(progress, [0.2, 0.4, 0.8, 0.9], [0.5, 1.2, 1, 0.8]);
+  // Cinematic Trajectory: Fly from bottom-left depth to top-right
+  const x = useTransform(progress, [0, 1], [-1200, 1200]);
+  const y = useTransform(progress, [0, 1], [600, -600]);
+  const z = useTransform(progress, [0, 1], [-1500, 500]);
+  const rotate = useTransform(progress, [0, 1], [0, 1080]);
+  const scale = useTransform(progress, [0, 0.5, 1], [0.4, 1.2, 0.8]);
 
   // Fixed set of trails
   const particles = useMemo(() => {

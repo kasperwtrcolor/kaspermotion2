@@ -25,7 +25,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper';
+type BackgroundStyle = 'black';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' 
@@ -3669,34 +3669,6 @@ export default function App() {
                              ))}
                           </div>
 
-                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
-                            {/* Background Styles */}
-                            {[
-                              { id: 'black', label: 'Black', icon: <Square size={16} /> },
-                              { id: 'vibrant-glow', label: 'Vibrant', icon: <Sparkles size={16} /> },
-                              { id: 'particles', label: 'Stars', icon: <Star size={16} /> },
-                              { id: 'premium-parallax', label: 'Grid', icon: <Grid size={16} /> },
-                              { id: 'textured-paper', label: 'Paper', icon: <FileText size={16} /> }
-                            ].map(style => (
-                              <button
-                                type="button"
-                                key={style.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCompositions(prev => prev.map((c, i) => {
-                                    if (i !== idx) return c;
-                                    return { ...c, activeBackground: style.id as any };
-                                  }));
-                                }}
-                                className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 ${comp.activeBackground === style.id ? 'bg-brutal-yellow' : 'bg-white hover:bg-gray-100'}`}
-                                title={style.label}
-                              >
-                                <div className="pointer-events-none">
-                                  {style.icon}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
                           {[
