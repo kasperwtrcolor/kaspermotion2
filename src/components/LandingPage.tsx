@@ -1,6 +1,7 @@
+import React from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard, MousePointer2, ChevronRight, X } from 'lucide-react';
 import { PricingPlans } from './PricingModal';
-import { AnimatePresence } from 'motion/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
