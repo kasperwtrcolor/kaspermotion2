@@ -239,7 +239,7 @@ export default function AppHeader({
               className="absolute left-0 right-0 bottom-0 bg-white overflow-hidden pointer-events-none"
             >
               <motion.div 
-                className="h-full bg-brutal-green"
+                className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${renderProgress}%` }}
                 transition={{ duration: 0.3 }}

@@ -13,7 +13,7 @@ export const pricingTiers = [
     color: 'from-blue-500/10 to-indigo-500/10', 
     accent: 'text-blue-400',
     description: 'Perfect for exploring cinematic styles.',
-    features: ['50 Generator Credits', 'HD Quality Export', 'All Text Effects', 'Community Support']
+    features: ['50 Generator Credits', 'HD Quality Export', 'Standard AI Queue', 'All Text Effects']
   },
   { 
     id: 'Standard', 
@@ -23,7 +23,7 @@ export const pricingTiers = [
     accent: 'text-indigo-400',
     popular: true, 
     description: 'Most popular for serious vibe coders.',
-    features: ['150 Generator Credits', '4K Quality Export', 'Priority AI Queue', 'Discord Access', 'Custom Branding']
+    features: ['150 Generator Credits', '4K Quality Export', 'Priority AI Queue', 'Cinematic Presets']
   },
   { 
     id: 'Pro', 
@@ -32,7 +32,7 @@ export const pricingTiers = [
     color: 'from-purple-500/20 to-pink-500/20', 
     accent: 'text-purple-400',
     description: 'Elite tier for full production trailers.',
-    features: ['500 Generator Credits', 'Unlimited 4K Exports', 'Early Feature Access', '1-on-1 Support', 'Commercial License']
+    features: ['500 Generator Credits', 'Unlimited 4K Exports', 'Instant AI Generation', 'Commercial License']
   }
 ];
 

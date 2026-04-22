@@ -3466,7 +3466,7 @@ export default function App() {
                                 prev.includes(effect) ? prev.filter(e => e !== effect) : [...prev, effect]
                               );
                             }}
-                            className={`px-2 py-2 text-[10px] font-bold uppercase brutal-border transition-all ${selectedEffects.includes(effect) ? 'bg-brutal-purple text-white' : 'bg-white hover:bg-gray-50'}`}
+                            className={`px-3 py-2 text-[10px] font-bold uppercase rounded-xl border transition-all ${selectedEffects.includes(effect) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'}`}
                           >
                             {effect.replace('gsap-', '').replace('-', ' ')}
                           </button>
@@ -3485,94 +3485,79 @@ export default function App() {
                     The engine will cycle through your {selectedEffects.length} selected animations across your trailer scenes.
                   </p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Position</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['random', 'top', 'bottom', 'center', 'left', 'right'] as TextPosition[]).map(pos => (
-                      <button
-                        key={pos}
-                        onClick={() => setPreferredTextPosition(pos)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${preferredTextPosition === pos ? 'bg-brutal-purple' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {pos}
-                      </button>
+                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-amber-400">Text Position</h3>
+                  <select 
+                    value={preferredTextPosition}
+                    onChange={(e) => setPreferredTextPosition(e.target.value as TextPosition)}
+                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
+                  >
+                    {['random', 'top', 'bottom', 'center', 'left', 'right'].map(pos => (
+                      <option key={pos} value={pos} className="bg-zinc-900 border-none capitalize">{pos}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Effect</h3>
-                  <div className="grid grid-cols-2 md:flex md:flex-col gap-2">
-                    {(['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'] as TransitionType[]).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => setTransitionType(type)}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black ${transitionType === type ? 'bg-brutal-green' : 'bg-white hover:bg-gray-100'}`}
-                      >
-                        {type}
-                      </button>
+                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-emerald-400">Transition Engine</h3>
+                  <select 
+                    value={transitionType}
+                    onChange={(e) => setTransitionType(e.target.value as TransitionType)}
+                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
+                  >
+                    {['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'].map(type => (
+                      <option key={type} value={type} className="bg-zinc-900 border-none capitalize">{type.replace(/-/g, ' ')}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Transition Speed</h3>
-                  <div className="flex flex-col gap-4 px-2 bg-white brutal-border p-4">
-                    <input 
-                      type="range" 
-                      min="0.2" 
-                      max="3" 
-                      step="0.1" 
-                      value={transitionDuration}
-                      onChange={(e) => setTransitionDuration(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>FAST ({transitionDuration}s)</span>
-                      <span>SLOW</span>
+                <div className="glass-panel p-6 rounded-3xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-6 text-blue-400">Engine Speeds</h3>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Transition Speed</span>
+                         <span className="text-xs font-mono text-indigo-400">{transitionDuration}s</span>
+                      </div>
+                      <input 
+                        type="range" min="0.2" max="3" step="0.1" 
+                        value={transitionDuration}
+                        onChange={(e) => setTransitionDuration(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                      />
                     </div>
                     
-                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Text Anim Speed</h4>
-                    <input 
-                      type="range" 
-                      min="0.5" 
-                      max="2" 
-                      step="0.1" 
-                      value={textAnimationSpeed}
-                      onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>SLOWER (0.5x)</span>
-                      <span>{textAnimationSpeed}x</span>
-                      <span>FASTER (2x)</span>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Motion Complexity</span>
+                         <span className="text-xs font-mono text-purple-400">{textAnimationSpeed}x</span>
+                      </div>
+                      <input 
+                        type="range" min="0.5" max="2" step="0.1" 
+                        value={textAnimationSpeed}
+                        onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-purple-500"
+                      />
                     </div>
 
-                    <h4 className="text-xs font-mono font-bold uppercase mt-4 mb-2 text-black border-t-2 border-black pt-4">Scene Length</h4>
-                    <input 
-                      type="range" 
-                      min="2" 
-                      max="15" 
-                      step="0.5" 
-                      value={sceneDuration}
-                      onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
-                      className="w-full accent-black"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-black font-bold">
-                      <span>SHORT (2s)</span>
-                      <span>{sceneDuration}s</span>
-                      <span>LONG (15s)</span>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Scene Duration</span>
+                         <span className="text-xs font-mono text-pink-400">{sceneDuration}s</span>
+                      </div>
+                      <input 
+                        type="range" min="2" max="15" step="0.5" 
+                        value={sceneDuration}
+                        onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-pink-500"
+                      />
                     </div>
-
-
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
                 <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Format</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-white/40">Export Format</h3>
                   <div className="grid grid-cols-3 gap-2">
                     {(['webm', 'mp4', 'mov'] as const).map(f => (
                       <button
@@ -3585,14 +3570,14 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Export Resolution</h3>
+                <div className="glass-panel p-6 rounded-3xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-white/40">Export Resolution</h3>
                   <div className="grid grid-cols-3 gap-2">
                     {(['720p', '1080p', '4K'] as const).map(r => (
                       <button
                         key={r}
                         onClick={() => setExportResolution(r)}
-                        className={`px-3 py-2 text-center brutal-border transition-colors uppercase text-[10px] font-mono font-bold text-black ${exportResolution === r ? 'bg-brutal-pink' : 'bg-white hover:bg-gray-100'}`}
+                        className={`px-3 py-2 text-center rounded-xl border transition-all uppercase text-[10px] font-bold ${exportResolution === r ? 'bg-pink-600 border-pink-400 text-white' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'}`}
                       >
                         {r}
                       </button>
@@ -3600,56 +3585,37 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
-                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-4 text-center tracking-tight text-black">Social Media Customization</h3>
-                  <div className="max-w-md mx-auto">
-                    <label className="block text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Your @ Handle</label>
-                    <input 
-                      type="text" 
-                      value={socialHandle}
-                      onChange={(e) => setSocialHandle(e.target.value)}
-                      placeholder="@yourhandle"
-                      className="w-full brutal-input px-4 py-3 text-lg font-bold bg-white text-black"
-                    />
-                    <p className="mt-2 text-[10px] font-mono font-bold text-gray-400 uppercase text-center">
-                      This handle will be shown on all Instagram, X, and Notification layouts.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 mt-8 pt-8 border-t-4 border-black">
-                  <h3 className="text-xl md:text-2xl font-display font-bold uppercase mb-6 text-center tracking-tight text-black">Scene-by-Scene Designer</h3>
+                <div className="md:col-span-2 mt-8 pt-8 border-t border-white/10">
+                  <h3 className="text-xl md:text-2xl font-display font-bold mb-6 text-center tracking-tight text-white uppercase">Scene-by-Scene Editor</h3>
                   <div className="space-y-4">
                     {compositions.map((comp, idx) => (
-                      <div key={comp.id} className="brutal-border p-4 bg-white flex flex-col md:flex-row items-center gap-4 group hover:bg-gray-50 transition-colors">
+                      <div key={comp.id} className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center gap-6 group hover:bg-white/5 transition-all">
                         <div className="flex flex-col gap-2 shrink-0">
-                          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border">
+                          <div className="w-12 h-12 bg-indigo-500 text-white flex items-center justify-center font-display font-bold text-xl rounded-2xl shadow-lg shadow-indigo-500/20">
                             {idx + 1}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
-                          <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
+                          <p className="text-[10px] font-bold uppercase text-white/30 tracking-widest mb-1 text-left">Scene Script</p>
+                          <p className="text-sm font-bold text-white truncate text-left">{comp.caption || "Untitled Scene"}</p>
                           
-                          {/* Scene Asset Controls (Fullscreen/Animate) */}
-                          <div className="flex flex-wrap gap-2 mt-3 pb-3 border-b border-gray-100">
+                          <div className="flex flex-wrap gap-2 mt-4 pb-4 border-b border-white/5">
                              {comp.media.map((m, mIdx) => (
-                               <div key={mIdx} className="relative group/media brutal-border p-1 bg-white w-14 h-14 md:w-16 md:h-16 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex-shrink-0">
+                               <div key={mIdx} className="relative group/media glass-panel p-1 rounded-xl w-14 h-14 md:w-20 md:h-20 flex-shrink-0 border border-white/10 overflow-hidden">
                                  {m.type === 'video' ? (
-                                   <video src={m.url} className="w-full h-full object-cover" />
+                                   <video src={m.url} className="w-full h-full object-cover rounded-lg" />
                                  ) : (
-                                   <img src={m.url} className="w-full h-full object-cover" alt="Asset" />
+                                   <img src={m.url} className="w-full h-full object-cover rounded-lg" alt="Asset" />
                                  )}
                                  
-                                 {/* Controls Overlay */}
                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/media:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 z-50">
                                    <button
                                      type="button"
                                      onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(idx, mIdx); }}
-                                     className={`p-1 brutal-border shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 ${m.isFullscreen ? 'bg-brutal-yellow text-black' : 'bg-white text-black'}`}
+                                     className={`p-1.5 rounded-lg border transition-all hover:scale-110 ${m.isFullscreen ? 'bg-indigo-500 border-indigo-400 text-white' : 'bg-white/10 border-white/10 text-white'}`}
                                      title="Toggle Fullscreen"
                                    >
-                                     <Maximize2 size={10} />
+                                     <Maximize2 size={12} />
                                    </button>
                                    
                                    {m.type === 'image' && (
@@ -3657,17 +3623,16 @@ export default function App() {
                                        type="button"
                                        onClick={(e) => { e.stopPropagation(); handleAnimateAsset(idx, mIdx); }}
                                        disabled={m.isAnimating}
-                                       className="p-1 brutal-border bg-brutal-purple text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                                       className="p-1.5 rounded-lg bg-purple-500 border border-purple-400 text-white hover:scale-110 disabled:opacity-50 transition-all"
                                        title="AI Animate"
                                      >
-                                       {m.isAnimating ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                       {m.isAnimating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                                      </button>
                                    )}
                                  </div>
                                </div>
                              ))}
                           </div>
-
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
                           {[
@@ -3686,31 +3651,19 @@ export default function App() {
                                 e.stopPropagation();
                                 setCompositions(prev => prev.map((c, i) => {
                                   if (i !== idx) return c;
-                                  
                                   const newType = type.id as any;
                                   let updatedMedia = [...c.media];
-                                  
                                   if (['standard'].includes(newType)) {
-                                    updatedMedia = updatedMedia.map(m => ({
-                                      ...m,
-                                      xOffset: 0,
-                                      yOffset: 0,
-                                      scale: 1
-                                    }));
+                                    updatedMedia = updatedMedia.map(m => ({ ...m, xOffset: 0, yOffset: 0, scale: 1 }));
                                   }
-                                  
-                                  return { 
-                                    ...c, 
-                                    sceneType: newType,
-                                    media: updatedMedia
-                                  };
+                                  return { ...c, sceneType: newType, media: updatedMedia };
                                 }));
                               }}
-                              className={`p-2 brutal-border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-brutal-blue text-black' : 'bg-white hover:bg-gray-100 text-black'}`}
+                              className={`p-3 rounded-xl border relative z-50 cursor-pointer transition-all hover:scale-110 active:scale-95 flex flex-col items-center gap-1 group/btn ${comp.sceneType === type.id ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
                             >
                               <div className="pointer-events-none flex flex-col items-center gap-1">
                                 {type.icon}
-                                <span className="text-[7px] font-mono font-bold uppercase">{type.label}</span>
+                                <span className="text-[7px] font-bold uppercase tracking-widest">{type.label}</span>
                               </div>
                             </button>
                           ))}

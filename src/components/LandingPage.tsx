@@ -1,6 +1,7 @@
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard, MousePointer2, ChevronRight } from 'lucide-react';
+import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard, MousePointer2, ChevronRight, X } from 'lucide-react';
 import { PricingPlans } from './PricingModal';
+import { AnimatePresence } from 'motion/react';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -8,6 +9,7 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onStart, onSelectTier }: LandingPageProps) {
+  const [showLegal, setShowLegal] = React.useState<'privacy' | 'terms' | null>(null);
   const { scrollYProgress } = useScroll();
   const y1 = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -35,19 +37,15 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               Transform your screenshots into cinematic trailers. AI-pioneered kinetic motion, depth of field, and professional studio vibes.
             </p>
             <div className="flex flex-col sm:flex-row gap-5">
-              <button 
-                onClick={onStart} 
-                className="elite-button group px-8 py-4 text-lg rounded-full font-bold flex items-center justify-center gap-2 overflow-hidden"
-              >
-                Start Creating Free
-                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button 
-                className="elite-button-secondary px-8 py-4 text-lg rounded-full font-bold flex items-center justify-center gap-2"
-              >
-                <Play size={20} /> Watch Reel
-              </button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-5">
+                <button 
+                  onClick={onStart} 
+                  className="elite-button group px-10 py-5 text-xl rounded-full font-bold flex items-center justify-center gap-2 overflow-hidden shadow-2xl shadow-indigo-500/20"
+                >
+                  Start Creating Free
+                  <ChevronRight size={22} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
 
             <div className="mt-12 flex items-center gap-6 text-white/40 font-medium text-sm">
               <div className="flex -space-x-3">
@@ -201,6 +199,49 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
         </div>
       </section>
 
+      {/* Motion Engine Showcase */}
+      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+        <div className="text-center mb-16">
+          <p className="text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-[0.3em] mb-4">The Kinetic Engine</p>
+          <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-4">Elite Typography.</h2>
+          <p className="text-white/40 text-sm max-w-xl mx-auto">Our GSAP-powered motion engine calculates optimal kinetic paths for every character automatically.</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { name: 'Cascade', effect: 'gsap-cascade', desc: 'Elegant staggered entry' },
+            { name: '3D Roll', effect: 'gsap-3d-roll', desc: 'Cinematic depth rotation' },
+            { name: 'Elastic', effect: 'gsap-elastic', desc: 'Playful organic bounce' },
+            { name: 'Glow', effect: 'gsap-glow', desc: 'Atmospheric light leaks' },
+            { name: 'Expand', effect: 'gsap-expand', desc: 'Powerful impact scaling' },
+            { name: 'Tornado', effect: 'gsap-tornado', desc: 'Vortex motion paths' },
+            { name: 'Focus', effect: 'gsap-focus-flash', desc: 'Sharp attention grabbing' },
+            { name: 'Stack', effect: 'gsap-stack', desc: 'Modern vertical layering' },
+          ].map((item, idx) => (
+            <motion.div 
+               key={idx}
+               whileInView={{ opacity: 1, y: 0 }}
+               initial={{ opacity: 0, y: 20 }}
+               viewport={{ once: true }}
+               transition={{ delay: idx * 0.1 }}
+               className="glass-panel p-6 rounded-3xl border border-white/5 hover:border-indigo-500/30 transition-all group cursor-default"
+            >
+               <div className="h-12 flex items-center mb-4">
+                  <h4 className="text-2xl font-display font-bold group-hover:text-indigo-400 transition-colors uppercase tracking-widest">{item.name}</h4>
+               </div>
+               <p className="text-[10px] font-bold uppercase text-white/30 tracking-wider mb-2">{item.desc}</p>
+               <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: idx * 0.2 }}
+                    className="h-full w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
+                  />
+               </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* Visual Depth Section */}
       <section className="py-32 bg-white/5 border-y border-white/10 relative overflow-hidden">
         <div className="absolute inset-0 bg-dot-grid opacity-20"></div>
@@ -264,16 +305,16 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
         >
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent pointer-events-none" />
           <div className="flex items-center gap-8 relative z-10">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 shadow-lg shadow-white/5">
               <CreditCard size={32} className="text-white/60" />
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold">Enterprise Handoff</h3>
-              <p className="text-white/50 text-sm max-w-md">Custom cinematic preset development and bulk credit packages for agencies.</p>
+              <h3 className="font-display text-2xl font-bold tracking-tight">Agency Solutions</h3>
+              <p className="text-white/40 text-sm max-w-sm uppercase font-bold tracking-widest mt-1">Order 1,000+ credits for your team.</p>
             </div>
           </div>
-          <button onClick={onStart} className="elite-button-secondary px-8 py-4 rounded-full font-bold relative z-10">
-            Contact Support
+          <button onClick={onStart} className="elite-button-secondary px-8 py-4 rounded-xl font-bold relative z-10 border border-white/10">
+            Buy Bulk Credits
           </button>
         </motion.div>
       </section>
@@ -300,17 +341,98 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
       <footer className="py-20 border-t border-white/5 bg-[#09090b]">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-indigo-500" />
-              <span className="font-display font-bold text-lg">vibetrailer</span>
+              <div className="w-6 h-6 rounded bg-indigo-500 shadow-lg shadow-indigo-500/40" />
+              <span className="font-display font-bold text-lg tracking-tighter">vibetrailer</span>
            </div>
-           <div className="flex gap-8 text-white/40 text-sm font-medium">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Twitter</a>
+           <div className="flex gap-8 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+              <button onClick={() => setShowLegal('privacy')} className="hover:text-white transition-colors">Privacy</button>
+              <button onClick={() => setShowLegal('terms')} className="hover:text-white transition-colors">Terms</button>
+              <a href="https://twitter.com/vibetrailer" target="_blank" className="hover:text-white transition-colors">Twitter</a>
            </div>
-           <p className="text-white/20 text-xs font-mono">© {new Date().getFullYear()} VibeTrailer. Built for the modern web.</p>
+           <p className="text-white/20 text-[10px] font-mono uppercase tracking-widest">© {new Date().getFullYear()} VibeTrailer. Elite Cinematic Output.</p>
         </div>
       </footer>
+
+      {/* Legal Popups */}
+      <AnimatePresence>
+        {showLegal && (
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowLegal(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-panel w-full max-w-3xl max-h-[80vh] overflow-y-auto p-10 rounded-3xl relative border border-white/10 custom-scrollbar"
+            >
+              <button 
+                onClick={() => setShowLegal(null)}
+                className="absolute top-6 right-6 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <X size={20} />
+              </button>
+              
+              <div className="prose prose-invert max-w-none">
+                {showLegal === 'privacy' ? (
+                  <>
+                    <h2 className="text-4xl font-display font-bold mb-6 text-indigo-400">Privacy Policy</h2>
+                    <p className="text-white/60 mb-8 leading-relaxed">
+                      At VibeTrailer, we prioritize the protection of your creative assets and personal data. This policy outlines how we handle information to provide you with an elite cinematic experience.
+                    </p>
+                    <div className="space-y-6">
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">1. Data Sovereignty</h4>
+                        <p className="text-white/50 text-sm">Your uploaded media remains your property. We only process it to generate your trailers and do not train AI models on your private assets without explicit consent.</p>
+                      </section>
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">2. Secure Processing</h4>
+                        <p className="text-white/50 text-sm">All renders are performed in secure browser environments or encrypted cloud nodes. We use Stripe for high-security payment processing.</p>
+                      </section>
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">3. Right to Erasure</h4>
+                        <p className="text-white/50 text-sm">You can delete your account and all associated trailers at any time from your profile dashboard.</p>
+                      </section>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-4xl font-display font-bold mb-6 text-purple-400">Terms of Service</h2>
+                    <p className="text-white/60 mb-8 leading-relaxed">
+                      By using VibeTrailer, you are entering a space built for high-performance creativity. Please adhere to these standards to maintain the elite nature of the community.
+                    </p>
+                    <div className="space-y-6">
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">1. Account Integrity</h4>
+                        <p className="text-white/50 text-sm">You are responsible for maintaining the security of your account and for all activities that occur under your vibe-profile.</p>
+                      </section>
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">2. Usage Rights</h4>
+                        <p className="text-white/50 text-sm">Trailers generated by VibeTrailer are subject to the license of your specific credit tier. Commercial usage requires a 'Pro' package.</p>
+                      </section>
+                      <section>
+                        <h4 className="text-white font-bold uppercase tracking-widest text-sm mb-2">3. Acceptable Use</h4>
+                        <p className="text-white/50 text-sm">Users must not generate harmful, illegal, or deepfake-style content that violates the rights of third parties.</p>
+                      </section>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="mt-12 pt-8 border-t border-white/5 text-center">
+                 <button 
+                   onClick={() => setShowLegal(null)}
+                   className="elite-button px-8 py-3 rounded-xl text-sm"
+                 >
+                   I Understand
+                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
