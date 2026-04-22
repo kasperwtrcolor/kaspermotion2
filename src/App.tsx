@@ -3342,7 +3342,6 @@ export default function App() {
           )}
 
           {setupStep === 4 && (
-          {setupStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
               <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-6 text-indigo-400">
                 <Sparkles size={32} />
