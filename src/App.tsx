@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2 } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -63,6 +63,8 @@ type Composition = {
     yOffset?: number;
     scale?: number;
     m3Shape?: string;
+    isFullscreen?: boolean;
+    isAnimating?: boolean;
   }[];
   x: number;
   y: number;
@@ -1676,58 +1678,58 @@ const CompositionNode = ({
         )}
 
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-        {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
-          const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
-          
-          const mediaElement = m.url && (
-            m.type === 'video' ? (
-              <motion.video
-                src={m.url}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className={shapeStyle.className}
-                style={shapeStyle.style}
-                onError={() => setHasError(true)}
-                animate={status === 'active' ? {
-                  scale: [1, 1.05],
-                  rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                } : { scale: 1, rotate: 0 }}
-                transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-              />
-            ) : (
-              <motion.img
-                src={m.url}
-                alt={comp.caption}
-                className={shapeStyle.className}
-                style={shapeStyle.style}
-                onError={() => setHasError(true)}
-                animate={status === 'active' ? {
-                  scale: [1, 1.05],
-                  rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                } : { scale: 1, rotate: 0 }}
-                transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
-              />
-            )
-          );
-
-          return (
-            <motion.div
-              key={i}
-              className="absolute z-10"
-              style={{ 
-                transformStyle: 'preserve-3d',
-                x: m.xOffset || 0,
-                y: m.yOffset || 0,
-                scale: m.scale || 1
-              }}
-            >
-              {hasError ? (
-                <div className={shapeStyle.className} style={shapeStyle.style}>
-                </div>
+          {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
+            const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
+            
+            const mediaElement = m.url && (
+              m.type === 'video' ? (
+                <motion.video
+                  src={m.url}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
+                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
+                  onError={() => setHasError(true)}
+                  animate={(status === 'active' && !m.isFullscreen) ? {
+                    scale: [1, 1.05],
+                    rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                  } : { scale: 1, rotate: 0 }}
+                  transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                />
               ) : (
-                comp.preset === 'app-showcase' ? (
+                <motion.img
+                  src={m.url}
+                  alt={comp.caption}
+                  className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
+                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
+                  onError={() => setHasError(true)}
+                  animate={(status === 'active' && !m.isFullscreen) ? {
+                    scale: [1, 1.05],
+                    rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                  } : { scale: 1, rotate: 0 }}
+                  transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                />
+              )
+            );
+
+            return (
+              <motion.div
+                key={i}
+                className={m.isFullscreen ? "absolute inset-0 z-0" : "absolute z-10"}
+                style={m.isFullscreen ? { width: '100%', height: '100%' } : { 
+                  transformStyle: 'preserve-3d',
+                  x: m.xOffset || 0,
+                  y: m.yOffset || 0,
+                  scale: m.scale || 1
+                }}
+              >
+                {hasError ? (
+                  <div className={shapeStyle.className} style={shapeStyle.style}>
+                  </div>
+                ) : (
+                  comp.preset === 'app-showcase' ? (
                   <MobileMockup status={status} variant={i} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
                     <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
                       {mediaElement}
@@ -2203,6 +2205,69 @@ export default function App() {
     setAppMode('setup');
     setSetupStep(1);
     setToastMessage("Started over. Ready for a new project.");
+  };
+
+  const handleToggleFullscreen = (sceneIdx: number, mediaIdx: number) => {
+    setCompositions(prev => prev.map((c, i) => {
+      if (i !== sceneIdx) return c;
+      const newMedia = [...c.media];
+      newMedia[mediaIdx] = { 
+        ...newMedia[mediaIdx], 
+        isFullscreen: !newMedia[mediaIdx].isFullscreen 
+      };
+      return { ...c, media: newMedia };
+    }));
+  };
+
+  const handleAnimateAsset = async (sceneIdx: number, mediaIdx: number) => {
+    const comp = compositions[sceneIdx];
+    const media = comp.media[mediaIdx];
+    
+    if (media.type !== 'image' || !media.url) return;
+
+    // Set animating state
+    setCompositions(prev => prev.map((c, i) => {
+      if (i !== sceneIdx) return c;
+      const newMedia = [...c.media];
+      newMedia[mediaIdx] = { ...newMedia[mediaIdx], isAnimating: true };
+      return { ...c, media: newMedia };
+    }));
+
+    try {
+      const response = await fetch('/api/animate-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: media.url })
+      });
+
+      const data = await response.json();
+      if (data.videoUrl) {
+        setCompositions(prev => prev.map((c, i) => {
+          if (i !== sceneIdx) return c;
+          const newMedia = [...c.media];
+          newMedia[mediaIdx] = { 
+            ...newMedia[mediaIdx], 
+            url: data.videoUrl, 
+            type: 'video', 
+            isAnimating: false 
+          };
+          return { ...c, media: newMedia };
+        }));
+        setToastMessage("AI Animation complete!");
+      } else {
+        throw new Error(data.error || "Animation failed");
+      }
+    } catch (err: any) {
+      setToastMessage(err.message);
+      setCompositions(prev => prev.map((c, i) => {
+        if (i !== sceneIdx) return c;
+        const newMedia = [...c.media];
+        newMedia[mediaIdx] = { ...newMedia[mediaIdx], isAnimating: false };
+        return { ...c, media: newMedia };
+      }));
+    } finally {
+      setTimeout(() => setToastMessage(null), 3000);
+    }
   };
 
   const deleteProject = async (id: string) => {
@@ -3577,6 +3642,44 @@ export default function App() {
                         <div className="flex-1 min-w-0">
                           <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
                           <p className="text-sm font-bold text-black truncate text-left">{comp.caption || "No caption"}</p>
+                          
+                          {/* Scene Asset Controls (Fullscreen/Animate) */}
+                          <div className="flex flex-wrap gap-2 mt-3 pb-3 border-b border-gray-100">
+                             {comp.media.map((m, mIdx) => (
+                               <div key={mIdx} className="relative group/media brutal-border p-1 bg-white w-14 h-14 md:w-16 md:h-16 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex-shrink-0">
+                                 {m.type === 'video' ? (
+                                   <video src={m.url} className="w-full h-full object-cover" />
+                                 ) : (
+                                   <img src={m.url} className="w-full h-full object-cover" alt="Asset" />
+                                 )}
+                                 
+                                 {/* Controls Overlay */}
+                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/media:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 z-50">
+                                   <button
+                                     type="button"
+                                     onClick={(e) => { e.stopPropagation(); handleToggleFullscreen(idx, mIdx); }}
+                                     className={`p-1 brutal-border shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 ${m.isFullscreen ? 'bg-brutal-yellow text-black' : 'bg-white text-black'}`}
+                                     title="Toggle Fullscreen"
+                                   >
+                                     <Maximize2 size={10} />
+                                   </button>
+                                   
+                                   {m.type === 'image' && (
+                                     <button
+                                       type="button"
+                                       onClick={(e) => { e.stopPropagation(); handleAnimateAsset(idx, mIdx); }}
+                                       disabled={m.isAnimating}
+                                       className="p-1 brutal-border bg-brutal-purple text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                                       title="AI Animate"
+                                     >
+                                       {m.isAnimating ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                     </button>
+                                   )}
+                                 </div>
+                               </div>
+                             ))}
+                          </div>
+
                           <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
                             {/* Background Styles */}
                             {[
@@ -3584,18 +3687,7 @@ export default function App() {
                               { id: 'vibrant-glow', label: 'Vibrant', icon: <Sparkles size={16} /> },
                               { id: 'particles', label: 'Stars', icon: <Star size={16} /> },
                               { id: 'premium-parallax', label: 'Grid', icon: <Grid size={16} /> },
-                              { id: 'textured-paper', label: 'Paper', icon: <FileText size={16} /> },
-                              { id: 'world-flowers', label: 'Flowers', icon: <Flower2 size={16} /> },
-                              { id: 'world-sunset', label: 'Sunset', icon: <Sunrise size={16} /> },
-                              { id: 'world-cartoon-animals', label: 'Animals', icon: <Sparkles size={16} /> },
-                              { id: 'world-forest', label: 'Forest', icon: <Trees size={16} /> },
-                              { id: 'world-spaceship', label: 'Spaceship', icon: <Rocket size={16} /> },
-                              { id: 'world-tech', label: 'Tech', icon: <Cpu size={16} /> },
-                              { id: 'world-people', label: 'People', icon: <Users size={16} /> },
-                              { id: 'world-vr', label: 'VR UI', icon: <Glasses size={16} /> },
-                              { id: 'world-sports', label: 'Sports', icon: <Trophy size={16} /> },
-                              { id: 'world-tennis', label: 'Tennis', icon: <Target size={16} /> },
-                              { id: 'world-football', label: 'Football', icon: <Dribbble size={16} /> }
+                              { id: 'textured-paper', label: 'Paper', icon: <FileText size={16} /> }
                             ].map(style => (
                               <button
                                 type="button"
