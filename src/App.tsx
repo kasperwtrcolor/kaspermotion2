@@ -3124,14 +3124,6 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-8">
-                <button 
-                  onClick={() => setSetupStep(2)}
-                  className="elite-button px-10 py-4 text-xl flex items-center gap-3 rounded-full"
-                >
-                  Next: Add Caption <ArrowRight size={24} />
-                </button>
-              </div>
 
               <AnimatePresence>
                 {showLibrary && (
@@ -3217,12 +3209,12 @@ export default function App() {
               </AnimatePresence>
 
 
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-8">
                 <button 
                   onClick={() => setSetupStep(2)}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
+                  className="elite-button px-10 py-4 text-xl flex items-center gap-3 rounded-full"
                 >
-                  Continue <ArrowRight size={18} />
+                  Continue <ArrowRight size={24} />
                 </button>
               </div>
             </motion.div>

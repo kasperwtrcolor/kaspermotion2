@@ -263,13 +263,13 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
     <motion.div
       initial={{ y: 100, opacity: 0, scale: 0.9 }}
       animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
-      className="bg-[#121212] border border-white/10 rounded-[1.25rem] p-5 md:p-6 w-[94vw] max-w-[580px] shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-5 md:gap-7 relative overflow-hidden"
+      className="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-[1.25rem] p-5 md:p-6 w-[90vw] max-w-[500px] shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-5 md:gap-7 relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 p-3 opacity-5">
         <Music size={100} className="text-white" />
       </div>
-      <div className="w-32 h-32 md:w-36 md:h-36 bg-gradient-to-br from-gray-800 to-black rounded-lg shadow-2xl flex items-center justify-center border border-white/5 shrink-0">
-        <Music size={40} className="text-white/10" />
+      <div className="w-24 h-24 md:w-36 md:h-36 bg-gradient-to-br from-gray-800 to-black rounded-lg shadow-2xl flex items-center justify-center border border-white/5 shrink-0">
+        <Music size={32} className="text-white/10" />
       </div>
       <div className="flex-1 flex flex-col gap-1.5 relative z-10 w-full">
         <div className="flex items-center gap-2">
