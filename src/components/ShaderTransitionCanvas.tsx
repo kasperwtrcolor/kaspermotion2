@@ -165,7 +165,7 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
       ref={canvasRef}
       width={resolution.width}
       height={resolution.height}
-      className="absolute inset-0 w-full h-full pointer-events-none z-[200]"
+      className="absolute inset-0 w-full h-full pointer-events-none z-[1000] scale-[1.02]"
       style={{ mixBlendMode: 'normal' }}
     />
   );

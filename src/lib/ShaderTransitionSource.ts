@@ -275,4 +275,22 @@ export const SHADER_LIBRARY: Record<string, string> = {
     vec2 rotUv = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c) + 0.5;
     gl_FragColor = mix(texture2D(u_from, clamp(rotUv, 0.0, 1.0)), texture2D(u_to, v_uv), u_progress);
   }`,
+
+  "hyper-blocks": H + `void main(){
+    float columns = 12.0;
+    float r = floor(v_uv.x * columns);
+    float t = clamp(u_progress * 2.0 - r/columns, 0.0, 1.0);
+    gl_FragColor = mix(texture2D(u_from, v_uv), texture2D(u_to, v_uv), smoothstep(0.0, 1.0, t));
+  }`,
+
+  "hyper-wipe": H + `void main(){
+    float p = u_progress;
+    float x = v_uv.x;
+    float edge = 0.1;
+    float mask = smoothstep(p - edge, p + edge, x);
+    vec4 A = texture2D(u_from, v_uv);
+    vec4 B = texture2D(u_to, v_uv);
+    float line = exp(-abs(x - p) * 50.0) * (1.0 - step(0.98, p)) * (step(0.02, p));
+    gl_FragColor = vec4(mix(B, A, mask).rgb + u_accent_bright * line * 2.0, 1.0);
+  }`,
 };

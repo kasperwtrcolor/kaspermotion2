@@ -17,7 +17,7 @@ const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress,
   const y = useTransform(progress, [0, 1], [600, -600]);
   const z = useTransform(progress, [0, 1], [-1500, 500]);
   const rotate = useTransform(progress, [0, 1], [0, 1080]);
-  const scale = useTransform(progress, [0, 0.5, 1], [0.4, 1.2, 0.8]);
+  const scale = useTransform(progress, [0, 0.4, 0.6, 1], [0.4, 2.5, 2.5, 0.8]);
 
   // Fixed set of trails
   const particles = useMemo(() => {
@@ -34,7 +34,7 @@ const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress,
   if (!isActive) return null;
 
   return (
-    <div className="absolute inset-0 z-[250] pointer-events-none overflow-hidden" style={{ perspective: '1200px' }}>
+    <div className="absolute inset-0 z-[1100] pointer-events-none overflow-hidden" style={{ perspective: '2000px' }}>
       <motion.div
         style={{ 
           x, 
@@ -45,7 +45,7 @@ const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress,
           rotateZ: rotate / 3,
           scale 
         }}
-        className="absolute w-64 h-64 flex items-center justify-center transform-gpu"
+        className="absolute w-[1000px] h-[1000px] flex items-center justify-center transform-gpu"
       >
         {/* Core 3D Icon */}
         <div className="relative w-full h-full flex items-center justify-center">

@@ -2486,7 +2486,7 @@ export default function App() {
           'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'random',
           'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens',
           'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion',
-          'flash-through-white', 'cross-warp-morph', 'light-leak'
+          'flash-through-white', 'cross-warp-morph', 'light-leak', 'hyper-blocks', 'hyper-wipe'
         ];
         
         const isShaderTrans = shaderList.includes(nextComp.transitionType);
