@@ -37,15 +37,14 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               Transform your screenshots into cinematic trailers. AI-pioneered kinetic motion, depth of field, and professional studio vibes.
             </p>
             <div className="flex flex-col sm:flex-row gap-5">
-              <div className="flex flex-col sm:flex-row gap-5">
-                <button 
-                  onClick={onStart} 
-                  className="elite-button group px-10 py-5 text-xl rounded-full font-bold flex items-center justify-center gap-2 overflow-hidden shadow-2xl shadow-indigo-500/20"
-                >
-                  Start Creating Free
-                  <ChevronRight size={22} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
+              <button 
+                onClick={onStart} 
+                className="elite-button group px-10 py-5 text-xl rounded-full font-bold flex items-center justify-center gap-2 overflow-hidden shadow-2xl shadow-indigo-500/20"
+              >
+                Start Creating Free
+                <ChevronRight size={22} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
 
             <div className="mt-12 flex items-center gap-6 text-white/40 font-medium text-sm">
               <div className="flex -space-x-3">
