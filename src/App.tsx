@@ -25,7 +25,7 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | 'world-flowers' | 'world-sunset' | 'world-cartoon-animals' | 'world-forest' | 'world-spaceship' | 'world-tech' | 'world-people' | 'world-vr' | 'world-sports' | 'world-tennis' | 'world-football';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper';
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' 
@@ -3627,16 +3627,6 @@ export default function App() {
                           <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-display font-bold text-xl brutal-border">
                             {idx + 1}
                           </div>
-                          <button 
-                            onClick={() => {
-                              setAddingAssetToSceneIdx(idx);
-                              setShowLibrary(true);
-                            }}
-                            className="w-12 h-8 bg-brutal-green text-black flex items-center justify-center brutal-border hover:-translate-y-0.5 transition-transform shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                            title="Add Media from Library"
-                          >
-                            <Plus size={16} />
-                          </button>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-mono text-[10px] font-bold uppercase text-gray-400 mb-1 text-left">Scene Script</p>
@@ -3706,40 +3696,6 @@ export default function App() {
                                 </div>
                               </button>
                             ))}
-                          </div>
-
-                          {/* 3D Transition Item Selector */}
-                          <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-3 pt-3 border-t border-gray-100">
-                             <p className="w-full text-[8px] font-mono font-bold uppercase text-gray-400 mb-1 text-left">Transition Item</p>
-                             <button
-                                type="button"
-                                onClick={() => {
-                                  setCompositions(prev => prev.map((c, i) => {
-                                    if (i !== idx) return c;
-                                    return { ...c, transitionItemAsset: findBestTransitionItem(c.caption) || undefined };
-                                  }));
-                                }}
-                                className="p-2 brutal-border bg-brutal-green hover:bg-green-400 transition-colors"
-                                title="AI Suggest Item"
-                             >
-                                <Wand2 size={14} />
-                             </button>
-                             {Object.entries(TRANSITION_ITEM_LIB).slice(0, 8).map(([key, url]) => (
-                               <button
-                                 type="button"
-                                 key={key}
-                                 onClick={() => {
-                                   setCompositions(prev => prev.map((c, i) => {
-                                     if (i !== idx) return c;
-                                     return { ...c, transitionItemAsset: url };
-                                   }));
-                                 }}
-                                 className={`w-10 h-10 p-1 brutal-border transition-all hover:scale-110 active:scale-95 ${comp.transitionItemAsset === url ? 'bg-brutal-blue' : 'bg-white hover:bg-gray-50'}`}
-                                 title={key}
-                               >
-                                 <img src={url} className="w-full h-full object-contain pointer-events-none" alt={key} />
-                               </button>
-                             ))}
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-1 justify-center md:justify-end">
