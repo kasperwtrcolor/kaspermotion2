@@ -43,7 +43,7 @@ body {
 }
 
 /* Glassmorphism Utilities */
-.glass-panel {
+@utility glass-panel {
   background: rgba(24, 24, 27, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -51,7 +51,7 @@ body {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-.glass-panel-light {
+@utility glass-panel-light {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -59,7 +59,7 @@ body {
 }
 
 /* Elite Action Components */
-.elite-button {
+@utility elite-button {
   @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
   background: var(--color-elite-accent);
   color: white;
@@ -71,7 +71,7 @@ body {
   box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
 }
 
-.elite-button-secondary {
+@utility elite-button-secondary {
   @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 border border-white/10 active:scale-95;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(4px);
@@ -82,7 +82,7 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-.elite-input {
+@utility elite-input {
   @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white transition-all duration-200 outline-none;
 }
 
@@ -91,7 +91,7 @@ body {
 }
 
 /* Texture & Gradients */
-.bg-mesh-gradient {
+@utility bg-mesh-gradient {
   background: 
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
@@ -100,14 +100,14 @@ body {
   background-color: var(--color-elite-bg);
 }
 
-.bg-dot-grid {
+@utility bg-dot-grid {
   background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
 /* Legacy Brutalist Compatibility (Mapped to Elite) */
-.brutal-border { border: 1px solid rgba(255, 255, 255, 0.1); }
-.brutal-shadow { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
+@utility brutal-border { border: 1px solid rgba(255, 255, 255, 0.1); }
+@utility brutal-shadow { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
 .brutal-card { @apply glass-panel rounded-xl; }
 .brutal-button { @apply elite-button; }
 .brutal-input { @apply elite-input; }
