@@ -5,7 +5,6 @@ import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { GoogleGenAI } from "@google/genai";
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import LandingPage from './components/LandingPage';
 import AppHeader from './components/AppHeader';
@@ -21,7 +20,7 @@ import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transit
 
 gsap.registerPlugin(useGSAP);
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
