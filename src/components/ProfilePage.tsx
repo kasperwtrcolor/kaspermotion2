@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, CreditCard, Sparkles, Zap } from 'lucide-react';
+import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, CreditCard, Sparkles, Zap, ChevronRight, Check } from 'lucide-react';
 
 interface ProfilePageProps {
   user: any;
@@ -48,66 +48,71 @@ export default function ProfilePage({
   };
 
   return (
-    <div className="min-h-screen bg-isometric-grid text-black font-sans">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Profile Header */}
-        <div className="brutal-card p-6 md:p-8 mb-8 flex flex-col sm:flex-row items-center gap-6">
-          <div className="w-20 h-20 brutal-border overflow-hidden shrink-0 bg-brutal-purple">
-            <img
-              src={user?.photoURL || ''}
-              className="w-full h-full object-cover"
-              alt="Profile"
-            />
+    <div className="min-h-screen bg-mesh-gradient bg-dot-grid text-white font-sans selection:bg-indigo-500/30 pt-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        
+        {/* Profile Header Block */}
+        <div className="glass-panel p-8 rounded-3xl mb-12 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none" />
+          
+          <div className="relative group shrink-0">
+            <div className="w-24 h-24 rounded-full border-2 border-indigo-500/30 overflow-hidden bg-gray-900 group-hover:scale-110 transition-transform duration-500">
+              <img
+                src={user?.photoURL || ''}
+                className="w-full h-full object-cover"
+                alt="Profile"
+              />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-indigo-500 border-2 border-[#09090b] flex items-center justify-center">
+              <Award size={14} className="text-white" />
+            </div>
           </div>
-          <div className="flex-1 text-center sm:text-left">
-            <h1 className="font-display text-3xl md:text-4xl font-bold uppercase tracking-tighter">
-              {user?.displayName || 'Creator'}
+
+          <div className="flex-1 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-wider mb-3">
+              Certified Designer
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+              {user?.displayName || 'Creative Visionary'}
             </h1>
-            <p className="font-mono text-xs text-black/60 uppercase tracking-wider mt-1">
+            <p className="font-mono text-xs text-white/40 mt-2">
               {user?.email}
             </p>
           </div>
-          <div className="flex gap-3">
-            <div className="bg-brutal-orange brutal-border p-4 text-center min-w-[90px]">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <Coins size={16} />
+
+          <div className="grid grid-cols-3 gap-4 w-full md:w-auto">
+            {[
+              { icon: <Coins size={16} />, val: credits, label: 'Credits', color: 'text-indigo-400' },
+              { icon: <Film size={16} />, val: userTrailers.length, label: 'Videos', color: 'text-purple-400' },
+              { icon: <ImageIcon size={16} />, val: libraryAssets.length, label: 'Assets', color: 'text-pink-400' }
+            ].map((stat, i) => (
+              <div key={i} className="glass-panel-light p-4 rounded-2xl text-center min-w-[100px] border border-white/5">
+                <div className={`flex items-center justify-center mb-1 ${stat.color}`}>
+                  {stat.icon}
+                </div>
+                <p className="font-display text-2xl font-bold">{stat.val}</p>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-white/30">{stat.label}</p>
               </div>
-              <p className="font-display text-2xl font-bold">{credits}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-black/60">Credits</p>
-            </div>
-            <div className="bg-brutal-blue brutal-border p-4 text-center min-w-[90px]">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <Film size={16} />
-              </div>
-              <p className="font-display text-2xl font-bold">{userTrailers.length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-black/60">Videos</p>
-            </div>
-            <div className="bg-brutal-green brutal-border p-4 text-center min-w-[90px]">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <ImageIcon size={16} />
-              </div>
-              <p className="font-display text-2xl font-bold">{libraryAssets.length}</p>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-black/60">Assets</p>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-3 mb-10 border-b border-white/5 pb-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
+              className={`px-6 py-3 rounded-full font-sans text-sm font-semibold flex items-center gap-3 transition-all active:scale-95 ${
                 activeTab === tab.id
-                  ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
-                  : 'bg-white hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]'
+                  ? 'bg-indigo-500 text-white shadow-xl shadow-indigo-500/20'
+                  : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white'
               }`}
             >
               {tab.icon}
               {tab.label}
               {tab.count !== undefined && (
-                <span className="bg-black text-white px-1.5 py-0.5 text-[10px] font-bold">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${activeTab === tab.id ? 'bg-white/20' : 'bg-white/5'}`}>
                   {tab.count}
                 </span>
               )}
@@ -115,75 +120,91 @@ export default function ProfilePage({
           ))}
         </div>
 
-        {/* Tab Content */}
+        {/* Content Area */}
         <AnimatePresence mode="wait">
-          {/* MY VIDEOS */}
           {activeTab === 'videos' && (
             <motion.div
               key="videos"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {userTrailers.length === 0 ? (
-                <div className="brutal-card p-12 text-center">
-                  <Film size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="font-mono text-sm font-bold uppercase text-black/40">
-                    No trailers yet. Create your first one!
+                <div className="col-span-full glass-panel p-20 text-center rounded-3xl">
+                  <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+                    <Film size={32} className="text-white/20" />
+                  </div>
+                  <p className="text-xl font-display font-medium text-white/40 mb-8">
+                    Your studio is empty. Ready to craft your first trailer?
                   </p>
+                  <button className="elite-button px-8 py-3 rounded-full font-bold">
+                     Create New Project
+                  </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {userTrailers.map((project) => (
-                    <div
-                      key={project.id}
-                      className="brutal-card p-0 overflow-hidden group hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all"
-                    >
-                      {/* Preview thumbnail area */}
-                      <div className="aspect-video bg-black/90 relative flex items-center justify-center overflow-hidden">
-                        {project.media?.[0]?.url ? (
-                          <img
-                            src={project.media[0].url}
-                            alt="Trailer thumbnail"
-                            className="w-full h-full object-cover opacity-60"
-                          />
-                        ) : (
-                          <Film size={48} className="text-white/20" />
-                        )}
-                        <button
-                          onClick={() => onLoadProject(project)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <div className="w-14 h-14 bg-brutal-green brutal-border flex items-center justify-center">
-                            <Play size={24} fill="black" />
-                          </div>
-                        </button>
-                        <div className="absolute bottom-2 right-2 bg-white brutal-border px-2 py-0.5 font-mono text-[10px] font-bold">
-                          {project.media?.length || 0} SCENES
+                userTrailers.map((project) => (
+                  <div
+                    key={project.id}
+                    className="glass-panel group rounded-3xl overflow-hidden hover:border-indigo-500/30 transition-all duration-300 shadow-xl"
+                  >
+                    <div className="aspect-video bg-[#0c0c0e] relative overflow-hidden">
+                      {project.media?.[0]?.url ? (
+                        <img
+                          src={project.media[0].url}
+                          alt="Trailer thumbnail"
+                          className="w-full h-full object-cover opacity-50 group-hover:scale-105 group-hover:opacity-60 transition-all duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Film size={48} className="text-white/5" />
                         </div>
+                      )}
+                      
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button 
+                           onClick={() => onLoadProject(project)}
+                           className="w-14 h-14 rounded-full bg-indigo-500 flex items-center justify-center shadow-2xl text-white transform hover:scale-110 active:scale-95 transition-all"
+                         >
+                           <Play size={24} className="fill-white ml-1" />
+                         </button>
                       </div>
-                      <div className="p-4 flex items-center justify-between">
-                        <div className="cursor-pointer flex-1" onClick={() => onLoadProject(project)}>
-                          <p className="font-mono font-bold text-sm uppercase truncate">
-                            {project.name}
-                          </p>
-                          <p className="font-mono text-[10px] text-black/50 uppercase mt-0.5 flex items-center gap-2">
-                            <Calendar size={10} />
-                            {project.createdAt?.seconds
-                              ? new Date(project.createdAt.seconds * 1000).toLocaleDateString()
-                              : 'Unknown'}
-                          </p>
+                      
+                      <div className="absolute top-4 right-4 glass-panel-light px-3 py-1 rounded-full font-mono text-[9px] font-bold tracking-widest text-white/60">
+                        {project.media?.length || 0} SCENES
+                      </div>
+                    </div>
+                    
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1 cursor-pointer" onClick={() => onLoadProject(project)}>
+                           <h4 className="font-display font-bold text-lg tracking-tight mb-1 group-hover:text-indigo-400 transition-colors truncate">
+                             {project.name}
+                           </h4>
+                           <p className="text-[10px] uppercase font-bold text-white/30 tracking-widest flex items-center gap-2">
+                             <Calendar size={12} className="text-white/20" />
+                             {project.createdAt?.seconds
+                               ? new Date(project.createdAt.seconds * 1000).toLocaleDateString()
+                               : 'Unknown'}
+                           </p>
                         </div>
                         <button
                           onClick={() => onDeleteProject(project.id)}
-                          className="p-2 brutal-border bg-white hover:bg-brutal-pink transition-colors"
+                          className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-white/30 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 transition-all"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
+                      
+                      <button 
+                         onClick={() => onLoadProject(project)}
+                         className="w-full py-3 rounded-xl bg-white/5 border border-white/10 font-bold text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                      >
+                         Open in Studio <ChevronRight size={14} />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </motion.div>
           )}
@@ -192,21 +213,25 @@ export default function ProfilePage({
           {activeTab === 'assets' && (
             <motion.div
               key="assets"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
             >
               {selectedAssets.size > 0 && (
-                <div className="mb-4 bg-brutal-green brutal-border p-3 flex items-center justify-between">
-                  <p className="font-mono text-xs font-bold uppercase">
-                    {selectedAssets.size} asset{selectedAssets.size > 1 ? 's' : ''} selected
+                <motion.div 
+                  initial={{ y: -20, opacity: 0 }} 
+                  animate={{ y: 0, opacity: 1 }}
+                  className="mb-8 p-4 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-between"
+                >
+                  <p className="font-sans text-sm font-bold text-white">
+                    {selectedAssets.size} asset{selectedAssets.size > 1 ? 's' : ''} selected for export
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => setSelectedAssets(new Set())}
-                      className="brutal-button bg-white px-3 py-1.5 text-xs"
+                      className="px-4 py-2 rounded-xl bg-white/5 text-white/60 text-xs font-bold hover:bg-white/10"
                     >
-                      Clear
+                      Deselect
                     </button>
                     <button
                       onClick={() => {
@@ -214,63 +239,60 @@ export default function ProfilePage({
                         onUseAssetInProject(assets);
                         setSelectedAssets(new Set());
                       }}
-                      className="brutal-button bg-brutal-blue px-3 py-1.5 text-xs"
+                      className="px-4 py-2 rounded-xl bg-white text-black text-xs font-bold hover:bg-gray-100"
                     >
-                      Use in Project
+                      Use in Studio
                     </button>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {libraryAssets.length === 0 ? (
-                <div className="brutal-card p-12 text-center">
-                  <ImageIcon size={48} className="mx-auto mb-4 opacity-30" />
-                  <p className="font-mono text-sm font-bold uppercase text-black/40">
-                    No assets yet. Upload some or generate with AI!
+                <div className="glass-panel p-20 text-center rounded-3xl">
+                  <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6">
+                    <ImageIcon size={32} className="text-white/20" />
+                  </div>
+                  <p className="text-xl font-display font-medium text-white/40">
+                    No assets found in your collection.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {libraryAssets.map((asset) => {
                     const isSelected = selectedAssets.has(asset.id);
                     return (
                       <div
                         key={asset.id}
                         onClick={() => toggleAssetSelection(asset.id)}
-                        className={`relative aspect-square brutal-border overflow-hidden group cursor-pointer transition-all ${
+                        className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-300 ${
                           isSelected
-                            ? 'ring-4 ring-brutal-blue bg-brutal-blue'
-                            : 'bg-white hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+                            ? 'border-indigo-500 shadow-lg shadow-indigo-500/20 scale-[0.98]'
+                            : 'border-white/5 hover:border-white/20'
                         }`}
                       >
                         {asset.type === 'video' ? (
-                          <video
-                            src={asset.url}
-                            className="w-full h-full object-cover"
-                            muted
-                          />
+                          <video src={asset.url} className="w-full h-full object-cover opacity-80" muted />
                         ) : (
-                          <img
-                            src={asset.url}
-                            className="w-full h-full object-cover"
-                            alt={asset.name}
-                          />
+                          <img src={asset.url} className="w-full h-full object-cover opacity-80" alt={asset.name} />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-                          <p className="text-[10px] truncate w-full font-mono font-bold text-white">
+                        
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                          <p className="text-[10px] truncate w-full font-sans font-bold text-white/70">
                             {asset.name}
                           </p>
                         </div>
-                        {isSelected && (
-                          <div className="absolute top-2 left-2 w-6 h-6 bg-brutal-blue brutal-border flex items-center justify-center">
-                            <span className="text-black font-bold text-xs">✓</span>
-                          </div>
-                        )}
+                        
+                        <div className={`absolute top-3 left-3 w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
+                          isSelected ? 'bg-indigo-500 border-indigo-400' : 'bg-black/30 border-white/10 backdrop-blur-md'
+                        }`}>
+                          {isSelected && <Check size={14} className="text-white" />}
+                        </div>
+                        
                         <button
                           onClick={(e) => onDeleteAsset(e, asset)}
-                          className="absolute top-2 right-2 bg-brutal-pink brutal-border p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                          className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/30 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:border-red-500/40 transition-all"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={12} className="text-white" />
                         </button>
                       </div>
                     );
@@ -287,130 +309,98 @@ export default function ProfilePage({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
+              className="grid lg:grid-cols-3 gap-8"
             >
-              {/* User Info */}
-              <div className="brutal-card p-6">
-                <h3 className="font-display text-xl font-bold uppercase mb-6 flex items-center gap-3 border-b-2 border-black pb-3">
-                  <UserIcon size={20} /> Account Details
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-brutal-bg brutal-border p-4">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-black/50 mb-1">Name</p>
-                    <p className="font-mono text-sm font-bold">{user?.displayName || '—'}</p>
-                  </div>
-                  <div className="bg-brutal-bg brutal-border p-4">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-black/50 mb-1">Email</p>
-                    <p className="font-mono text-sm font-bold">{user?.email || '—'}</p>
-                  </div>
-                  <div className="bg-brutal-bg brutal-border p-4">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-black/50 mb-1">Provider</p>
-                    <p className="font-mono text-sm font-bold">
-                      {user?.providerData?.[0]?.providerId === 'google.com' ? 'Google' : user?.providerData?.[0]?.providerId || '—'}
-                    </p>
-                  </div>
-                  <div className="bg-brutal-bg brutal-border p-4">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-black/50 mb-1">User ID</p>
-                    <p className="font-mono text-[11px] font-bold truncate">{user?.uid || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Credit Economy Explainer */}
-              <div className="brutal-card p-6 bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                <h3 className="font-display text-xl font-bold uppercase mb-6 flex items-center gap-3 border-b-2 border-black pb-3">
-                  <Zap size={20} className="text-brutal-orange" /> Credit Economy Guide
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center bg-brutal-blue/10 p-3 brutal-border">
-                      <span className="font-mono text-xs font-bold uppercase">AI Visual Gen</span>
-                      <span className="font-display font-bold text-lg text-brutal-blue">3 pts</span>
-                    </div>
-                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
-                      Use Gemini 2.5 Flash to generate custom cinematic assets from text prompts.
-                    </p>
-                  </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center bg-brutal-purple/10 p-3 brutal-border">
-                      <span className="font-mono text-xs font-bold uppercase">Trailer Draft</span>
-                      <span className="font-display font-bold text-lg text-brutal-purple">1 pt</span>
-                    </div>
-                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
-                      Compile your scenes, scripts, and media into a full cinematic preview.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center bg-brutal-green/10 p-3 brutal-border">
-                      <span className="font-mono text-xs font-bold uppercase">4K / HD Export</span>
-                      <span className="font-display font-bold text-lg text-brutal-green">2 pts</span>
-                    </div>
-                    <p className="text-[10px] font-mono leading-tight text-black/60 uppercase font-bold">
-                      Render and download high-bitrate WebM or MP4 files for distribution.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="mt-6 bg-black text-white p-4 brutal-border flex items-center gap-4">
-                  <Award size={24} className="text-brutal-yellow" />
-                  <div>
-                    <h4 className="font-display font-bold text-sm uppercase">Loyalty Reward</h4>
-                    <p className="font-mono text-[10px] uppercase font-bold opacity-80">
-                      Vibe Coders receive 5 complementary credits every single day just for showing up.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Credits Balance & Top-up */}
-              <div className="brutal-card p-6">
-                <div className="flex justify-between items-center mb-6 border-b-2 border-black pb-3">
-                  <h3 className="font-display text-xl font-bold uppercase flex items-center gap-3">
-                    <Coins size={20} /> Current Balance
-                  </h3>
-                  <button 
-                    onClick={onShowPricing}
-                    className="brutal-button bg-brutal-orange px-4 py-2 text-xs flex items-center gap-2"
-                  >
-                    <CreditCard size={14} /> Refill Credits
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-brutal-orange brutal-border p-6 text-center">
-                    <p className="font-display text-4xl font-bold">{credits}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Available Credits</p>
-                  </div>
-                  <div className="bg-brutal-green brutal-border p-6 text-center">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <Award size={20} />
-                    </div>
-                    <p className="font-display text-xl font-bold">+5 Daily</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest mt-1">Next Reward in 24h</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notifications */}
-              <div className="brutal-card p-6">
-                <h3 className="font-display text-xl font-bold uppercase mb-6 flex items-center gap-3 border-b-2 border-black pb-3">
-                   Activity Notifications
-                </h3>
-                {notifications.length === 0 ? (
-                  <p className="font-mono text-sm uppercase text-black/50">No notifications yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {notifications.map((msg, idx) => (
-                      <div key={idx} className="bg-white brutal-border p-3 flex items-start gap-3">
-                        <div className="mt-0.5 text-black">
-                           <span className="font-bold">›</span>
+              <div className="lg:col-span-2 space-y-8">
+                {/* Account Details */}
+                <div className="glass-panel p-8 rounded-3xl relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-8 opacity-5">
+                      <UserIcon size={120} />
+                   </div>
+                   <h3 className="text-xl font-display font-bold uppercase mb-8 flex items-center gap-3 text-white">
+                      <UserIcon size={20} className="text-indigo-400" /> Account Identity
+                   </h3>
+                   <div className="grid sm:grid-cols-2 gap-6 relative z-10">
+                      {[
+                        { label: 'Display Name', val: user?.displayName },
+                        { label: 'Email Address', val: user?.email },
+                        { label: 'Login Provider', val: user?.providerData?.[0]?.providerId === 'google.com' ? 'Google' : user?.providerData?.[0]?.providerId },
+                        { label: 'Account Created', val: 'May 12, 2025' }
+                      ].map((field, i) => (
+                        <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5">
+                           <p className="text-[10px] font-bold uppercase text-white/30 tracking-widest mb-1">{field.label}</p>
+                           <p className="font-sans font-bold text-white truncate">{field.val || '—'}</p>
                         </div>
-                        <p className="font-mono text-xs font-bold uppercase">{msg}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                   </div>
+                </div>
+
+                {/* Credit Economy Guide */}
+                <div className="glass-panel p-8 rounded-3xl bg-indigo-600/5 border border-indigo-500/10">
+                   <h3 className="text-xl font-display font-bold uppercase mb-8 flex items-center gap-3">
+                      <Zap size={20} className="text-indigo-400" /> Credit Intelligence
+                   </h3>
+                   <div className="grid md:grid-cols-3 gap-6">
+                      {[
+                        { title: 'AI Synthesis', cost: '3 Pts', color: 'bg-blue-500/10 text-blue-400', desc: 'Craft high-fidelity cinematic assets from text.' },
+                        { title: 'Project Build', cost: '1 Pt', color: 'bg-purple-500/10 text-purple-400', desc: 'Compile scenes and scripts into a master layout.' },
+                        { title: 'Premium Render', cost: '2 Pts', color: 'bg-pink-500/10 text-pink-400', desc: 'High-bitrate 4K production export.' }
+                      ].map((item, i) => (
+                        <div key={i} className="space-y-3">
+                           <div className={`flex justify-between items-center ${item.color} px-4 py-2 rounded-xl font-bold border border-white/5`}>
+                              <span className="text-[10px] uppercase font-bold">{item.title}</span>
+                              <span className="text-sm">{item.cost}</span>
+                           </div>
+                           <p className="text-[10px] text-white/40 font-medium leading-relaxed">{item.desc}</p>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* Balance Card */}
+                <div className="glass-panel p-8 rounded-3xl text-center flex flex-col items-center border border-indigo-500/30 shadow-2xl shadow-indigo-500/10">
+                   <div className="w-16 h-16 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-6">
+                      <Coins size={32} className="text-indigo-400" />
+                   </div>
+                   <h3 className="text-lg font-display font-bold uppercase mb-1 tracking-tight">Available Balance</h3>
+                   <p className="text-5xl font-display font-bold text-white mb-8">{credits}</p>
+                   <button 
+                     onClick={onShowPricing}
+                     className="elite-button w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 group"
+                   >
+                     Get More Credits <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+                   </button>
+                </div>
+
+                {/* Daily Reward Notification */}
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex items-center gap-4">
+                   <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                      <Zap size={20} className="text-indigo-400" />
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Active Reward</p>
+                      <p className="font-sans font-bold text-sm text-white">+5 Credits Applied Today</p>
+                   </div>
+                </div>
+
+                {/* Notifications List */}
+                <div className="glass-panel p-8 rounded-3xl max-h-[400px] overflow-hidden flex flex-col">
+                   <h3 className="text-lg font-display font-bold uppercase mb-6">Activity</h3>
+                   <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
+                      {notifications.length === 0 ? (
+                        <p className="text-[10px] uppercase font-bold text-white/20">No recent activity logs.</p>
+                      ) : (
+                        notifications.map((msg, idx) => (
+                           <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-start gap-3">
+                              <span className="text-indigo-500 font-bold mt-[-2px]">→</span>
+                              <p className="text-[10px] font-bold uppercase text-white/60 leading-tight">{msg}</p>
+                           </div>
+                        ))
+                      )}
+                   </div>
+                </div>
               </div>
             </motion.div>
           )}

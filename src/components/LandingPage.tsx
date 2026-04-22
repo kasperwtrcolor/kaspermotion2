@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from 'motion/react';
-import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard } from 'lucide-react';
+import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard, MousePointer2, ChevronRight } from 'lucide-react';
 import { PricingPlans } from './PricingModal';
 
 interface LandingPageProps {
@@ -9,229 +9,307 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStart, onSelectTier }: LandingPageProps) {
   const { scrollYProgress } = useScroll();
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, -400]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   return (
-    <div className="min-h-screen bg-isometric-grid text-black font-sans selection:bg-brutal-green selection:text-black">
+    <div className="min-h-screen bg-mesh-gradient bg-dot-grid text-white font-sans selection:bg-indigo-500/30">
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 min-h-[90vh]">
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 min-h-[90vh] overflow-hidden">
         <div className="flex-1 z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="inline-block bg-brutal-orange brutal-border px-3 py-1 mb-6 font-mono text-sm font-bold uppercase transform -rotate-2">
-              Cinematic App Showcases
+            <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-xs font-semibold uppercase tracking-wider">
+              <Sparkles size={12} />
+              Elite App Showcases for Designers
             </div>
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-6 uppercase">
-              Showcase <span className="text-brutal-blue" style={{ textShadow: '4px 4px 0 #000' }}>Your App,</span><br />
-              Vibe Coder.
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-8 max-w-3xl">
+              Showcase <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Your Vision.</span>
             </h1>
-            <p className="text-xl sm:text-2xl font-medium mb-10 max-w-2xl border-l-4 border-black pl-4">
-              Turn your screenshots and code into cinematic trailers with AI-driven kinetic motion, depth effects, and elite tech vibes.
+            <p className="text-xl sm:text-2xl font-medium mb-12 max-w-2xl text-white/60 leading-relaxed">
+              Transform your screenshots into cinematic trailers. AI-pioneered kinetic motion, depth of field, and professional studio vibes.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button onClick={onStart} className="brutal-button bg-brutal-green px-8 py-4 text-lg flex items-center justify-center gap-2">
-                Create Now <ArrowRight size={20} />
+            <div className="flex flex-col sm:flex-row gap-5">
+              <button 
+                onClick={onStart} 
+                className="elite-button group px-8 py-4 text-lg rounded-full font-bold flex items-center justify-center gap-2 overflow-hidden"
+              >
+                Start Creating Free
+                <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
+              <button 
+                className="elite-button-secondary px-8 py-4 text-lg rounded-full font-bold flex items-center justify-center gap-2"
+              >
+                <Play size={20} /> Watch Reel
+              </button>
+            </div>
+
+            <div className="mt-12 flex items-center gap-6 text-white/40 font-medium text-sm">
+              <div className="flex -space-x-3">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-gray-800" />
+                ))}
+              </div>
+              <p>Join 2,000+ top designers & developers</p>
             </div>
           </motion.div>
         </div>
 
         <div className="flex-1 relative w-full max-w-lg lg:max-w-none">
+          {/* Main Visual Component representing the product UI */}
           <motion.div 
             style={{ y: y1 }}
-            className="relative z-20 brutal-card bg-brutal-purple p-2 transform rotate-3"
+            className="relative z-20 glass-panel p-2 rounded-2xl shadow-2xl rotate-2 hover:rotate-0 transition-all duration-700"
           >
-            <div className="aspect-video bg-black brutal-border relative overflow-hidden flex items-center justify-center">
-              <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/trailer/800/450')] bg-cover bg-center opacity-80 mix-blend-luminosity"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              <Play size={64} className="text-white relative z-10" />
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                <div className="font-display text-white font-bold text-2xl uppercase">Epic Journey</div>
-                <div className="font-mono text-brutal-green text-sm">00:45</div>
+            <div className="aspect-video bg-[#0c0c0e] rounded-xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/elite-trailer/1200/675')] bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-all">
+                  <Play size={32} className="text-white fill-white ml-1" />
+                </div>
+              </div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex justify-between items-end">
+                   <div>
+                     <p className="text-white/40 font-mono text-[10px] uppercase tracking-widest mb-1">Current Scene</p>
+                     <h3 className="font-display text-white font-bold text-2xl tracking-tight">The Future of Interaction</h3>
+                   </div>
+                   <div className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white font-mono text-xs">
+                     00:45
+                   </div>
+                </div>
               </div>
             </div>
           </motion.div>
 
           <motion.div 
             style={{ y: y2 }}
-            className="absolute -bottom-10 -left-10 z-30 brutal-card bg-brutal-pink p-4 transform -rotate-6 hidden sm:block"
+            className="absolute -bottom-12 -left-12 z-30 glass-panel-light p-4 rounded-2xl -rotate-6 hidden sm:block w-48"
           >
-            <div className="font-mono font-bold text-sm mb-2 uppercase border-b-2 border-black pb-1">Assets</div>
-            <div className="flex gap-2">
-              <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><ImageIcon size={20} /></div>
-              <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><Video size={20} /></div>
-              <div className="w-12 h-12 bg-white brutal-border flex items-center justify-center"><Sparkles size={20} /></div>
+            <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-2">
+              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+              <p className="font-mono text-[10px] font-bold text-white/60 uppercase">Timeline Sync</p>
+            </div>
+            <div className="space-y-2">
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <motion.div animate={{ width: ['0%', '100%', '0%'] }} transition={{ duration: 3, repeat: Infinity }} className="h-full bg-indigo-500" />
+              </div>
+              <div className="h-1.5 w-[80%] bg-white/5 rounded-full" />
+              <div className="h-1.5 w-[60%] bg-white/5 rounded-full" />
             </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="absolute -top-10 -right-10 z-10 brutal-card bg-brutal-blue p-4 transform rotate-12 hidden sm:block"
+            transition={{ delay: 0.4 }}
+            className="absolute -top-12 -right-12 z-10 glass-panel p-4 rounded-2xl rotate-6 hidden sm:block"
           >
-            <div className="font-mono font-bold text-sm uppercase flex items-center gap-2">
-              <Sparkles size={16} /> AI Generated
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                 <Sparkles size={20} className="text-indigo-400" />
+               </div>
+               <div>
+                  <p className="font-display font-bold text-sm">AI Cinematic</p>
+                  <p className="text-[10px] text-white/50">Auto-calculated paths</p>
+               </div>
+             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Bento Grid Features Section */}
+      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">The High-Performance Workflow.</h2>
+          <p className="text-lg text-white/50 max-w-2xl mx-auto">Skip the manual keyframing. Let AI handle the cinematic composition.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[280px]">
+          {/* Step 1 */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-8 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group"
+          >
+            <div className="absolute top-8 left-8">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-indigo-400 mb-4 transition-transform group-hover:scale-110">
+                <ImageIcon size={24} />
+              </div>
+              <h3 className="text-3xl font-display font-bold mb-3">Upload Media.</h3>
+              <p className="text-white/50 max-w-md">Drop your screenshots or let our AI generate visuals from your ideas. Supports high-res PNG, JPG and MP4.</p>
+            </div>
+            <div className="absolute right-[-20px] bottom-[-20px] w-64 h-64 opacity-20 group-hover:opacity-40 transition-opacity">
+               <ImageIcon size={200} className="text-white" />
+            </div>
+          </motion.div>
+
+          {/* Step 2 */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-4 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group border border-purple-500/20"
+          >
+            <div className="absolute top-8 left-8">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 text-purple-400 mb-4">
+                <Type size={24} />
+              </div>
+              <h3 className="text-2xl font-display font-bold mb-3">Add Script.</h3>
+              <p className="text-white/50 text-sm">Captions sync with kinetic motion paths automatically.</p>
+            </div>
+          </motion.div>
+
+          {/* Step 3 */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-4 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group border border-pink-500/20"
+          >
+            <div className="absolute top-8 left-8">
+              <div className="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30 text-pink-400 mb-4">
+                <Layers size={24} />
+              </div>
+              <h3 className="text-2xl font-display font-bold mb-3">Apply Vibes.</h3>
+              <p className="text-white/50 text-sm">Presets for Film Noir, Cyberpunk, and Classic Tech.</p>
+            </div>
+          </motion.div>
+
+          {/* Export Cell */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="md:col-span-8 glass-panel-light p-8 rounded-3xl flex items-center justify-between group overflow-hidden"
+          >
+            <div className="max-w-xs">
+              <h3 className="text-3xl font-display font-bold mb-3">Direct Export.</h3>
+              <p className="text-white/50">Render at 4K 60fps directly in your browser. No server waiting times.</p>
+            </div>
+            <div className="relative">
+               <motion.div 
+                 animate={{ rotate: 360 }}
+                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                 className="w-48 h-48 rounded-full border border-dashed border-white/10 flex items-center justify-center"
+               >
+                 <div className="w-40 h-40 rounded-full border border-dashed border-white/20 flex items-center justify-center">
+                    <Zap size={40} className="text-indigo-400" />
+                 </div>
+               </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 bg-black text-white border-y-4 border-black relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-brutal-blue via-black to-black"></div>
+      {/* Visual Depth Section */}
+      <section className="py-32 bg-white/5 border-y border-white/10 relative overflow-hidden">
+        <div className="absolute inset-0 bg-dot-grid opacity-20"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-display font-bold uppercase tracking-tighter mb-4">How It Works</h2>
-            <p className="text-xl font-mono text-brutal-green">Three simple steps to cinematic glory.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Upload Media",
-                desc: "Drag and drop your images and videos, or generate new ones using our built-in AI image generator.",
-                icon: <ImageIcon size={32} />,
-                color: "bg-brutal-pink"
-              },
-              {
-                step: "02",
-                title: "Write Script",
-                desc: "Add text captions for each scene. Our system automatically synchronizes them with smooth kinetic motion paths.",
-                icon: <Type size={32} />,
-                color: "bg-brutal-blue"
-              },
-              {
-                step: "03",
-                title: "Apply Style",
-                desc: "Choose from cinematic presets, add 3D camera movements, film grain, and dynamic transitions.",
-                icon: <Layers size={32} />,
-                color: "bg-brutal-orange"
-              }
-            ].map((feature, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ delay: i * 0.2 }}
-                className="bg-white text-black brutal-border p-6 relative group hover:-translate-y-2 transition-transform duration-300"
-              >
-                <div className={`absolute -top-4 -right-4 w-12 h-12 ${feature.color} brutal-border flex items-center justify-center font-mono font-bold text-xl transform rotate-12 group-hover:rotate-0 transition-transform`}>
-                  {feature.step}
+          <div className="grid lg:grid-cols-2 items-center gap-24">
+             <div>
+                <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-8">
+                   Unrivaled <br/>
+                   <span className="text-indigo-400 underline decoration-indigo-500/30 underline-offset-8 italic">Visual Depth.</span>
+                </h2>
+                <div className="space-y-8">
+                   {[
+                     { icon: <MousePointer2 className="text-indigo-400" />, title: "3D Parallax Control", desc: "Layers react to virtual lens movement for a true 3D feel." },
+                     { icon: <Sparkles className="text-purple-400" />, title: "Cinematic Overlays", desc: "Film grain, dust particles, and organic light leaks." },
+                     { icon: <Zap className="text-pink-400" />, title: "Kinetic Synthesis", desc: "Text and media move in perfect harmony with 0 effort." }
+                   ].map((item, idx) => (
+                     <div key={idx} className="flex gap-4">
+                        <div className="mt-1">{item.icon}</div>
+                        <div>
+                           <h4 className="font-bold text-lg">{item.title}</h4>
+                           <p className="text-white/50">{item.desc}</p>
+                        </div>
+                     </div>
+                   ))}
                 </div>
-                <div className="mb-6 border-b-2 border-black pb-4 inline-block">
-                  {feature.icon}
-                </div>
-                <h3 className="text-2xl font-display font-bold uppercase mb-3">{feature.title}</h3>
-                <p className="font-medium text-gray-700">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+             </div>
 
-      {/* Interactive Demo Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1">
-            <h2 className="text-5xl md:text-6xl font-display font-bold uppercase tracking-tighter mb-6">
-              Cinematic <br/>
-              <span className="bg-brutal-green px-2 brutal-border inline-block transform -rotate-2 mt-2">Effects</span>
-            </h2>
-            <p className="text-xl font-medium mb-8">
-              Go beyond basic screen recordings. VibeTrailer adds real 3D camera movements, depth of field, chromatic aberration, and motion blur to make your app look like a masterpiece.
-            </p>
-            <ul className="space-y-4 font-mono font-bold uppercase text-sm">
-              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-purple brutal-border"></div> 3D Parallax & Depth</li>
-              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-orange brutal-border"></div> Dynamic Text Animations</li>
-              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-blue brutal-border"></div> Film Grain & Vignette</li>
-              <li className="flex items-center gap-3"><div className="w-4 h-4 bg-brutal-pink brutal-border"></div> Kinetic-synced Transitions</li>
-            </ul>
-          </div>
-          <div className="flex-1 w-full">
-            <div className="brutal-card bg-white p-4 transform rotate-2">
-              <div className="border-2 border-black bg-gray-100 aspect-video relative overflow-hidden">
-                {/* Simulated 3D effect */}
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    rotateZ: [0, 2, -2, 0],
-                  }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 bg-[url('https://picsum.photos/seed/cinematic/800/450')] bg-cover bg-center"
-                />
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-                <motion.div 
-                  animate={{ 
-                    y: [50, 0, 0, -50],
-                    opacity: [0, 1, 1, 0]
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, times: [0, 0.2, 0.8, 1] }}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  <h3 className="text-5xl font-display font-bold text-white uppercase tracking-widest" style={{ textShadow: '2px 2px 0 #000, -2px -2px 0 #ff00ff, 2px -2px 0 #00ffff' }}>
-                    Cyberpunk
-                  </h3>
-                </motion.div>
-              </div>
-              <div className="mt-4 flex justify-between items-center font-mono text-xs font-bold uppercase">
-                <span>Effect: Glitch</span>
-                <span>Camera: Dolly Zoom</span>
-              </div>
-            </div>
+             <div className="relative">
+                <div className="glass-panel p-4 rounded-2xl aspect-video overflow-hidden group">
+                   <motion.div 
+                     animate={{ scale: [1, 1.1, 1], rotate: [0, 1, -1, 0] }}
+                     transition={{ duration: 15, repeat: Infinity }}
+                     className="absolute inset-0 bg-[url('https://picsum.photos/seed/design/1000/600')] bg-cover bg-center rounded-xl overflow-hidden"
+                   />
+                   <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <p className="font-mono text-xs uppercase tracking-widest bg-black/60 px-4 py-2 rounded-full border border-white/10">Rendering Engine active</p>
+                   </div>
+                </div>
+                {/* Decorative floating UI */}
+                <div className="absolute -top-6 -right-6 glass-panel-light px-4 py-2 rounded-full font-mono text-[10px] text-white/60">
+                   SHDR_CORE_v2
+                </div>
+             </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-4 border-black">
-        <div className="text-center mb-16">
-          <div className="inline-block bg-brutal-orange brutal-border px-4 py-1.5 mb-6 font-mono text-sm font-bold uppercase transform -rotate-2">
-            Pricing Plans
-          </div>
-          <h2 className="text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter mb-4">Choose Your Vibe</h2>
-          <p className="text-xl font-mono text-black/60 font-bold uppercase">No subscriptions. Pay as you go.</p>
+      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center mb-20">
+          <p className="text-indigo-400 font-mono text-sm font-bold uppercase tracking-[0.2em] mb-4">Pricing</p>
+          <h2 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-6">Built for results.</h2>
+          <p className="text-xl text-white/50 font-medium">Simple credit-based usage. No monthly recurring fees.</p>
         </div>
 
         <PricingPlans onSelect={onSelectTier} />
         
-        <div className="mt-16 bg-white brutal-border p-8 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 bg-brutal-green brutal-border flex items-center justify-center shrink-0">
-              <CreditCard size={32} />
+        <motion.div 
+          whileHover={{ scale: 1.01 }}
+          className="mt-20 glass-panel p-10 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent pointer-events-none" />
+          <div className="flex items-center gap-8 relative z-10">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+              <CreditCard size={32} className="text-white/60" />
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold uppercase">Enterprise & Custom</h3>
-              <p className="font-mono text-sm font-bold uppercase text-black/60">Need more than 500 credits per month or custom cinematic presets? We've got you.</p>
+              <h3 className="font-display text-2xl font-bold">Enterprise Handoff</h3>
+              <p className="text-white/50 text-sm max-w-md">Custom cinematic preset development and bulk credit packages for agencies.</p>
             </div>
           </div>
-          <button onClick={onStart} className="brutal-button bg-black text-white px-8 py-4 text-lg">
+          <button onClick={onStart} className="elite-button-secondary px-8 py-4 rounded-full font-bold relative z-10">
             Contact Support
+          </button>
+        </motion.div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-indigo-600/10 pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
+          <h2 className="text-6xl md:text-8xl font-display font-bold tracking-tighter mb-12">
+            Make the UI <br/> 
+            <span className="text-indigo-400 italic">breathe.</span>
+          </h2>
+          <button 
+            onClick={onStart} 
+            className="elite-button group px-12 py-6 text-2xl rounded-full font-bold inline-flex items-center gap-4"
+          >
+            <Zap size={32} fill="white" /> 
+            Start Crafting Now
           </button>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-brutal-purple border-t-4 border-black text-center px-4">
-        <h2 className="text-5xl md:text-7xl font-display font-bold uppercase tracking-tighter mb-8 max-w-4xl mx-auto">
-          Ready to make your masterpiece?
-        </h2>
-        <button onClick={onStart} className="brutal-button bg-brutal-green px-12 py-6 text-2xl inline-flex items-center gap-4 hover:scale-105">
-          <Zap size={32} /> Start Creating Now
-        </button>
-      </section>
-
       {/* Footer */}
-      <footer className="bg-black text-white py-8 border-t-4 border-black text-center font-mono text-sm uppercase">
-        <p>© {new Date().getFullYear()} VibeTrailer. All rights reserved.</p>
+      <footer className="py-20 border-t border-white/5 bg-[#09090b]">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
+           <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-indigo-500" />
+              <span className="font-display font-bold text-lg">vibetrailer</span>
+           </div>
+           <div className="flex gap-8 text-white/40 text-sm font-medium">
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <a href="#" className="hover:text-white transition-colors">Twitter</a>
+           </div>
+           <p className="text-white/20 text-xs font-mono">© {new Date().getFullYear()} VibeTrailer. Built for the modern web.</p>
+        </div>
       </footer>
     </div>
   );

@@ -72,7 +72,7 @@ export default function AppHeader({
         initial={{ y: -80 }}
         animate={{ y: headerVisible ? 0 : -80 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed top-0 left-0 right-0 z-[500] bg-brutal-bg/95 backdrop-blur-md border-b-2 border-black"
+        className="fixed top-0 left-0 right-0 z-[500] glass-panel border-b border-white/10"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           {/* Logo */}
@@ -80,7 +80,7 @@ export default function AppHeader({
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-2 group"
           >
-            <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center overflow-hidden group-hover:rotate-12 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform shadow-lg shadow-indigo-500/20">
               <img
                 src="/logo.png"
                 alt="VibeTrailer Logo"
@@ -91,8 +91,8 @@ export default function AppHeader({
                 }}
               />
             </div>
-            <span className="font-display font-bold text-lg tracking-tight uppercase hidden sm:inline">
-              VibeTrailer
+            <span className="font-display font-bold text-lg tracking-tight lowercase hidden sm:inline text-white">
+              vibe<span className="text-indigo-400">trailer</span>
             </span>
           </button>
 
@@ -102,28 +102,28 @@ export default function AppHeader({
               <>
                 <button
                   onClick={onExport}
-                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-pink hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full bg-white text-black hover:bg-gray-100 transition-all active:scale-95 shadow-lg shadow-white/10"
                 >
                   <Video size={14} />
                   Export
                 </button>
                 <button
                   onClick={onStudio}
-                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
                 >
                   Studio
                 </button>
                 <button
                   onClick={onResetCamera}
-                  className="p-2 brutal-border bg-brutal-blue hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="p-2 rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
                   title="Reset Camera"
                 >
                   <RefreshCcw size={14} />
                 </button>
-                <div className="w-px h-6 bg-black mx-2" />
+                <div className="w-px h-6 bg-white/10 mx-2" />
                 <button
                   onClick={onNewProject}
-                  className="px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all active:scale-95"
                 >
                   <Plus size={14} />
                   New
@@ -141,11 +141,11 @@ export default function AppHeader({
                         onNavigate(item.id);
                         setMobileMenuOpen(false);
                       }}
-                      className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ${
-                        isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-200' :
+                      className={`px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full transition-all active:scale-95 ${
+                        isDisabled ? 'opacity-30 cursor-not-allowed' :
                         appMode === item.id
-                          ? 'bg-brutal-blue translate-x-0.5 translate-y-0.5 shadow-none'
-                          : 'bg-white hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                          ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
                     >
                       {item.icon}
@@ -156,8 +156,8 @@ export default function AppHeader({
                 <button
                   onClick={onNewProject}
                   disabled={!user}
-                  className={`px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 brutal-border transition-all ml-1 ${
-                    !user ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-brutal-green hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                  className={`px-4 py-2 font-sans text-xs font-bold flex items-center gap-2 rounded-full transition-all ml-1 ${
+                    !user ? 'opacity-30 cursor-not-allowed' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
                   }`}
                 >
                   <Plus size={14} />
@@ -171,20 +171,20 @@ export default function AppHeader({
           <div className="flex items-center gap-2">
             {/* Credits Badge */}
             {user && (
-              <div className="flex items-center">
+              <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/5 border border-white/10">
                 <button
                   onClick={() => onNavigate('profile')}
-                  className="flex items-center gap-1.5 bg-brutal-orange brutal-border px-3 py-1.5 hover:bg-white transition-colors h-9"
+                  className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/5 rounded-full transition-colors h-8"
                 >
-                  <Coins size={14} />
-                  <span className="font-mono text-xs font-bold">{credits}</span>
+                  <Coins size={12} className="text-indigo-400" />
+                  <span className="font-sans text-xs font-bold text-white">{credits}</span>
                 </button>
                 <button
                   onClick={onRefill}
-                  className="bg-brutal-pink brutal-border p-1.5 h-9 w-9 flex items-center justify-center hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ml-[-2px]"
+                  className="bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-white"
                   title="Buy Credits"
                 >
-                  <Plus size={16} />
+                  <Plus size={12} />
                 </button>
               </div>
             )}
@@ -194,7 +194,7 @@ export default function AppHeader({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onNavigate('profile')}
-                  className="w-8 h-8 brutal-border overflow-hidden hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="w-8 h-8 rounded-full border border-white/20 overflow-hidden hover:scale-110 transition-all shadow-lg"
                 >
                   <img
                     src={user.photoURL || ''}
@@ -204,7 +204,7 @@ export default function AppHeader({
                 </button>
                 <button
                   onClick={onLogout}
-                  className="hidden md:flex p-2 brutal-border bg-white hover:bg-brutal-pink hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="hidden md:flex p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
                   title="Sign Out"
                 >
                   <LogOut size={14} />
@@ -213,7 +213,7 @@ export default function AppHeader({
             ) : (
               <button
                 onClick={onLogin}
-                className="brutal-button bg-brutal-green px-4 py-1.5 text-xs flex items-center gap-2"
+                className="elite-button h-9 px-4 text-xs flex items-center gap-2 rounded-full"
               >
                 <UserIcon size={14} /> Sign In
               </button>
@@ -222,7 +222,7 @@ export default function AppHeader({
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 brutal-border bg-white hover:bg-gray-100 transition-colors"
+              className="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white"
             >
               {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -265,7 +265,7 @@ export default function AppHeader({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-14 right-0 bottom-0 w-64 bg-brutal-bg brutal-border border-t-0 z-[500] md:hidden flex flex-col p-4 gap-2 shadow-[-8px_0_0_0_rgba(0,0,0,1)]"
+              className="fixed top-14 right-0 bottom-0 w-64 glass-panel border-l-0 z-[500] md:hidden flex flex-col p-4 gap-2"
             >
               {navItems.map((item) => {
                 const isDisabled = !user && (item.id === 'setup' || item.id === 'profile');
@@ -277,11 +277,11 @@ export default function AppHeader({
                       onNavigate(item.id);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border transition-all ${
-                      isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-200' :
+                    className={`w-full px-4 py-3 font-sans text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${
+                      isDisabled ? 'opacity-30 cursor-not-allowed' :
                       appMode === item.id
-                        ? 'bg-brutal-blue'
-                        : 'bg-white hover:bg-gray-50'
+                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                        : 'bg-white/5 text-white/70 hover:bg-white/10'
                     }`}
                   >
                     {item.icon}
@@ -296,8 +296,8 @@ export default function AppHeader({
                   setMobileMenuOpen(false);
                 }}
                 disabled={!user}
-                className={`w-full px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider flex items-center gap-3 brutal-border ${
-                  !user ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-brutal-green'
+                className={`w-full px-4 py-3 font-sans text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${
+                  !user ? 'opacity-30 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-100'
                 }`}
               >
                 <Plus size={16} />
@@ -305,18 +305,18 @@ export default function AppHeader({
               </button>
 
               {user && (
-                <div className="mt-auto pt-4 border-t-2 border-black">
+                <div className="mt-auto pt-4 border-t border-white/10">
                   <div className="flex items-center gap-3 mb-3">
                     <img
                       src={user.photoURL || ''}
-                      className="w-10 h-10 brutal-border object-cover"
+                      className="w-10 h-10 rounded-full border border-white/20 object-cover"
                       alt="Profile"
                     />
                     <div>
-                      <p className="font-mono text-xs font-bold uppercase truncate max-w-[140px]">
+                      <p className="font-sans text-xs font-bold text-white truncate max-w-[140px]">
                         {user.displayName}
                       </p>
-                      <p className="font-mono text-[10px] text-black/60">
+                      <p className="font-sans text-[10px] text-white/50">
                         {credits} credits
                       </p>
                     </div>
@@ -326,7 +326,7 @@ export default function AppHeader({
                       onLogout();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full px-4 py-2 font-mono text-xs font-bold uppercase flex items-center gap-2 brutal-border bg-brutal-pink"
+                    className="w-full px-4 py-2 font-sans text-xs font-bold flex items-center gap-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20"
                   >
                     <LogOut size={14} /> Sign Out
                   </button>

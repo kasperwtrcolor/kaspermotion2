@@ -6,6 +6,8 @@
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Retaining creative fonts for video content only */
   --font-archivo: "Archivo Black", sans-serif;
   --font-bebas: "Bebas Neue", cursive;
   --font-outfit: "Outfit", sans-serif;
@@ -22,173 +24,101 @@
   --font-space-tech: "Space Grotesk", sans-serif;
   --font-bangers: "Bangers", system-ui;
 
-  --color-brutal-bg: #f4f4f0;
-  --color-brutal-black: #000000;
-  --color-brutal-white: #ffffff;
-  --color-brutal-green: #a7f3d0;
-  --color-brutal-blue: #bfdbfe;
-  --color-brutal-purple: #ddd6fe;
-  --color-brutal-orange: #fed7aa;
-  --color-brutal-pink: #fbcfe8;
+  /* Elite Dark Palette */
+  --color-elite-bg: #09090b;
+  --color-elite-surface: #18181b;
+  --color-elite-border: rgba(255, 255, 255, 0.1);
+  --color-elite-accent: #6366f1;
+  --color-elite-text: #fafafa;
+  --color-elite-text-muted: #a1a1aa;
 }
 
 body {
-  background-color: var(--color-brutal-bg);
-  color: var(--color-brutal-black);
+  background-color: var(--color-elite-bg);
+  color: var(--color-elite-text);
+  font-family: var(--font-sans);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Isometric Grid Background */
-.bg-isometric-grid {
-  background-color: var(--color-brutal-bg);
-  background-image: 
-    linear-gradient(30deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
-    linear-gradient(150deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
-    linear-gradient(30deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
-    linear-gradient(150deg, #e5e5e5 12%, transparent 12.5%, transparent 87%, #e5e5e5 87.5%, #e5e5e5),
-    linear-gradient(60deg, #e5e5e577 25%, transparent 25.5%, transparent 75%, #e5e5e577 75%, #e5e5e577),
-    linear-gradient(60deg, #e5e5e577 25%, transparent 25.5%, transparent 75%, #e5e5e577 75%, #e5e5e577);
-  background-size: 80px 140px;
-  background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(24, 24, 27, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-/* Brutalist Utilities */
-.brutal-border {
-  border: 2px solid var(--color-brutal-black);
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.brutal-shadow {
-  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+/* Elite Action Components */
+.elite-button {
+  @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
+  background: var(--color-elite-accent);
+  color: white;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
-.brutal-shadow:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px var(--color-brutal-black);
+.elite-button:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
 }
 
-.brutal-shadow-sm {
-  box-shadow: 2px 2px 0px 0px var(--color-brutal-black);
+.elite-button-secondary {
+  @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 border border-white/10 active:scale-95;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
 }
 
-.brutal-shadow-lg {
-  box-shadow: 8px 8px 0px 0px var(--color-brutal-black);
+.elite-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.brutal-card {
-  background-color: var(--color-brutal-white);
-  border: 2px solid var(--color-brutal-black);
-  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
+.elite-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white transition-all duration-200 outline-none;
 }
 
-.brutal-button {
-  background-color: var(--color-brutal-white);
-  border: 2px solid var(--color-brutal-black);
-  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  transition: all 0.1s ease;
+.elite-input:focus {
+  @apply border-indigo-500/50 ring-1 ring-indigo-500/20 bg-white/10;
 }
 
-.brutal-button:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
+/* Texture & Gradients */
+.bg-mesh-gradient {
+  background: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+  background-color: var(--color-elite-bg);
 }
 
-.brutal-button:active {
-  transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px 0px var(--color-brutal-black);
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
-.brutal-input {
-  background-color: var(--color-brutal-white);
-  border: 2px solid var(--color-brutal-black);
-  box-shadow: 4px 4px 0px 0px var(--color-brutal-black);
-  transition: all 0.2s ease;
-}
+/* Legacy Brutalist Compatibility (Mapped to Elite) */
+.brutal-border { border: 1px solid rgba(255, 255, 255, 0.1); }
+.brutal-shadow { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
+.brutal-card { @apply glass-panel rounded-xl; }
+.brutal-button { @apply elite-button; }
+.brutal-input { @apply elite-input; }
+.bg-brutal-bg { background-color: var(--color-elite-bg); }
+.bg-brutal-purple { background-color: #7c3aed; }
+.bg-brutal-blue { background-color: #2563eb; }
+.bg-brutal-green { background-color: #059669; }
+.bg-brutal-orange { background-color: #d97706; }
+.bg-brutal-pink { background-color: #db2777; }
 
-.brutal-input:focus {
-  outline: none;
-  box-shadow: 6px 6px 0px 0px var(--color-brutal-black);
-  transform: translate(-2px, -2px);
-}
-
-.bg-vibrant-glow {
-  background-color: #0ea5e9;
-  background-image: 
-    radial-gradient(at 0% 0%, #3b82f6 0px, transparent 50%),
-    radial-gradient(at 100% 0%, #8b5cf6 0px, transparent 50%),
-    radial-gradient(at 100% 100%, #10b981 0px, transparent 50%),
-    radial-gradient(at 0% 100%, #f43f5e 0px, transparent 50%);
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes spin-reverse {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
-
-@keyframes pulse-opacity {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes dash-flow {
-  from { background-position: 0 0; }
-  to { background-position: -40px 0; }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 20s linear infinite;
-}
-
-.animate-spin-reverse {
-  animation: spin-reverse 15s linear infinite;
-}
-
-.animate-pulse-opacity {
-  animation: pulse-opacity 4s ease-in-out infinite;
-}
-
-.animate-dash-flow {
-  animation: dash-flow 1s linear infinite;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--color-brutal-bg);
-  border-left: 2px solid var(--color-brutal-black);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-brutal-black);
-  border: 2px solid var(--color-brutal-black);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #333;
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animate-gradient-slow {
-  background-size: 200% 200%;
-  animation: gradient-shift 15s ease infinite;
-}
-
+/* Keep specific functional styles */
 .neon-path {
   position: absolute;
   height: 4px;
@@ -223,7 +153,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
+  backdrop-filter: blur(20px);
   pointer-events: none;
 }
 
@@ -231,6 +162,23 @@ body {
   font-size: 12rem;
   font-weight: 900;
   color: white;
-  font-family: 'Space Grotesk', sans-serif;
-  text-shadow: 0 0 80px rgba(255,255,255,0.3);
+  font-family: var(--font-display);
+  text-shadow: 0 0 80px rgba(99, 102, 241, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-elite-bg);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

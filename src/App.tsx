@@ -3039,18 +3039,18 @@ export default function App() {
 
     if (appMode === 'setup') {
       return (
-        <div className="min-h-screen bg-isometric-grid text-black font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-16 overflow-y-auto">
-          <div className="w-full max-w-3xl brutal-card p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
+        <div className="min-h-screen bg-mesh-gradient bg-dot-grid text-white font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-16 overflow-y-auto">
+          <div className="w-full max-w-3xl glass-panel p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
             <AnimatePresence>
               {(isUploading || isSaving) && (
                 <motion.div 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 bg-brutal-blue/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl md:rounded-3xl brutal-border"
+                  className="absolute inset-0 z-50 bg-indigo-600/90 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl md:rounded-3xl border border-white/20"
                 >
-                  <div className="w-16 h-16 border-8 border-black border-t-brutal-pink rounded-full animate-spin mb-6"></div>
-                  <p className="text-black font-display font-bold uppercase text-xl bg-white px-4 py-2 brutal-border">
+                  <div className="w-16 h-16 border-4 border-white/10 border-t-white rounded-full animate-spin mb-6"></div>
+                  <p className="text-white font-display font-bold uppercase text-xl px-4 py-2">
                     {isUploading && "Uploading assets..."}
                     {isSaving && "Saving project..."}
                   </p>
@@ -3058,16 +3058,16 @@ export default function App() {
               )}
             </AnimatePresence>
             
-            <div className="flex items-center justify-between mb-8 md:mb-12 border-b-4 border-black pb-4">
+            <div className="flex items-center justify-between mb-8 md:mb-12 border-b border-white/10 pb-6">
               <div>
-                <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tighter uppercase mb-1">Create Trailer</h1>
-                <p className="text-black font-mono text-xs md:text-sm font-bold bg-brutal-green inline-block px-2 py-1 brutal-border transform -rotate-2">Step {setupStep} of 4</p>
+                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tighter uppercase mb-2 text-white">Create Trailer</h1>
+                <p className="text-white font-mono text-xs md:text-sm font-bold bg-white/10 inline-block px-3 py-1 rounded-full border border-white/10 mb-4">Step {setupStep} of 4</p>
               </div>
               <div className="flex gap-2">
                 {[1, 2, 3, 4].map(step => (
                   <div 
                     key={step} 
-                    className={`w-4 h-4 brutal-border transition-colors ${setupStep >= step ? 'bg-black' : 'bg-white'}`} 
+                    className={`w-6 h-1.5 rounded-full transition-all duration-300 ${setupStep >= step ? 'bg-indigo-500 shadow-lg shadow-indigo-500/30' : 'bg-white/10'}`} 
                   />
                 ))}
               </div>
@@ -3076,31 +3076,31 @@ export default function App() {
           {setupStep === 1 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-brutal-blue brutal-border flex items-center justify-center"><ImageIcon size={16} /></div> Step 1: Add Media
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400"><ImageIcon size={20} /></div> Step 1: Add Media
               </h2>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 {mediaFiles.map((item, i) => (
-                  <div key={i} className="relative aspect-square bg-white brutal-border overflow-hidden group">
+                  <div key={i} className="relative aspect-square glass-panel overflow-hidden group rounded-xl border border-white/10">
                     <MediaThumbnail item={item} />
                     <button 
                       onClick={() => removeFile(i)}
-                      className="absolute top-2 right-2 bg-brutal-pink brutal-border p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+                      className="absolute top-2 right-2 bg-red-500/80 backdrop-blur-md text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
                     >
-                      <X size={14} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 ))}
                 
                 <div className="flex flex-col gap-2">
-                  <label className="flex-1 aspect-square bg-brutal-orange/20 hover:bg-brutal-orange/40 border-2 border-black border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors text-black">
+                  <label className="flex-1 aspect-square glass-panel bg-white/5 hover:bg-white/10 border-2 border-white/10 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all text-white/40 hover:text-white">
                     <Upload size={24} className="mb-2" />
-                    <span className="text-xs uppercase font-mono font-bold">Upload</span>
+                    <span className="text-xs uppercase font-sans font-bold tracking-wider">Upload</span>
                     <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleFileUpload} />
                   </label>
                   <button 
                     onClick={() => setShowLibrary(true)}
-                    className="brutal-button bg-brutal-purple h-10 flex items-center justify-center gap-2 text-xs"
+                    className="elite-button h-10 flex items-center justify-center gap-2 text-xs rounded-lg"
                   >
                     <History size={14} /> Library
                   </button>
@@ -3114,7 +3114,7 @@ export default function App() {
                   <input 
                     type="text" 
                     placeholder="e.g. KasperMotion" 
-                    className="brutal-input w-full py-4 pl-12 pr-6 text-lg font-bold bg-white"
+                    className="elite-input w-full py-4 pl-12 pr-6 text-lg font-bold bg-white/5"
                     value={websiteSiteName}
                     onChange={(e) => setWebsiteSiteName(e.target.value)}
                   />
@@ -3127,7 +3127,7 @@ export default function App() {
               <div className="flex justify-end mt-8">
                 <button 
                   onClick={() => setSetupStep(2)}
-                  className="brutal-button bg-brutal-orange px-10 py-4 text-xl flex items-center gap-3 transition-all hover:translate-x-1"
+                  className="elite-button px-10 py-4 text-xl flex items-center gap-3 rounded-full"
                 >
                   Next: Add Caption <ArrowRight size={24} />
                 </button>
@@ -3145,13 +3145,13 @@ export default function App() {
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.9, opacity: 0 }}
-                      className="bg-white brutal-border w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+                      className="glass-panel w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl rounded-3xl"
                     >
-                      <div className="p-6 border-b-4 border-black flex items-center justify-between bg-brutal-blue">
-                        <h3 className="text-2xl font-display font-bold uppercase flex items-center gap-3 text-black">
+                      <div className="p-6 border-b border-white/10 flex items-center justify-between bg-indigo-600/50 backdrop-blur-md">
+                        <h3 className="text-2xl font-display font-bold uppercase flex items-center gap-3 text-white">
                           <History size={24} /> Your Asset Library
                         </h3>
-                        <button onClick={() => setShowLibrary(false)} className="p-2 hover:bg-black/10 transition-colors text-black">
+                        <button onClick={() => setShowLibrary(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors text-white">
                           <X size={24} />
                         </button>
                       </div>
@@ -3231,18 +3231,18 @@ export default function App() {
           {setupStep === 2 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-brutal-green brutal-border flex items-center justify-center"><FileText size={16} /></div> Step 2: Add Script
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400"><FileText size={20} /></div> Step 2: Add Script
               </h2>
               
-              <div className="mb-6 bg-brutal-pink/20 brutal-border p-4">
-                <label className="block text-sm font-mono font-bold uppercase mb-2">AI URL Scraper (Optional)</label>
-                <div className="flex flex-col md:flex-row gap-2">
+              <div className="mb-6 bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-6">
+                <label className="block text-xs font-bold uppercase tracking-wider mb-3 text-white/50">AI URL Scraper (Optional)</label>
+                <div className="flex flex-col md:flex-row gap-3">
                   <div className="relative flex-1">
-                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" size={14} />
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                     <input 
                       type="url" 
                       placeholder="https://example.com/article" 
-                      className="brutal-input w-full py-2 pl-10 pr-4 text-sm"
+                      className="elite-input w-full py-3 pl-10 pr-4 text-sm bg-white/5"
                       value={scrapeUrl}
                       onChange={(e) => setScrapeUrl(e.target.value)}
                     />
@@ -3250,32 +3250,32 @@ export default function App() {
                   <button 
                     onClick={handleScrape}
                     disabled={isScraping || !scrapeUrl}
-                    className="brutal-button bg-brutal-purple px-4 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="elite-button px-6 py-2 text-sm flex items-center justify-center gap-2 rounded-xl disabled:opacity-50"
                   >
-                    {isScraping ? <Loader2 size={14} className="animate-spin" /> : 'Fetch Content'}
+                    {isScraping ? <Loader2 size={18} className="animate-spin" /> : 'Fetch Content'}
                   </button>
                 </div>
               </div>
 
-              <p className="text-black/70 text-sm mb-4 font-medium">Each line of text will be displayed as a caption for the corresponding media file.</p>
+              <p className="text-white/50 text-sm mb-4 font-medium">Each line of text will be displayed as a caption for the corresponding media file.</p>
               
               <textarea
-                className="brutal-input w-full p-6 font-mono text-sm resize-none h-48 mb-4"
+                className="elite-input w-full p-6 font-sans text-sm resize-none h-48 mb-6 bg-white/5"
                 placeholder="Line 1: Welcome to the presentation&#10;Line 2: Here is our first product&#10;Line 3: Notice the sleek design..."
                 value={scriptText}
                 onChange={(e) => handleScriptChange(e.target.value)}
               />
 
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-between mt-10">
                 <button 
                   onClick={() => setSetupStep(1)}
-                  className="brutal-button bg-white px-6 py-3"
+                  className="px-8 py-3 font-bold text-white/60 hover:text-white transition-colors"
                 >
                   Back
                 </button>
                 <button 
                   onClick={handleGoToMapping}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
+                  className="elite-button px-10 py-3 text-lg flex items-center gap-2 rounded-full"
                 >
                   Next <ArrowRight size={18} />
                 </button>
@@ -3286,23 +3286,23 @@ export default function App() {
           {setupStep === 3 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
               <h2 className="text-2xl font-display font-bold uppercase mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 bg-brutal-purple brutal-border flex items-center justify-center"><LinkIcon size={16} /></div> Step 3: Link Media to Text
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400"><LinkIcon size={20} /></div> Step 3: Link Media to Text
               </h2>
               
-              <div className="space-y-3 mb-8 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-4 mb-8 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
                 {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
-                  <div key={idx} className="flex flex-col md:flex-row gap-3 bg-white brutal-border p-3">
-                    <div className="flex-1 text-sm text-black font-medium flex items-center">
-                      <span className="bg-brutal-blue brutal-border text-black px-2 py-0.5 font-mono font-bold text-xs mr-3">{idx + 1}</span>
+                  <div key={idx} className="flex flex-col md:flex-row gap-4 glass-panel p-5 rounded-2xl border border-white/5">
+                    <div className="flex-1 text-sm text-white/80 font-medium flex items-center">
+                      <span className="bg-indigo-500 text-white w-7 h-7 flex items-center justify-center rounded-lg font-bold text-xs mr-4 shrink-0 shadow-lg shadow-indigo-500/20">{idx + 1}</span>
                       {line}
                     </div>
-                    <div className="flex items-center gap-3 md:w-1/3">
-                      <label className="flex items-center gap-2 text-xs font-mono font-bold uppercase whitespace-nowrap cursor-pointer">
+                    <div className="flex items-center gap-4 md:w-1/3">
+                      <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/40 whitespace-nowrap cursor-pointer hover:text-white transition-colors">
                         <input 
                           type="checkbox" 
                           checked={textOnlyLines.has(idx)}
                           onChange={() => toggleTextOnly(idx)}
-                          className="w-4 h-4 border-2 border-black rounded-none text-brutal-blue focus:ring-0 focus:ring-offset-0"
+                          className="w-4 h-4 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/20"
                         />
                         Text Only
                       </label>
@@ -3311,11 +3311,11 @@ export default function App() {
                         <select
                           value={mediaMapping[idx] || ''}
                           onChange={(e) => setMediaMapping(prev => ({ ...prev, [idx]: e.target.value }))}
-                          className="brutal-input flex-1 px-2 py-1.5 text-xs font-mono"
+                          className="elite-input flex-1 px-3 py-2 text-xs bg-white/5 border border-white/10"
                         >
                           <option value="">Select Media...</option>
                           {mediaFiles.map(m => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
+                            <option key={m.id} value={m.id} className="bg-zinc-900">{m.name}</option>
                           ))}
                         </select>
                       )}
@@ -3324,16 +3324,16 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-between mt-10">
                 <button 
                   onClick={() => setSetupStep(2)}
-                  className="brutal-button bg-white px-6 py-3"
+                  className="px-8 py-3 font-bold text-white/60 hover:text-white transition-colors"
                 >
                   Back
                 </button>
                 <button 
                   onClick={() => setSetupStep(4)}
-                  className="brutal-button bg-brutal-orange px-8 py-3 text-lg flex items-center gap-2"
+                  className="elite-button px-10 py-3 text-lg flex items-center gap-2 rounded-full"
                 >
                   Next <ArrowRight size={18} />
                 </button>
@@ -3342,20 +3342,21 @@ export default function App() {
           )}
 
           {setupStep === 4 && (
+          {setupStep === 4 && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="py-2 md:py-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-brutal-green brutal-border flex items-center justify-center mx-auto mb-4 transform -rotate-6">
-                <CheckCircle2 size={24} className="md:w-8 md:h-8 text-black" />
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-6 text-indigo-400">
+                <Sparkles size={32} />
               </div>
-              <h2 className="text-3xl md:text-5xl font-display font-bold uppercase mb-1 md:mb-2 text-center tracking-tighter text-black">Style & Generate</h2>
-              <p className="text-black/70 font-mono font-bold uppercase mb-6 md:mb-8 text-center text-xs md:text-sm">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
+              <h2 className="text-3xl md:text-5xl font-display font-bold mb-2 text-center tracking-tight text-white uppercase">Finalize & Preview</h2>
+              <p className="text-white/40 font-mono text-[10px] uppercase tracking-[0.2em] mb-10 text-center font-bold">Loaded {mediaFiles.length} media files and {scriptText.split('\n').filter(l => l.trim()).length} script lines.</p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Typography Style</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div className="glass-panel p-6 rounded-2xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-indigo-400">Typography System</h3>
                   <select 
                     value={fontFamily}
                     onChange={(e) => setFontFamily(e.target.value as FontFamily)}
-                    className="w-full brutal-input px-3 py-3 text-sm font-bold uppercase transition-all"
+                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
                   >
                     {[
                       { val: 'font-display', label: 'Space Grotesk' },
@@ -3378,33 +3379,37 @@ export default function App() {
                       { val: 'font-space-tech', label: 'Space Technical' },
                       { val: 'font-bangers', label: 'Bangers Comic' }
                     ].map(f => (
-                      <option key={f.val} value={f.val} className={f.val}>{f.label}</option>
+                      <option key={f.val} value={f.val} className={`${f.val} bg-zinc-900 border-none`}>{f.label}</option>
                     ))}
                   </select>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Font Color</h3>
+                
+                <div className="glass-panel p-6 rounded-2xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-purple-400">Visual Controls</h3>
                   <div className="flex gap-4">
-                    <input 
-                      type="color" 
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="w-12 h-12 brutal-border cursor-pointer bg-white p-1"
-                    />
-                    <label className="flex items-center gap-2 cursor-pointer flex-1 brutal-border px-3 bg-white">
+                    <div className="relative group">
+                      <input 
+                        type="color" 
+                        value={textColor}
+                        onChange={(e) => setTextColor(e.target.value)}
+                        className="w-12 h-12 rounded-xl cursor-pointer bg-white/5 border border-white/10 p-1 hover:border-indigo-500/50 transition-all"
+                      />
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer flex-1 glass-panel-light px-4 rounded-xl border border-white/5 hover:bg-white/10 transition-all">
                       <input 
                         type="checkbox" 
                         checked={isMultiColor}
                         onChange={(e) => setIsMultiColor(e.target.checked)}
-                        className="w-5 h-5 border-2 border-black rounded-none text-brutal-green focus:ring-0"
+                        className="w-5 h-5 rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500/20"
                       />
-                      <span className="text-[10px] font-mono font-bold uppercase">Multicolors</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Multicolors</span>
                     </label>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Background</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+
+                <div className="md:col-span-2 glass-panel p-6 rounded-2xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-pink-400">Background Atmosphere</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {(['black', 'vibrant-glow', 'particles', 'gradient-teal', 'gradient-rose', 'gradient-amber', 'gradient-emerald', 'gradient-indigo', 'gradient-slate', 'deep-ocean', 'sunset-fire', 'midnight', 'premium-parallax', 'textured-paper'] as BackgroundStyle[]).map(bg => (
                       <button
                         key={bg}
@@ -3413,11 +3418,11 @@ export default function App() {
                             prev.includes(bg) ? prev.filter(s => s !== bg) : [...prev, bg]
                           );
                         }}
-                        className={`px-3 py-2 md:px-4 md:py-3 text-left brutal-border transition-colors capitalize text-xs md:text-sm text-black relative ${backgroundStyles.includes(bg) ? 'bg-brutal-orange' : 'bg-white hover:bg-gray-100'}`}
+                        className={`px-3 py-3 text-left rounded-xl border transition-all capitalize text-[11px] font-bold relative ${backgroundStyles.includes(bg) ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white'}`}
                       >
                         {bg.replace('-', ' ')}
                         {backgroundStyles.includes(bg) && (
-                          <div className="absolute top-1 right-1 w-2 h-2 bg-black rounded-full shadow-[0_0_5px_white]" />
+                          <div className="absolute top-2 right-2 w-2 h-2 bg-white rounded-full shadow-lg" />
                         )}
                       </button>
                     ))}
@@ -3426,31 +3431,26 @@ export default function App() {
               </div>
 
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                 <div className="md:col-span-2">
-                  <h3 className="text-sm font-mono font-bold uppercase mb-3 border-b-2 border-black pb-1 inline-block text-black">Text Animation Combination</h3>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <button 
-                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-blue hover:bg-blue-400"
-                    >
-                      Select All
-                    </button>
-                    <button 
-                      onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-brutal-purple text-white"
-                    >
-                      Pure GSAP
-                    </button>
-                    <button 
-                      onClick={() => setSelectedEffects([])}
-                      className="px-2 py-1 text-[10px] font-bold uppercase brutal-border bg-white hover:bg-gray-100"
-                    >
-                      Clear
-                    </button>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/40">Kinetic Motion Profiles</h3>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setSelectedEffects(['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-expand', 'gsap-tornado', 'gsap-merge-elastic', 'gsap-funnel', 'gsap-triangle', 'gsap-square', 'gsap-heart', 'gsap-stack', 'gsap-glow', 'gsap-focus-flash'])}
+                        className="text-[9px] uppercase font-bold text-white/30 hover:text-white transition-colors border border-white/5 px-2 py-1 rounded"
+                      >
+                        Select All
+                      </button>
+                      <button 
+                        onClick={() => setSelectedEffects([])}
+                        className="text-[9px] uppercase font-bold text-white/30 hover:text-white transition-colors border border-white/5 px-2 py-1 rounded"
+                      >
+                        Clear
+                      </button>
+                    </div>
                   </div>
-
+                  
                   <div className="space-y-6">
                     <div>
                       <p className="text-[10px] font-mono font-bold uppercase text-gray-500 mb-2">Advanced Cinematic (GSAP)</p>
@@ -3955,9 +3955,9 @@ export default function App() {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white brutal-border p-8 max-w-md w-full text-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]"
+              className="glass-panel p-8 max-w-md w-full text-white shadow-2xl"
             >
-              <h2 className="font-display text-2xl font-bold uppercase mb-4 text-brutal-blue">Export Instructions</h2>
+              <h2 className="font-display text-2xl font-bold uppercase mb-6 text-indigo-400">Export Instructions</h2>
               <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
                 1. Click <span className="bg-brutal-blue px-1">PROCEED</span> to select a screen to record.
               </p>
@@ -3971,13 +3971,13 @@ export default function App() {
               <div className="flex gap-4">
                 <button 
                   onClick={() => setShowExportExplainer(false)} 
-                  className="flex-1 px-4 py-3 bg-white brutal-border font-bold font-mono text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all uppercase"
+                  className="flex-1 p-3 elite-button-secondary rounded-lg font-bold"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={startRecording}
-                  className="flex-1 px-4 py-3 bg-brutal-blue text-black brutal-border font-bold font-mono text-sm hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all uppercase flex items-center justify-center gap-2"
+                  className="flex-1 p-3 elite-button rounded-lg font-bold flex items-center justify-center gap-2"
                 >
                   Proceed
                 </button>
@@ -3996,16 +3996,16 @@ export default function App() {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white brutal-border w-full max-w-2xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[80vh]"
+              className="glass-panel w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh] rounded-3xl"
             >
-              <div className="p-4 border-b-4 border-black flex justify-between items-center bg-brutal-purple text-black">
-                <h3 className="font-display font-bold uppercase flex items-center gap-2"><Sparkles size={18} /> Add Giphy Sticker</h3>
-                <button onClick={() => setShowGiphyModal(false)} className="p-1.5 hover:scale-110 transition-transform">
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-indigo-600/50 backdrop-blur-md text-white">
+                <h3 className="font-display font-bold uppercase flex items-center gap-3 text-sm"><Sparkles size={16} /> Add Giphy Sticker</h3>
+                <button onClick={() => setShowGiphyModal(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
                   <X size={20} />
                 </button>
               </div>
               
-              <div className="p-4 border-b-4 border-black bg-gray-100">
+              <div className="p-6 border-b border-white/10 bg-white/5">
                 <form onSubmit={handleGiphySearch} className="relative flex gap-2">
                   <div className="relative flex-1">
                     <input 
@@ -4017,7 +4017,7 @@ export default function App() {
                     />
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                   </div>
-                  <button type="submit" className="brutal-button bg-brutal-blue px-6 py-3 text-sm">
+                  <button type="submit" className="elite-button px-6 py-2 text-sm rounded-lg">
                     Search
                   </button>
                 </form>
