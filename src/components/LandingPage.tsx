@@ -1,8 +1,85 @@
-import React from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
 import { ArrowRight, Play, Layers, Zap, Sparkles, Image as ImageIcon, Video, Type, CreditCard, MousePointer2, ChevronRight, X } from 'lucide-react';
 import { PricingPlans } from './PricingModal';
 import { AnimatePresence } from 'motion/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+const KineticTitle = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  const containerRef = React.useRef<HTMLHeadingElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    
+    // Split text into lines/words if it's a string
+    const target = containerRef.current;
+    
+    gsap.fromTo(target, 
+      { 
+        y: 60,
+        opacity: 0,
+        skewY: 3,
+        clipPath: 'polygon(0 0, 100% 0, 100% 0, 0 0)'
+      },
+      {
+        y: 0,
+        opacity: 1,
+        skewY: 0,
+        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+        duration: 1.2,
+        ease: 'power4.out',
+        scrollTrigger: {
+          trigger: target,
+          start: 'top 85%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  }, { scope: containerRef });
+
+  return (
+    <h2 ref={containerRef} className={`${className} will-change-transform`}>
+      {children}
+    </h2>
+  );
+};
+
+const KineticHero = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  const containerRef = React.useRef<HTMLHeadingElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    
+    const target = containerRef.current;
+    
+    gsap.fromTo(target, 
+      { 
+        y: 100,
+        opacity: 0,
+        rotateX: -20,
+        perspective: 1000
+      },
+      {
+        y: 0,
+        opacity: 1,
+        rotateX: 0,
+        duration: 1.5,
+        ease: 'power4.out',
+        delay: 0.2
+      }
+    );
+  }, { scope: containerRef });
+
+  return (
+    <h1 ref={containerRef} className={`${className} will-change-transform`}>
+      {children}
+    </h1>
+  );
+};
 
 interface LandingPageProps {
   onStart: () => void;
@@ -30,10 +107,10 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               <Sparkles size={12} />
               Elite App Showcases for Designers
             </div>
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-8 max-w-3xl">
+            <KineticHero className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-8 max-w-3xl">
               Showcase <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Your Vision.</span>
-            </h1>
+            </KineticHero>
             <p className="text-xl sm:text-2xl font-medium mb-12 max-w-2xl text-white/60 leading-relaxed">
               Transform your screenshots into cinematic trailers. AI-pioneered kinetic motion, depth of field, and professional studio vibes.
             </p>
@@ -125,7 +202,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
       {/* Bento Grid Features Section */}
       <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">The High-Performance Workflow.</h2>
+          <KineticTitle className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">The High-Performance Workflow.</KineticTitle>
           <p className="text-lg text-white/50 max-w-2xl mx-auto">Skip the manual keyframing. Let AI handle the cinematic composition.</p>
         </div>
 
@@ -139,7 +216,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-indigo-400 mb-4 transition-transform group-hover:scale-110">
                 <ImageIcon size={24} />
               </div>
-              <h3 className="text-3xl font-display font-bold mb-3">Upload Media.</h3>
+              <KineticTitle className="text-3xl font-display font-bold mb-3">Upload Media.</KineticTitle>
               <p className="text-white/50 max-w-md">Drop your screenshots or let our AI generate visuals from your ideas. Supports high-res PNG, JPG and MP4.</p>
             </div>
             <div className="absolute right-[-20px] bottom-[-20px] w-64 h-64 opacity-20 group-hover:opacity-40 transition-opacity">
@@ -156,7 +233,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 text-purple-400 mb-4">
                 <Type size={24} />
               </div>
-              <h3 className="text-2xl font-display font-bold mb-3">Add Script.</h3>
+              <KineticTitle className="text-2xl font-display font-bold mb-3">Add Script.</KineticTitle>
               <p className="text-white/50 text-sm">Captions sync with kinetic motion paths automatically.</p>
             </div>
           </motion.div>
@@ -170,7 +247,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               <div className="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30 text-pink-400 mb-4">
                 <Layers size={24} />
               </div>
-              <h3 className="text-2xl font-display font-bold mb-3">Apply Vibes.</h3>
+              <KineticTitle className="text-2xl font-display font-bold mb-3">Apply Vibes.</KineticTitle>
               <p className="text-white/50 text-sm">Presets for Film Noir, Cyberpunk, and Classic Tech.</p>
             </div>
           </motion.div>
@@ -181,7 +258,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
             className="md:col-span-8 glass-panel-light p-8 rounded-3xl flex items-center justify-between group overflow-hidden"
           >
             <div className="max-w-xs">
-              <h3 className="text-3xl font-display font-bold mb-3">Direct Export.</h3>
+              <KineticTitle className="text-3xl font-display font-bold mb-3">Direct Export.</KineticTitle>
               <p className="text-white/50">Render at 4K 60fps directly in your browser. No server waiting times.</p>
             </div>
             <div className="relative">
@@ -199,48 +276,6 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
         </div>
       </section>
 
-      {/* Motion Engine Showcase */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-        <div className="text-center mb-16">
-          <p className="text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-[0.3em] mb-4">The Kinetic Engine</p>
-          <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-4">Elite Typography.</h2>
-          <p className="text-white/40 text-sm max-w-xl mx-auto">Our GSAP-powered motion engine calculates optimal kinetic paths for every character automatically.</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { name: 'Cascade', effect: 'gsap-cascade', desc: 'Elegant staggered entry' },
-            { name: '3D Roll', effect: 'gsap-3d-roll', desc: 'Cinematic depth rotation' },
-            { name: 'Elastic', effect: 'gsap-elastic', desc: 'Playful organic bounce' },
-            { name: 'Glow', effect: 'gsap-glow', desc: 'Atmospheric light leaks' },
-            { name: 'Expand', effect: 'gsap-expand', desc: 'Powerful impact scaling' },
-            { name: 'Tornado', effect: 'gsap-tornado', desc: 'Vortex motion paths' },
-            { name: 'Focus', effect: 'gsap-focus-flash', desc: 'Sharp attention grabbing' },
-            { name: 'Stack', effect: 'gsap-stack', desc: 'Modern vertical layering' },
-          ].map((item, idx) => (
-            <motion.div 
-               key={idx}
-               whileInView={{ opacity: 1, y: 0 }}
-               initial={{ opacity: 0, y: 20 }}
-               viewport={{ once: true }}
-               transition={{ delay: idx * 0.1 }}
-               className="glass-panel p-6 rounded-3xl border border-white/5 hover:border-indigo-500/30 transition-all group cursor-default"
-            >
-               <div className="h-12 flex items-center mb-4">
-                  <h4 className="text-2xl font-display font-bold group-hover:text-indigo-400 transition-colors uppercase tracking-widest">{item.name}</h4>
-               </div>
-               <p className="text-[10px] font-bold uppercase text-white/30 tracking-wider mb-2">{item.desc}</p>
-               <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                  <motion.div 
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: idx * 0.2 }}
-                    className="h-full w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent"
-                  />
-               </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
 
       {/* Visual Depth Section */}
       <section className="py-32 bg-white/5 border-y border-white/10 relative overflow-hidden">
@@ -248,10 +283,10 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 items-center gap-24">
              <div>
-                <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-8">
+                <KineticTitle className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-8">
                    Unrivaled <br/>
                    <span className="text-indigo-400 underline decoration-indigo-500/30 underline-offset-8 italic">Visual Depth.</span>
-                </h2>
+                </KineticTitle>
                 <div className="space-y-8">
                    {[
                      { icon: <MousePointer2 className="text-indigo-400" />, title: "3D Parallax Control", desc: "Layers react to virtual lens movement for a true 3D feel." },
@@ -293,7 +328,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
       <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center mb-20">
           <p className="text-indigo-400 font-mono text-sm font-bold uppercase tracking-[0.2em] mb-4">Pricing</p>
-          <h2 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-6">Built for results.</h2>
+          <KineticTitle className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-6">Built for results.</KineticTitle>
           <p className="text-xl text-white/50 font-medium">Simple credit-based usage. No monthly recurring fees.</p>
         </div>
 
@@ -309,7 +344,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
               <CreditCard size={32} className="text-white/60" />
             </div>
             <div>
-              <h3 className="font-display text-2xl font-bold tracking-tight">Agency Solutions</h3>
+              <KineticTitle className="text-2xl font-display font-bold tracking-tight">Agency Solutions</KineticTitle>
               <p className="text-white/40 text-sm max-w-sm uppercase font-bold tracking-widest mt-1">Order 1,000+ credits for your team.</p>
             </div>
           </div>
@@ -323,10 +358,10 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
       <section className="py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-indigo-600/10 pointer-events-none" />
         <div className="max-w-7xl mx-auto px-4 text-center relative z-10">
-          <h2 className="text-6xl md:text-8xl font-display font-bold tracking-tighter mb-12">
+          <KineticTitle className="text-6xl md:text-8xl font-display font-bold tracking-tighter mb-12">
             Make the UI <br/> 
             <span className="text-indigo-400 italic">breathe.</span>
-          </h2>
+          </KineticTitle>
           <button 
             onClick={onStart} 
             className="elite-button group px-12 py-6 text-2xl rounded-full font-bold inline-flex items-center gap-4"
