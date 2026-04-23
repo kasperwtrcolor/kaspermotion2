@@ -21,6 +21,8 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        // Blackhole the HyperFrames engine scripts that pull in Node built-ins
+        '@hyperframes/core/dist/inline-scripts/hyperframesRuntime.engine.js': path.resolve(__dirname, './src/lib/mocks/empty.js'),
       },
     },
     server: {
