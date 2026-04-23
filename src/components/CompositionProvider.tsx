@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { Composition as HFComposition } from '@hyperframes/core';
+import gsap from 'gsap';
 
 interface CompositionContextType {
-  hfComposition: HFComposition | null;
+  hfComposition: any | null;
 }
 
 const CompositionContext = createContext<CompositionContextType>({ hfComposition: null });
@@ -11,24 +11,23 @@ export const useHyperFrames = () => useContext(CompositionContext);
 
 export const CompositionProvider: React.FC<{ children: React.ReactNode, duration: number }> = ({ children, duration }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const hfRef = useRef<HFComposition | null>(null);
+  const hfRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && containerRef.current) {
-      // Initialize HyperFrames composition on the container
-      // This allows the headless engine to find and seek our stage
-      const hf = new HFComposition(containerRef.current, {
-        duration,
-        fps: 60,
-        // Sync with GSAP
-        adapter: 'gsap'
-      });
+      // Provide a lightweight mock for local previews to seek correctly.
+      // The actual HyperFrames engine (headless) relies on the data-hf-* attributes.
+      const hfMock = {
+        seek: (time: number) => {
+          gsap.globalTimeline.seek(time);
+        },
+        destroy: () => {}
+      };
       
-      hfRef.current = hf;
-      (window as any).__HYPERFRAMES_COMPOSITION__ = hf;
+      hfRef.current = hfMock;
+      (window as any).__HYPERFRAMES_COMPOSITION__ = hfMock;
 
       return () => {
-        hf.destroy();
         delete (window as any).__HYPERFRAMES_COMPOSITION__;
       };
     }
