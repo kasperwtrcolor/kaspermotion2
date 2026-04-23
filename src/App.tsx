@@ -3814,6 +3814,7 @@ export default function App() {
               return ''; 
             case 'black': 
             case 'radio-waves':
+            case 'particles':
             case 'motion-tile':
             case 'premium-parallax':
             case 'fluid-displace':

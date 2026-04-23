@@ -24,13 +24,30 @@
   --font-space-tech: "Space Grotesk", sans-serif;
   --font-bangers: "Bangers", system-ui;
 
-  /* Elite Dark Palette */
   --color-elite-bg: #09090b;
   --color-elite-surface: #18181b;
   --color-elite-border: rgba(255, 255, 255, 0.1);
   --color-elite-accent: #6366f1;
   --color-elite-text: #fafafa;
   --color-elite-text-muted: #a1a1aa;
+
+  /* Brutal Colors Mapped to Theme for Gradient Support */
+  --color-brutal-pink: #db2777;
+  --color-brutal-orange: #d97706;
+  --color-brutal-purple: #7c3aed;
+  --color-brutal-blue: #2563eb;
+  --color-brutal-green: #059669;
+
+  @keyframes animate-gradient-slow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+.animate-gradient-slow {
+  background-size: 200% 200%;
+  animation: animate-gradient-slow 8s ease infinite;
 }
 
 body {

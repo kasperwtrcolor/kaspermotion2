@@ -146,8 +146,10 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
     const brightRgb = hexToRgb(accentBrightColor);
     gl.uniform3f(uAccentBright, brightRgb[0], brightRgb[1], brightRgb[2]);
     
-    const darkRgb = hexToRgb(accentDarkColor);
     gl.uniform3f(uAccentDark, darkRgb[0], darkRgb[1], darkRgb[2]);
+    
+    // Set viewport to match resolution
+    gl.viewport(0, 0, resolution.width, resolution.height);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.from);

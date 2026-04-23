@@ -34,7 +34,7 @@ const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress,
   if (!isActive) return null;
 
   return (
-    <div className="absolute inset-0 z-[1100] pointer-events-none overflow-hidden" style={{ perspective: '2000px' }}>
+    <div className="absolute inset-0 z-[1200] pointer-events-none overflow-visible" style={{ perspective: '2000px' }}>
       <motion.div
         style={{ 
           x, 
@@ -45,7 +45,7 @@ const TransitionFiller: React.FC<TransitionFillerProps> = ({ assetUrl, progress,
           rotateZ: rotate / 3,
           scale 
         }}
-        className="absolute w-[1000px] h-[1000px] flex items-center justify-center transform-gpu"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] flex items-center justify-center transform-gpu"
       >
         {/* Core 3D Icon */}
         <div className="relative w-full h-full flex items-center justify-center">
