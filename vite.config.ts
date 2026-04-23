@@ -2,7 +2,6 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
@@ -10,10 +9,6 @@ export default defineConfig(({mode}) => {
     plugins: [
       react(), 
       tailwindcss(),
-      nodePolyfills({
-        // Whether to polyfill `node:` protocol imports.
-        protocolImports: true,
-      }),
     ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -21,8 +16,14 @@ export default defineConfig(({mode}) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        // Blackhole the HyperFrames engine scripts that pull in Node built-ins
-        '@hyperframes/core/dist/inline-scripts/hyperframesRuntime.engine.js': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        // Manual robust polyfills for Node.js built-ins
+        'path': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'fs': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'url': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'node:path': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'node:fs': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'node:url': path.resolve(__dirname, './src/lib/mocks/empty.js'),
+        'esbuild': path.resolve(__dirname, './src/lib/mocks/empty.js'),
       },
     },
     server: {
