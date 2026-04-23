@@ -126,12 +126,16 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
       if (typeof source === 'string') {
+        if (!source || source.trim() === '') {
+          return tex;
+        }
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
           gl.bindTexture(gl.TEXTURE_2D, tex);
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
         };
+        img.onerror = () => console.warn('ShaderTransition: Failed to load texture from', source);
         img.src = source;
       } else {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);

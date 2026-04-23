@@ -2575,7 +2575,7 @@ export default function App() {
 
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
+      const effectiveSceneDuration = Math.max((sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
       
       timer = setTimeout(playNext, effectiveSceneDuration); 
     }
