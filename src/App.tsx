@@ -113,6 +113,8 @@ const generateComposition = (
   preset?: string,
   backgroundStyles?: string[],
   giphyStickerUrl?: string,
+  fontFamily?: FontFamily,
+  textColor?: string,
   isMultiColor?: boolean,
   choreography?: {
     transitionType?: TransitionType;
