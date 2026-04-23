@@ -3615,7 +3615,7 @@ export default function App() {
                 <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-pink-400">Cinematic Path</h3>
                   <select 
-                    value={activeComp?.cameraPath || 'static'}
+                    value={compositions[currentIndex]?.cameraPath || 'static'}
                     onChange={(e) => {
                       const newPath = e.target.value as any;
                       setCompositions(prev => prev.map((c, i) => i === currentIndex ? { ...c, cameraPath: newPath } : c));
