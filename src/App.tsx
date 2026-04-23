@@ -2397,6 +2397,8 @@ export default function App() {
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX, smoothArtX], ([x, px, wx, ax]) => Number(x) + Number(px) + Number(wx) + Number(ax));
   const worldY = useTransform([smoothY, smoothPanY, smoothWiggleY, smoothArtY], ([y, py, wy, ay]) => Number(y) + Number(py) + Number(wy) + Number(ay));
   const worldZ = useTransform([smoothZ, smoothArtZ], ([z, az]) => Number(z) + Number(az));
+  const worldRotX = useTransform([smoothRotX, smoothArtRotX], ([rx, arx]) => Number(rx) + Number(arx));
+  const worldRotY = useTransform([smoothRotY, smoothArtRotY], ([ry, ary]) => Number(ry) + Number(ary));
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -3915,8 +3917,8 @@ export default function App() {
               x: worldX,
               y: worldY,
               z: worldZ,
-              rotateX: useTransform([smoothRotX, smoothArtRotX], ([rx, arx]) => Number(rx) + Number(arx)),
-              rotateY: useTransform([smoothRotY, smoothArtRotY], ([ry, ary]) => Number(ry) + Number(ary)),
+              rotateX: worldRotX,
+              rotateY: worldRotY,
               filter: cameraFilter
             }}
           >
