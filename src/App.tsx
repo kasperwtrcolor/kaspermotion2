@@ -16,6 +16,7 @@ import { useGSAP } from '@gsap/react';
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
+import { CompositionProvider } from './components/CompositionProvider';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
@@ -90,6 +91,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static';
 };
 
 const M3_SHAPES = [
@@ -111,9 +113,13 @@ const generateComposition = (
   preset?: string,
   backgroundStyles?: string[],
   giphyStickerUrl?: string,
-  fontFamily?: FontFamily,
-  textColor?: string,
-  isMultiColor?: boolean
+  isMultiColor?: boolean,
+  choreography?: {
+    transitionType?: TransitionType;
+    backgroundStyle?: BackgroundStyle;
+    textEffect?: TextEffect;
+    cameraPath?: Composition['cameraPath'];
+  }
 ): Composition => {
   let sceneType: Composition['sceneType'] = 'standard';
   const rand = Math.random();
@@ -170,22 +176,24 @@ const generateComposition = (
     caption,
     textPosition,
     sceneType,
-    textEffect: preferredEffect,
-    transitionType: preferredTransition === 'random' 
+    textEffect: choreography?.textEffect || preferredEffect,
+    transitionType: choreography?.transitionType || (preferredTransition === 'random' 
       ? (Math.random() > 0.4 
           ? (ALL_SHADER_NAMES[Math.floor(Math.random() * ALL_SHADER_NAMES.length)] as TransitionType)
           : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
-      : preferredTransition,
+      : preferredTransition),
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
     backgroundStyles,
-    activeBackground: backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[Math.floor(Math.random() * backgroundStyles.length)] as BackgroundStyle) : 'black',
+    activeBackground: choreography?.backgroundStyle || (backgroundStyles && backgroundStyles.length > 0 ? (backgroundStyles[Math.floor(Math.random() * backgroundStyles.length)] as BackgroundStyle) : 'black'),
     giphyStickerUrl,
     fontFamily,
     textColor,
     isMultiColor,
-    transitionItemAsset
+    transitionItemAsset,
+    cameraPath: choreography?.cameraPath || (['zoom-in', 'zoom-out', 'static'][Math.floor(Math.random() * 3)] as any),
+    effectiveDuration: 5 // Default HyperFrames scene duration
   };
 };
 
@@ -1817,6 +1825,7 @@ export default function App() {
   const [selectedLibraryAssets, setSelectedLibraryAssets] = useState<Set<string>>(new Set());
   const [showLibrary, setShowLibrary] = useState(false);
   const [scriptText, setScriptText] = useState("");
+  const [aiChoreography, setAiChoreography] = useState<any>(null);
 
   const [scrapeUrl, setScrapeUrl] = useState("https://");
   const [isScraping, setIsScraping] = useState(false);
@@ -2325,6 +2334,8 @@ export default function App() {
   const artistryX = useMotionValue(0);
   const artistryY = useMotionValue(0);
   const artistryZ = useMotionValue(0);
+  const artistryRotX = useMotionValue(0);
+  const artistryRotY = useMotionValue(0);
   
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
@@ -2338,6 +2349,8 @@ export default function App() {
   const smoothArtX = useSpring(artistryX, { damping: 30, stiffness: 100 });
   const smoothArtY = useSpring(artistryY, { damping: 30, stiffness: 100 });
   const smoothArtZ = useSpring(artistryZ, { damping: 30, stiffness: 100 });
+  const smoothArtRotX = useSpring(artistryRotX, { damping: 40, stiffness: 80 });
+  const smoothArtRotY = useSpring(artistryRotY, { damping: 40, stiffness: 80 });
   
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
@@ -2395,9 +2408,31 @@ export default function App() {
       camY.set(windowSize.h / 2 - currentComp.y);
       camZ.set(-currentComp.z);
       setSceneStartTime(Date.now());
+      
+      // Reset artistry offsets
       artistryX.set(0);
       artistryY.set(0);
       artistryZ.set(0);
+      artistryRotX.set(0);
+      artistryRotY.set(0);
+
+      // AI-Driven Camera Path Animations
+      const duration = 5; // Standard scene duration
+      
+      if (currentComp.cameraPath === 'zoom-in') {
+        animate(artistryZ, 600, { duration, ease: "linear" });
+      } else if (currentComp.cameraPath === 'zoom-out') {
+        animate(artistryZ, -600, { duration, ease: "linear" });
+      } else if (currentComp.cameraPath === 'orbit-left') {
+        animate(artistryX, -400, { duration, ease: "linear" });
+        animate(artistryRotY, 15, { duration, ease: "linear" });
+      } else if (currentComp.cameraPath === 'orbit-right') {
+        animate(artistryX, 400, { duration, ease: "linear" });
+        animate(artistryRotY, -15, { duration, ease: "linear" });
+      } else if (currentComp.cameraPath === 'pan-down-tilt') {
+        animate(artistryY, -300, { duration, ease: "linear" });
+        animate(artistryRotX, 10, { duration, ease: "linear" });
+      }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
 
@@ -2494,21 +2529,15 @@ export default function App() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (appMode === 'playing' && !isRecording && compositions.length > 0) {
-      const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
-      const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
+      const hf = (window as any).__HYPERFRAMES_COMPOSITION__;
       
-      timer = setTimeout(() => {
+      const playNext = () => {
         const nextIdx = (currentIndex + 1) % compositions.length;
         const currentComp = compositions[currentIndex];
         const nextComp = compositions[nextIdx];
-        const shaderList = [
-          'fade', ...ALL_SHADER_NAMES
-        ];
         
-        const isShaderTrans = shaderList.includes(nextComp.transitionType);
-
-        if (isShaderTrans) {
+        // Use HyperFrames to coordinate the actual transition if it's a shader
+        if (ALL_SHADER_NAMES.includes(nextComp.transitionType)) {
           globalTransitionProgress.set(0);
           setActiveShaderTransition({
             name: nextComp.transitionType,
@@ -2530,9 +2559,20 @@ export default function App() {
             }
           });
         }
-
+        
         setCurrentIndex(nextIdx);
-      }, effectiveSceneDuration); 
+        
+        // Seek HyperFrames stage to the correct time
+        if (hf) {
+          hf.seek(nextIdx * 5); // 5s per scene
+        }
+      };
+
+      const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
+      const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
+      const effectiveSceneDuration = hasText ? animDuration + 500 : 500;
+      
+      timer = setTimeout(playNext, effectiveSceneDuration); 
     }
     return () => clearTimeout(timer);
   }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
@@ -2665,11 +2705,16 @@ export default function App() {
       if (data.script) {
         handleScriptChange(data.script);
         
+        if (data.choreography) {
+          setAiChoreography(data.choreography);
+          setToastMessage("AI has designed your video choreography!");
+        } else {
+          setToastMessage("Content fetched — script & assets ready!");
+        }
+        
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
-        
-        setToastMessage("Content fetched — script & assets ready!");
       } else {
         setToastMessage(data.error || "Failed to generate script.");
       }
@@ -2728,6 +2773,7 @@ export default function App() {
       const transitions: TransitionType[] = ['random', 'fade', '3d-flip', ...ALL_SHADER_NAMES as TransitionType[]];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
 
+      const sceneChoreography = aiChoreography?.scenes?.[sceneIdx];
       const comp = generateComposition(
         sceneItems, 
         sceneIdx, 
@@ -2743,7 +2789,8 @@ export default function App() {
         undefined,
         fontFamily,
         textColor,
-        isMultiColor
+        isMultiColor,
+        sceneChoreography
       );
       
       if (existingComp) {
@@ -3564,6 +3611,22 @@ export default function App() {
                     ))}
                   </select>
                 </div>
+
+                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-pink-400">Cinematic Path</h3>
+                  <select 
+                    value={activeComp?.cameraPath || 'static'}
+                    onChange={(e) => {
+                      const newPath = e.target.value as any;
+                      setCompositions(prev => prev.map((c, i) => i === currentIndex ? { ...c, cameraPath: newPath } : c));
+                    }}
+                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
+                  >
+                    {['static', 'zoom-in', 'zoom-out', 'orbit-left', 'orbit-right', 'pan-down-tilt'].map(path => (
+                      <option key={path} value={path} className="bg-zinc-900 border-none capitalize">{path.replace(/-/g, ' ')}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="glass-panel p-6 rounded-3xl border border-white/5">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest mb-6 text-blue-400">Engine Speeds</h3>
                   <div className="space-y-6">
@@ -3842,76 +3905,84 @@ export default function App() {
       
       {/* The 3D World */}
       <VideoCanvas key={recordingKey} isRecording={isRecording}>
-      <motion.div
-        className="absolute top-0 left-0 w-full h-full overflow-visible"
-        style={{ 
-          transformStyle: 'preserve-3d',
-          x: worldX,
-          y: worldY,
-          z: worldZ,
-          rotateX: smoothRotX,
-          rotateY: smoothRotY,
-          filter: cameraFilter
-        }}
-      >
+        <CompositionProvider duration={compositions.length * 5}>
+          <motion.div
+            className="absolute top-0 left-0 w-full h-full overflow-visible"
+            style={{ 
+              transformStyle: 'preserve-3d',
+              x: worldX,
+              y: worldY,
+              z: worldZ,
+              rotateX: useTransform([smoothRotX, smoothArtRotX], ([rx, arx]) => Number(rx) + Number(arx)),
+              rotateY: useTransform([smoothRotY, smoothArtRotY], ([ry, ary]) => Number(ry) + Number(ary)),
+              filter: cameraFilter
+            }}
+          >
 
 
-        {/* Compositions */}
-        {compositions.map((comp, index) => {
-          let status: 'past' | 'active' | 'future' = 'future';
-          if (index === currentIndex) status = 'active';
-          else if (index < currentIndex) status = 'past';
+            {/* Compositions */}
+            {compositions.map((comp, index) => {
+              let status: 'past' | 'active' | 'future' = 'future';
+              if (index === currentIndex) status = 'active';
+              else if (index < currentIndex) status = 'past';
 
-          // Randomize text size for text-only scenes
-          const randomFontSize = comp.isTextOnly 
-            ? ['text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl'][Math.floor(Math.random() * 5)]
-            : 'text-4xl md:text-6xl';
+              // Randomize text size for text-only scenes
+              const randomFontSize = comp.isTextOnly 
+                ? ['text-5xl', 'text-6xl', 'text-7xl', 'text-8xl', 'text-9xl'][Math.floor(Math.random() * 5)]
+                : 'text-4xl md:text-6xl';
 
-          return (
-            <div className="absolute inset-0 pointer-events-none" style={{ transformStyle: 'preserve-3d', isolation: 'isolate' }}>
+              return (
+                <div 
+                  key={comp.id} 
+                  className="absolute inset-0 pointer-events-none" 
+                  style={{ transformStyle: 'preserve-3d', isolation: 'isolate' }}
+                  data-hf-duration="5"
+                  data-hf-trigger={index * 5}
+                >
 
-              <CompositionNode 
-                comp={comp} 
-                status={status} 
-                fontSizeOverride={randomFontSize} 
-                globalTextColor={textColor}
-                globalIsMultiColor={isMultiColor}
-                globalFontFamily={fontFamily}
-                socialHandle={socialHandle}
-                websiteSiteName={websiteSiteName}
-                worldX={worldX}
-                worldY={worldY}
-              />
-            </div>
-          );
-        })}
-      </motion.div>
+                  <CompositionNode 
+                    comp={comp} 
+                    status={status} 
+                    fontSizeOverride={randomFontSize} 
+                    globalTextColor={textColor}
+                    globalIsMultiColor={isMultiColor}
+                    globalFontFamily={fontFamily}
+                    socialHandle={socialHandle}
+                    websiteSiteName={websiteSiteName}
+                    worldX={worldX}
+                    worldY={worldY}
+                  />
+                </div>
+              );
+            })}
+          </motion.div>
 
 
 
-      {/* Global Shader Transition Layer */}
-      {activeShaderTransition.isActive && (
-        <ShaderTransitionCanvas 
-          fromImage={activeShaderTransition.fromUrl}
-          toImage={activeShaderTransition.toUrl}
-          shaderName={activeShaderTransition.name}
-          progress={activeShaderTransition.progress}
-          resolution={{ width: windowSize.w, height: windowSize.h }}
-          accentColor={textColor || '#A855F7'}
-        />
-      )}
+          {/* Global Shader Transition Layer */}
+          {activeShaderTransition.isActive && (
+            <ShaderTransitionCanvas 
+              fromImage={activeShaderTransition.fromUrl}
+              toImage={activeShaderTransition.toUrl}
+              shaderName={activeShaderTransition.name}
+              progress={activeShaderTransition.progress}
+              resolution={{ width: windowSize.w, height: windowSize.h }}
+              accentColor={textColor || '#A855F7'}
+            />
+          )}
 
-      {/* 3D Transition Filler Overlay */}
-      {activeShaderTransition.isActive && compositions[currentIndex]?.transitionItemAsset && (
-        <TransitionFiller 
-          assetUrl={compositions[currentIndex].transitionItemAsset!}
-          progress={globalTransitionProgress}
-          isActive={true}
-          accentColor={textColor || '#ff3e88'}
-        />
-      )}
+          {/* 3D Transition Filler Overlay */}
+          {activeShaderTransition.isActive && compositions[currentIndex]?.transitionItemAsset && (
+            <TransitionFiller 
+              assetUrl={compositions[currentIndex].transitionItemAsset!}
+              progress={globalTransitionProgress}
+              isActive={true}
+              accentColor={textColor || '#ff3e88'}
+            />
+          )}
+        </CompositionProvider>
 
-      {/* Manual Scene Layout Picker Toolbar Moved to Step 4 */}
+        {/* Manual Scene Layout Picker Toolbar Moved to Step 4 */}
 
         </VideoCanvas>
       </div>

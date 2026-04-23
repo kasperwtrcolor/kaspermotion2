@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as cheerio from 'cheerio';
 import Stripe from 'stripe';
 import * as admin from 'firebase-admin';
+import { renderComposition } from './src/lib/renderer';
 import 'dotenv/config';
 
 // Initialize Stripe
@@ -146,8 +147,21 @@ H1 Tags: ${h1s.join(' | ')}
 H2 Tags: ${h2s.join(' | ')}
       `.trim();
 
-      const prompt = `Based on the following extracted structure from ${url}, identify the primary value proposition and slogans to generate a short, punchy script for a motion graphics trailer. 
-      Return ONLY the script, with each scene's caption on a new line. Do not include scene numbers or prefixes. Keep it under 10 lines.
+      const prompt = `Based on the following extracted structure from ${url}, identify the primary value proposition and slogans to generate a short, punchy script and choreography for a motion graphics trailer. 
+      
+      Return ONLY a JSON object with this structure:
+      {
+        "siteName": "...",
+        "scenes": [
+          {
+            "caption": "...",
+            "transitionType": "one of: fade, slide, 3d-flip, zoom, domain-warp, ridged-burn, whip-pan, sdf-iris, ripple-waves, gravitational-lens, cinematic-zoom, chromatic-split, glitch, swirl-vortex, thermal-distortion, flash-through-white, cross-warp-morph, light-leak",
+            "backgroundStyle": "one of: vibrant-glow, particles, grid, gradient-teal, gradient-rose, deep-ocean, sunset-fire, midnight",
+            "textEffect": "one of: gsap-cascade, gsap-3d-roll, gsap-elastic, gsap-expand, gsap-tornado, gsap-merge-elastic, gsap-glow",
+            "cameraPath": "one of: zoom-in, zoom-out, orbit-left, orbit-right, pan-down-tilt, static"
+          }
+        ]
+      }
       
       Extracted Content:
       ${extractedData}`;
@@ -157,11 +171,24 @@ H2 Tags: ${h2s.join(' | ')}
         contents: prompt,
       });
 
+      let choreography;
+      try {
+        const text = aiResponse.text?.trim() || "{}";
+        // Remove markdown code blocks if present
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        choreography = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+      } catch (e) {
+        console.error('Failed to parse AI JSON:', e);
+        // Fallback to simple script
+        choreography = { siteName: title, scenes: [{ caption: aiResponse.text?.trim() || "Welcome" }] };
+      }
+
       res.json({
-        script: aiResponse.text?.trim(),
+        choreography,
+        script: choreography.scenes.map((s: any) => s.caption).join('\n'),
         screenshotUrl,
         pageImages: pageImages.slice(0, 6),
-        siteName: title,
+        siteName: choreography.siteName || title,
       });
     } catch (error: any) {
       console.error('Scraping error:', error);
@@ -441,11 +468,69 @@ H2 Tags: ${h2s.join(' | ')}
         status: data?.status,
         videoId: data?.videoId,
         videoUrl: data?.videoUrl,
+        progress: data?.progress || 0,
         createdAt: data?.createdAt
       });
     } catch (error: any) {
       console.error('Render job fetch error:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch render job' });
+    }
+  });
+
+  // HyperFrames Server-Side Render Trigger
+  app.post('/api/render-hyperframes', async (req, res) => {
+    try {
+      const { url, duration, jobId } = req.body;
+      
+      if (!url || !duration) {
+        return res.status(400).json({ error: 'URL and duration are required' });
+      }
+
+      const id = jobId || `job_${Date.now()}`;
+      const outputPath = path.join(process.cwd(), 'temp', `${id}.mp4`);
+      
+      // Update job status to rendering
+      if (jobId) {
+        await db.collection('render-jobs').doc(jobId).update({
+          status: 'rendering',
+          progress: 0,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      // Start asynchronous render
+      renderComposition(url, outputPath, {
+        duration,
+        onProgress: async (p) => {
+          if (jobId) {
+            await db.collection('render-jobs').doc(jobId).update({
+              progress: Math.round(p * 100)
+            });
+          }
+        }
+      }).then(async (path) => {
+        // Upload to Firebase Storage and update job status
+        console.log(`Rendered: ${path}`);
+        if (jobId) {
+          await db.collection('render-jobs').doc(jobId).update({
+            status: 'complete',
+            progress: 100,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }).catch(async (err) => {
+        console.error('Render job error:', err);
+        if (jobId) {
+          await db.collection('render-jobs').doc(jobId).update({
+            status: 'failed',
+            error: err.message
+          });
+        }
+      });
+
+      res.json({ jobId: id, status: 'started' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
