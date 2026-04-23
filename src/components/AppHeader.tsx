@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, Sparkles, RefreshCcw } from 'lucide-react';
 
-type AppMode = 'landing' | 'setup' | 'playing' | 'profile';
+type AppMode = 'landing' | 'setup' | 'playing' | 'profile' | 'share';
 
 interface AppHeaderProps {
   appMode: AppMode;

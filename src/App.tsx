@@ -17,6 +17,7 @@ import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
+import SharePage from './components/SharePage';
 
 gsap.registerPlugin(useGSAP);
 
@@ -1795,7 +1796,22 @@ export default function App() {
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [useGiphy, setUseGiphy] = useState(false);
 
-  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile'>('landing');
+  // Detect share page from URL
+  const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
+    const path = window.location.pathname;
+    if (path.startsWith('/share/')) return 'share';
+    return 'landing';
+  };
+  const getShareVideoId = (): string | null => {
+    const path = window.location.pathname;
+    const match = path.match(/^\/share\/(.+)$/);
+    return match ? match[1] : null;
+  };
+
+  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile' | 'share'>(getInitialMode());
+  const [shareVideoId, setShareVideoId] = useState<string | null>(getShareVideoId());
+  const [lastShareUrl, setLastShareUrl] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
   
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
@@ -2918,21 +2934,53 @@ export default function App() {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         sequenceActiveRef.current = false;
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        const url = URL.createObjectURL(blob);
+        
+        // 1. Download locally
+        const localUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
+        a.href = localUrl;
         const ext = exportFormat === 'mov' ? 'mov' : (exportFormat === 'mp4' ? 'mp4' : 'webm');
         a.download = `motion-trailer-${exportResolution}.${ext}`;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(localUrl);
         setIsRecording(false);
         stream.getTracks().forEach(t => t.stop());
         document.body.style.cursor = 'default';
         const header = document.querySelector('header');
         if (header) (header as HTMLElement).style.display = '';
+
+        // 2. Upload to server for shareable link
+        try {
+          setIsUploadingVideo(true);
+          setToastMessage('Generating shareable link...');
+          const uploadRes = await fetch('/api/video/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': mimeType.split(';')[0],
+              'x-user-id': user?.uid || '',
+              'x-video-title': websiteSiteName || 'Motion Trailer',
+            },
+            body: blob
+          });
+          
+          if (uploadRes.ok) {
+            const { shareUrl } = await uploadRes.json();
+            setLastShareUrl(shareUrl);
+            setToastMessage(`Video shared! Link copied to clipboard.`);
+            navigator.clipboard.writeText(shareUrl).catch(() => {});
+          } else {
+            setToastMessage('Video saved locally. Share upload failed.');
+          }
+        } catch (err) {
+          console.error('Video upload failed:', err);
+          setToastMessage('Video saved locally. Share upload failed.');
+        } finally {
+          setIsUploadingVideo(false);
+          setTimeout(() => setToastMessage(null), 6000);
+        }
       };
 
       stream.getVideoTracks()[0].onended = () => {
@@ -3001,6 +3049,19 @@ export default function App() {
   };
 
   const renderContent = () => {
+    if (appMode === 'share' && shareVideoId) {
+      return (
+        <SharePage 
+          videoId={shareVideoId} 
+          onGoHome={() => {
+            window.history.pushState({}, '', '/');
+            setAppMode('landing');
+            setShareVideoId(null);
+          }} 
+        />
+      );
+    }
+
     if (appMode === 'landing') {
       return (
         <LandingPage onStart={async () => {

@@ -293,6 +293,162 @@ H2 Tags: ${h2s.join(' | ')}
     }
   });
 
+  // =========================================================================
+  // SHAREABLE VIDEOS + RENDER JOB API
+  // =========================================================================
+
+  // Upload a rendered video to Firebase Storage and create a shareable link
+  app.post('/api/video/upload', express.raw({ type: 'video/*', limit: '100mb' }), async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      const title = (req.headers['x-video-title'] as string) || 'Untitled Trailer';
+      
+      if (!req.body || req.body.length === 0) {
+        return res.status(400).json({ error: 'No video data received' });
+      }
+
+      const videoId = `vid_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const contentType = req.headers['content-type'] || 'video/webm';
+      const ext = contentType.includes('mp4') ? 'mp4' : 'webm';
+      const storagePath = `public-videos/${videoId}.${ext}`;
+
+      // Upload to Firebase Storage via Admin SDK
+      const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
+      const file = bucket.file(storagePath);
+      
+      await file.save(req.body, {
+        metadata: {
+          contentType,
+          metadata: {
+            videoId,
+            userId: userId || 'anonymous',
+            title,
+            uploadedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      // Make the file publicly readable
+      await file.makePublic();
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+
+      // Store metadata in Firestore
+      const videoDoc = {
+        videoId,
+        userId: userId || 'anonymous',
+        title,
+        url: publicUrl,
+        storagePath,
+        status: 'complete',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        views: 0,
+        ext
+      };
+
+      await db.collection('videos').doc(videoId).set(videoDoc);
+
+      const shareUrl = `${process.env.APP_URL || 'https://vibetrailer.com'}/share/${videoId}`;
+
+      res.json({ 
+        videoId,
+        shareUrl,
+        videoUrl: publicUrl
+      });
+    } catch (error: any) {
+      console.error('Video upload error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload video' });
+    }
+  });
+
+  // Get video metadata for the share page
+  app.get('/api/video/:id', async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      const videoDoc = await db.collection('videos').doc(videoId).get();
+
+      if (!videoDoc.exists) {
+        return res.status(404).json({ error: 'Video not found' });
+      }
+
+      const data = videoDoc.data();
+
+      // Increment view count
+      await db.collection('videos').doc(videoId).update({
+        views: admin.firestore.FieldValue.increment(1)
+      });
+
+      res.json({
+        videoId: data?.videoId,
+        title: data?.title,
+        url: data?.url,
+        status: data?.status,
+        views: (data?.views || 0) + 1,
+        createdAt: data?.createdAt
+      });
+    } catch (error: any) {
+      console.error('Video fetch error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch video' });
+    }
+  });
+
+  // Create a render job (for the X bot to trigger server-side rendering)
+  app.post('/api/render-job', async (req, res) => {
+    try {
+      const { script, mediaUrls, config, sourceType, sourceId } = req.body;
+
+      if (!script) {
+        return res.status(400).json({ error: 'Script is required' });
+      }
+
+      const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+      const jobDoc = {
+        jobId,
+        script,
+        mediaUrls: mediaUrls || [],
+        config: config || {},
+        sourceType: sourceType || 'api',  // 'x-bot', 'api', etc.
+        sourceId: sourceId || null,        // X post ID, etc.
+        status: 'pending',                 // pending → rendering → complete → failed
+        videoId: null,
+        videoUrl: null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('render-jobs').doc(jobId).set(jobDoc);
+
+      res.json({ jobId, status: 'pending' });
+    } catch (error: any) {
+      console.error('Render job creation error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create render job' });
+    }
+  });
+
+  // Get render job status
+  app.get('/api/render-job/:id', async (req, res) => {
+    try {
+      const jobId = req.params.id;
+      const jobDoc = await db.collection('render-jobs').doc(jobId).get();
+
+      if (!jobDoc.exists) {
+        return res.status(404).json({ error: 'Render job not found' });
+      }
+
+      const data = jobDoc.data();
+      res.json({
+        jobId: data?.jobId,
+        status: data?.status,
+        videoId: data?.videoId,
+        videoUrl: data?.videoUrl,
+        createdAt: data?.createdAt
+      });
+    } catch (error: any) {
+      console.error('Render job fetch error:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch render job' });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
