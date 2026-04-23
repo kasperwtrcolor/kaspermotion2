@@ -43,6 +43,29 @@
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+}
+
+@utility bg-vibrant-glow {
+  background: linear-gradient(135deg, #db2777, #d97706, #7c3aed);
+  background-size: 200% 200%;
+  animation: animate-gradient-slow 12s ease infinite;
+}
+
+@utility bg-particles-glow {
+  background: radial-gradient(circle at center, #1e1b4b, #09090b);
+}
+
+@utility bg-cyber-grid {
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-color: #030408;
 }
 
 .animate-gradient-slow {

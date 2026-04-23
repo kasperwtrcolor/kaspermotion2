@@ -74,7 +74,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle,
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-10 w-[620px] max-w-[90vw] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative overflow-visible"
+      className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-8 md:p-10 w-[620px] max-w-[95vw] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative"
     >
       {/* Subtle Branding Background */}
       <div className="absolute -top-10 -right-10 opacity-[0.03] rotate-12">
@@ -263,7 +263,7 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
     <motion.div
       initial={{ y: 100, opacity: 0, scale: 0.9 }}
       animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
-      className="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-[1.25rem] p-5 md:p-6 w-[90vw] max-w-[500px] shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-5 md:gap-7 relative overflow-hidden"
+      className="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 md:p-10 w-[95vw] max-w-[600px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-8 md:gap-10 relative overflow-visible"
     >
       <div className="absolute top-0 right-0 p-3 opacity-5">
         <Music size={100} className="text-white" />
@@ -302,7 +302,7 @@ export const RedditPostOverlay = ({ status, caption, handle = "r/cinematic" }: B
     <motion.div
       initial={{ x: 100, opacity: 0 }}
       animate={status === 'active' ? { x: 0, opacity: 1 } : { x: 100, opacity: 0 }}
-      className="bg-[#1A1A1B] border border-[#343536] rounded-xl p-6 w-[550px] shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex gap-4"
+      className="bg-[#1A1A1B] border border-[#343536] rounded-xl p-6 md:p-8 w-[550px] max-w-[95vw] shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex gap-4 md:gap-6"
     >
       <div className="flex flex-col items-center gap-2 bg-[#151516] p-2 rounded-lg h-fit">
         <ArrowUp size={20} className="text-[#FF4500]" />

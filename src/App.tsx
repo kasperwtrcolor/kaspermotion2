@@ -18,6 +18,7 @@ import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
+import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 
 gsap.registerPlugin(useGSAP);
 
@@ -26,13 +27,10 @@ const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_pr
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
-type BackgroundStyle = 'black';
+type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' 
-  | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' 
-  | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' 
-  | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 type LibraryAsset = {
@@ -175,7 +173,7 @@ const generateComposition = (
     textEffect: preferredEffect,
     transitionType: preferredTransition === 'random' 
       ? (Math.random() > 0.4 
-          ? (['domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'][Math.floor(Math.random() * 14)] as TransitionType)
+          ? (ALL_SHADER_NAMES[Math.floor(Math.random() * ALL_SHADER_NAMES.length)] as TransitionType)
           : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
       : preferredTransition,
     transitionDuration: preferredDuration,
@@ -1862,6 +1860,12 @@ export default function App() {
   const currentComp = compositions[currentIndex];
   
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [isRecording, setIsRecording] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
   const setToastMessage = (msg: string | null) => {
@@ -2499,10 +2503,7 @@ export default function App() {
         const currentComp = compositions[currentIndex];
         const nextComp = compositions[nextIdx];
         const shaderList = [
-          'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', 'random',
-          'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens',
-          'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion',
-          'flash-through-white', 'cross-warp-morph', 'light-leak', 'hyper-blocks', 'hyper-wipe'
+          'fade', ...ALL_SHADER_NAMES
         ];
         
         const isShaderTrans = shaderList.includes(nextComp.transitionType);
@@ -2724,7 +2725,7 @@ export default function App() {
       
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
-      const transitions: TransitionType[] = ['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'];
+      const transitions: TransitionType[] = ['random', 'fade', '3d-flip', ...ALL_SHADER_NAMES as TransitionType[]];
       const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
 
       const comp = generateComposition(
@@ -3275,7 +3276,7 @@ export default function App() {
                   onClick={() => setSetupStep(2)}
                   className="elite-button px-10 py-4 text-xl flex items-center gap-3 rounded-full"
                 >
-                  Continue <ArrowRight size={24} />
+                  Continue to Scripts <ArrowRight size={24} />
                 </button>
               </div>
             </motion.div>
@@ -3558,7 +3559,7 @@ export default function App() {
                     onChange={(e) => setTransitionType(e.target.value as TransitionType)}
                     className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
                   >
-                    {['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', 'domain-warp', 'ridged-burn', 'whip-pan', 'sdf-iris', 'ripple-waves', 'gravitational-lens', 'cinematic-zoom', 'chromatic-split', 'glitch', 'swirl-vortex', 'thermal-distortion', 'flash-through-white', 'cross-warp-morph', 'light-leak'].map(type => (
+                    {['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', ...ALL_SHADER_NAMES].map(type => (
                       <option key={type} value={type} className="bg-zinc-900 border-none capitalize">{type.replace(/-/g, ' ')}</option>
                     ))}
                   </select>
@@ -3806,15 +3807,14 @@ export default function App() {
             case 'deep-ocean': return 'bg-gradient-to-b from-blue-950 via-cyan-900 to-teal-950 animate-gradient-slow';
             case 'sunset-fire': return 'bg-gradient-to-br from-yellow-400 via-red-500 to-purple-700 animate-gradient-slow';
             case 'midnight': return 'bg-gradient-to-br from-gray-950 via-indigo-950 to-purple-950 animate-gradient-slow';
-            case 'grid': return 'bg-isometric-grid bg-white';
-            case 'vibrant-glow': return 'bg-gradient-to-br from-brutal-pink via-brutal-orange to-brutal-purple animate-gradient-slow';
+            case 'vibrant-glow': return 'bg-vibrant-glow';
+            case 'particles': return 'bg-particles-glow';
+            case 'grid': return 'bg-cyber-grid';
             case 'sunset-haze':
             case 'morning-dew':
-              // These define their own base colors in-component, so we return empty to avoid overlap
               return ''; 
             case 'black': 
             case 'radio-waves':
-            case 'particles':
             case 'motion-tile':
             case 'premium-parallax':
             case 'fluid-displace':

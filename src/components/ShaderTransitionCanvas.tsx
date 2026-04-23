@@ -1,6 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
 import { vertSrc, SHADER_LIBRARY } from '../lib/ShaderTransitionSource';
+
+/**
+ * ShaderTransitionCanvas — WebGL-based shader transitions
+ * Rewritten to match the HyperFrames (@hyperframes/shader-transitions) WebGL pipeline.
+ * Key fixes from upstream:
+ *   - Uses TRIANGLE_STRIP with 4 vertices (not TRIANGLES with 6)
+ *   - Sets gl.pixelStorei(UNPACK_FLIP_Y_WEBGL, false)
+ *   - Initializes textures with 1x1 placeholder
+ *   - Caches uniform locations
+ *   - Sets viewport on every frame
+ */
 
 interface ShaderTransitionProps {
   fromImage: string | HTMLCanvasElement;
@@ -12,6 +22,9 @@ interface ShaderTransitionProps {
   accentBrightColor?: string;
   accentDarkColor?: string;
 }
+
+// Matches HyperFrames quad geometry exactly
+const QUAD_VERTS = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
 
 const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
   fromImage,
@@ -27,42 +40,54 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
   const glRef = useRef<WebGLRenderingContext | null>(null);
   const programRef = useRef<WebGLProgram | null>(null);
   const texturesRef = useRef<{ from: WebGLTexture | null; to: WebGLTexture | null }>({ from: null, to: null });
+  const locsRef = useRef<Record<string, WebGLUniformLocation | null | number>>({});
+  const quadBufRef = useRef<WebGLBuffer | null>(null);
 
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-      parseInt(result[1], 16) / 255,
-      parseInt(result[2], 16) / 255,
-      parseInt(result[3], 16) / 255
-    ] : [1, 1, 1];
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const h = hex.replace('#', '');
+    if (h.length < 6) return [0.5, 0.5, 0.5];
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return [0.5, 0.5, 0.5];
+    return [r, g, b];
   };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Match HyperFrames: createContext()
     const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
     if (!gl) return;
+    gl.viewport(0, 0, resolution.width, resolution.height);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     glRef.current = gl;
 
-    // Create Shader Program
-    const createShader = (gl: WebGLRenderingContext, type: number, source: string) => {
-      const shader = gl.createShader(type);
-      if (!shader) return null;
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error('Shader compile error:', gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
+    // Match HyperFrames: setupQuad()
+    const quadBuf = gl.createBuffer();
+    if (!quadBuf) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, QUAD_VERTS, gl.STATIC_DRAW);
+    quadBufRef.current = quadBuf;
+
+    // Match HyperFrames: createProgram()
+    const compileShader = (src: string, type: number): WebGLShader | null => {
+      const s = gl.createShader(type);
+      if (!s) return null;
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error('[ShaderTransition] Shader compile:', gl.getShaderInfoLog(s));
+        gl.deleteShader(s);
         return null;
       }
-      return shader;
+      return s;
     };
 
-    const fragRef = SHADER_LIBRARY[shaderName] || SHADER_LIBRARY['whip-pan'];
-    const vs = createShader(gl, gl.VERTEX_SHADER, vertSrc);
-    const fs = createShader(gl, gl.FRAGMENT_SHADER, fragRef);
-
+    const fragSrc = SHADER_LIBRARY[shaderName] || SHADER_LIBRARY['fade'];
+    const vs = compileShader(vertSrc, gl.VERTEX_SHADER);
+    const fs = compileShader(fragSrc, gl.FRAGMENT_SHADER);
     if (!vs || !fs) return;
 
     const program = gl.createProgram();
@@ -71,28 +96,34 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error('Program link error:', gl.getProgramInfoLog(program));
+      console.error('[ShaderTransition] Program link:', gl.getProgramInfoLog(program));
       return;
     }
-    gl.useProgram(program);
     programRef.current = program;
 
-    // Set up geometry (fullscreen quad)
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
-    const posLoc = gl.getAttribLocation(program, 'a_pos');
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+    // Cache uniform locations (matches HyperFrames pattern)
+    locsRef.current = {
+      from: gl.getUniformLocation(program, 'u_from'),
+      to: gl.getUniformLocation(program, 'u_to'),
+      progress: gl.getUniformLocation(program, 'u_progress'),
+      resolution: gl.getUniformLocation(program, 'u_resolution'),
+      accent: gl.getUniformLocation(program, 'u_accent'),
+      accentDark: gl.getUniformLocation(program, 'u_accent_dark'),
+      accentBright: gl.getUniformLocation(program, 'u_accent_bright'),
+      aPos: gl.getAttribLocation(program, 'a_pos'),
+    };
 
-    // Load Textures
+    // Match HyperFrames: createTexture() — initialize with 1x1 placeholder
     const createTexture = (source: string | HTMLCanvasElement) => {
       const tex = gl.createTexture();
+      if (!tex) return null;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      // Start with 1x1 placeholder (HyperFrames pattern)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
       if (typeof source === 'string') {
         const img = new Image();
@@ -115,7 +146,7 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
       gl.deleteProgram(program);
       gl.deleteShader(vs);
       gl.deleteShader(fs);
-      gl.deleteBuffer(buffer);
+      if (quadBuf) gl.deleteBuffer(quadBuf);
       if (texturesRef.current.from) gl.deleteTexture(texturesRef.current.from);
       if (texturesRef.current.to) gl.deleteTexture(texturesRef.current.to);
     };
@@ -124,53 +155,56 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
   useEffect(() => {
     const gl = glRef.current;
     const program = programRef.current;
-    if (!gl || !program) return;
+    const locs = locsRef.current;
+    const quadBuf = quadBufRef.current;
+    if (!gl || !program || !quadBuf) return;
 
+    // Match HyperFrames: renderShader()
     gl.useProgram(program);
-
-    // Uniforms
-    const uProgress = gl.getUniformLocation(program, 'u_progress');
-    const uRes = gl.getUniformLocation(program, 'u_resolution');
-    const uAccent = gl.getUniformLocation(program, 'u_accent');
-    const uAccentBright = gl.getUniformLocation(program, 'u_accent_bright');
-    const uAccentDark = gl.getUniformLocation(program, 'u_accent_dark');
-    const uFrom = gl.getUniformLocation(program, 'u_from');
-    const uTo = gl.getUniformLocation(program, 'u_to');
-
-    gl.uniform1f(uProgress, progress);
-    gl.uniform2f(uRes, resolution.width, resolution.height);
-    
-    const rgb = hexToRgb(accentColor);
-    gl.uniform3f(uAccent, rgb[0], rgb[1], rgb[2]);
-    
-    const brightRgb = hexToRgb(accentBrightColor);
-    gl.uniform3f(uAccentBright, brightRgb[0], brightRgb[1], brightRgb[2]);
-    
-    const darkRgb = hexToRgb(accentDarkColor);
-    gl.uniform3f(uAccentDark, darkRgb[0], darkRgb[1], darkRgb[2]);
-    
-    // Set viewport to match resolution
     gl.viewport(0, 0, resolution.width, resolution.height);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.from);
-    gl.uniform1i(uFrom, 0);
+    gl.uniform1i(locs.from as WebGLUniformLocation, 0);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.to);
-    gl.uniform1i(uTo, 1);
+    gl.uniform1i(locs.to as WebGLUniformLocation, 1);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.uniform1f(locs.progress as WebGLUniformLocation, progress);
+    gl.uniform2f(locs.resolution as WebGLUniformLocation, resolution.width, resolution.height);
+
+    const accentRgb = hexToRgb(accentColor);
+    gl.uniform3f(locs.accent as WebGLUniformLocation, accentRgb[0], accentRgb[1], accentRgb[2]);
+
+    const darkRgb = hexToRgb(accentDarkColor);
+    gl.uniform3f(locs.accentDark as WebGLUniformLocation, darkRgb[0], darkRgb[1], darkRgb[2]);
+
+    const brightRgb = hexToRgb(accentBrightColor);
+    gl.uniform3f(locs.accentBright as WebGLUniformLocation, brightRgb[0], brightRgb[1], brightRgb[2]);
+
+    // Match HyperFrames: TRIANGLE_STRIP with 4 vertices
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+    gl.enableVertexAttribArray(locs.aPos as number);
+    gl.vertexAttribPointer(locs.aPos as number, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }, [progress, resolution, accentColor, accentBrightColor, accentDarkColor]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={resolution.width}
-      height={resolution.height}
-      className="absolute inset-0 w-full h-full pointer-events-none z-[1000] scale-[1.02]"
-      style={{ mixBlendMode: 'normal' }}
-    />
+    <div className="absolute inset-0 z-[1000] pointer-events-none overflow-hidden">
+      {/* Background Haze Overlay */}
+      <div 
+        className="absolute inset-0 opacity-20 blur-[100px] transition-colors duration-1000"
+        style={{ backgroundColor: accentColor }}
+      />
+      <canvas
+        ref={canvasRef}
+        width={resolution.width}
+        height={resolution.height}
+        className="absolute inset-0 w-full h-full"
+        style={{ mixBlendMode: 'normal' }}
+      />
+    </div>
   );
 };
 

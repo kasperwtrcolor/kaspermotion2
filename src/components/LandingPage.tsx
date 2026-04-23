@@ -200,130 +200,44 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
         </div>
       </section>
 
-      {/* Bento Grid Features Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <KineticTitle className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">The High-Performance Workflow.</KineticTitle>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto">Skip the manual keyframing. Let AI handle the cinematic composition.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-[280px]">
-          {/* Step 1 */}
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="md:col-span-8 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group"
-          >
-            <div className="absolute top-8 left-8">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-indigo-400 mb-4 transition-transform group-hover:scale-110">
-                <ImageIcon size={24} />
-              </div>
-              <KineticTitle className="text-3xl font-display font-bold mb-3">Upload Media.</KineticTitle>
-              <p className="text-white/50 max-w-md">Drop your screenshots or let our AI generate visuals from your ideas. Supports high-res PNG, JPG and MP4.</p>
+      {/* Kinetic Typography Showcase (Fully Animated with GSAP) */}
+      <section className="py-40 bg-zinc-950/50 border-y border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-dot-grid opacity-10"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-20">
+          <div className="flex flex-col gap-32">
+            <div className="max-w-4xl">
+              <span className="text-indigo-400 font-mono text-sm font-bold uppercase tracking-[0.4em] mb-8 block">01. Dynamic Motion</span>
+              <KineticTitle className="text-7xl md:text-9xl font-display font-bold leading-[0.8] tracking-tighter uppercase mb-12">
+                Cinematic <br/><span className="text-indigo-500">Kinetics.</span>
+              </KineticTitle>
+              <p className="text-2xl text-white/40 leading-relaxed max-w-2xl font-medium">
+                The core engine treats every word as a 3D object. Elastic bounces, 3D rotations, and cascade reveals—all calculated in real-time.
+              </p>
             </div>
-            <div className="absolute right-[-20px] bottom-[-20px] w-64 h-64 opacity-20 group-hover:opacity-40 transition-opacity">
-               <ImageIcon size={200} className="text-white" />
+
+            <div className="max-w-4xl ml-auto text-right">
+              <span className="text-purple-400 font-mono text-sm font-bold uppercase tracking-[0.4em] mb-8 block">02. Visual Depth</span>
+              <KineticTitle className="text-7xl md:text-9xl font-display font-bold leading-[0.8] tracking-tighter uppercase mb-12">
+                Hyper <br/><span className="text-purple-500">Depth.</span>
+              </KineticTitle>
+              <p className="text-2xl text-white/40 leading-relaxed max-w-2xl ml-auto font-medium">
+                SDF iris wipes and chromatic splits. Every transition is a masterpiece of WebGL architecture, covering the entire viewport with cinematic glow.
+              </p>
             </div>
-          </motion.div>
 
-          {/* Step 2 */}
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="md:col-span-4 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group border border-purple-500/20"
-          >
-            <div className="absolute top-8 left-8">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 text-purple-400 mb-4">
-                <Type size={24} />
-              </div>
-              <KineticTitle className="text-2xl font-display font-bold mb-3">Add Script.</KineticTitle>
-              <p className="text-white/50 text-sm">Captions sync with kinetic motion paths automatically.</p>
+            <div className="max-w-4xl">
+              <span className="text-pink-400 font-mono text-sm font-bold uppercase tracking-[0.4em] mb-8 block">03. Professional Flow</span>
+              <KineticTitle className="text-7xl md:text-9xl font-display font-bold leading-[0.8] tracking-tighter uppercase mb-12">
+                Elite <br/><span className="text-pink-500">Studio.</span>
+              </KineticTitle>
+              <p className="text-2xl text-white/40 leading-relaxed max-w-2xl font-medium">
+                Bypass standard editing tools. Write a script, upload a screenshot, and watch our AI director compose the choreography.
+              </p>
             </div>
-          </motion.div>
-
-          {/* Step 3 */}
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="md:col-span-4 glass-panel p-8 rounded-3xl flex flex-col justify-end relative overflow-hidden group border border-pink-500/20"
-          >
-            <div className="absolute top-8 left-8">
-              <div className="w-12 h-12 rounded-2xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30 text-pink-400 mb-4">
-                <Layers size={24} />
-              </div>
-              <KineticTitle className="text-2xl font-display font-bold mb-3">Apply Vibes.</KineticTitle>
-              <p className="text-white/50 text-sm">Presets for Film Noir, Cyberpunk, and Classic Tech.</p>
-            </div>
-          </motion.div>
-
-          {/* Export Cell */}
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="md:col-span-8 glass-panel-light p-8 rounded-3xl flex items-center justify-between group overflow-hidden"
-          >
-            <div className="max-w-xs">
-              <KineticTitle className="text-3xl font-display font-bold mb-3">Direct Export.</KineticTitle>
-              <p className="text-white/50">Render at 4K 60fps directly in your browser. No server waiting times.</p>
-            </div>
-            <div className="relative">
-               <motion.div 
-                 animate={{ rotate: 360 }}
-                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                 className="w-48 h-48 rounded-full border border-dashed border-white/10 flex items-center justify-center"
-               >
-                 <div className="w-40 h-40 rounded-full border border-dashed border-white/20 flex items-center justify-center">
-                    <Zap size={40} className="text-indigo-400" />
-                 </div>
-               </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-
-      {/* Visual Depth Section */}
-      <section className="py-32 bg-white/5 border-y border-white/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-dot-grid opacity-20"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 items-center gap-24">
-             <div>
-                <KineticTitle className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-8">
-                   Unrivaled <br/>
-                   <span className="text-indigo-400 underline decoration-indigo-500/30 underline-offset-8 italic">Visual Depth.</span>
-                </KineticTitle>
-                <div className="space-y-8">
-                   {[
-                     { icon: <MousePointer2 className="text-indigo-400" />, title: "3D Parallax Control", desc: "Layers react to virtual lens movement for a true 3D feel." },
-                     { icon: <Sparkles className="text-purple-400" />, title: "Cinematic Overlays", desc: "Film grain, dust particles, and organic light leaks." },
-                     { icon: <Zap className="text-pink-400" />, title: "Kinetic Synthesis", desc: "Text and media move in perfect harmony with 0 effort." }
-                   ].map((item, idx) => (
-                     <div key={idx} className="flex gap-4">
-                        <div className="mt-1">{item.icon}</div>
-                        <div>
-                           <h4 className="font-bold text-lg">{item.title}</h4>
-                           <p className="text-white/50">{item.desc}</p>
-                        </div>
-                     </div>
-                   ))}
-                </div>
-             </div>
-
-             <div className="relative">
-                <div className="glass-panel p-4 rounded-2xl aspect-video overflow-hidden group">
-                   <motion.div 
-                     animate={{ scale: [1, 1.1, 1], rotate: [0, 1, -1, 0] }}
-                     transition={{ duration: 15, repeat: Infinity }}
-                     className="absolute inset-0 bg-[url('https://picsum.photos/seed/design/1000/600')] bg-cover bg-center rounded-xl overflow-hidden"
-                   />
-                   <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                       <p className="font-mono text-xs uppercase tracking-widest bg-black/60 px-4 py-2 rounded-full border border-white/10">Rendering Engine active</p>
-                   </div>
-                </div>
-                {/* Decorative floating UI */}
-                <div className="absolute -top-6 -right-6 glass-panel-light px-4 py-2 rounded-full font-mono text-[10px] text-white/60">
-                   SHDR_CORE_v2
-                </div>
-             </div>
           </div>
         </div>
       </section>
+
 
       {/* Pricing Section */}
       <section className="py-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
