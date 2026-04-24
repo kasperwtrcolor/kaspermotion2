@@ -3857,11 +3857,9 @@ export default function App() {
 
     if (appMode === 'playing') {
       const getBackgroundClass = () => {
-        if (!backgroundStyles.length) return 'bg-black';
+        const style = currentComp?.activeBackground || backgroundStyles[0] || 'black';
         
-        // Find first style that provides a base background class
-        for (const style of backgroundStyles) {
-          switch (style) {
+        switch (style) {
             case 'gradient-blue': return 'bg-gradient-to-br from-brutal-blue via-white to-brutal-blue animate-pulse';
             case 'gradient-purple': return 'bg-gradient-to-tr from-brutal-purple via-brutal-pink to-white animate-pulse';
             case 'gradient-teal': return 'bg-gradient-to-br from-teal-400 via-cyan-500 to-teal-700 animate-gradient-slow';
@@ -3888,7 +3886,6 @@ export default function App() {
             case 'textured-paper':
               return 'bg-[#f4f1ea]';
           }
-        }
         return 'bg-black';
       };
 
@@ -3897,13 +3894,28 @@ export default function App() {
       
       return (
         <div 
-          className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle} ${getBackgroundClass()}`} 
+          className={`relative w-screen h-screen overflow-hidden text-black ${fontStyle}`} 
           style={{ perspective: '1500px' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
+
+          {/* Animated Background Underlay */}
+          <div className="absolute inset-0 z-0 pointer-events-none bg-black">
+            <AnimatePresence>
+              <motion.div
+                key={currentComp?.activeBackground || 'black'}
+                className={`absolute inset-0 w-full h-full ${getBackgroundClass()}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+              />
+            </AnimatePresence>
+          </div>
+
 
       
       {/* The 3D World */}
