@@ -45,6 +45,7 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
   const quadBufRef = useRef<WebGLBuffer | null>(null);
   const [isReady, setIsReady] = React.useState(false);
   const texturesReadyRef = useRef<{ from: boolean; to: boolean }>({ from: false, to: false });
+  const isMountedRef = useRef<boolean>(true);
 
   const checkReady = () => {
     if (texturesReadyRef.current.from && texturesReadyRef.current.to) {
