@@ -2553,23 +2553,19 @@ export default function App() {
           });
 
           gsap.to({}, {
-            duration: (nextComp.transitionDuration || 1200) / 1000,
+            duration: nextComp.transitionDuration !== undefined ? nextComp.transitionDuration : 1.2,
             onUpdate: function() {
               globalTransitionProgress.set(this.progress());
             },
             onComplete: () => {
               setActiveShaderTransition(prev => ({ ...prev, isActive: false }));
-              setCurrentIndex(nextIdx);
-              if (hf) {
-                hf.seek(nextIdx * 5);
-              }
             }
           });
-        } else {
-          setCurrentIndex(nextIdx);
-          if (hf) {
-            hf.seek(nextIdx * 5); // 5s per scene
-          }
+        }
+        
+        setCurrentIndex(nextIdx);
+        if (hf) {
+          hf.seek(nextIdx * 5); // 5s per scene
         }
       };
 
