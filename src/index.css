@@ -63,31 +63,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* HyperFrames Core UI Elements */
 
-.card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: border-color 0.2s ease-out;
-}
 
-.card:hover {
-  border-color: var(--color-border-light);
-}
-
-.btn-primary {
-  font-size: 0.8rem;
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  background: var(--color-heading);
-  color: #0a0a0a;
-  font-weight: 500;
-  transition: opacity 0.15s ease;
-}
-
-.btn-primary:hover {
-  opacity: 0.85;
-}
 
 .badge-green {
   color: var(--color-accent-green);
@@ -129,9 +105,33 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 8px;
 }
 
-/* UI Elements Core Setup */
-@utility elite-button {
-  @apply btn-primary;
+.card, .brutal-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease-out;
+}
+
+.card:hover, .brutal-card:hover {
+  border-color: var(--color-border-light);
+}
+
+.btn-primary, .brutal-button, .elite-button {
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: var(--color-heading);
+  color: #0a0a0a;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover, .brutal-button:hover, .elite-button:hover {
+  opacity: 0.85;
 }
 
 @utility elite-button-secondary {
@@ -166,8 +166,6 @@ h1, h2, h3, h4, h5, h6 {
 /* Legacy Brutalist Compatibility Mapped Directly to HyperFrames Specs */
 @utility brutal-border { border: 1px solid var(--color-border); }
 @utility brutal-shadow { box-shadow: none !important; }
-.brutal-card { @apply card rounded-xl; }
-.brutal-button { @apply btn-primary inline-flex items-center justify-center; }
 .brutal-input { @apply elite-input; }
 
 .bg-brutal-bg { background-color: var(--color-bg); }
