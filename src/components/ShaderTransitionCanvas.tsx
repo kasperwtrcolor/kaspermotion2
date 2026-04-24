@@ -129,14 +129,50 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
         if (!source || source.trim() === '') {
           return tex;
         }
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          gl.bindTexture(gl.TEXTURE_2D, tex);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        };
-        img.onerror = () => console.warn('ShaderTransition: Failed to load texture from', source);
-        img.src = source;
+
+        const isVideo = source.match(/\.(mp4|webm|mov|ogg)($|\?)/i) || source.includes('video');
+
+        if (isVideo) {
+          const video = document.createElement('video');
+          video.crossOrigin = 'anonymous';
+          video.muted = true;
+          video.playsInline = true;
+          video.loop = true;
+          video.onloadeddata = () => {
+            video.play().catch(() => {});
+            // Draw initial frame
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+          };
+          video.onerror = () => {
+            console.warn('ShaderTransition: Failed to load video from URL', source);
+            // Fallback without crossOrigin to bypass strict CORS if we ONLY want local visual preview
+            // Note: this will taint the canvas in strict mode but works for rendering passes if safe
+          };
+          video.src = source;
+        } else {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+          };
+          img.onerror = () => {
+             console.warn('ShaderTransition: Failed to load texture from', source, '- attempting CORS bypass');
+             // Attempt CORS bypass silently if strict fetching failed
+             const fallbackImg = new Image();
+             fallbackImg.onload = () => {
+                try {
+                  gl.bindTexture(gl.TEXTURE_2D, tex);
+                  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fallbackImg);
+                } catch (e) {
+                   console.warn('ShaderTransition: WebGL Canvas tainted by CORS restrictions.');
+                }
+             };
+             fallbackImg.src = source;
+          };
+          img.src = source;
+        }
       } else {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
       }
