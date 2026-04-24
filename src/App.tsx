@@ -21,6 +21,7 @@ import { CompositionProvider } from './components/CompositionProvider';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
+import WorldNavigationPaths from './components/WorldNavigationPaths';
 
 gsap.registerPlugin(useGSAP);
 
@@ -1583,10 +1584,14 @@ const CompositionNode = ({
   const [hasError, setHasError] = useState(false);
 
   const getTransitionVariants = (type: TransitionType) => {
+    const ghostOpacity = isSpatialWorld ? 0.35 : 0;
+    const ghostBlur = isSpatialWorld ? 'blur(8px)' : 'blur(40px)';
+    const ghostScale = isSpatialWorld ? 0.7 : 0.4;
+    
     return {
-      future: { opacity: 0, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } },
-      active: { opacity: 1, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } },
-      past: { opacity: 0, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } }
+      future: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } },
+      active: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 1.2 } },
+      past: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } }
     };
   };
 
@@ -1814,6 +1819,26 @@ export default function App() {
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sceneStartTime, setSceneStartTime] = useState(Date.now());
+
+  const [isSpatialWorld, setIsSpatialWorld] = useState(true);
+
+  const generateWorldTemplate = () => {
+    setCompositions(prev => {
+      const newComps = [...prev];
+      newComps.forEach((comp, i) => {
+        const spiralFactor = 0.6;
+        const spacing = 2200;
+        comp.x = Math.cos(i * spiralFactor) * (i * spacing);
+        comp.y = Math.sin(i * spiralFactor) * (i * spacing * 0.3);
+        comp.z = -i * 1500;
+        comp.rotY = (i * spiralFactor * 180 / Math.PI);
+        comp.cameraPath = 'zoom-in';
+      });
+      return newComps;
+    });
+    setToastMessage("World Layout Generated! Hit Play to explore.");
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const currentComp = compositions[currentIndex];
   
@@ -2291,9 +2316,9 @@ export default function App() {
   const userPanX = useMotionValue(0);
   const userPanY = useMotionValue(0);
 
-  const smoothX = useSpring(camX, { damping: 26, stiffness: 220, mass: 1 });
-  const smoothY = useSpring(camY, { damping: 26, stiffness: 220, mass: 1 });
-  const smoothZ = useSpring(camZ, { damping: 26, stiffness: 220, mass: 1 });
+  const smoothX = useSpring(camX, { damping: 40, stiffness: 60, mass: 1.2 });
+  const smoothY = useSpring(camY, { damping: 40, stiffness: 60, mass: 1.2 });
+  const smoothZ = useSpring(camZ, { damping: 40, stiffness: 60, mass: 1.2 });
 
   const smoothArtX = useSpring(artistryX, { damping: 30, stiffness: 100 });
   const smoothArtY = useSpring(artistryY, { damping: 30, stiffness: 100 });
@@ -3408,8 +3433,26 @@ export default function App() {
                 </div>
                 
                 <div className="glass-panel p-6 rounded-2xl border border-white/5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-purple-400">Visual Controls</h3>
-                  <div className="flex gap-4">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-purple-400">Spatial Controls</h3>
+                  <div className="flex gap-4 items-center">
+                    <button 
+                      onClick={() => setIsSpatialWorld(!isSpatialWorld)}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-tighter transition-all flex items-center gap-2 ${isSpatialWorld ? 'bg-indigo-500 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]' : 'bg-white/5 text-white/40 border border-white/10'}`}
+                    >
+                      <Grid className="w-3 h-3" />
+                      {isSpatialWorld ? 'Spatial World: ON' : 'Spatial World: OFF'}
+                    </button>
+
+                    <button 
+                      onClick={generateWorldTemplate}
+                      className="px-4 py-2 rounded-xl text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold uppercase tracking-tighter hover:bg-emerald-500/30 transition-all flex items-center gap-2"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Generate Galaxy Path
+                    </button>
+
+                    <div className="mx-2 h-8 w-px bg-white/10" />
+
                     <div className="relative group">
                       <input 
                         type="color" 
@@ -3811,7 +3854,9 @@ export default function App() {
               filter: cameraFilter
             }}
           >
-
+            
+            {/* 3D Connective Paths */}
+            <WorldNavigationPaths compositions={compositions} currentIndex={currentIndex} />
 
             {/* Compositions */}
             {compositions.map((comp, index) => {
