@@ -1583,65 +1583,11 @@ const CompositionNode = ({
   const [hasError, setHasError] = useState(false);
 
   const getTransitionVariants = (type: TransitionType) => {
-    const baseTransition = { duration, ease: [0.16, 1, 0.3, 1] };
-    
-    switch (type) {
-      case 'slide':
-        return {
-          future: { x: 1000, opacity: 0, transition: baseTransition },
-          active: { x: 0, opacity: 1, transition: baseTransition },
-          past: { x: -1000, opacity: 0, transition: baseTransition }
-        };
-      case 'zoom':
-        return {
-          future: { scale: 0, opacity: 0, transition: baseTransition },
-          active: { scale: 1, opacity: 1, transition: baseTransition },
-          past: { scale: 5, opacity: 0, transition: baseTransition }
-        };
-      case 'dissolve':
-        return {
-          future: { opacity: 0, filter: 'blur(40px)', transition: baseTransition },
-          active: { opacity: 1, filter: 'blur(0px)', transition: baseTransition },
-          past: { opacity: 0, filter: 'blur(40px)', transition: baseTransition }
-        };
-      case 'explode':
-        return {
-          future: { scale: 0, opacity: 0, transition: baseTransition },
-          active: { scale: 1, opacity: 1, transition: baseTransition },
-          past: { scale: 10, opacity: 0, filter: 'blur(60px)', transition: baseTransition }
-        };
-      case 'spin':
-        return {
-          future: { rotateY: 180, opacity: 0, scale: 0.5, transition: baseTransition },
-          active: { rotateY: 0, opacity: 1, scale: 1, transition: baseTransition },
-          past: { rotateY: -180, opacity: 0, scale: 0.5, transition: baseTransition }
-        };
-      case 'expand':
-        return {
-          future: { scale: 0.8, opacity: 0, transition: baseTransition },
-          active: { scale: 1, opacity: 1, transition: baseTransition },
-          past: { scale: 1.2, opacity: 0, transition: baseTransition }
-        };
-      case 'contract':
-        return {
-          future: { scale: 1.2, opacity: 0, transition: baseTransition },
-          active: { scale: 1, opacity: 1, transition: baseTransition },
-          past: { scale: 0.8, opacity: 0, transition: baseTransition }
-        };
-      case '3d-flip':
-        return {
-          future: { rotateY: 90, scale: 0.8, opacity: 0, x: 500, transition: baseTransition },
-          active: { rotateY: 0, scale: 1, opacity: 1, x: 0, transition: baseTransition },
-          past: { rotateY: -90, scale: 0.8, opacity: 0, x: -500, transition: baseTransition }
-        };
-      case 'fade':
-      default:
-        return {
-          future: { opacity: 0, transition: baseTransition },
-          active: { opacity: 1, transition: baseTransition },
-          past: { opacity: 0, transition: baseTransition }
-        };
-    }
+    return {
+      future: { opacity: 0, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } },
+      active: { opacity: 1, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } },
+      past: { opacity: 0, x: 0, y: 0, scale: 1, rotateY: 0, filter: 'blur(0px)', transition: { duration: 0 } }
+    };
   };
 
   const transitionVariants = getTransitionVariants(comp.transitionType);
@@ -2538,30 +2484,6 @@ export default function App() {
       
       const playNext = () => {
         const nextIdx = (currentIndex + 1) % compositions.length;
-        const currentComp = compositions[currentIndex];
-        const nextComp = compositions[nextIdx];
-        
-        // Use HyperFrames to coordinate the actual transition if it's a shader
-        if (ALL_SHADER_NAMES.includes(nextComp.transitionType)) {
-          globalTransitionProgress.set(0);
-          setActiveShaderTransition({
-            name: nextComp.transitionType,
-            fromUrl: currentComp.media[0]?.url || '',
-            toUrl: nextComp.media[0]?.url || '',
-            isActive: true,
-            progress: 0
-          });
-
-          gsap.to({}, {
-            duration: nextComp.transitionDuration !== undefined ? nextComp.transitionDuration : 1.2,
-            onUpdate: function() {
-              globalTransitionProgress.set(this.progress());
-            },
-            onComplete: () => {
-              setActiveShaderTransition(prev => ({ ...prev, isActive: false }));
-            }
-          });
-        }
         
         setCurrentIndex(nextIdx);
         if (hf) {
@@ -3600,49 +3522,7 @@ export default function App() {
                   </select>
                 </div>
 
-                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-emerald-400">Transition Engine</h3>
-                  <select 
-                    value={transitionType}
-                    onChange={(e) => setTransitionType(e.target.value as TransitionType)}
-                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
-                  >
-                    {['random', 'fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract', '3d-flip', ...ALL_SHADER_NAMES].map(type => (
-                      <option key={type} value={type} className="bg-zinc-900 border-none capitalize">{type.replace(/-/g, ' ')}</option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-pink-400">Cinematic Path</h3>
-                  <select 
-                    value={compositions[currentIndex]?.cameraPath || 'static'}
-                    onChange={(e) => {
-                      const newPath = e.target.value as any;
-                      setCompositions(prev => prev.map((c, i) => i === currentIndex ? { ...c, cameraPath: newPath } : c));
-                    }}
-                    className="elite-input w-full px-4 py-3 text-sm bg-white/5 border border-white/10 rounded-xl"
-                  >
-                    {['static', 'zoom-in', 'zoom-out', 'orbit-left', 'orbit-right', 'pan-down-tilt'].map(path => (
-                      <option key={path} value={path} className="bg-zinc-900 border-none capitalize">{path.replace(/-/g, ' ')}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="glass-panel p-6 rounded-3xl border border-white/5">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-6 text-blue-400">Engine Speeds</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Transition Speed</span>
-                         <span className="text-xs font-mono text-indigo-400">{transitionDuration}s</span>
-                      </div>
-                      <input 
-                        type="range" min="0.2" max="3" step="0.1" 
-                        value={transitionDuration}
-                        onChange={(e) => setTransitionDuration(parseFloat(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
-                      />
-                    </div>
                     
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -3972,27 +3852,7 @@ export default function App() {
 
 
 
-          {/* Global Shader Transition Layer */}
-          {activeShaderTransition.isActive && (
-            <ShaderTransitionCanvas 
-              fromImage={activeShaderTransition.fromUrl}
-              toImage={activeShaderTransition.toUrl}
-              shaderName={activeShaderTransition.name}
-              progress={globalTransitionProgress}
-              resolution={{ width: windowSize.w, height: windowSize.h }}
-              accentColor={textColor || '#A855F7'}
-            />
-          )}
 
-          {/* 3D Transition Filler Overlay */}
-          {activeShaderTransition.isActive && compositions[currentIndex]?.transitionItemAsset && (
-            <TransitionFiller 
-              assetUrl={compositions[currentIndex].transitionItemAsset!}
-              progress={globalTransitionProgress}
-              isActive={true}
-              accentColor={textColor || '#ff3e88'}
-            />
-          )}
         </CompositionProvider>
 
         {/* Manual Scene Layout Picker Toolbar Moved to Step 4 */}
