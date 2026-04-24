@@ -1103,23 +1103,23 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
   const isThemedWorld = style.startsWith('world-');
 
   return (
-    <>
+    <div style={{ transform: 'translateZ(0)' }}> {/* GPU hint */}
       <FilmGrainOverlay />
-      {isThemedWorld ? (
+      {status === 'active' && isThemedWorld ? (
          <ThemedParallaxWorld theme={style} worldX={worldX} worldY={worldY} />
       ) : (
         <motion.div 
           className="absolute inset-[-1000%] pointer-events-none"
-          style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10, willChange: 'transform' }}
+          style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10 }}
           animate={{ 
-            opacity: status === 'active' ? 1 : 0.8
+            opacity: status === 'active' ? 1 : 0.4
           }}
           transition={{ duration: 0.5 }}
         >
-          {style === 'particles' && <ParticleTrails />}
+          {status === 'active' && style === 'particles' && <ParticleTrails />}
         </motion.div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -2324,10 +2324,10 @@ export default function App() {
   const userPanX = useMotionValue(0);
   const userPanY = useMotionValue(0);
 
-  const smoothX = useSpring(camX, { damping: 40, stiffness: 60, mass: 1.2 });
-  const smoothY = useSpring(camY, { damping: 40, stiffness: 60, mass: 1.2 });
-  const smoothZ = useSpring(camZ, { damping: 40, stiffness: 60, mass: 1.2 });
-  const smoothRoll = useSpring(camRoll, { damping: 35, stiffness: 50 });
+  const smoothX = useSpring(camX, { damping: 30, stiffness: 80, mass: 1 });
+  const smoothY = useSpring(camY, { damping: 30, stiffness: 80, mass: 1 });
+  const smoothZ = useSpring(camZ, { damping: 30, stiffness: 80, mass: 1 });
+  const smoothRoll = useSpring(camRoll, { damping: 40, stiffness: 50 });
 
   const smoothArtX = useSpring(artistryX, { damping: 30, stiffness: 100 });
   const smoothArtY = useSpring(artistryY, { damping: 30, stiffness: 100 });
@@ -2346,10 +2346,11 @@ export default function App() {
 
   useEffect(() => {
     if (appMode === 'playing') {
-      const interval = setInterval(() => {
-        const now = Date.now();
-        wiggleX.set((Math.random() - 0.5) * 40);
-        wiggleY.set((Math.random() - 0.5) * 40);
+      const controlsX = animate(wiggleX, [-5, 5, -5], { duration: 4, repeat: Infinity, ease: "easeInOut" });
+      const controlsY = animate(wiggleY, [-3, 3, -3], { duration: 5, repeat: Infinity, ease: "easeInOut" });
+      return () => { controlsX.stop(); controlsY.stop(); };
+    }
+  }, [appMode]);
         
         const time = now / 2000;
         userPanX.set(Math.sin(time) * 15);
@@ -2368,15 +2369,14 @@ export default function App() {
 
   const cameraFilter = useTransform([velX, velY, velZ], ([vx, vy, vz]) => {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
-    const blurAmount = Math.min(speed / 120, 15); 
-    const caAmount = Math.min(speed / 80, 8);
+    const blurAmount = Math.min(speed / 200, 10); 
     
     // Auto-tilt based on horizontal speed
-    camRoll.set(Number(vx) / 60);
+    camRoll.set(Number(vx) / 100);
 
-    if (speed < 5) return `blur(0px)`;
+    if (speed < 15) return `blur(0px)`;
     
-    return `blur(${blurAmount}px) drop-shadow(${caAmount}px 0px 0px rgba(255,0,0,0.6)) drop-shadow(-${caAmount}px 0px 0px rgba(0,255,255,0.6))`;
+    return `blur(${blurAmount}px)`;
   });
 
   const worldFOV = useTransform([velX, velY, velZ, artistryZ], ([vx, vy, vz, az]) => {
