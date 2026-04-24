@@ -2348,17 +2348,17 @@ export default function App() {
     if (appMode === 'playing') {
       const controlsX = animate(wiggleX, [-5, 5, -5], { duration: 4, repeat: Infinity, ease: "easeInOut" });
       const controlsY = animate(wiggleY, [-3, 3, -3], { duration: 5, repeat: Infinity, ease: "easeInOut" });
-      return () => { controlsX.stop(); controlsY.stop(); };
+      
+      // Smooth subtle pan
+      const panControlsX = animate(userPanX, [0, 15, 0], { duration: 8, repeat: Infinity, ease: "easeInOut" });
+      
+      return () => { 
+        controlsX.stop(); 
+        controlsY.stop(); 
+        panControlsX.stop();
+      };
     }
   }, [appMode]);
-        
-        const time = now / 2000;
-        userPanX.set(Math.sin(time) * 15);
-        userPanY.set(Math.cos(time * 0.8) * 15);
-      }, 150);
-      return () => clearInterval(interval);
-    }
-  }, [appMode, sceneStartTime]);
 
   const smoothWiggleX = useSpring(wiggleX, { damping: 20, stiffness: 50 });
   const smoothWiggleY = useSpring(wiggleY, { damping: 20, stiffness: 50 });
