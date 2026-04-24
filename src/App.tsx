@@ -1565,7 +1565,8 @@ const CompositionNode = ({
   socialHandle,
   websiteSiteName,
   worldX,
-  worldY
+  worldY,
+  isSpatialWorld,
 }: { 
   key?: string; 
   comp: Composition; 
@@ -1578,6 +1579,7 @@ const CompositionNode = ({
   websiteSiteName: string;
   worldX: any;
   worldY: any;
+  isSpatialWorld: boolean;
 }) => {
   const accentColor = globalTextColor || '#A855F7';
   const duration = comp.transitionDuration;
@@ -3540,7 +3542,6 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-
                   </div>
                   
                   {selectedEffects.length === 0 && (
@@ -3552,6 +3553,7 @@ export default function App() {
                     The engine will cycle through your {selectedEffects.length} selected animations across your trailer scenes.
                   </p>
                 </div>
+
                 <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-amber-400">Text Position</h3>
                   <select 
@@ -3565,33 +3567,32 @@ export default function App() {
                   </select>
                 </div>
 
-
-                    
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Motion Complexity</span>
-                         <span className="text-xs font-mono text-purple-400">{textAnimationSpeed}x</span>
-                      </div>
-                      <input 
-                        type="range" min="0.5" max="2" step="0.1" 
-                        value={textAnimationSpeed}
-                        onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-purple-500"
-                      />
+                <div className="md:col-span-1 glass-panel p-6 rounded-3xl border border-white/5 space-y-6">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4 text-white/40">Engine Speeds</h3>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                       <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Motion Complexity</span>
+                       <span className="text-xs font-mono text-purple-400">{textAnimationSpeed}x</span>
                     </div>
+                    <input 
+                      type="range" min="0.5" max="2" step="0.1" 
+                      value={textAnimationSpeed}
+                      onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-purple-500"
+                    />
+                  </div>
 
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                         <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Scene Duration</span>
-                         <span className="text-xs font-mono text-pink-400">{sceneDuration}s</span>
-                      </div>
-                      <input 
-                        type="range" min="2" max="15" step="0.5" 
-                        value={sceneDuration}
-                        onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
-                        className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-pink-500"
-                      />
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                       <span className="text-[10px] font-bold uppercase text-white/40 tracking-wider">Scene Duration</span>
+                       <span className="text-xs font-mono text-pink-400">{sceneDuration}s</span>
                     </div>
+                    <input 
+                      type="range" min="2" max="15" step="0.5" 
+                      value={sceneDuration}
+                      onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-pink-500"
+                    />
                   </div>
                 </div>
               </div>
@@ -3889,6 +3890,7 @@ export default function App() {
                     websiteSiteName={websiteSiteName}
                     worldX={worldX}
                     worldY={worldY}
+                    isSpatialWorld={isSpatialWorld}
                   />
                 </div>
               );
