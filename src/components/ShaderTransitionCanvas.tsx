@@ -15,7 +15,7 @@ import { vertSrc, SHADER_LIBRARY } from '../lib/ShaderTransitionSource';
 interface ShaderTransitionProps {
   fromImage: string | HTMLCanvasElement;
   toImage: string | HTMLCanvasElement;
-  progress: number;
+  progress: number | import('motion/react').MotionValue<number>;
   shaderName: string;
   resolution: { width: number; height: number };
   accentColor?: string;
@@ -157,41 +157,48 @@ const ShaderTransitionCanvas: React.FC<ShaderTransitionProps> = ({
   }, [shaderName, fromImage, toImage]);
 
   useEffect(() => {
-    const gl = glRef.current;
-    const program = programRef.current;
-    const locs = locsRef.current;
-    const quadBuf = quadBufRef.current;
-    if (!gl || !program || !quadBuf) return;
+    let animFrame: number;
+    const renderLoop = () => {
+      const gl = glRef.current;
+      const program = programRef.current;
+      const locs = locsRef.current;
+      const quadBuf = quadBufRef.current;
+      if (!gl || !program || !quadBuf) return;
 
-    // Match HyperFrames: renderShader()
-    gl.useProgram(program);
-    gl.viewport(0, 0, resolution.width, resolution.height);
+      gl.useProgram(program);
+      gl.viewport(0, 0, resolution.width, resolution.height);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.from);
-    gl.uniform1i(locs.from as WebGLUniformLocation, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.from);
+      gl.uniform1i(locs.from as WebGLUniformLocation, 0);
 
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.to);
-    gl.uniform1i(locs.to as WebGLUniformLocation, 1);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, texturesRef.current.to);
+      gl.uniform1i(locs.to as WebGLUniformLocation, 1);
 
-    gl.uniform1f(locs.progress as WebGLUniformLocation, progress);
-    gl.uniform2f(locs.resolution as WebGLUniformLocation, resolution.width, resolution.height);
+      const p = typeof progress === 'number' ? progress : progress.get();
+      gl.uniform1f(locs.progress as WebGLUniformLocation, p);
+      gl.uniform2f(locs.resolution as WebGLUniformLocation, resolution.width, resolution.height);
 
-    const accentRgb = hexToRgb(accentColor);
-    gl.uniform3f(locs.accent as WebGLUniformLocation, accentRgb[0], accentRgb[1], accentRgb[2]);
+      const accentRgb = hexToRgb(accentColor);
+      gl.uniform3f(locs.accent as WebGLUniformLocation, accentRgb[0], accentRgb[1], accentRgb[2]);
 
-    const darkRgb = hexToRgb(accentDarkColor);
-    gl.uniform3f(locs.accentDark as WebGLUniformLocation, darkRgb[0], darkRgb[1], darkRgb[2]);
+      const darkRgb = hexToRgb(accentDarkColor);
+      gl.uniform3f(locs.accentDark as WebGLUniformLocation, darkRgb[0], darkRgb[1], darkRgb[2]);
 
-    const brightRgb = hexToRgb(accentBrightColor);
-    gl.uniform3f(locs.accentBright as WebGLUniformLocation, brightRgb[0], brightRgb[1], brightRgb[2]);
+      const brightRgb = hexToRgb(accentBrightColor);
+      gl.uniform3f(locs.accentBright as WebGLUniformLocation, brightRgb[0], brightRgb[1], brightRgb[2]);
 
-    // Match HyperFrames: TRIANGLE_STRIP with 4 vertices
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
-    gl.enableVertexAttribArray(locs.aPos as number);
-    gl.vertexAttribPointer(locs.aPos as number, 2, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+      gl.enableVertexAttribArray(locs.aPos as number);
+      gl.vertexAttribPointer(locs.aPos as number, 2, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      animFrame = requestAnimationFrame(renderLoop);
+    };
+
+    renderLoop();
+    return () => cancelAnimationFrame(animFrame);
   }, [progress, resolution, accentColor, accentBrightColor, accentDarkColor]);
 
   return (

@@ -2555,12 +2555,10 @@ export default function App() {
           gsap.to({}, {
             duration: (nextComp.transitionDuration || 1200) / 1000,
             onUpdate: function() {
-              const p = this.progress();
-              globalTransitionProgress.set(p);
-              setActiveShaderTransition(prev => ({ ...prev, progress: p }));
+              globalTransitionProgress.set(this.progress());
             },
             onComplete: () => {
-              setActiveShaderTransition(prev => ({ ...prev, isActive: false, progress: 0 }));
+              setActiveShaderTransition(prev => ({ ...prev, isActive: false }));
             }
           });
         }
@@ -3970,7 +3968,7 @@ export default function App() {
               fromImage={activeShaderTransition.fromUrl}
               toImage={activeShaderTransition.toUrl}
               shaderName={activeShaderTransition.name}
-              progress={activeShaderTransition.progress}
+              progress={globalTransitionProgress}
               resolution={{ width: windowSize.w, height: windowSize.h }}
               accentColor={textColor || '#A855F7'}
             />
