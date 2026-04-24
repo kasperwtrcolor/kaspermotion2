@@ -1,13 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&family=Archivo+Black&family=Bebas+Neue&family=Outfit:wght@300;400;600;700&family=Syne:wght@400;700;800&family=Unbounded:wght@400;700;900&family=Kanit:wght@400;600;800&family=Public+Sans:wght@400;700;900&family=Work+Sans:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Big+Shoulders+Display:wght@400;700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Righteous&family=Bangers&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
   
-  /* Retaining creative fonts for video content only */
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface2: #1a1a1a;
+  --color-border: #2a2a2a;
+  --color-border-light: #3a3a3a;
+  --color-text: #e5e5e5;
+  --color-text-secondary: #a0a0a0;
+  --color-text-tertiary: #666666;
+  --color-heading: #f5f5f5;
+  --color-code-bg: #141414;
+
+  --color-accent-green: #22c55e;
+  --color-accent-green-light: rgba(34, 197, 94, 0.1);
+  --color-accent-green-border: rgba(34, 197, 94, 0.3);
+  
+  --color-accent-blue: #3b82f6;
+  --color-accent-blue-light: rgba(59, 130, 246, 0.1);
+  --color-accent-blue-border: rgba(59, 130, 246, 0.3);
+  
+  --color-accent-purple: #a78bfa;
+  --color-accent-purple-light: rgba(167, 139, 250, 0.1);
+  --color-accent-purple-border: rgba(167, 139, 250, 0.3);
+
+  /* Video Only Experimental Fonts */
   --font-archivo: "Archivo Black", sans-serif;
   --font-bebas: "Bebas Neue", cursive;
   --font-outfit: "Outfit", sans-serif;
@@ -23,140 +45,139 @@
   --font-righteous: "Righteous", cursive;
   --font-space-tech: "Space Grotesk", sans-serif;
   --font-bangers: "Bangers", system-ui;
-
-  --color-elite-bg: #09090b;
-  --color-elite-surface: #18181b;
-  --color-elite-border: rgba(255, 255, 255, 0.1);
-  --color-elite-accent: #6366f1;
-  --color-elite-text: #fafafa;
-  --color-elite-text-muted: #a1a1aa;
-
-  /* Brutal Colors Mapped to Theme for Gradient Support */
-  --color-brutal-pink: #db2777;
-  --color-brutal-orange: #d97706;
-  --color-brutal-purple: #7c3aed;
-  --color-brutal-blue: #2563eb;
-  --color-brutal-green: #059669;
-
-  @keyframes animate-gradient-slow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 1; }
-  }
-}
-
-@utility bg-vibrant-glow {
-  background: linear-gradient(135deg, #db2777, #d97706, #7c3aed);
-  background-size: 200% 200%;
-  animation: animate-gradient-slow 12s ease infinite;
-}
-
-@utility bg-particles-glow {
-  background: radial-gradient(circle at center, #1e1b4b, #09090b);
-}
-
-@utility bg-cyber-grid {
-  background-image: 
-    linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-color: #030408;
-}
-
-.animate-gradient-slow {
-  background-size: 200% 200%;
-  animation: animate-gradient-slow 8s ease infinite;
 }
 
 body {
-  background-color: var(--color-elite-bg);
-  color: var(--color-elite-text);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: var(--font-sans);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism Utilities */
+/* Base Headings Setup */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-heading);
+}
+
+/* HyperFrames Core UI Elements */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease-out;
+}
+
+.card:hover {
+  border-color: var(--color-border-light);
+}
+
+.btn-primary {
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  background: var(--color-heading);
+  color: #0a0a0a;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.badge-green {
+  color: var(--color-accent-green);
+  background: var(--color-accent-green-light);
+  border: 1px solid var(--color-accent-green-border);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+.badge-blue {
+  color: var(--color-accent-blue);
+  background: var(--color-accent-blue-light);
+  border: 1px solid var(--color-accent-blue-border);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+.badge-purple {
+  color: var(--color-accent-purple);
+  background: var(--color-accent-purple-light);
+  border: 1px solid var(--color-accent-purple-border);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+/* Glassmorphism Legacy Mappings (Re-routed to HyperFrames flat styles for safety) */
 @utility glass-panel {
-  background: rgba(24, 24, 27, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
 }
 
 @utility glass-panel-light {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
 }
 
-/* Elite Action Components */
+/* UI Elements Core Setup */
 @utility elite-button {
-  @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
-  background: var(--color-elite-accent);
-  color: white;
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
-}
-
-.elite-button:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  @apply btn-primary;
 }
 
 @utility elite-button-secondary {
-  @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 border border-white/10 active:scale-95;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(4px);
+  @apply relative inline-flex items-center justify-center px-6 py-2 rounded-lg font-medium transition-all duration-200 border bg-transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
-
 .elite-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--color-border-light);
+  background: var(--color-surface2);
 }
 
 @utility elite-input {
-  @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white transition-all duration-200 outline-none;
+  @apply w-full border rounded-lg px-4 py-2 transition-all duration-200 outline-none;
+  background-color: var(--color-code-bg);
+  border-color: var(--color-border);
+  color: var(--color-text);
 }
-
 .elite-input:focus {
-  @apply border-indigo-500/50 ring-1 ring-indigo-500/20 bg-white/10;
+  border-color: var(--color-accent-purple);
 }
 
 /* Texture & Gradients */
 @utility bg-mesh-gradient {
-  background: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
-  background-color: var(--color-elite-bg);
+  background-color: var(--color-bg);
 }
 
 @utility bg-dot-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 0);
-  background-size: 24px 24px;
+  background-color: var(--color-bg);
 }
 
-/* Legacy Brutalist Compatibility (Mapped to Elite) */
-@utility brutal-border { border: 1px solid rgba(255, 255, 255, 0.1); }
-@utility brutal-shadow { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
-.brutal-card { @apply glass-panel rounded-xl; }
-.brutal-button { @apply elite-button; }
+/* Legacy Brutalist Compatibility Mapped Directly to HyperFrames Specs */
+@utility brutal-border { border: 1px solid var(--color-border); }
+@utility brutal-shadow { box-shadow: none !important; }
+.brutal-card { @apply card rounded-xl; }
+.brutal-button { @apply btn-primary inline-flex items-center justify-center; }
 .brutal-input { @apply elite-input; }
-.bg-brutal-bg { background-color: var(--color-elite-bg); }
-.bg-brutal-purple { background-color: #7c3aed; }
-.bg-brutal-blue { background-color: #2563eb; }
-.bg-brutal-green { background-color: #059669; }
-.bg-brutal-orange { background-color: #d97706; }
-.bg-brutal-pink { background-color: #db2777; }
+
+.bg-brutal-bg { background-color: var(--color-bg); }
+.bg-brutal-purple, .bg-brutal-blue, .bg-brutal-green, .bg-brutal-orange, .bg-brutal-pink { 
+  background-color: var(--color-surface); 
+  border: 1px solid var(--color-border);
+}
+.text-brutal-purple, .text-brutal-blue, .text-brutal-green, .text-brutal-orange, .text-brutal-pink {
+  color: var(--color-text);
+}
 
 /* Keep specific functional styles */
 .neon-path {

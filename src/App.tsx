@@ -2559,15 +2559,17 @@ export default function App() {
             },
             onComplete: () => {
               setActiveShaderTransition(prev => ({ ...prev, isActive: false }));
+              setCurrentIndex(nextIdx);
+              if (hf) {
+                hf.seek(nextIdx * 5);
+              }
             }
           });
-        }
-        
-        setCurrentIndex(nextIdx);
-        
-        // Seek HyperFrames stage to the correct time
-        if (hf) {
-          hf.seek(nextIdx * 5); // 5s per scene
+        } else {
+          setCurrentIndex(nextIdx);
+          if (hf) {
+            hf.seek(nextIdx * 5); // 5s per scene
+          }
         }
       };
 

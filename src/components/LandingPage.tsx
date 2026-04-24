@@ -110,7 +110,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
             </div>
             <KineticHero className="text-6xl sm:text-7xl lg:text-8xl font-display font-bold leading-[0.9] tracking-tighter mb-8 max-w-3xl">
               Showcase <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Your Vision.</span>
+              <span className="text-white">Your Vision.</span>
             </KineticHero>
             <p className="text-xl sm:text-2xl font-medium mb-12 max-w-2xl text-white/60 leading-relaxed">
               Transform your screenshots into cinematic trailers. AI-pioneered kinetic motion, depth of field, and professional studio vibes.
@@ -188,7 +188,7 @@ export default function LandingPage({ onStart, onSelectTier }: LandingPageProps)
             className="absolute -top-12 -right-12 z-10 glass-panel p-4 rounded-2xl rotate-6 hidden sm:block"
           >
              <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+               <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                  <Sparkles size={20} className="text-indigo-400" />
                </div>
                <div>
