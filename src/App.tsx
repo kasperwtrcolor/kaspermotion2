@@ -93,7 +93,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
-  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static';
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide';
 };
 
 const M3_SHAPES = [
@@ -2211,6 +2211,10 @@ export default function App() {
     setToastMessage("Started over. Ready for a new project.");
   };
 
+  const updateSceneProperty = (idx: number, prop: keyof Composition, value: any) => {
+    setCompositions(prev => prev.map((c, i) => i === idx ? { ...c, [prop]: value } : c));
+  };
+
   const handleToggleFullscreen = (sceneIdx: number, mediaIdx: number) => {
     setCompositions(prev => prev.map((c, i) => {
       if (i !== sceneIdx) return c;
@@ -2306,12 +2310,14 @@ export default function App() {
   const camX = useMotionValue(0);
   const camY = useMotionValue(0);
   const camZ = useMotionValue(0);
+  const camRoll = useMotionValue(0);
   
   const artistryX = useMotionValue(0);
   const artistryY = useMotionValue(0);
   const artistryZ = useMotionValue(0);
   const artistryRotX = useMotionValue(0);
   const artistryRotY = useMotionValue(0);
+  const artistryRoll = useMotionValue(0);
   
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
@@ -2321,12 +2327,14 @@ export default function App() {
   const smoothX = useSpring(camX, { damping: 40, stiffness: 60, mass: 1.2 });
   const smoothY = useSpring(camY, { damping: 40, stiffness: 60, mass: 1.2 });
   const smoothZ = useSpring(camZ, { damping: 40, stiffness: 60, mass: 1.2 });
+  const smoothRoll = useSpring(camRoll, { damping: 35, stiffness: 50 });
 
   const smoothArtX = useSpring(artistryX, { damping: 30, stiffness: 100 });
   const smoothArtY = useSpring(artistryY, { damping: 30, stiffness: 100 });
   const smoothArtZ = useSpring(artistryZ, { damping: 30, stiffness: 100 });
   const smoothArtRotX = useSpring(artistryRotX, { damping: 40, stiffness: 80 });
   const smoothArtRotY = useSpring(artistryRotY, { damping: 40, stiffness: 80 });
+  const smoothArtRoll = useSpring(artistryRoll, { damping: 40, stiffness: 80 });
   
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
@@ -2363,9 +2371,23 @@ export default function App() {
     const blurAmount = Math.min(speed / 120, 15); 
     const caAmount = Math.min(speed / 80, 8);
     
+    // Auto-tilt based on horizontal speed
+    camRoll.set(Number(vx) / 60);
+
     if (speed < 5) return `blur(0px)`;
     
     return `blur(${blurAmount}px) drop-shadow(${caAmount}px 0px 0px rgba(255,0,0,0.6)) drop-shadow(-${caAmount}px 0px 0px rgba(0,255,255,0.6))`;
+  });
+
+  const worldFOV = useTransform([velX, velY, velZ, artistryZ], ([vx, vy, vz, az]) => {
+    const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
+    const speedScale = 1 + Math.min(speed / 8000, 0.2);
+    
+    // Dolly Zoom compensation logic
+    // If artistryZ is increasing (moving in), we scale DOWN to compensate
+    const dollyComp = currentComp?.cameraPath === 'dolly-zoom' ? 1 - (Number(az) / 4000) : 1;
+    
+    return speedScale * dollyComp; 
   });
 
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX, smoothArtX], ([x, px, wx, ax]) => Number(x) + Number(px) + Number(wx) + Number(ax));
@@ -2373,6 +2395,7 @@ export default function App() {
   const worldZ = useTransform([smoothZ, smoothArtZ], ([z, az]) => Number(z) + Number(az));
   const worldRotX = useTransform([smoothRotX, smoothArtRotX], ([rx, arx]) => Number(rx) + Number(arx));
   const worldRotY = useTransform([smoothRotY, smoothArtRotY], ([ry, ary]) => Number(ry) + Number(ary));
+  const worldRoll = useTransform([smoothRoll, smoothArtRoll], ([sr, ar]) => Number(sr) + Number(ar));
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
@@ -2393,23 +2416,35 @@ export default function App() {
       artistryZ.set(0);
       artistryRotX.set(0);
       artistryRotY.set(0);
+      artistryRoll.set(0);
 
       // AI-Driven Camera Path Animations
-      const duration = 5; // Standard scene duration
+      const duration = 5; 
       
       if (currentComp.cameraPath === 'zoom-in') {
-        animate(artistryZ, 600, { duration, ease: "linear" });
+        animate(artistryZ, 800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'zoom-out') {
-        animate(artistryZ, -600, { duration, ease: "linear" });
+        animate(artistryZ, -800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'orbit-left') {
-        animate(artistryX, -400, { duration, ease: "linear" });
-        animate(artistryRotY, 15, { duration, ease: "linear" });
+        animate(artistryX, -600, { duration, ease: "linear" });
+        animate(artistryRotY, 20, { duration, ease: "linear" });
+        animate(artistryRoll, -5, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'orbit-right') {
-        animate(artistryX, 400, { duration, ease: "linear" });
-        animate(artistryRotY, -15, { duration, ease: "linear" });
+        animate(artistryX, 600, { duration, ease: "linear" });
+        animate(artistryRotY, -20, { duration, ease: "linear" });
+        animate(artistryRoll, 5, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'pan-down-tilt') {
-        animate(artistryY, -300, { duration, ease: "linear" });
-        animate(artistryRotX, 10, { duration, ease: "linear" });
+        animate(artistryY, -400, { duration, ease: "linear" });
+        animate(artistryRotX, 15, { duration, ease: "linear" });
+      } else if (currentComp.cameraPath === 'dolly-zoom') {
+        // Move camera IN while zooming world OUT
+        animate(artistryZ, 1200, { duration, ease: "easeInOut" });
+      } else if (currentComp.cameraPath === 'hyper-glide') {
+        animate(artistryZ, [0, 400, 0], { duration, ease: "anticipate" });
+        animate(artistryRotY, [0, 10, 0], { duration, ease: "anticipate" });
+      } else if (currentComp.cameraPath === 'static') {
+        // Subtle drift
+        animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration, ease: "easeInOut" });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
@@ -3710,6 +3745,40 @@ export default function App() {
                             </button>
                           ))}
                         </div>
+                        
+                        <div className="mt-4 flex items-center gap-4 border-t border-white/5 pt-4">
+                          <div className="flex-1">
+                            <p className="text-[9px] font-bold uppercase text-white/30 tracking-widest mb-2">Camera Director</p>
+                            <select 
+                              value={comp.cameraPath || 'static'}
+                              onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
+                              className="w-full bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase py-2 px-3 rounded-xl focus:ring-1 focus:ring-indigo-500 outline-none transition-all cursor-pointer hover:bg-white/10"
+                            >
+                              <option value="static" className="bg-zinc-900">Cinematic Static</option>
+                              <option value="zoom-in" className="bg-zinc-900">Slow Zoom In</option>
+                              <option value="zoom-out" className="bg-zinc-900">Slow Zoom Out</option>
+                              <option value="orbit-left" className="bg-zinc-900">Orbit Left</option>
+                              <option value="orbit-right" className="bg-zinc-900">Orbit Right</option>
+                              <option value="pan-down-tilt" className="bg-zinc-900">Pan Down + Tilt</option>
+                              <option value="dolly-zoom" className="bg-zinc-900">Dolly Zoom (Vertigo)</option>
+                              <option value="hyper-glide" className="bg-zinc-900">Hyper-Glide</option>
+                            </select>
+                          </div>
+                          
+                          <div className="flex-1">
+                            <p className="text-[9px] font-bold uppercase text-white/30 tracking-widest mb-2">Scene Backdrop</p>
+                            <select 
+                              value={comp.activeBackground || 'black'}
+                              onChange={(e) => updateSceneProperty(idx, 'activeBackground', e.target.value)}
+                              className="w-full bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase py-2 px-3 rounded-xl focus:ring-1 focus:ring-emerald-500 outline-none transition-all cursor-pointer hover:bg-white/10"
+                            >
+                              <option value="black" className="bg-zinc-900">Pure Black</option>
+                              <option value="vibrant-glow" className="bg-zinc-900">Vibrant Glow</option>
+                              <option value="particles" className="bg-zinc-900">Particles</option>
+                              <option value="premium-parallax" className="bg-zinc-900">Parallax Nebula</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -3852,6 +3921,8 @@ export default function App() {
               z: worldZ,
               rotateX: worldRotX,
               rotateY: worldRotY,
+              rotateZ: worldRoll,
+              scale: worldFOV,
               filter: cameraFilter
             }}
           >
