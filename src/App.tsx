@@ -12,6 +12,7 @@ import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
 import PricingModal from './components/PricingModal';
 import VideoCanvas from './components/VideoCanvas';
+import HandDrawnCursor from './components/HandDrawnCursor';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
@@ -3133,18 +3134,18 @@ export default function App() {
 
     if (appMode === 'setup') {
       return (
-        <div className="min-h-screen bg-mesh-gradient bg-dot-grid text-white font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-16 overflow-y-auto">
-          <div className="w-full max-w-3xl glass-panel p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative">
+        <div className="min-h-screen bg-cream text-ink font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-24 overflow-y-auto">
+          <div className="w-full max-w-3xl border border-black/5 bg-white p-6 md:p-12 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative shadow-sm">
             <AnimatePresence>
               {(isUploading || isSaving) && (
                 <motion.div 
                   initial={{ opacity: 0 }} 
                   animate={{ opacity: 1 }} 
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-50 bg-indigo-600/90 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl md:rounded-3xl border border-white/20"
+                  className="absolute inset-0 z-50 bg-ivory/90 backdrop-blur-md flex flex-col items-center justify-center border border-black/10"
                 >
-                  <div className="w-16 h-16 border-4 border-white/10 border-t-white rounded-full animate-spin mb-6"></div>
-                  <p className="text-white font-display font-bold uppercase text-xl px-4 py-2">
+                  <div className="w-16 h-16 border-4 border-black/10 border-t-ink rounded-full animate-spin mb-6"></div>
+                  <p className="text-ink font-mono font-bold uppercase text-lg px-4 py-2">
                     {isUploading && "Uploading assets..."}
                     {isSaving && "Saving project..."}
                   </p>
@@ -3985,7 +3986,9 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-cream selection:bg-ink selection:text-cream font-sans">
+      <HandDrawnCursor />
+      
       <AppHeader
         appMode={appMode}
         user={user}
@@ -3993,7 +3996,7 @@ export default function App() {
         onNavigate={setAppMode}
         onLogin={handleLogin}
         onLogout={handleLogout}
-        onNewProject={handleStartOver}
+        onNewProject={resetToLanding}
         onRefill={() => setShowPricing(true)}
         onExport={() => setShowExportExplainer(true)}
         onStudio={() => setAppMode('setup')}
@@ -4023,10 +4026,10 @@ export default function App() {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="glass-panel p-8 max-w-md w-full text-white shadow-2xl"
+              className="bg-white border border-black/10 p-10 max-w-md w-full text-ink shadow-2xl rounded-none"
             >
-              <h2 className="font-display text-2xl font-bold uppercase mb-6 text-indigo-400">Export Instructions</h2>
-              <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
+              <h2 className="mono text-2xl font-black uppercase mb-8">Export Instructions</h2>
+              <p className="font-sans text-sm mb-6 leading-relaxed">
                 1. Click <span className="bg-brutal-blue px-1">PROCEED</span> to select a screen to record.
               </p>
               <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
@@ -4060,20 +4063,20 @@ export default function App() {
         {showGiphyModal && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[1100] bg-cream/80 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="glass-panel w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh] rounded-3xl"
+              className="bg-white border border-ink/10 w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
             >
-              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-indigo-600/50 backdrop-blur-md text-white">
-                <h3 className="font-display font-bold uppercase flex items-center gap-3 text-sm"><Sparkles size={16} /> Add Giphy Sticker</h3>
-                <button onClick={() => setShowGiphyModal(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+              <div className="p-8 border-b border-black/5 flex justify-between items-center bg-ivory text-ink">
+                <h3 className="mono font-bold uppercase flex items-center gap-3 text-sm"><Sparkles size={16} /> Add Giphy Sticker</h3>
+                <button onClick={() => setShowGiphyModal(false)} className="p-2 hover:bg-black/5 transition-colors">
                   <X size={20} />
                 </button>
               </div>
               
-              <div className="p-6 border-b border-white/10 bg-white/5">
+              <div className="p-8 border-b border-black/5 bg-white">
                 <form onSubmit={handleGiphySearch} className="relative flex gap-2">
                   <div className="relative flex-1">
                     <input 
@@ -4081,38 +4084,37 @@ export default function App() {
                       value={giphySearchQuery}
                       onChange={(e) => setGiphySearchQuery(e.target.value)}
                       placeholder="Search for a sticker..."
-                      className="brutal-input w-full py-3 pl-10 pr-4 text-sm bg-white"
+                      className="elite-input"
                     />
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                   </div>
-                  <button type="submit" className="elite-button px-6 py-2 text-sm rounded-lg">
+                  <button type="submit" className="btn-primary py-2 px-8 text-xs">
                     Search
                   </button>
                 </form>
               </div>
 
-              <div className="p-4 overflow-y-auto flex-1 custom-scrollbar bg-white text-black">
+              <div className="p-4 overflow-y-auto flex-1 custom-scrollbar bg-white text-ink">
                 {isSearchingGiphy ? (
-                  <div className="flex flex-col items-center justify-center h-48 text-black/50">
+                  <div className="flex flex-col items-center justify-center h-48 opacity-40">
                     <Loader2 size={32} className="animate-spin mb-4" />
-                    <p className="text-sm font-mono uppercase font-bold">Searching Giphy...</p>
+                    <p className="mono font-bold">Searching Giphy...</p>
                   </div>
                 ) : giphySearchResults.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 p-4">
                     {giphySearchResults.map((gif) => (
                       <button 
                         key={gif.id}
                         onClick={() => applyStickerToCurrentScene(gif.images.original.url)}
-                        className="aspect-square bg-gray-100 brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all p-2 flex items-center justify-center group"
+                        className="aspect-square bg-ivory border border-transparent hover:border-ink transition-all p-2 flex items-center justify-center group"
                       >
                         <img src={gif.images.fixed_height.url} alt={gif.title} className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform" />
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-48 text-black/40">
-                    <ImageIcon size={48} className="mb-4 opacity-50" />
-                    <p className="text-sm font-mono font-bold uppercase">Search for stickers to add to Scene {currentIndex + 1}</p>
+                  <div className="flex flex-col items-center justify-center h-48 opacity-20">
+                    <ImageIcon size={48} className="mb-4" />
+                    <p className="mono font-bold">Search stickers for Scene {currentIndex + 1}</p>
                   </div>
                 )}
               </div>

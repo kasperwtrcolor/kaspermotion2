@@ -1,230 +1,130 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, CreditCard, Zap, Award, Check } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
-
-export const pricingTiers = [
-  { 
-    id: 'Basic', 
-    credits: 50, 
-    amount: 5, 
-    color: 'from-blue-500/10 to-indigo-500/10', 
-    accent: 'text-blue-400',
-    description: 'Perfect for exploring cinematic styles.',
-    features: ['50 Generator Credits', 'HD Quality Export', 'Standard AI Queue', 'All Text Effects']
-  },
-  { 
-    id: 'Standard', 
-    credits: 150, 
-    amount: 12, 
-    color: 'from-indigo-500/20 to-purple-500/20', 
-    accent: 'text-indigo-400',
-    popular: true, 
-    description: 'Most popular for serious vibe coders.',
-    features: ['150 Generator Credits', '4K Quality Export', 'Priority AI Queue', 'Cinematic Presets']
-  },
-  { 
-    id: 'Pro', 
-    credits: 500, 
-    amount: 30, 
-    color: 'from-purple-500/20 to-pink-500/20', 
-    accent: 'text-purple-400',
-    description: 'Elite tier for full production trailers.',
-    features: ['500 Generator Credits', 'Unlimited 4K Exports', 'Instant AI Generation', 'Commercial License']
-  }
-];
+import React from 'react';
+import { X, Check, Zap, Sparkles, TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: any;
+  onPurchase?: (tier: string) => void;
 }
 
-export default function PricingModal({ isOpen, onClose, user }: PricingModalProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const handleBuyCredits = async (tier: typeof pricingTiers[0]) => {
-    if (!user) return;
-    
-    setIsProcessing(true);
-    try {
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to load');
-
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.uid,
-          credits: tier.credits,
-          amount: tier.amount
-        }),
-      });
-
-      const session = await response.json();
-      if (session.error) throw new Error(session.error);
-
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id,
-      });
-
-      if (result.error) throw new Error(result.error.message);
-    } catch (err: any) {
-      console.error('Payment Error:', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onPurchase }) => {
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[1000] bg-cream/80 backdrop-blur-md flex items-center justify-center p-4"
+      >
         <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+          className="bg-white border border-ink/10 w-full max-w-6xl max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl relative p-8 md:p-12 mb-12"
         >
-          <motion.div 
-            initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-            className="glass-panel w-full max-w-5xl p-6 md:p-10 relative mt-auto mb-auto overflow-hidden rounded-3xl"
+          <button 
+            onClick={onClose}
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-black/5 transition-colors"
           >
-            <div className="absolute inset-0 bg-mesh-gradient opacity-30 pointer-events-none" />
-            
-            <button 
-              onClick={onClose}
-              className="absolute top-6 right-6 p-2 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all z-10"
-              disabled={isProcessing}
-            >
-              <X size={20} />
-            </button>
+            <X size={24} />
+          </button>
 
-            <div className="text-center mb-12 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-wider">
-                <Sparkles size={12} />
-                Refill Your Stash
-              </div>
-              <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">Upgrade Your Status</h2>
-              <p className="font-sans text-sm font-medium text-white/50 max-w-md mx-auto">Choose a high-performance package to keep the cinematic vibes flowing.</p>
+          <header className="mb-12">
+            <p className="mono text-muted mb-2">Pricing</p>
+            <h2 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tighter">Built for results.</h2>
+            <p className="text-muted text-lg max-w-2xl">Simple credit-based usage. No monthly recurring fees. Every second of your trailer is a masterpiece of cinematic motion.</p>
+          </header>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Basic */}
+            <div className="bg-ivory border border-transparent hover:border-ink transition-all p-8 flex flex-col group hover:-translate-y-2">
+              <h4 className="text-xl font-bold uppercase mb-1">Basic</h4>
+              <p className="mono text-[10px] text-muted mb-8">Perfect for exploring</p>
+              <div className="text-5xl font-black mb-2 uppercase">$5</div>
+              <p className="mono text-[10px] text-muted mb-8">/ one-time</p>
+              
+              <ul className="flex-1 space-y-3 mb-10">
+                {['50 Generator Credits', 'HD Quality Export', 'Standard AI Queue', 'All Text Effects'].map(f => (
+                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
+                    <Check size={14} className="text-ink opacity-40" /> {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button 
+                onClick={() => onPurchase?.('basic')}
+                className="btn-outline w-full"
+              >
+                Select Plan
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-              {pricingTiers.map((tier) => (
-                <div 
-                  key={tier.id}
-                  className={`glass-panel p-8 flex flex-col relative transition-all rounded-3xl ${tier.popular ? 'border-indigo-500/50 shadow-2xl shadow-indigo-500/10' : ''}`}
-                >
-                  {tier.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white px-3 py-1 rounded-full font-mono text-[10px] font-bold uppercase tracking-widest">
-                      Most Popular
-                    </div>
-                  )}
-                  <div className="mb-6">
-                    <h4 className="font-display text-2xl font-bold">{tier.id}</h4>
-                    <p className="text-[10px] uppercase font-bold text-white/40 leading-tight mt-1">{tier.description}</p>
-                  </div>
-                  
-                  <div className={`bg-gradient-to-br ${tier.color} rounded-2xl py-8 text-center mb-6 border border-white/5`}>
-                    <p className={`font-display text-6xl font-bold ${tier.accent}`}>{tier.credits}</p>
-                    <p className="font-mono text-xs font-bold uppercase tracking-widest opacity-40">Credits</p>
-                  </div>
+            {/* Elite */}
+            <div className="bg-ink text-cream p-8 flex flex-col relative group hover:-translate-y-2 transition-transform">
+              <div className="absolute top-0 right-0 bg-white text-ink px-3 py-1 text-[8px] font-bold uppercase">Popular</div>
+              <h4 className="text-xl font-bold uppercase mb-1">Elite Choice</h4>
+              <p className="mono text-[10px] opacity-60 mb-8">Standard Choice</p>
+              <div className="text-5xl font-black mb-2 uppercase">$12</div>
+              <p className="mono text-[10px] opacity-60 mb-8">/ one-time</p>
+              
+              <ul className="flex-1 space-y-3 mb-10">
+                {['150 Generator Credits', '4K Quality Export', 'Priority AI Queue', 'Cinematic Presets'].map(f => (
+                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
+                    <Sparkles size={14} className="text-cream opacity-40" /> {f}
+                  </li>
+                ))}
+              </ul>
 
-                  <div className="text-center mb-8">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="font-display text-4xl font-bold">${tier.amount}</span>
-                      <span className="text-white/40 text-xs font-bold uppercase tracking-widest">one-time</span>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => handleBuyCredits(tier)}
-                    disabled={isProcessing}
-                    className={`elite-button w-full py-4 text-sm font-bold flex items-center justify-center gap-2 rounded-xl transition-all ${tier.popular ? 'bg-indigo-500' : 'bg-white/10 hover:bg-white/20 border border-white/10'} disabled:opacity-50`}
-                  >
-                    {isProcessing ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>Get Now <Sparkles size={16} /></>
-                    )}
-                  </button>
-
-                  <div className="mt-8 space-y-3 border-t border-white/5 pt-6">
-                     <p className="text-[10px] font-bold uppercase flex items-center gap-2 text-white/60">
-                       <Zap size={12} className="text-indigo-400" /> Instant Activation
-                     </p>
-                     <p className="text-[10px] font-bold uppercase flex items-center gap-2 text-white/60">
-                       <Award size={12} className="text-purple-400" /> Priority Queue
-                     </p>
-                  </div>
-                </div>
-              ))}
+              <button 
+                onClick={() => onPurchase?.('elite')}
+                className="bg-cream text-ink border border-transparent font-bold uppercase py-3 transition-all hover:bg-white"
+              >
+                Select Plan
+              </button>
             </div>
-            
-            <p className="text-center mt-12 font-mono text-[10px] uppercase text-white/40 font-bold max-w-md mx-auto leading-relaxed relative z-10">
-              Secure payments powered by Stripe. Your credits never expire and are tied to your account.
-            </p>
-          </motion.div>
+
+            {/* Pro */}
+            <div className="bg-ivory border border-transparent hover:border-ink transition-all p-8 flex flex-col group hover:-translate-y-2">
+              <h4 className="text-xl font-bold uppercase mb-1">Pro</h4>
+              <p className="mono text-[10px] text-muted mb-8">Elite tier for full production</p>
+              <div className="text-5xl font-black mb-2 uppercase">$30</div>
+              <p className="mono text-[10px] text-muted mb-8">/ one-time</p>
+              
+              <ul className="flex-1 space-y-3 mb-10">
+                {['500 Generator Credits', 'Unlimited 4K Exports', 'Instant AI Generation', 'Commercial License'].map(f => (
+                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
+                    <Zap size={14} className="text-ink opacity-40" /> {f}
+                  </li>
+                ))}
+              </ul>
+
+              <button 
+                onClick={() => onPurchase?.('pro')}
+                className="btn-outline w-full"
+              >
+                Select Plan
+              </button>
+            </div>
+
+            {/* Agency */}
+            <div className="bg-ivory border border-transparent border-dashed p-8 flex flex-col items-center justify-center text-center hover:border-solid hover:border-ink transition-all">
+              <TrendingUp size={32} className="mb-4 opacity-40" />
+              <h4 className="text-xl font-bold uppercase mb-2">Agency Solutions</h4>
+              <p className="mono text-[10px] text-muted mb-6">Order 1,000+ credits for your team or organization.</p>
+              <button 
+                className="btn-outline w-full"
+              >
+                Buy Bulk Credits
+              </button>
+            </div>
+          </div>
         </motion.div>
-      )}
+      </motion.div>
     </AnimatePresence>
   );
-}
+};
 
-export function PricingPlans({ onSelect, isProcessing }: { onSelect: (tier: any) => void, isProcessing?: boolean }) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {pricingTiers.map((tier) => (
-        <div 
-          key={tier.id}
-          className={`glass-panel p-10 flex flex-col relative transition-all rounded-3xl hover:scale-[1.02] ${tier.popular ? 'border-indigo-500/50 shadow-2xl shadow-indigo-500/10' : ''}`}
-        >
-          {tier.popular && (
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-500 text-white px-4 py-1.5 rounded-full font-mono text-xs font-bold uppercase tracking-widest whitespace-nowrap">
-              Elite Choice
-            </div>
-          )}
-          
-          <div className="mb-8">
-            <h4 className="font-display text-3xl font-bold tracking-tight">{tier.id}</h4>
-            <p className="text-[11px] uppercase font-bold text-white/40 leading-tight mt-1">{tier.description}</p>
-          </div>
-          
-          <div className={`bg-gradient-to-br ${tier.color} rounded-2xl py-10 text-center mb-8 border border-white/5`}>
-            <p className={`font-display text-7xl font-bold tracking-tighter ${tier.accent}`}>{tier.credits}</p>
-            <p className="font-mono text-sm font-bold uppercase tracking-widest opacity-40">Credits</p>
-          </div>
-
-          <div className="mb-10">
-            <div className="flex items-baseline gap-1 mb-10">
-              <span className="font-display text-5xl font-bold">${tier.amount}</span>
-              <span className="text-white/40 text-xs font-bold uppercase tracking-[0.2em]">/ one-time</span>
-            </div>
-            
-            <ul className="space-y-4">
-              {tier.features.map((feature, idx) => (
-                <li key={idx} className="flex items-center gap-4 text-[11px] font-bold uppercase text-white/70">
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center shrink-0">
-                    <Check size={12} className="text-indigo-400" />
-                  </div>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <button 
-            onClick={() => onSelect(tier)}
-            disabled={isProcessing}
-            className={`elite-button w-full mt-auto py-5 text-xl font-bold flex items-center justify-center gap-3 rounded-2xl transition-all ${tier.popular ? 'bg-indigo-500' : 'bg-white/10 hover:bg-white/20 border border-white/10'} disabled:opacity-50`}
-          >
-            {isProcessing ? (
-              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>Select Plan <Sparkles size={24} /></>
-            )}
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
+export default PricingModal;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, Sparkles, RefreshCcw } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, RefreshCcw } from 'lucide-react';
 
 type AppMode = 'landing' | 'setup' | 'playing' | 'profile' | 'share';
 
@@ -30,7 +30,6 @@ export default function AppHeader({
 }: AppHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
-  const [lastMouseY, setLastMouseY] = useState(0);
 
   // Auto-hide header in playing mode
   useEffect(() => {
@@ -41,7 +40,6 @@ export default function AppHeader({
 
     let hideTimeout: ReturnType<typeof setTimeout>;
     const handleMouseMove = (e: MouseEvent) => {
-      setLastMouseY(e.clientY);
       if (e.clientY < 80) {
         setHeaderVisible(true);
         clearTimeout(hideTimeout);
@@ -51,7 +49,6 @@ export default function AppHeader({
       }
     };
 
-    // Initially show, then auto-hide after 3s
     hideTimeout = setTimeout(() => setHeaderVisible(false), 3000);
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
@@ -72,65 +69,54 @@ export default function AppHeader({
         initial={{ y: -80 }}
         animate={{ y: headerVisible ? 0 : -80 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed top-0 left-0 right-0 z-[500] glass-panel border-b border-white/10"
+        className="fixed top-0 left-0 right-0 z-[500] bg-ivory/80 backdrop-blur-md border-b border-black/5"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo */}
           <button
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-2 group"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform shadow-lg shadow-indigo-500/20">
-              <img
-                src="/logo.png"
-                alt="VibeTrailer Logo"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerText = 'V';
-                }}
-              />
-            </div>
-            <span className="font-display font-bold text-lg tracking-tight lowercase hidden sm:inline text-white">
-              vibe<span className="text-indigo-400">trailer</span>
+            <span className="font-display font-black text-2xl tracking-tighter uppercase text-ink">
+              vibe<span className="opacity-40">trailer</span>
             </span>
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-8">
             {appMode === 'playing' ? (
               <>
                 <button
                   onClick={onExport}
-                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full bg-white text-black hover:bg-gray-100 transition-all active:scale-95 shadow-lg shadow-white/10"
+                  className="btn-primary py-2 px-6 text-xs"
                 >
-                  <Video size={14} />
+                  <Video size={14} className="mr-2" />
                   Export
                 </button>
                 <button
                   onClick={onStudio}
-                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
+                  className="btn-outline py-2 px-6 text-xs"
                 >
                   Studio
                 </button>
                 <button
                   onClick={onResetCamera}
-                  className="p-2 rounded-full border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all active:scale-95"
+                  className="p-2 border border-black/10 hover:bg-black/5 transition-colors"
                   title="Reset Camera"
                 >
                   <RefreshCcw size={14} />
                 </button>
-                <div className="w-px h-6 bg-white/10 mx-2" />
+                <div className="w-px h-6 bg-black/10 mx-2" />
                 <button
                   onClick={onNewProject}
-                  className="px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all active:scale-95"
+                  className="btn-outline border-ink/20 text-ink/40 py-2 px-6 text-xs"
                 >
-                  <Plus size={14} />
+                  <Plus size={14} className="mr-2" />
                   New
                 </button>
               </>
             ) : (
-              <>
+              <div className="flex bg-white/50 backdrop-blur-sm border border-black/5 px-2 py-1.5 rounded-full items-center gap-1">
                 {navItems.map((item) => {
                   const isDisabled = !user && (item.id === 'setup' || item.id === 'profile');
                   return (
@@ -141,90 +127,82 @@ export default function AppHeader({
                         onNavigate(item.id);
                         setMobileMenuOpen(false);
                       }}
-                      className={`px-4 py-2 font-sans text-xs font-semibold flex items-center gap-2 rounded-full transition-all active:scale-95 ${
-                        isDisabled ? 'opacity-30 cursor-not-allowed' :
+                      className={`px-6 py-2 font-mono text-[10px] uppercase font-bold flex items-center gap-2 rounded-full transition-all active:scale-95 ${
+                        isDisabled ? 'opacity-20 cursor-not-allowed' :
                         appMode === item.id
-                          ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
+                          ? 'bg-ink text-cream shadow-xl'
+                          : 'text-ink/60 hover:text-ink'
                       }`}
                     >
-                      {item.icon}
                       {item.label}
+                      {item.id === 'profile' && user && (
+                         <span className="new-badge mono text-[8px]">5</span>
+                      )}
                     </button>
                   );
                 })}
-                <button
-                  onClick={onNewProject}
-                  disabled={!user}
-                  className={`px-4 py-2 font-sans text-xs font-bold flex items-center gap-2 rounded-full transition-all ml-1 ${
-                    !user ? 'opacity-30 cursor-not-allowed' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <Plus size={14} />
-                  New
-                </button>
-              </>
+              </div>
             )}
           </nav>
 
           {/* Right side: Credits + User */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* Credits Badge */}
             {user && (
-              <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => onNavigate('profile')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-white/5 rounded-full transition-colors h-8"
+                  className="flex items-center gap-2 px-4 py-2 border border-black/10 rounded-full hover:bg-black/5 transition-colors"
                 >
-                  <Coins size={12} className="text-indigo-400" />
-                  <span className="font-sans text-xs font-bold text-white">{credits}</span>
+                  <Coins size={12} className="text-ink" />
+                  <span className="mono text-xs font-bold text-ink">{credits}</span>
                 </button>
                 <button
                   onClick={onRefill}
-                  className="bg-indigo-500 rounded-full h-6 w-6 flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-white"
+                  className="bg-ink text-cream rounded-full h-8 w-8 flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
                   title="Buy Credits"
                 >
-                  <Plus size={12} />
+                  <Plus size={16} />
                 </button>
               </div>
             )}
 
             {/* User Avatar / Login */}
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => onNavigate('profile')}
-                  className="w-8 h-8 rounded-full border border-white/20 overflow-hidden hover:scale-110 transition-all shadow-lg"
+                  className="w-10 h-10 rounded-full border border-black/10 overflow-hidden hover:scale-110 transition-all p-0.5"
                 >
                   <img
                     src={user.photoURL || ''}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-full"
                     alt="Profile"
                   />
                 </button>
                 <button
                   onClick={onLogout}
-                  className="hidden md:flex p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                  className="hidden md:flex p-2 border border-black/10 text-ink/40 hover:text-ink hover:bg-black/5 transition-all"
                   title="Sign Out"
                 >
-                  <LogOut size={14} />
+                  <LogOut size={16} />
                 </button>
               </div>
             ) : (
               <button
                 onClick={onLogin}
-                className="elite-button h-9 px-4 text-xs flex items-center gap-2 rounded-full"
+                className="btn-primary py-2 px-6 text-xs h-10"
               >
-                <UserIcon size={14} /> Sign In
+                Sign In
               </button>
             )}
 
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white"
+              className="md:hidden p-2 text-ink"
             >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -236,10 +214,10 @@ export default function AppHeader({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 4, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="absolute left-0 right-0 bottom-0 bg-white overflow-hidden pointer-events-none"
+              className="absolute left-0 right-0 bottom-0 bg-cream overflow-hidden pointer-events-none"
             >
               <motion.div 
-                className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                className="h-full bg-ink"
                 initial={{ width: 0 }}
                 animate={{ width: `${renderProgress}%` }}
                 transition={{ duration: 0.3 }}
@@ -257,7 +235,7 @@ export default function AppHeader({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/30 z-[499] md:hidden"
+              className="fixed inset-0 bg-ink/10 backdrop-blur-sm z-[499] md:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
             <motion.div
@@ -265,7 +243,7 @@ export default function AppHeader({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed top-14 right-0 bottom-0 w-64 glass-panel border-l-0 z-[500] md:hidden flex flex-col p-4 gap-2"
+              className="fixed top-20 right-4 bottom-4 w-72 bg-white border border-black/10 z-[500] md:hidden flex flex-col p-8 md:p-12 gap-4 shadow-2xl"
             >
               {navItems.map((item) => {
                 const isDisabled = !user && (item.id === 'setup' || item.id === 'profile');
@@ -277,46 +255,32 @@ export default function AppHeader({
                       onNavigate(item.id);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full px-4 py-3 font-sans text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${
-                      isDisabled ? 'opacity-30 cursor-not-allowed' :
+                    className={`w-full px-6 py-4 font-mono text-xs uppercase font-bold flex items-center justify-between transition-all ${
+                      isDisabled ? 'opacity-20 cursor-not-allowed' :
                       appMode === item.id
-                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10'
+                        ? 'bg-ink text-cream'
+                        : 'bg-ivory text-ink/60'
                     }`}
                   >
-                    {item.icon}
                     {item.label}
+                    {item.icon}
                   </button>
                 );
               })}
 
-              <button
-                onClick={() => {
-                  onNewProject();
-                  setMobileMenuOpen(false);
-                }}
-                disabled={!user}
-                className={`w-full px-4 py-3 font-sans text-sm font-bold flex items-center gap-3 rounded-xl transition-all ${
-                  !user ? 'opacity-30 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-100'
-                }`}
-              >
-                <Plus size={16} />
-                New Project
-              </button>
-
               {user && (
-                <div className="mt-auto pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="mt-auto pt-8 border-t border-black/5">
+                  <div className="flex items-center gap-4 mb-6">
                     <img
                       src={user.photoURL || ''}
-                      className="w-10 h-10 rounded-full border border-white/20 object-cover"
+                      className="w-12 h-12 rounded-full border border-black/10 p-0.5 object-cover"
                       alt="Profile"
                     />
                     <div>
-                      <p className="font-sans text-xs font-bold text-white truncate max-w-[140px]">
+                      <p className="mono text-xs font-bold text-ink truncate max-w-[140px]">
                         {user.displayName}
                       </p>
-                      <p className="font-sans text-[10px] text-white/50">
+                      <p className="mono text-[10px] opacity-40">
                         {credits} credits
                       </p>
                     </div>
@@ -326,9 +290,9 @@ export default function AppHeader({
                       onLogout();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full px-4 py-2 font-sans text-xs font-bold flex items-center gap-2 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20"
+                    className="w-full px-6 py-4 mono text-[10px] font-bold bg-cream text-red-500 border border-red-500/10 uppercase"
                   >
-                    <LogOut size={14} /> Sign Out
+                    Sign Out
                   </button>
                 </div>
               )}
@@ -338,7 +302,7 @@ export default function AppHeader({
       </AnimatePresence>
 
       {/* Spacer to prevent content from going under the fixed header */}
-      {appMode !== 'playing' && <div className="h-14" />}
+      {appMode !== 'playing' && <div className="h-20" />}
     </>
   );
 }
