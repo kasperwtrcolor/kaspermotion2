@@ -7,6 +7,7 @@ import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User 
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { GiphyFetch } from '@giphy/js-fetch-api';
+import { Analytics } from '@vercel/analytics/react';
 import LandingPage from './components/LandingPage';
 import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
@@ -4122,6 +4123,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <Analytics />
     </div>
   );
 }
