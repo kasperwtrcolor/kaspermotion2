@@ -3996,7 +3996,7 @@ export default function App() {
         onNavigate={setAppMode}
         onLogin={handleLogin}
         onLogout={handleLogout}
-        onNewProject={resetToLanding}
+        onNewProject={handleStartOver}
         onRefill={() => setShowPricing(true)}
         onExport={() => setShowExportExplainer(true)}
         onStudio={() => setAppMode('setup')}
