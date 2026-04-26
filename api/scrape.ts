@@ -115,7 +115,7 @@ export default async function handler(req: any, res: any) {
     `;
     
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.0-flash', // Optimized for fast structured JSON
+      model: 'gemini-1.5-flash', // Optimized for fast structured JSON
       contents: prompt,
     });
 
