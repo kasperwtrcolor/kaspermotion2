@@ -1949,13 +1949,22 @@ export default function App() {
   };
 
   const resetProject = () => {
+    if (compositions.length > 0) {
+       if (!window.confirm("Abandon this production? All unsaved cinematic choreography will be lost.")) return;
+    }
     setCompositions([]);
     setMediaFiles([]);
     setScriptText("");
     setDesignTokens(null);
+    setCurrentProjectId(null);
     setAppMode('landing');
     setSetupStep(1);
     setScrapeUrl("https://");
+    setHistory([]);
+  };
+
+  const handleStartOver = () => {
+    resetProject();
   };
 
   const currentComp = compositions[currentIndex];
@@ -2218,6 +2227,7 @@ export default function App() {
           useGiphy
         },
         media: mediaData,
+        compositions: compositions, // Save full timeline for deterministic rendering
         updatedAt: serverTimestamp(),
         isAutoSave
       };
@@ -2268,16 +2278,86 @@ export default function App() {
     }));
     setMediaFiles(loadedMedia);
 
-    const newComps: Composition[] = [];
-    let prev: Composition | undefined = undefined;
-    project.media.forEach((m: any, i: number) => {
-      const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-      const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, loadedBackgrounds, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
-      newComps.push(comp);
-      prev = comp;
-    });
-    setCompositions(newComps);
+    if (project.compositions && project.compositions.length > 0) {
+      setCompositions(project.compositions);
+    } else {
+      const newComps: Composition[] = [];
+      let prev: Composition | undefined = undefined;
+      project.media.forEach((m: any, i: number) => {
+        const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
+        const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, loadedBackgrounds, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
+        newComps.push(comp);
+        prev = comp;
+      });
+      setCompositions(newComps);
+    }
+
     setAppMode('playing');
+  };
+
+  const startHyperRender = async () => {
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+    if (!isAdmin && credits < 5) {
+       setShowPricing(true);
+       return;
+    }
+    
+    try {
+      setShowExportExplainer(false);
+      setToastMessage("Activating HyperFlow Cloud Engine...");
+      setIsRenderingTrailer(true);
+      setRenderProgress(0);
+      
+      // 1. Save project first
+      await saveProject(true);
+      if (!currentProjectId) throw new Error("Cloud sync failed. Please save project.");
+      
+      // 2. Trigger server-side render
+      const totalDuration = compositions.reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
+      const res = await fetch('/api/render-hyperframes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: `${window.location.origin}/?mode=render&projectId=${currentProjectId}`,
+          duration: totalDuration,
+          jobId: `render_${currentProjectId}_${Date.now()}`
+        })
+      });
+      
+      if (!res.ok) throw new Error("Elite Render Engine is currently busy.");
+      const { jobId } = await res.json();
+      
+      // 3. Poll for progress
+      const poll = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/render-job/${jobId}`);
+          const statusData = await statusRes.json();
+          
+          if (statusData.status === 'complete') {
+            clearInterval(poll);
+            setIsRenderingTrailer(false);
+            setToastMessage("Elite Video Production Complete!");
+            if (statusData.videoId) {
+              setShareVideoId(statusData.videoId);
+              setAppMode('share');
+            }
+          } else if (statusData.status === 'failed') {
+            clearInterval(poll);
+            setIsRenderingTrailer(false);
+            setToastMessage(`Render Error: HF_FAIL_${statusData.error?.substring(0, 4) || 'UNK'}`);
+          } else {
+            setRenderProgress(Math.max(statusData.progress || 5, 2));
+          }
+        } catch (e) {
+          console.warn("Poll heartbeat failed", e);
+        }
+      }, 4000);
+      
+    } catch (err: any) {
+      console.error(err);
+      setIsRenderingTrailer(false);
+      setToastMessage(err.message || "HyperRender failure.");
+    }
   };
 
   const handleGiphySearch = async (e?: React.FormEvent) => {
@@ -3849,10 +3929,7 @@ export default function App() {
                              </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                             <button onClick={resetProject} className="flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 border border-red-100 mono text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all rounded-lg">
-                                <Trash2 size={16} /> New PROD
-                             </button>
+                          <div className="grid grid-cols-1">
                              <button onClick={() => setShowLibrary(true)} className="flex items-center justify-center gap-3 py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all rounded-lg">
                                 <ImageIcon size={16} /> View Assets
                              </button>
@@ -4123,6 +4200,51 @@ export default function App() {
     return null;
   };
 
+  // Render Mode Detection (for HyperFrames headless output)
+  const isRenderMode = typeof window !== 'undefined' && window.location.search.includes('mode=render');
+  
+  useEffect(() => {
+    if (isRenderMode) {
+      const params = new URLSearchParams(window.location.search);
+      const projectId = params.get('projectId');
+      if (projectId) {
+        const fetchAndLoad = async () => {
+          const docRef = doc(db, 'trailers', projectId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             loadProject({ id: docSnap.id, ...docSnap.data() });
+          }
+        };
+        fetchAndLoad();
+      }
+    }
+  }, [isRenderMode]);
+
+  if (isRenderMode) {
+     const totalDuration = compositions.reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
+     return (
+        <div className="fixed inset-0 bg-black overflow-hidden" data-hf-render="true">
+           <VideoCanvas isRecording={true}>
+              <CompositionProvider duration={totalDuration}>
+                 <div className="w-full h-full relative" data-hf-timeline="true">
+                    {compositions.map((comp, i) => (
+                       <div key={comp.id} style={{ display: currentIndex === i ? 'block' : 'none' }} data-hf-scene={i} data-hf-scene-duration={comp.sceneDuration || 5}>
+                          <VideoPlayer 
+                            comp={comp} 
+                            isActive={currentIndex === i} 
+                            onComplete={() => {}}
+                            index={i}
+                            isRecording={true}
+                          />
+                       </div>
+                    ))}
+                 </div>
+              </CompositionProvider>
+           </VideoCanvas>
+        </div>
+     );
+  }
+
   return (
     <div className="min-h-screen bg-cream selection:bg-ink selection:text-cream font-sans">
       <HandDrawnCursor />
@@ -4135,6 +4257,7 @@ export default function App() {
         onLogin={handleLogin}
         onLogout={handleLogout}
         onNewProject={handleStartOver}
+        onReset={resetProject}
         onRefill={() => setShowPricing(true)}
         onExport={() => setShowExportExplainer(true)}
         onStudio={() => setAppMode('setup')}
@@ -4205,19 +4328,27 @@ export default function App() {
                  3. Do not switch tabs. A 3s countdown will start.
                </p>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-4">
                 <button
-                  onClick={() => setShowExportExplainer(false)}
-                  className="flex-1 p-3 elite-button-secondary rounded-lg font-bold"
+                  onClick={startHyperRender}
+                  className="w-full p-4 mb-2 bg-ink text-cream rounded-none font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl"
                 >
-                  Cancel
+                  <Zap size={18} fill="currentColor" /> Run HyperFlow Engine (5 CR)
                 </button>
-                <button
-                  onClick={startRecording}
-                  className="flex-1 p-3 elite-button rounded-lg font-bold flex items-center justify-center gap-2"
-                >
-                  Proceed
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setShowExportExplainer(false)}
+                    className="flex-1 p-3 elite-button-secondary font-bold uppercase text-[10px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={startRecording}
+                    className="flex-1 p-3 border border-black/10 hover:bg-black/5 font-bold uppercase text-[10px] flex items-center justify-center gap-2"
+                  >
+                    Manual (2 CR)
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

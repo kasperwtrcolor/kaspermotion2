@@ -508,22 +508,58 @@ H2 Tags: ${h2s.join(' | ')}
             });
           }
         }
-      }).then(async (path) => {
-        // Upload to Firebase Storage and update job status
-        console.log(`Rendered: ${path}`);
+      }).then(async (renderedPath) => {
+        // 1. Read the rendered file
+        const fs = await import('fs/promises');
+        const videoBuffer = await fs.readFile(renderedPath);
+        
+        // 2. Upload to Firebase
+        const videoId = `vid_hf_${Date.now()}`;
+        const storagePath = `public-videos/${videoId}.mp4`;
+        const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
+        const file = bucket.file(storagePath);
+        
+        await file.save(videoBuffer, {
+          metadata: {
+            contentType: 'video/mp4',
+            metadata: { videoId, source: 'hyperframes-headless' }
+          }
+        });
+        await file.makePublic();
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+        
+        // 3. Create video document
+        await db.collection('videos').doc(videoId).set({
+          videoId,
+          title: 'HyperRender Video',
+          url: publicUrl,
+          storagePath,
+          status: 'complete',
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          views: 0,
+          ext: 'mp4'
+        });
+
+        // 4. Update job status
         if (jobId) {
           await db.collection('render-jobs').doc(jobId).update({
             status: 'complete',
             progress: 100,
+            videoId: videoId,
+            videoUrl: publicUrl,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
         }
+        
+        // 5. Cleanup temp file
+        await fs.unlink(renderedPath).catch(() => {});
       }).catch(async (err) => {
         console.error('Render job error:', err);
         if (jobId) {
           await db.collection('render-jobs').doc(jobId).update({
             status: 'failed',
-            error: err.message
+            error: err.message,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
         }
       });

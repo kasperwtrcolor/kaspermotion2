@@ -12,6 +12,7 @@ interface AppHeaderProps {
   onLogin: () => void;
   onLogout: () => void;
   onNewProject: () => void;
+  onReset: () => void;
   onRefill: () => void;
   // Studio Controls for Playing Mode
   onExport?: () => void;
@@ -24,7 +25,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ 
   appMode, user, credits, 
-  onNavigate, onLogin, onLogout, onNewProject, onRefill,
+  onNavigate, onLogin, onLogout, onNewProject, onReset, onRefill,
   onExport, onStudio, onStickers, onResetCamera,
   isRendering, renderProgress = 0
 }: AppHeaderProps) {
@@ -108,11 +109,11 @@ export default function AppHeader({
                 </button>
                 <div className="w-px h-6 bg-black/10 mx-2" />
                 <button
-                  onClick={onNewProject}
-                  className="btn-outline border-ink/20 text-ink/40 py-2 px-6 text-xs"
+                  onClick={onReset}
+                  className="btn-outline border-red-500/20 text-red-600 py-2 px-6 text-xs hover:bg-red-50"
                 >
-                  <Plus size={14} className="mr-2" />
-                  New
+                  <RefreshCcw size={14} className="mr-2" />
+                  Reset
                 </button>
               </>
             ) : (
