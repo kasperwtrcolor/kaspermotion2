@@ -1910,6 +1910,13 @@ export default function App() {
 
   const globalTransitionProgress = useMotionValue(0);
 
+  const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [socialHandle, setSocialHandle] = useState('@Handle');
+  const [compositions, setCompositions] = useState<Composition[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sceneStartTime, setSceneStartTime] = useState(Date.now());
+
   const [isSpatialWorld, setIsSpatialWorld] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
