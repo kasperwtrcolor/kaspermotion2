@@ -1092,9 +1092,9 @@ const GSAPStaggerText = ({ text, className, textColor }: { text: string, classNa
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className={className} style={{ color: textColor }}>
+    <div ref={containerRef} className={`${className} will-change-transform`} style={{ color: textColor }}>
       {text.split('').map((char, i) => (
-        <span key={i} className="gsap-char inline-block whitespace-pre">
+        <span key={i} className="gsap-char inline-block whitespace-pre opacity-0 translate-y-10">
           {char === ' ' ? '\u00A0' : char}
         </span>
       ))}
@@ -2983,25 +2983,27 @@ export default function App() {
         }
       }
 
-      // Dynamic Complexity Logic with AI Choreography/Skeleton Overrides
-      const currentSceneType: any = sceneChoreography?.sceneType || (
+      const existingComp = compositions[sceneIdx];
+
+      // Logical Hierarchy: Manual > Skeleton > AI > Random
+      const currentSceneType: any = existingComp?.sceneType || sceneChoreography?.sceneType || (
         complexity === 'dense' || complexity === 'layered' 
           ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post'][Math.floor(Math.random() * 4)]))
           : 'standard'
       );
 
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow'];
-      const currentEffect: TextEffect = sceneChoreography?.textEffect || (
+      const currentEffect: TextEffect = existingComp?.textEffect || sceneChoreography?.textEffect || (
         textEffect === 'random' 
           ? effectList[Math.floor(Math.random() * effectList.length)] 
           : textEffect
       );
 
-      const currentCameraPath: any = sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
-      const currentBackground = sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
+      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
+      const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
-      const customDur = skelScene?.duration || sceneChoreography?.duration;
-      const finalTransition = (skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
+      const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
+      const finalTransition = (existingComp?.transitionType || skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
 
       const comp = generateCompositionFromData(
         sceneItems, 
@@ -3015,7 +3017,8 @@ export default function App() {
         backgroundStyles,
         undefined, // sticker
         1, 0, 0,
-        customDur
+        customDur,
+        caption
       );
       
       comp.sceneType = currentSceneType;
@@ -3086,7 +3089,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number, customSceneDuration?: number): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number, customSceneDuration?: number, caption?: string): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -3108,7 +3111,7 @@ export default function App() {
       rotY: 0,
       rotZ: 0,
       angle,
-      caption: media[0]?.caption || '',
+      caption: caption || media[0]?.caption || '',
       textPosition: 'bottom',
       sceneType: 'standard',
       textEffect: effect,
