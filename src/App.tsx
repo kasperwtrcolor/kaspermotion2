@@ -19,7 +19,7 @@ import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { CompositionProvider } from './components/CompositionProvider';
-import { findBestTransitionItem, TRANSITION_ITEM_LIB } from './constants/transitionAssets';
+import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
@@ -52,6 +52,18 @@ type MediaItem = {
   type: 'image' | 'video';
   name: string;
   m3Shape?: string;
+};
+
+type SecondaryAsset = {
+  id: string;
+  type: 'hyper-shape' | '3d-item';
+  content: string;
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  rotation: number;
+  drift: number;
 };
 
 type Composition = {
@@ -95,6 +107,7 @@ type Composition = {
   isMultiColor?: boolean;
   transitionItemAsset?: string;
   cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide';
+  secondaryAssets?: SecondaryAsset[];
 };
 
 const M3_SHAPES = [
@@ -1617,6 +1630,64 @@ const CompositionNode = ({
       >
 
         <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
+
+        {/* Secondary Motion Assets Layer */}
+        {comp.secondaryAssets?.map(asset => {
+          if (asset.type === '3d-item') {
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  x: asset.drift,
+                  rotateZ: asset.rotation + 360
+                } : {}}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              >
+                <img 
+                  src={asset.content} 
+                  className="w-48 h-48 object-contain opacity-60 filter blur-[1px] hover:blur-0 transition-all duration-700" 
+                  style={{ transform: `scale(${asset.scale})` }} 
+                />
+              </motion.div>
+            );
+          } else {
+            const shapeData = getM3ShapeStyle(asset.content, comp.caption);
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none flex items-center justify-center"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  y: asset.drift,
+                  rotateX: 360,
+                  rotateY: 180
+                } : {}}
+                transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <div 
+                  className={`w-32 h-32 ${shapeData.className} opacity-10`}
+                  style={{ 
+                    ...shapeData.style, 
+                    backgroundColor: accentColor,
+                    transform: `scale(${asset.scale})`
+                  }}
+                />
+              </motion.div>
+            );
+          }
+        })}
         {comp.giphyStickerUrl && (
           <motion.div
             className="absolute z-50 flex items-center justify-center"
@@ -2877,12 +2948,28 @@ export default function App() {
       comp.sceneType = currentSceneType;
       comp.cameraPath = currentCameraPath;
       
-      // If dense, add a random Giphy sticker related to the caption
-      if (complexity === 'dense' || complexity === 'layered') {
-        comp.stickerScale = 1.2;
-        comp.stickerX = Math.random() * 40 - 20;
-        comp.stickerY = Math.random() * 40 - 20;
+      // Generate Secondary Assets for depth
+      const secondaryAssets: SecondaryAsset[] = [];
+      const assetCount = complexity === 'dense' || complexity === 'layered' ? 3 : 1;
+      
+      for (let i = 0; i < assetCount; i++) {
+        const is3D = Math.random() > 0.5;
+        secondaryAssets.push({
+          id: `sec-${sceneIdx}-${i}`,
+          type: is3D ? '3d-item' : 'hyper-shape',
+          content: is3D 
+            ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+            : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)],
+          x: (Math.random() * 2000 - 1000),
+          y: (Math.random() * 1200 - 600),
+          z: (Math.random() * -1000 - 200),
+          scale: 0.5 + Math.random() * 0.8,
+          rotation: Math.random() * 360,
+          drift: Math.random() * 200 - 100
+        });
       }
+
+      comp.secondaryAssets = secondaryAssets;
 
       newComps.push(comp);
       prev = comp;

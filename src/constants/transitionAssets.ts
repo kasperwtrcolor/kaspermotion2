@@ -15,6 +15,23 @@ export const TRANSITION_ITEM_LIB = {
   design: '/assets/3D-Items/brush-dynamic-premium.png'
 };
 
+export const SECONDARY_3D_ITEMS = [
+  '/assets/3D-Items/bulb-dynamic-color.png',
+  '/assets/3D-Items/camera-dynamic-color.png',
+  '/assets/3D-Items/chat-dynamic-color.png',
+  '/assets/3D-Items/bell-dynamic-color.png',
+  '/assets/3D-Items/bag-dynamic-color.png',
+  '/assets/3D-Items/calculator-dynamic-color.png',
+  '/assets/3D-Items/at-dynamic-color.png',
+  '/assets/3D-Items/chart-dynamic-color.png',
+  '/assets/3D-Items/axe-dynamic-color.png',
+  '/assets/3D-Items/battery-dynamic-color.png'
+];
+
+export const HYPER_SHAPES = [
+  'star', 'diamond', 'triangle', 'pentagon', 'hexagon', 'shield', 'banner', 'cloud', 'heart', 'lightning'
+];
+
 export const findBestTransitionItem = (caption: string): string | null => {
   const lower = caption.toLowerCase();
   
