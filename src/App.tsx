@@ -3302,7 +3302,7 @@ export default function App() {
             )}
 
             {setupStep === 2 && (
-               <div className="space-y-12">
+               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                  <div className="pb-8 border-b border-black/5">
                     <p className="mono text-[10px] uppercase opacity-40 mb-2">Step Two</p>
                     <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Capture the vision.</h2>
@@ -3339,8 +3339,8 @@ export default function App() {
                      </div>
                    ))}
                  </div>
-               </div>
-                           <div className="mb-12">
+
+                 <div className="mb-12">
                  <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Engine Branding</label>
                  <div className="relative group">
                    <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
@@ -3522,7 +3522,9 @@ export default function App() {
                  <button onClick={() => setSetupStep(5)} className="btn-primary flex-[2] py-5 text-sm">Proceed to Studio</button>
                </div>
             </motion.div>
-                    {setupStep === 5 && (
+           )}
+
+           {setupStep === 5 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                <div className="pb-8 border-b border-black/5 mb-12">
                   <p className="mono text-[10px] uppercase opacity-40 mb-2">Final Step</p>
