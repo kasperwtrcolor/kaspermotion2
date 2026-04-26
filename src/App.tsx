@@ -1630,42 +1630,31 @@ const getTextPositionClass = (pos: TextPosition) => {
 };
 
 
-
-
 const CompositionNode = ({
   comp,
   status,
-  fontSizeOverride,
   globalTextColor,
   globalIsMultiColor,
   globalFontFamily,
   socialHandle,
   websiteSiteName,
-  worldX,
-  worldY,
-  isSpatialWorld,
 }: {
-  key?: string;
   comp: Composition;
   status: 'past' | 'active' | 'future';
-  fontSizeOverride?: string;
   globalTextColor: string;
   globalIsMultiColor: boolean;
   globalFontFamily: string;
   socialHandle: string;
   websiteSiteName: string;
-  worldX: any;
-  worldY: any;
-  isSpatialWorld: boolean;
 }) => {
   const accentColor = globalTextColor || '#A855F7';
   const duration = comp.transitionDuration;
   const [hasError, setHasError] = useState(false);
 
   const getTransitionVariants = (type: TransitionType) => {
-    const ghostOpacity = isSpatialWorld ? 0.35 : 0;
-    const ghostBlur = isSpatialWorld ? 'blur(8px)' : 'blur(40px)';
-    const ghostScale = isSpatialWorld ? 0.7 : 0.4;
+    const ghostOpacity = 0;
+    const ghostBlur = 'blur(40px)';
+    const ghostScale = 0.4;
 
     return {
       future: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } },
@@ -1691,7 +1680,7 @@ const CompositionNode = ({
         initial="future"
         animate={status}
       >
-        <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
+        <SceneBackground style={comp.activeBackground} status={status} />
         <div className="vignette-overlay" />
         
         {/* Secondary Motion Assets Layer */}
@@ -1845,39 +1834,6 @@ const CompositionNode = ({
           );
         })}
         </div>
-
-
-        {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && (
-          <div className="absolute inset-0 z-[200] pointer-events-none flex items-center justify-center">
-            <PremiumSocialOverlays
-              type={comp.sceneType}
-              status={status}
-              caption={comp.caption}
-              accentColor={accentColor}
-              handle={socialHandle}
-              name={websiteSiteName || "KasperMotion"}
-            />
-          </div>
-        )}
-
-        {comp.caption && status === 'active' && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, filter: 'blur(10px)', z: 1000 }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)', z: 1000 }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(10px)', z: 1000 }}
-            className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
-          >
-            <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]`}>
-              <AnimatedCaption
-                text={comp.caption}
-                effect={comp.textEffect}
-                className={comp.fontSize || fontSizeOverride || "text-4xl md:text-6xl"}
-                textColor={comp.textColor || globalTextColor}
-                isMulti={comp.isMultiColor || globalIsMultiColor}
-              />
-            </div>
-          </motion.div>
-        )}
       </motion.div>
     </div>
   );
@@ -4032,15 +3988,11 @@ export default function App() {
                       <CompositionNode
                         comp={comp}
                         status={status}
-                        fontSizeOverride={comp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-4xl md:text-6xl'}
                         globalTextColor={textColor}
                         globalIsMultiColor={isMultiColor}
                         globalFontFamily={fontFamily}
                         socialHandle={socialHandle}
                         websiteSiteName={websiteSiteName}
-                        worldX={worldX}
-                        worldY={worldY}
-                        isSpatialWorld={isSpatialWorld}
                       />
                     </div>
                   );
@@ -4048,6 +4000,62 @@ export default function App() {
               </motion.div>
             </CompositionProvider>
           </VideoCanvas>
+
+          {/* GLOBAL TYPOGRAPHY LAYER - FIXED ABOVE WORLD */}
+          <div className="absolute inset-0 z-[500] pointer-events-none overflow-hidden">
+             <AnimatePresence mode="wait">
+               {currentComp && (
+                 <motion.div 
+                   key={currentIndex + (currentComp.caption || 'empty')}
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="absolute inset-0"
+                 >
+                   {/* 1. Social Overlays layer */}
+                   {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (
+                      <div className="absolute inset-0 flex items-center justify-center p-8">
+                        <PremiumSocialOverlays
+                          type={currentComp.sceneType}
+                          status="active"
+                          caption={currentComp.caption}
+                          accentColor={textColor}
+                          handle={socialHandle}
+                          name={websiteSiteName || "KasperMotion"}
+                        />
+                      </div>
+                   )}
+
+                   {/* 2. Kinetic Typography layer */}
+                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (
+                     <div className={`absolute flex flex-col items-center justify-center text-center px-12 md:px-24 ${getTextPositionClass(currentComp.textPosition)}`}>
+                        <motion.div 
+                          initial={{ scale: 0.9, y: 30, opacity: 0 }}
+                          animate={{ scale: 1, y: 0, opacity: 1 }}
+                          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                          className={`transform -rotate-1 ${currentComp.fontFamily || fontFamily} font-black tracking-tight uppercase drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)] pointer-events-none`}
+                        >
+                          <AnimatedCaption
+                            text={currentComp.caption}
+                            effect={currentComp.textEffect}
+                            className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}
+                            textColor={currentComp.textColor || textColor}
+                            isMulti={currentComp.isMultiColor || isMultiColor}
+                          />
+                        </motion.div>
+                     </div>
+                   )}
+                 </motion.div>
+               )}
+             </AnimatePresence>
+          </div>
+
+          {/* Vignette & Grime */}
+          <div className="vignette-overlay z-[450]" />
+          <div className="absolute bottom-12 left-12 z-[600] flex items-center gap-4 opacity-40">
+             <div className="w-8 h-px bg-ink" />
+             <p className="mono font-bold text-[10px] uppercase tracking-widest">{currentIndex + 1} / {compositions.length}</p>
+          </div>
         </div>
       );
     }
