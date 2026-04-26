@@ -1898,6 +1898,8 @@ export default function App() {
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
+  const [transitionDuration, setTransitionDuration] = useState(1.2);
+  const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
