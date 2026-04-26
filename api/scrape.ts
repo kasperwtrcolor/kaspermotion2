@@ -121,7 +121,8 @@ export default async function handler(req: any, res: any) {
               "shape": "pill" | "square" | "circle" | "message" | "star" | "flower",
               "textEffect": "gsap-cascade" | "gsap-3d-roll" | "gsap-elastic" | "gsap-tornado" | "gsap-funnel" | "gsap-stack",
               "cameraPath": "zoom-in" | "zoom-out" | "orbit-left" | "dolly-zoom" | "hyper-glide",
-              "backgroundStyle": "black" | "ivory" | "cream" | "vibrant-glow"
+              "backgroundStyle": "black" | "ivory" | "cream" | "vibrant-glow",
+              "secondaryAssetIntent": "Strictly 1-2 thematic keywords for 3D assets (e.g., 'growth', 'launch'). LEAVE EMPTY if NO HIGH-MATCH fits the scene."
             }
           ]
         }

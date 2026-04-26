@@ -1893,9 +1893,9 @@ export default function App() {
   const [textEffect, setTextEffect] = useState<TextEffect>('random');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
+  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
+  const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
-  const [transitionDuration, setTransitionDuration] = useState(1.2);
-  const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
   const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
 
@@ -1910,18 +1910,16 @@ export default function App() {
 
   const globalTransitionProgress = useMotionValue(0);
 
-  const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
-  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
-  const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
-
-  const [socialHandle, setSocialHandle] = useState('@Handle');
-  const [compositions, setCompositions] = useState<Composition[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [sceneStartTime, setSceneStartTime] = useState(Date.now());
-
   const [isSpatialWorld, setIsSpatialWorld] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  useEffect(() => {
+    if (isRecording) {
+      document.body.setAttribute('data-recording', 'true');
+    } else {
+      document.body.removeAttribute('data-recording');
+    }
+  }, [isRecording]);
 
   const generateWorldTemplate = () => {
     setCompositions(prev => {
@@ -1950,7 +1948,7 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [isRecording, setIsRecording] = useState(false);
+  const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [notifications, setNotifications] = useState<string[]>([]);
   const setToastMessage = (msg: string | null) => {
     if (!msg) return;
@@ -3043,18 +3041,27 @@ export default function App() {
       
       for (let i = 0; i < assetCount; i++) {
         const is3D = Math.random() > 0.5;
+        let content = is3D 
+          ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+          : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+
+        // AI Intent Override
+        if (is3D && sceneChoreography?.secondaryAssetIntent) {
+          const matched = findBestTransitionItem(sceneChoreography.secondaryAssetIntent);
+          if (matched) content = matched;
+          else if (i > 0) continue; // Skip if no match and not first asset, more selective
+        }
+
         secondaryAssets.push({
           id: `sec-${sceneIdx}-${i}`,
           type: is3D ? '3d-item' : 'hyper-shape',
-          content: is3D 
-            ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
-            : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)],
-          x: (Math.random() * 2000 - 1000),
-          y: (Math.random() * 1200 - 600),
-          z: (Math.random() * -1000 - 200),
-          scale: 0.5 + Math.random() * 0.8,
+          content,
+          x: (Math.random() * 1200 - 600), // More centered to avoid clipping
+          y: (Math.random() * 800 - 400),
+          z: (Math.random() * -800 - 200),
+          scale: 0.5 + Math.random() * 0.7,
           rotation: Math.random() * 360,
-          drift: Math.random() * 200 - 100
+          drift: Math.random() * 100 - 50 // Reduced drift for stability
         });
       }
 
@@ -4106,16 +4113,44 @@ export default function App() {
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
               className="bg-white border border-black/10 p-10 max-w-md w-full text-ink shadow-2xl rounded-none"
             >
-              <h2 className="mono text-2xl font-black uppercase mb-8">Export Instructions</h2>
-              <p className="font-sans text-sm mb-6 leading-relaxed">
-                1. Click <span className="bg-brutal-blue px-1">PROCEED</span> to select a screen to record.
-              </p>
-              <p className="font-mono text-sm mb-4 leading-relaxed font-bold">
-                2. Your browser will ask you to share your screen. Select the <span className="bg-brutal-green px-1">CURRENT TAB</span>. Make sure "Share Audio" is checked if available.
-              </p>
-              <p className="font-mono text-sm mb-6 leading-relaxed font-bold">
-                3. Do not minimize or switch tabs. A 3-second countdown will start, followed by the actual video export.
-              </p>
+               <h2 className="mono text-2xl font-black uppercase mb-8 text-black">Export Engine</h2>
+               
+               <div className="grid grid-cols-2 gap-4 mb-8">
+                 <div className="space-y-2">
+                   <label className="mono text-[10px] font-bold uppercase opacity-40">Format</label>
+                   <select 
+                     value={exportFormat} 
+                     onChange={(e) => setExportFormat(e.target.value as any)}
+                     className="w-full bg-ivory border border-black/10 p-3 mono text-[10px] font-bold uppercase"
+                   >
+                     <option value="webm">WebM (Alpha)</option>
+                     <option value="mp4">MP4 (Standard)</option>
+                     <option value="mov">MOV (ProRes)</option>
+                   </select>
+                 </div>
+                 <div className="space-y-2">
+                   <label className="mono text-[10px] font-bold uppercase opacity-40">Quality</label>
+                   <select 
+                     value={exportResolution} 
+                     onChange={(e) => setExportResolution(e.target.value as any)}
+                     className="w-full bg-ivory border border-black/10 p-3 mono text-[10px] font-bold uppercase"
+                   >
+                     <option value="4K">ULTRA 4K</option>
+                     <option value="1080p">FULL 1080P</option>
+                     <option value="720p">HD 720P</option>
+                   </select>
+                 </div>
+               </div>
+
+               <p className="font-sans text-[11px] mb-4 leading-relaxed opacity-60">
+                 1. Click <span className="bg-ink text-white px-1">PROCEED</span> to select a screen to record.
+               </p>
+               <p className="font-sans text-[11px] mb-4 leading-relaxed opacity-60">
+                 2. Browser will ask to share. Select <span className="underline font-bold">CURRENT TAB</span>.
+               </p>
+               <p className="font-sans text-[11px] mb-8 leading-relaxed opacity-60">
+                 3. Do not switch tabs. A 3s countdown will start.
+               </p>
 
               <div className="flex gap-4">
                 <button
