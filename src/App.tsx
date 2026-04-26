@@ -2117,8 +2117,18 @@ export default function App() {
       console.error("Upload failed", err);
       return { url: URL.createObjectURL(file), uploaded: false };
     }
+  const sanitizeForFirestore = (obj: any): any => {
+    if (Array.isArray(obj)) {
+      return obj.map(v => sanitizeForFirestore(v));
+    } else if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
+      return Object.fromEntries(
+        Object.entries(obj)
+          .filter(([_, v]) => v !== undefined)
+          .map(([k, v]) => [k, sanitizeForFirestore(v)])
+      );
+    }
+    return obj;
   };
-
 
   const saveProject = async (isAutoSave = false) => {
     if (!user) {
@@ -2232,12 +2242,14 @@ export default function App() {
         isAutoSave
       };
 
+      const cleanData = sanitizeForFirestore(trailerData);
+
       if (currentProjectId) {
-        await setDoc(doc(db, 'trailers', currentProjectId), trailerData, { merge: true });
+        await setDoc(doc(db, 'trailers', currentProjectId), cleanData, { merge: true });
         if (!isAutoSave) setToastMessage("Project saved successfully!");
       } else {
-        trailerData.createdAt = serverTimestamp();
-        const docRef = await addDoc(collection(db, 'trailers'), trailerData);
+        cleanData.createdAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, 'trailers'), cleanData);
         setCurrentProjectId(docRef.id);
         if (!isAutoSave) setToastMessage("Project saved successfully!");
       }
