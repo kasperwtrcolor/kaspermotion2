@@ -176,6 +176,25 @@ export const MacosNotificationOverlay = ({ status, caption }: BlockProps) => {
 
 export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: BlockProps) => {
   const bars = [80, 65, 90, 45, 75];
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (status === 'active') {
+      let start = 0;
+      const end = 92;
+      const duration = 2000;
+      const stepTime = Math.abs(Math.floor(duration / end));
+      const timer = setInterval(() => {
+        start += 1;
+        setCount(start);
+        if (start === end) clearInterval(timer);
+      }, stepTime);
+      return () => clearInterval(timer);
+    } else {
+      setCount(0);
+    }
+  }, [status]);
+
   return (
     <motion.div
       initial={{ scale: 0.9, opacity: 0, rotateX: 20 }}
@@ -183,15 +202,7 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       className="bg-black/90 backdrop-blur-[50px] rounded-[1.5rem] p-10 md:p-14 w-[850px] max-w-[95vw] border border-white/20 shadow-[0_80px_200px_rgba(0,0,0,0.9)] relative overflow-visible"
     >
-      {/* Background Heartbeat Grid */}
-      <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <motion.div 
-          animate={{ x: ['100%', '-100%'] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white to-transparent"
-        />
-      </div>
+      <div className="grain-overlay opacity-10" />
 
       <div className="flex items-center justify-between mb-12 relative z-10">
         <div>
@@ -199,18 +210,20 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
             initial={{ x: -20, opacity: 0 }}
             animate={status === 'active' ? { x: 0, opacity: 1 } : {}}
             transition={{ delay: 0.3 }}
-            className="text-white font-black text-4xl mb-2 tracking-tighter"
+            className="text-white font-black text-4xl mb-4 tracking-tighter"
           >
-            {caption || "Performance Metrics"}
+            <span className="highlight-sweep px-2 py-1 inline-block" style={{ "--color-accent": accentColor } as any}>
+              {caption || "Performance Metrics"}
+            </span>
           </motion.h4>
-          <motion.p 
-            initial={{ x: -20, opacity: 0 }}
-            animate={status === 'active' ? { x: 0, opacity: 1 } : {}}
-            transition={{ delay: 0.4 }}
-            className="text-white/40 text-[10px] uppercase font-mono font-black tracking-[0.4em]"
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={status === 'active' ? { opacity: 1 } : {}}
+            className="text-white font-black text-7xl font-mono tracking-tighter"
+            style={{ color: accentColor }}
           >
-            Real-time Logic Visualization
-          </motion.p>
+            {count}%
+          </motion.div>
         </div>
         <motion.div 
           animate={{ scale: [1, 1.1, 1] }}
@@ -221,32 +234,18 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
         </motion.div>
       </div>
 
-      <div className="flex items-end justify-between gap-6 h-64 px-4 relative z-10">
+      <div className="flex items-end justify-between gap-6 h-56 px-4 relative z-10">
         {bars.map((h, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-6">
             <div className="relative w-full h-full flex flex-col justify-end">
               <motion.div
-                initial={{ height: 0 }}
-                animate={status === 'active' ? { height: `${h}%` } : { height: 0 }}
-                transition={{ delay: i * 0.15 + 0.6, type: 'spring', damping: 12, stiffness: 80 }}
-                style={{ backgroundColor: accentColor }}
-                className="w-full rounded-t-xl rounded-b-md relative group overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-white/20"
+                initial={{ scaleY: 0 }}
+                animate={status === 'active' ? { scaleY: h/100 } : { scaleY: 0 }}
+                transition={{ delay: i * 0.15 + 0.6, duration: 0.8, ease: "circOut" }}
+                style={{ backgroundColor: accentColor, transformOrigin: 'bottom' }}
+                className="w-full rounded-t-xl rounded-b-md relative group overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-white/20 h-full"
               >
                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/30" />
-                 <motion.div 
-                   animate={{ y: ['200%', '-100%'] }}
-                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: i * 0.2 }}
-                   className="absolute inset-x-0 h-10 bg-white/20 blur-xl"
-                 />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={status === 'active' ? { opacity: [0, 1, 0.5, 1] } : { opacity: 0 }}
-                transition={{ delay: i * 0.15 + 1.2, duration: 2, repeat: Infinity }}
-                className="absolute -top-10 left-1/2 -translate-x-1/2 text-white font-mono font-black text-xs"
-              >
-                {h}%
               </motion.div>
             </div>
             <span className="text-white/30 text-[10px] font-black font-mono tracking-widest uppercase">Node.0{i + 1}</span>

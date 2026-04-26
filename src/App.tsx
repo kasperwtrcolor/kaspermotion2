@@ -1030,25 +1030,39 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }:
     case 'gsap-heart': return <GSAPHeartText {...props} />;
     case 'gsap-stack': return <GSAPStackText {...props} />;
     case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
-    default: return <SplitText {...props} />;
+    case 'gsap-stagger': return <GSAPStaggerText {...props} />;
+    default: return <GSAPStaggerText {...props} />;
   }
 };
 
 const FilmGrainOverlay = () => {
   return (
-    <div className="absolute inset-0 pointer-events-none z-[100] opacity-[0.035] mix-blend-overlay overflow-hidden">
-      <svg className="w-full h-full">
-        <filter id="grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#grain)" />
-      </svg>
-      <motion.div
-        animate={{ x: [0, -100, 100, -50, 0], y: [0, 50, -50, 100, 0] }}
-        transition={{ duration: 0.2, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-[-100%] bg-white/5 opacity-20"
-      />
+    <div className="grain-overlay" />
+  );
+};
+
+const GSAPStaggerText = ({ text, className, textColor }: { text: string, className?: string, textColor?: string }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const chars = containerRef.current.querySelectorAll('.gsap-char');
+    gsap.from(chars, {
+      y: 60,
+      opacity: 0,
+      duration: 0.8,
+      ease: "power3.out",
+      stagger: { each: 0.08, from: "start" },
+    });
+  }, { scope: containerRef });
+
+  return (
+    <div ref={containerRef} className={className} style={{ color: textColor }}>
+      {text.split('').map((char, i) => (
+        <span key={i} className="gsap-char inline-block whitespace-pre">
+          {char === ' ' ? '\u00A0' : char}
+        </span>
+      ))}
     </div>
   );
 };
@@ -1646,9 +1660,14 @@ const CompositionNode = ({
                 }}
                 animate={status === 'active' ? {
                   x: asset.drift,
-                  rotateZ: asset.rotation + 360
+                  rotateZ: asset.rotation + 360,
+                  y: [0, -10, 0] // Breathing float
                 } : {}}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                transition={{ 
+                   x: { duration: 20, repeat: Infinity, ease: 'linear' },
+                   rotateZ: { duration: 20, repeat: Infinity, ease: 'linear' },
+                   y: { duration: 3, repeat: Infinity, ease: 'sine.inOut' }
+                }}
               >
                 <img 
                   src={asset.content} 
@@ -3772,6 +3791,7 @@ export default function App() {
           className="relative w-screen h-screen overflow-hidden bg-cream"
           style={{ perspective: '2000px' }}
         >
+          <div className="grain-overlay" />
           {/* Spatial Canvas */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <AnimatePresence mode="wait">
