@@ -1794,7 +1794,7 @@ export default function App() {
   const [textColor, setTextColor] = useState<string>('#FFFFFF');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
-  const [textEffect, setTextEffect] = useState<TextEffect>('gsap-glow');
+  const [textEffect, setTextEffect] = useState<TextEffect>('random');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
@@ -2243,6 +2243,24 @@ export default function App() {
         };
         setFontFamily(fontMap[data.typography.vibe] || 'font-display');
       }
+
+      // Actionable Brand Intelligence: Pacing & Density
+      if (data.pacing) {
+        const pacingMap: Record<string, number> = {
+          'rapid-tiktok': 1.8,
+          'standard': 1.0,
+          'cinematic-slow': 0.6
+        };
+        setTextAnimationSpeed(pacingMap[data.pacing] || 1.0);
+        setSceneDuration(data.pacing === 'rapid-tiktok' ? 3.5 : 5.5);
+      }
+
+      if (data.sceneComplexity === 'dense' || data.sceneComplexity === 'layered') {
+        // Force random kinetic for maximum dynamism in complex scenes
+        setTextEffect('random');
+        setTransitionDuration(0.8); // Snappier transitions for density
+      }
+      setDesignTokens(data);
 
       // 3. Populate Scraped Assets
       if (data.scrapedImages && data.scrapedImages.length > 0) {
@@ -2810,11 +2828,12 @@ export default function App() {
     const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
 
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
-      const existingComp = compositions[sceneIdx];
       let caption = scriptLines[sceneIdx] || '';
+      const complexity = designTokens?.sceneComplexity || 'standard';
+      
       let isTextOnly = textOnlyLines.has(sceneIdx);
-
       let sceneItems: MediaItem[] = [];
+
       if (!isTextOnly) {
         const mappedMediaId = mediaMapping[sceneIdx];
         if (mappedMediaId) {
@@ -2829,95 +2848,46 @@ export default function App() {
         }
       }
 
-      let activeEffect = effectsPool[sceneIdx % effectsPool.length];
+      // Dynamic Complexity Logic: Add "more things happening"
+      const currentSceneType: any = complexity === 'dense' || complexity === 'layered' 
+        ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post'][Math.floor(Math.random() * 4)]))
+        : 'standard';
 
-      const transitions: TransitionType[] = ['random', 'fade', '3d-flip', ...ALL_SHADER_NAMES as TransitionType[]];
-      const activeTransition = transitionType === 'random' ? transitions[Math.floor(Math.random() * (transitions.length - 1)) + 1] : transitionType;
+      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow'];
+      const currentEffect: TextEffect = textEffect === 'random' 
+        ? effectList[Math.floor(Math.random() * effectList.length)] 
+        : textEffect;
 
-      const sceneChoreography = aiChoreography?.scenes?.[sceneIdx];
-      const comp = generateComposition(
-        sceneItems,
-        sceneIdx,
-        caption,
-        preferredTextPosition,
-        activeEffect,
-        activeTransition,
-        transitionDuration,
-        prev,
-        isTextOnly,
-        preset,
+      const currentCameraPath: any = (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
+
+      const comp = generateCompositionFromData(
+        sceneItems, 
+        sceneIdx, 
+        currentEffect, 
+        transitionType, 
+        transitionDuration, 
+        prev, 
+        isTextOnly, 
+        preset, 
         backgroundStyles,
-        undefined,
-        fontFamily,
-        textColor,
-        isMultiColor,
-        sceneChoreography
+        undefined, // sticker
+        1, 0, 0
       );
-
-      if (existingComp) {
-        comp.sceneType = existingComp.sceneType;
+      
+      comp.sceneType = currentSceneType;
+      comp.cameraPath = currentCameraPath;
+      
+      // If dense, add a random Giphy sticker related to the caption
+      if (complexity === 'dense' || complexity === 'layered') {
+        comp.stickerScale = 1.2;
+        comp.stickerX = Math.random() * 40 - 20;
+        comp.stickerY = Math.random() * 40 - 20;
       }
 
       newComps.push(comp);
       prev = comp;
-
-      if (useGiphy && caption && sceneIdx % 3 === 0) {
-        try {
-          const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
-          const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
-          const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
-
-          if (data && data.length > 0) {
-            const stickerUrl = data[0].images.original.url;
-            const giphyComp = generateComposition(
-              [],
-              sceneIdx + 100,
-              searchTerm.toUpperCase(),
-              'center',
-              effectsPool[(sceneIdx + 1) % effectsPool.length],
-              'zoom',
-              transitionDuration,
-              prev,
-              isTextOnly,
-              preset,
-              backgroundStyles,
-              stickerUrl,
-              fontFamily,
-              textColor,
-              isMultiColor
-            );
-            newComps.push(giphyComp);
-            prev = giphyComp;
-          }
-        } catch (err) {
-          console.error("Giphy logic error:", err);
-        }
-      }
-
       setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
       await new Promise(r => setTimeout(r, 100));
-    }
-
-    const mappedMediaIds = new Set(Object.values(mediaMapping));
-    const unmappedMedia = mediaFiles.filter(m => !mappedMediaIds.has(m.id));
-
-    for (let i = 0; i < unmappedMedia.length; i++) {
-      const m = unmappedMedia[i];
-      const comp = generateComposition(
-        [m],
-        scriptLines.length + i,
-        '',
-        preferredTextPosition,
-        effectsPool[i % effectsPool.length],
-        transitionType,
-        transitionDuration,
-        prev,
-        false,
-        preset,
-        backgroundStyles
-      );
-      newComps.push(comp);
-      prev = comp;
     }
 
     setCompositions(newComps);
@@ -3649,26 +3619,7 @@ export default function App() {
                             <option value="data-chart">Data Chart</option>
                           </select>
 
-                          <select
-                            value={comp.textEffect || 'gsap-glow'}
-                            onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
-                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
-                          >
-                            <option value="random">Random Kinetic</option>
-                            <option value="gsap-cascade">Cascade</option>
-                            <option value="gsap-3d-roll">3D Roll</option>
-                            <option value="gsap-elastic">Elastic</option>
-                            <option value="gsap-merge-elastic">Merge Elastic</option>
-                            <option value="gsap-expand">Expand</option>
-                            <option value="gsap-tornado">Tornado</option>
-                            <option value="gsap-funnel">Funnel</option>
-                            <option value="gsap-triangle">Triangle</option>
-                            <option value="gsap-square">Square</option>
-                            <option value="gsap-heart">Heart</option>
-                            <option value="gsap-stack">Stack</option>
-                            <option value="gsap-glow">Glow Pulse</option>
-                            <option value="gsap-focus-flash">Focus</option>
-                          </select>
+
 
                           <select
                             value={comp.cameraPath || 'static'}

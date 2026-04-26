@@ -110,7 +110,9 @@ export default async function handler(req: any, res: any) {
           "vibe": "sans" | "serif" | "mono" | "display",
           "pairing": "Suggested font style name"
         },
-        "mood": "energetic" | "professional" | "minimal" | "cinematic"
+        "mood": "energetic" | "professional" | "minimal" | "cinematic",
+        "pacing": "rapid-tiktok" | "standard" | "cinematic-slow",
+        "sceneComplexity": "simple" | "dense" | "layered"
       }
     `;
     
