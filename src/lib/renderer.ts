@@ -1,6 +1,6 @@
 import path from 'path';
-import { Producer } from '@hyperframes/producer';
-import { Engine } from '@hyperframes/engine';
+import Producer from '@hyperframes/producer';
+import Engine from '@hyperframes/engine';
 import ffmpeg from 'fluent-ffmpeg';
 
 /**
