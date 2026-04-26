@@ -38,47 +38,13 @@ const HandDrawnCursor: React.FC = () => {
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
             const points = pointsRef.current;
 
-            if (points.length > 2) {
-                // Draw the trail
-                for (let i = 1; i < points.length; i++) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#121212';
-                    ctx.lineWidth = 1.5;
-                    ctx.lineJoin = 'round';
-                    ctx.lineCap = 'round';
-                    
-                    // Progressive Opacity
-                    ctx.globalAlpha = (i / points.length) * 0.8;
-                    
-                    const xc = (points[i].x + points[i - 1].x) / 2;
-                    const yc = (points[i].y + points[i - 1].y) / 2;
-                    
-                    ctx.moveTo(points[i-1].x, points[i-1].y);
-                    ctx.quadraticCurveTo(points[i-1].x, points[i-1].y, xc, yc);
-                    ctx.stroke();
-                }
-
-                // Draw the "Pencil Tip"
+            if (points.length > 0) {
                 const lastPoint = points[points.length - 1];
                 ctx.globalAlpha = 1;
-                ctx.save();
-                ctx.translate(lastPoint.x, lastPoint.y);
-                
-                // Pencil Tip Jitter
-                ctx.rotate(Math.sin(Date.now() / 100) * 0.1);
-                
                 ctx.beginPath();
                 ctx.fillStyle = '#121212';
-                ctx.fillRect(-1, -8, 2, 8); // Tip stem
-                
-                // Tip point
-                ctx.beginPath();
-                ctx.moveTo(-1, 0);
-                ctx.lineTo(1, 0);
-                ctx.lineTo(0, 2);
+                ctx.arc(lastPoint.x, lastPoint.y, 4, 0, Math.PI * 2);
                 ctx.fill();
-                
-                ctx.restore();
             }
             animationFrame = requestAnimationFrame(renderCursor);
         };

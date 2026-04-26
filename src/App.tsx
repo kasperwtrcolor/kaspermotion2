@@ -128,12 +128,12 @@ const generateComposition = (
 ): Composition => {
   let sceneType: Composition['sceneType'] = 'standard';
   const rand = Math.random();
-  
+
   if (caption && rand > 0.85) {
     const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'];
     sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
   }
-  
+
   const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
   const distance = 2000;
 
@@ -150,7 +150,7 @@ const generateComposition = (
 
     const randomShape = M3_SHAPES[Math.floor(Math.random() * M3_SHAPES.length)];
     let m3Shape = item.m3Shape || randomShape;
-    
+
     if (m3Shape === 'letter') {
       const firstChar = (caption || 'K').trim().charAt(0).toUpperCase();
       m3Shape = `letter-${firstChar.match(/[A-Z]/) ? firstChar : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
@@ -182,8 +182,8 @@ const generateComposition = (
     textPosition,
     sceneType,
     textEffect: choreography?.textEffect || preferredEffect,
-    transitionType: choreography?.transitionType || (preferredTransition === 'random' 
-      ? (Math.random() > 0.4 
+    transitionType: choreography?.transitionType || (preferredTransition === 'random'
+      ? (Math.random() > 0.4
           ? (ALL_SHADER_NAMES[Math.floor(Math.random() * ALL_SHADER_NAMES.length)] as TransitionType)
           : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
       : preferredTransition),
@@ -204,7 +204,7 @@ const generateComposition = (
 
 const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
   const base = "max-w-[85vw] max-h-[75vh] w-auto h-auto block object-cover shadow-[0_20px_50px_rgba(0,0,0,0.3)] transition-all duration-700";
-  
+
   let resolvedShape = shape;
   if (shape === 'letter') {
     const firstLetter = caption.trim().charAt(0).toUpperCase();
@@ -259,8 +259,8 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
 
   return {
     className: base,
-    style: { 
-      clipPath: paths[resolvedShape] || 'none', 
+    style: {
+      clipPath: paths[resolvedShape] || 'none',
       WebkitClipPath: paths[resolvedShape] || 'none'
     }
   };
@@ -269,14 +269,14 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
 const getWordStyle = (word: string, index: number, customColor?: string, isMulti?: boolean) => {
   const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
   const hash = cleanWord.length + index;
-  
+
   if (isMulti) {
     if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
     if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
     if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
     if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
   }
-  
+
   return customColor ? { color: customColor } : {};
 };
 
@@ -360,10 +360,10 @@ const KineticText = ({ text, className = "", style = {}, textColor, isMulti }: {
           <motion.div
             initial={{ y: '100%', opacity: 0, rotateX: -80, scale: 0.8 }}
             animate={{ y: 0, opacity: 1, rotateX: 0, scale: 1 }}
-            transition={{ 
-              delay: i * 0.1, 
-              type: 'spring', 
-              damping: 12, 
+            transition={{
+              delay: i * 0.1,
+              type: 'spring',
+              damping: 12,
               stiffness: 200,
               mass: 0.8
             }}
@@ -768,7 +768,7 @@ const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { x: 0, y: 0, opacity: 1 },
         "60%": { x: 0, y: 0, opacity: 1 },
-        "85%": { 
+        "85%": {
           x: (i) => (i % 3 === 0 ? 0 : i % 3 === 1 ? -120 : 120) + (Math.random()*10-5),
           y: (i) => (i % 3 === 0 ? -120 : 120) + (Math.random()*10-5),
           opacity: 1
@@ -802,7 +802,7 @@ const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { x: 0, y: 0, opacity: 1 },
         "60%": { x: 0, y: 0, opacity: 1 },
-        "85%": { 
+        "85%": {
           x: (i) => (i % 4 === 0 || i % 4 === 3 ? -120 : 120),
           y: (i) => (i % 4 === 0 || i % 4 === 1 ? -120 : 120),
           opacity: 1
@@ -836,8 +836,8 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
         "0%": { x: 0, y: 0, opacity: 0 },
         "20%": { x: 0, y: 0, opacity: 1 },
         "60%": { x: 0, y: 0, opacity: 1 },
-        "85%": { 
-          x: (i) => 7.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)), 
+        "85%": {
+          x: (i) => 7.5 * (16 * Math.pow(Math.sin(i * 0.5), 3)),
           y: (i) => -7.5 * (13 * Math.cos(i * 0.5) - 5 * Math.cos(2*i*0.5) - 2 * Math.cos(3*i*0.5) - Math.cos(4*i*0.5)),
           opacity: 1
         },
@@ -868,9 +868,9 @@ const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, c
   useGSAP(() => {
     if (!containerRef.current) return;
     const chars = containerRef.current.querySelectorAll('.gsap-glow-char');
-    
+
     gsap.set(chars, { opacity: 0, y: 30, scale: 0.8 });
-    
+
     gsap.to(chars, {
       opacity: 1,
       y: 0,
@@ -907,7 +907,7 @@ const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, c
 const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ').filter(w => w.length > 0);
-  
+
   const heroIndex = useMemo(() => {
     let maxLen = -1;
     let idx = 0;
@@ -923,11 +923,11 @@ const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: str
   useGSAP(() => {
     if (!containerRef.current) return;
     const wordElements = containerRef.current.querySelectorAll('.gsap-focus-word');
-    
+
     gsap.set(wordElements, { opacity: 0, scale: 0.5, filter: 'blur(10px)' });
-    
+
     const tl = gsap.timeline();
-    
+
     tl.to(wordElements, {
       opacity: 1,
       scale: 1,
@@ -960,9 +960,9 @@ const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: str
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
       {words.map((word, i) => (
-        <span 
-          key={i} 
-          className="gsap-focus-word inline-flex whitespace-pre" 
+        <span
+          key={i}
+          className="gsap-focus-word inline-flex whitespace-pre"
           style={{ ...getWordStyle(word, i, textColor, isMulti) }}
         >
           {word}
@@ -1031,7 +1031,7 @@ const FilmGrainOverlay = () => {
         </filter>
         <rect width="100%" height="100%" filter="url(#grain)" />
       </svg>
-      <motion.div 
+      <motion.div
         animate={{ x: [0, -100, 100, -50, 0], y: [0, 50, -50, 100, 0] }}
         transition={{ duration: 0.2, repeat: Infinity, ease: "linear" }}
         className="absolute inset-[-100%] bg-white/5 opacity-20"
@@ -1068,24 +1068,24 @@ const ThemedParallaxWorld = ({ theme, worldX, worldY }: { theme: string, worldX:
   return (
     <div className="absolute inset-[-1000px] pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
       {/* Background Layer (Far) */}
-      <motion.div 
-        style={{ x: bgX, y: bgY, z: -1500, scale: 12 }} 
+      <motion.div
+        style={{ x: bgX, y: bgY, z: -1500, scale: 12 }}
         className="absolute inset-0 flex items-center justify-center"
       >
         <img src={url} className="w-full h-full object-cover opacity-40 blur-[2px]" alt="far" />
       </motion.div>
 
       {/* Mid Layer (Horizon) */}
-      <motion.div 
-        style={{ x: midX, y: midY, z: -800, scale: 8 }} 
+      <motion.div
+        style={{ x: midX, y: midY, z: -800, scale: 8 }}
         className="absolute inset-0 flex items-center justify-center"
       >
         <img src={url} className="w-full h-full object-cover opacity-80" alt="mid" />
       </motion.div>
 
       {/* Foreground Layer (Focus) */}
-      <motion.div 
-        style={{ x: fgX, y: fgY, z: -200, scale: 4 }} 
+      <motion.div
+        style={{ x: fgX, y: fgY, z: -200, scale: 4 }}
         className="absolute inset-0 flex items-center justify-center"
       >
         <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" />
@@ -1109,10 +1109,10 @@ const SceneBackground = ({ style, status, worldX, worldY }: { style?: Background
       {status === 'active' && isThemedWorld ? (
          <ThemedParallaxWorld theme={style} worldX={worldX} worldY={worldY} />
       ) : (
-        <motion.div 
+        <motion.div
           className="absolute inset-[-1000%] pointer-events-none"
           style={{ transformStyle: 'preserve-3d', transform: 'translateZ(-500px) scale(8)', zIndex: -10 }}
-          animate={{ 
+          animate={{
             opacity: status === 'active' ? 1 : 0.4
           }}
           transition={{ duration: 0.5 }}
@@ -1191,7 +1191,7 @@ const ParticleTrails = () => {
 
 const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => {
   const randomIndex = useMemo(() => Math.floor(Math.random() * 14), []);
-  
+
   if (status !== 'active') return null;
 
   const shapes = [
@@ -1436,9 +1436,9 @@ const CartoonShapes = ({ status }: { status: 'past' | 'active' | 'future' }) => 
 
 const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { children: React.ReactNode, status: string, variant?: number, isLandscape?: boolean }) => {
   const animations = [
-    { 
-      rotateY: [-30, 30, -30], 
-      rotateX: [15, -10, 15], 
+    {
+      rotateY: [-30, 30, -30],
+      rotateX: [15, -10, 15],
       z: [0, 150, 0],
       transition: { duration: 15, repeat: Infinity, ease: "easeInOut" }
     },
@@ -1466,12 +1466,12 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
     <div className="perspective-container" style={{ perspective: '2000px', transformStyle: 'preserve-3d' }}>
       <motion.div
         initial={{ rotateY: 90, opacity: 0, scale: 0.5, z: -500 }}
-        animate={status === 'active' ? { 
+        animate={status === 'active' ? {
           rotateY: currentAnim.rotateY,
           rotateX: currentAnim.rotateX,
-          scale: 1, 
-          opacity: 1, 
-          z: 0 
+          scale: 1,
+          opacity: 1,
+          z: 0
         } : { rotateY: 90, opacity: 0, scale: 0.5, z: -500 }}
         transition={status === 'active' ? {
           rotateY: { type: 'spring', damping: 20, stiffness: 40 },
@@ -1511,9 +1511,9 @@ const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
           <motion.div
             key={i}
             className="absolute bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl"
-            initial={{ 
-              x: Math.random() * 2000 - 1000, 
-              y: Math.random() * 2000 - 1000, 
+            initial={{
+              x: Math.random() * 2000 - 1000,
+              y: Math.random() * 2000 - 1000,
               rotate: Math.random() * 360,
               scale: 0.5 + Math.random()
             }}
@@ -1522,13 +1522,13 @@ const PremiumBackgroundStack = ({ style }: { style: BackgroundStyle }) => {
               y: [null, Math.random() * 2000 - 1000],
               rotate: [null, Math.random() * 360],
             }}
-            transition={{ 
-              duration: 20 + Math.random() * 20, 
-              repeat: Infinity, 
-              ease: "linear" 
+            transition={{
+              duration: 20 + Math.random() * 20,
+              repeat: Infinity,
+              ease: "linear"
             }}
-            style={{ 
-              width: 200 + Math.random() * 400, 
+            style={{
+              width: 200 + Math.random() * 400,
               height: 200 + Math.random() * 400,
               boxShadow: '0 0 50px rgba(255,255,255,0.05)'
             }}
@@ -1556,9 +1556,9 @@ const getTextPositionClass = (pos: TextPosition) => {
 
 
 
-const CompositionNode = ({ 
-  comp, 
-  status, 
+const CompositionNode = ({
+  comp,
+  status,
   fontSizeOverride,
   globalTextColor,
   globalIsMultiColor,
@@ -1568,10 +1568,10 @@ const CompositionNode = ({
   worldX,
   worldY,
   isSpatialWorld,
-}: { 
-  key?: string; 
-  comp: Composition; 
-  status: 'past' | 'active' | 'future'; 
+}: {
+  key?: string;
+  comp: Composition;
+  status: 'past' | 'active' | 'future';
   fontSizeOverride?: string;
   globalTextColor: string;
   globalIsMultiColor: boolean;
@@ -1590,7 +1590,7 @@ const CompositionNode = ({
     const ghostOpacity = isSpatialWorld ? 0.35 : 0;
     const ghostBlur = isSpatialWorld ? 'blur(8px)' : 'blur(40px)';
     const ghostScale = isSpatialWorld ? 0.7 : 0.4;
-    
+
     return {
       future: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } },
       active: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 1.2 } },
@@ -1608,27 +1608,27 @@ const CompositionNode = ({
         transformStyle: 'preserve-3d'
       }}
     >
-      <motion.div 
-        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center" 
+      <motion.div
+        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
         style={{ transformStyle: 'preserve-3d' }}
         variants={transitionVariants}
         initial="future"
         animate={status}
       >
-        
+
         <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
         {comp.giphyStickerUrl && (
           <motion.div
             className="absolute z-50 flex items-center justify-center"
             initial={{ scale: 0, opacity: 0, rotateZ: -15 }}
-            animate={status === 'active' ? { 
-              scale: 1.5, 
-              opacity: 1, 
-              rotateZ: 0 
-            } : { 
-              scale: 0, 
-              opacity: 0, 
-              rotateZ: -15 
+            animate={status === 'active' ? {
+              scale: 1.5,
+              opacity: 1,
+              rotateZ: 0
+            } : {
+              scale: 0,
+              opacity: 0,
+              rotateZ: -15
             }}
             transition={{ type: 'spring', damping: 12, stiffness: 100, delay: status === 'active' ? 0.3 : 0 }}
           >
@@ -1643,7 +1643,7 @@ const CompositionNode = ({
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
           {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
             const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
-            
+
             const mediaElement = m.url && (
               m.type === 'video' ? (
                 <motion.video
@@ -1681,7 +1681,7 @@ const CompositionNode = ({
               <motion.div
                 key={i}
                 className={m.isFullscreen ? "absolute inset-0 z-0" : "absolute z-10"}
-                style={m.isFullscreen ? { width: '100%', height: '100%' } : { 
+                style={m.isFullscreen ? { width: '100%', height: '100%' } : {
                   transformStyle: 'preserve-3d',
                   x: m.xOffset || 0,
                   y: m.yOffset || 0,
@@ -1729,9 +1729,9 @@ const CompositionNode = ({
             className={`absolute z-[300] flex flex-col items-center justify-center text-center px-8 transition-all duration-700 ${getTextPositionClass(comp.textPosition)}`}
           >
             <div className={`transform -rotate-2 ${comp.fontFamily || globalFontFamily} font-bold tracking-tighter uppercase drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]`}>
-              <AnimatedCaption 
-                text={comp.caption} 
-                effect={comp.textEffect} 
+              <AnimatedCaption
+                text={comp.caption}
+                effect={comp.textEffect}
                 className={fontSizeOverride || "text-4xl md:text-6xl"}
                 textColor={comp.textColor || globalTextColor}
                 isMulti={comp.isMultiColor || globalIsMultiColor}
@@ -1776,7 +1776,7 @@ export default function App() {
   const [lastShareUrl, setLastShareUrl] = useState<string | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  
+
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
   const [libraryAssets, setLibraryAssets] = useState<LibraryAsset[]>([]);
   const [selectedLibraryAssets, setSelectedLibraryAssets] = useState<Set<string>>(new Set());
@@ -1788,7 +1788,7 @@ export default function App() {
   const [isScraping, setIsScraping] = useState(false);
   const [websiteSiteName, setWebsiteSiteName] = useState<string>('');
   const [designTokens, setDesignTokens] = useState<any>(null);
-  
+
   const [fontStyle, setFontStyle] = useState<FontStyle>('font-sans');
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#FFFFFF');
@@ -1845,7 +1845,7 @@ export default function App() {
   };
 
   const currentComp = compositions[currentIndex];
-  
+
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   useEffect(() => {
@@ -1939,7 +1939,7 @@ export default function App() {
           handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
         }
       };
-      
+
       checkAndRewardCredits();
 
       const unsubscribeUser = onSnapshot(doc(db, 'users', user.uid), (doc) => {
@@ -1974,15 +1974,15 @@ export default function App() {
     if (!user) return { url: URL.createObjectURL(file), uploaded: false };
     try {
       const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-      
+
       const uploadPromise = uploadBytes(storageRef, file);
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error("Upload timed out.")), 10000);
       });
-      
+
       await Promise.race([uploadPromise, timeoutPromise]);
       const url = await getDownloadURL(storageRef);
-      
+
       await addDoc(collection(db, 'assets'), {
         userId: user.uid,
         url,
@@ -2006,7 +2006,7 @@ export default function App() {
       }
       return;
     }
-    
+
     if (mediaFiles.length === 0 && !scriptText.trim()) return;
 
     if (!isAutoSave) setIsSaving(true);
@@ -2024,15 +2024,15 @@ export default function App() {
         if (item.file) {
           try {
             const storageRef = ref(storage, `users/${user.uid}/media/${Date.now()}_${item.file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-            
+
             const uploadPromise = uploadBytes(storageRef, item.file);
             const timeoutPromise = new Promise<never>((_, reject) => {
               setTimeout(() => reject(new Error("Upload timed out.")), 10000);
             });
-            
+
             await Promise.race([uploadPromise, timeoutPromise]);
             const url = await getDownloadURL(storageRef);
-            
+
             await addDoc(collection(db, 'assets'), {
               userId: user.uid,
               url,
@@ -2131,8 +2131,8 @@ export default function App() {
     setCurrentProjectId(project.id);
     setScriptText(project.script);
     setFontStyle(project.settings.fontStyle);
-    const loadedBackgrounds = Array.isArray(project.settings.backgroundStyles) 
-      ? project.settings.backgroundStyles 
+    const loadedBackgrounds = Array.isArray(project.settings.backgroundStyles)
+      ? project.settings.backgroundStyles
       : (project.settings.backgroundStyle ? [project.settings.backgroundStyle] : ['black']);
     setBackgroundStyles(loadedBackgrounds);
     setTextEffect(project.settings.textEffect || 'gsap-glow');
@@ -2146,7 +2146,7 @@ export default function App() {
     setTextOnlyLines(new Set(project.settings.textOnlyLines || []));
     setMediaMapping(project.settings.mediaMapping || {});
     setUseGiphy(project.settings.useGiphy || false);
-    
+
     const loadedMedia: MediaItem[] = project.media.map((m: any) => ({
       id: Math.random().toString(36).substr(2, 9),
       url: m.url,
@@ -2154,7 +2154,7 @@ export default function App() {
       name: m.name
     }));
     setMediaFiles(loadedMedia);
-    
+
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
     project.media.forEach((m: any, i: number) => {
@@ -2170,7 +2170,7 @@ export default function App() {
   const handleGiphySearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!giphySearchQuery.trim()) return;
-    
+
     setIsSearchingGiphy(true);
     try {
       const { data } = await gf.search(giphySearchQuery, { type: 'stickers', limit: 20 });
@@ -2200,24 +2200,24 @@ export default function App() {
     if (!scrapeUrl || !scrapeUrl.includes('.')) return;
     setIsScraping(true);
     setToastMessage("AI Director is analyzing your website...");
-    
+
     try {
       const resp = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: scrapeUrl })
       });
-      
+
       const data = await resp.json();
-      
+
       if (data.error) throw new Error(data.error);
 
       // 1. Populate Script
       if (data.script) setScriptText(data.script);
-      
+
       // 2. Populate Brand Settings
       if (data.brandTitle) setWebsiteSiteName(data.brandTitle);
-      
+
       if (data.colors) {
         if (data.colors.primary) setTextColor(data.colors.primary);
         if (data.colors.background) {
@@ -2230,7 +2230,7 @@ export default function App() {
             }
         }
       }
-      
+
       if (data.typography) {
         const fontMap: Record<string, FontFamily> = {
             'sans': 'font-display',
@@ -2292,9 +2292,9 @@ export default function App() {
     setCompositions(prev => prev.map((c, i) => {
       if (i !== sceneIdx) return c;
       const newMedia = [...c.media];
-      newMedia[mediaIdx] = { 
-        ...newMedia[mediaIdx], 
-        isFullscreen: !newMedia[mediaIdx].isFullscreen 
+      newMedia[mediaIdx] = {
+        ...newMedia[mediaIdx],
+        isFullscreen: !newMedia[mediaIdx].isFullscreen
       };
       return { ...c, media: newMedia };
     }));
@@ -2303,7 +2303,7 @@ export default function App() {
   const handleAnimateAsset = async (sceneIdx: number, mediaIdx: number) => {
     const comp = compositions[sceneIdx];
     const media = comp.media[mediaIdx];
-    
+
     if (media.type !== 'image' || !media.url) return;
 
     // Set animating state
@@ -2326,11 +2326,11 @@ export default function App() {
         setCompositions(prev => prev.map((c, i) => {
           if (i !== sceneIdx) return c;
           const newMedia = [...c.media];
-          newMedia[mediaIdx] = { 
-            ...newMedia[mediaIdx], 
-            url: data.videoUrl, 
-            type: 'video', 
-            isAnimating: false 
+          newMedia[mediaIdx] = {
+            ...newMedia[mediaIdx],
+            url: data.videoUrl,
+            type: 'video',
+            isAnimating: false
           };
           return { ...c, media: newMedia };
         }));
@@ -2384,14 +2384,14 @@ export default function App() {
   const camY = useMotionValue(0);
   const camZ = useMotionValue(0);
   const camRoll = useMotionValue(0);
-  
+
   const artistryX = useMotionValue(0);
   const artistryY = useMotionValue(0);
   const artistryZ = useMotionValue(0);
   const artistryRotX = useMotionValue(0);
   const artistryRotY = useMotionValue(0);
   const artistryRoll = useMotionValue(0);
-  
+
   const userRotX = useMotionValue(0);
   const userRotY = useMotionValue(0);
   const userPanX = useMotionValue(0);
@@ -2408,7 +2408,7 @@ export default function App() {
   const smoothArtRotX = useSpring(artistryRotX, { damping: 40, stiffness: 80 });
   const smoothArtRotY = useSpring(artistryRotY, { damping: 40, stiffness: 80 });
   const smoothArtRoll = useSpring(artistryRoll, { damping: 40, stiffness: 80 });
-  
+
   const smoothRotX = useSpring(userRotX, { damping: 50, stiffness: 150 });
   const smoothRotY = useSpring(userRotY, { damping: 50, stiffness: 150 });
   const smoothPanX = useSpring(userPanX, { damping: 50, stiffness: 150 });
@@ -2421,13 +2421,13 @@ export default function App() {
     if (appMode === 'playing') {
       const controlsX = animate(wiggleX, [-5, 5, -5], { duration: 4, repeat: Infinity, ease: "easeInOut" });
       const controlsY = animate(wiggleY, [-3, 3, -3], { duration: 5, repeat: Infinity, ease: "easeInOut" });
-      
+
       // Smooth subtle pan
       const panControlsX = animate(userPanX, [0, 15, 0], { duration: 8, repeat: Infinity, ease: "easeInOut" });
-      
-      return () => { 
-        controlsX.stop(); 
-        controlsY.stop(); 
+
+      return () => {
+        controlsX.stop();
+        controlsY.stop();
         panControlsX.stop();
       };
     }
@@ -2442,25 +2442,25 @@ export default function App() {
 
   const cameraFilter = useTransform([velX, velY, velZ], ([vx, vy, vz]) => {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
-    const blurAmount = Math.min(speed / 200, 10); 
-    
+    const blurAmount = Math.min(speed / 200, 10);
+
     // Auto-tilt based on horizontal speed
     camRoll.set(Number(vx) / 100);
 
     if (speed < 15) return `blur(0px)`;
-    
+
     return `blur(${blurAmount}px)`;
   });
 
   const worldFOV = useTransform([velX, velY, velZ, artistryZ], ([vx, vy, vz, az]) => {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
     const speedScale = 1 + Math.min(speed / 8000, 0.2);
-    
+
     // Dolly Zoom compensation logic
     // If artistryZ is increasing (moving in), we scale DOWN to compensate
     const dollyComp = currentComp?.cameraPath === 'dolly-zoom' ? 1 - (Number(az) / 4000) : 1;
-    
-    return speedScale * dollyComp; 
+
+    return speedScale * dollyComp;
   });
 
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX, smoothArtX], ([x, px, wx, ax]) => Number(x) + Number(px) + Number(wx) + Number(ax));
@@ -2482,7 +2482,7 @@ export default function App() {
       camY.set(windowSize.h / 2 - currentComp.y);
       camZ.set(-currentComp.z);
       setSceneStartTime(Date.now());
-      
+
       // Reset artistry offsets
       artistryX.set(0);
       artistryY.set(0);
@@ -2492,8 +2492,8 @@ export default function App() {
       artistryRoll.set(0);
 
       // AI-Driven Camera Path Animations
-      const duration = 5; 
-      
+      const duration = 5;
+
       if (currentComp.cameraPath === 'zoom-in') {
         animate(artistryZ, 800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'zoom-out') {
@@ -2529,10 +2529,10 @@ export default function App() {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDraggingRef.current) return;
-    
+
     const dx = e.clientX - lastMousePos.current.x;
     const dy = e.clientY - lastMousePos.current.y;
-    
+
     if (e.shiftKey) {
       userPanX.set(userPanX.get() + dx * 2);
       userPanY.set(userPanY.get() + dy * 2);
@@ -2540,7 +2540,7 @@ export default function App() {
       userRotY.set(userRotY.get() + dx * 0.2);
       userRotX.set(userRotX.get() - dy * 0.2);
     }
-    
+
     lastMousePos.current = { x: e.clientX, y: e.clientY };
   };
 
@@ -2616,10 +2616,10 @@ export default function App() {
     let timer: NodeJS.Timeout;
     if (appMode === 'playing' && !isRecording && compositions.length > 0) {
       const hf = (window as any).__HYPERFRAMES_COMPOSITION__;
-      
+
       const playNext = () => {
         const nextIdx = (currentIndex + 1) % compositions.length;
-        
+
         setCurrentIndex(nextIdx);
         if (hf) {
           hf.seek(nextIdx * 5); // 5s per scene
@@ -2629,14 +2629,14 @@ export default function App() {
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
       const effectiveSceneDuration = Math.max((sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
-      
-      timer = setTimeout(playNext, effectiveSceneDuration); 
+
+      timer = setTimeout(playNext, effectiveSceneDuration);
     }
     return () => clearTimeout(timer);
   }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
 
   const [addingAssetToSceneIdx, setAddingAssetToSceneIdx] = useState<number | null>(null);
-  
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
@@ -2738,14 +2738,14 @@ export default function App() {
     const newMapping = { ...mediaMapping };
     const lines = scriptText.split('\n').filter(l => l.trim().length > 0);
     let mediaIdx = 0;
-    
+
     lines.forEach((line, idx) => {
       if (!textOnlyLines.has(idx) && !newMapping[idx] && mediaIdx < mediaFiles.length) {
         newMapping[idx] = mediaFiles[mediaIdx].id;
         mediaIdx++;
       }
     });
-    
+
     setMediaMapping(newMapping);
     setSetupStep(3);
   };
@@ -2762,14 +2762,14 @@ export default function App() {
       const data = await res.json();
       if (data.script) {
         handleScriptChange(data.script);
-        
+
         if (data.choreography) {
           setAiChoreography(data.choreography);
           setToastMessage("AI has designed your video choreography!");
         } else {
           setToastMessage("Content fetched — script & assets ready!");
         }
-        
+
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
@@ -2799,18 +2799,18 @@ export default function App() {
 
     setIsRenderingTrailer(true);
     setRenderProgress(0);
-    
+
     const scriptLines = scriptText.split('\n').filter(line => line.trim() !== '');
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
     const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
-    
+
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       const existingComp = compositions[sceneIdx];
       let caption = scriptLines[sceneIdx] || '';
       let isTextOnly = textOnlyLines.has(sceneIdx);
-      
+
       let sceneItems: MediaItem[] = [];
       if (!isTextOnly) {
         const mappedMediaId = mediaMapping[sceneIdx];
@@ -2825,7 +2825,7 @@ export default function App() {
           isTextOnly = true;
         }
       }
-      
+
       let activeEffect = effectsPool[sceneIdx % effectsPool.length];
 
       const transitions: TransitionType[] = ['random', 'fade', '3d-flip', ...ALL_SHADER_NAMES as TransitionType[]];
@@ -2833,13 +2833,13 @@ export default function App() {
 
       const sceneChoreography = aiChoreography?.scenes?.[sceneIdx];
       const comp = generateComposition(
-        sceneItems, 
-        sceneIdx, 
-        caption, 
-        preferredTextPosition, 
-        activeEffect, 
-        activeTransition, 
-        transitionDuration, 
+        sceneItems,
+        sceneIdx,
+        caption,
+        preferredTextPosition,
+        activeEffect,
+        activeTransition,
+        transitionDuration,
         prev,
         isTextOnly,
         preset,
@@ -2850,11 +2850,11 @@ export default function App() {
         isMultiColor,
         sceneChoreography
       );
-      
+
       if (existingComp) {
         comp.sceneType = existingComp.sceneType;
       }
-      
+
       newComps.push(comp);
       prev = comp;
 
@@ -2863,17 +2863,17 @@ export default function App() {
           const words = caption.replace(/[^a-zA-Z0-9 ]/g, '').split(' ').filter(w => w.length > 3);
           const searchTerm = words.slice(0, 2).join(' ') || words[0] || 'dynamic';
           const { data } = await gf.search(searchTerm, { type: 'stickers', limit: 1 });
-          
+
           if (data && data.length > 0) {
             const stickerUrl = data[0].images.original.url;
             const giphyComp = generateComposition(
               [],
-              sceneIdx + 100, 
-              searchTerm.toUpperCase(), 
-              'center', 
-              effectsPool[(sceneIdx + 1) % effectsPool.length], 
-              'zoom', 
-              transitionDuration, 
+              sceneIdx + 100,
+              searchTerm.toUpperCase(),
+              'center',
+              effectsPool[(sceneIdx + 1) % effectsPool.length],
+              'zoom',
+              transitionDuration,
               prev,
               isTextOnly,
               preset,
@@ -2890,24 +2890,24 @@ export default function App() {
           console.error("Giphy logic error:", err);
         }
       }
-      
+
       setRenderProgress(Math.min(((sceneIdx / Math.max(scriptLines.length, 1)) * 100), 100));
       await new Promise(r => setTimeout(r, 100));
     }
 
     const mappedMediaIds = new Set(Object.values(mediaMapping));
     const unmappedMedia = mediaFiles.filter(m => !mappedMediaIds.has(m.id));
-    
+
     for (let i = 0; i < unmappedMedia.length; i++) {
       const m = unmappedMedia[i];
       const comp = generateComposition(
-        [m], 
-        scriptLines.length + i, 
-        '', 
-        preferredTextPosition, 
-        effectsPool[i % effectsPool.length], 
-        transitionType, 
-        transitionDuration, 
+        [m],
+        scriptLines.length + i,
+        '',
+        preferredTextPosition,
+        effectsPool[i % effectsPool.length],
+        transitionType,
+        transitionDuration,
         prev,
         false,
         preset,
@@ -2919,7 +2919,7 @@ export default function App() {
 
     setCompositions(newComps);
     setCurrentIndex(0);
-    
+
     if (newComps.length > 0) {
       try {
         const isAdmin = user?.email === 'philipsimmons67@gmail.com';
@@ -2930,7 +2930,7 @@ export default function App() {
         } else if (isAdmin) {
           setToastMessage("Admin access: Trailer generated without credit deduction!");
         }
-        
+
         setTimeout(() => {
           setIsRenderingTrailer(false);
           setAppMode('playing');
@@ -3002,7 +3002,7 @@ export default function App() {
       }[exportResolution] || { width: 1920, height: 1080 };
 
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { 
+        video: {
           displaySurface: "browser",
           width: { ideal: resConstraints.width },
           height: { ideal: resConstraints.height },
@@ -3028,9 +3028,9 @@ export default function App() {
         }
       }
 
-      const mediaRecorder = new MediaRecorder(stream, { 
+      const mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: exportResolution === '4K' ? 50000000 : 15000000 
+        videoBitsPerSecond: exportResolution === '4K' ? 50000000 : 15000000
       });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -3043,7 +3043,7 @@ export default function App() {
       mediaRecorder.onstop = async () => {
         sequenceActiveRef.current = false;
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        
+
         // 1. Download locally
         const localUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -3071,7 +3071,7 @@ export default function App() {
             },
             body: blob
           });
-          
+
           if (uploadRes.ok) {
             const { shareUrl } = await uploadRes.json();
             setLastShareUrl(shareUrl);
@@ -3098,7 +3098,7 @@ export default function App() {
       document.body.style.cursor = 'none';
       const header = document.querySelector('header');
       if (header) (header as HTMLElement).style.display = 'none';
-      
+
       const countdownEl = document.createElement('div');
       countdownEl.className = 'recording-countdown';
       countdownEl.innerHTML = '<span>3</span>';
@@ -3109,7 +3109,7 @@ export default function App() {
       countdownEl.innerHTML = '<span>1</span>';
       await new Promise(r => setTimeout(r, 1000));
       countdownEl.remove();
-      
+
       await new Promise(r => setTimeout(r, 1000));
 
       setIsRecording(true);
@@ -3119,24 +3119,24 @@ export default function App() {
 
       await new Promise(r => setTimeout(r, 100));
       mediaRecorder.start();
-      
+
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
-        
+
         setCurrentIndex(i);
         setRecordingProgress((i / compositions.length) * 100);
-        
+
         const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
         const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
         const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
 
-        await new Promise(r => setTimeout(r, effectiveSceneDuration)); 
+        await new Promise(r => setTimeout(r, effectiveSceneDuration));
       }
 
       if (sequenceActiveRef.current) {
         setRecordingProgress(100);
         const finalAnimDuration = (4 / textAnimationSpeed) * 1000;
-        await new Promise(r => setTimeout(r, Math.max(2000, finalAnimDuration))); 
+        await new Promise(r => setTimeout(r, Math.max(2000, finalAnimDuration)));
         if (mediaRecorder.state !== 'inactive') {
           mediaRecorder.stop();
         }
@@ -3157,13 +3157,13 @@ export default function App() {
   const renderContent = () => {
     if (appMode === 'share' && shareVideoId) {
       return (
-        <SharePage 
-          videoId={shareVideoId} 
+        <SharePage
+          videoId={shareVideoId}
           onGoHome={() => {
             window.history.pushState({}, '', '/');
             setAppMode('landing');
             setShareVideoId(null);
-          }} 
+          }}
         />
       );
     }
@@ -3210,9 +3210,9 @@ export default function App() {
           <div className="w-full max-w-4xl border border-black/10 bg-white p-8 md:p-16 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative shadow-2xl">
             <AnimatePresence>
               {(isUploading || isSaving) && (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 z-50 bg-ivory/95 backdrop-blur-md flex flex-col items-center justify-center border border-black/10"
                 >
@@ -3254,9 +3254,9 @@ export default function App() {
                  <div className="space-y-8">
                    <div className="relative group">
                      <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
-                     <input 
-                       type="text" 
-                       placeholder="https://your-website.com" 
+                     <input
+                       type="text"
+                       placeholder="https://your-website.com"
                        className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
                        value={scrapeUrl}
                        onChange={(e) => setScrapeUrl(e.target.value)}
@@ -3265,7 +3265,7 @@ export default function App() {
                    </div>
 
                    <div className="flex flex-col md:flex-row gap-4">
-                     <button 
+                     <button
                        onClick={handleUrlAnalysis}
                        disabled={isScraping || !scrapeUrl.includes('.')}
                        className="btn-primary flex-1 py-6 text-lg flex items-center justify-center gap-4 disabled:opacity-50"
@@ -3282,7 +3282,7 @@ export default function App() {
                          </>
                        )}
                      </button>
-                     <button 
+                     <button
                        onClick={() => setSetupStep(2)}
                        className="btn-outline px-12 py-6 text-sm"
                      >
@@ -3308,22 +3308,22 @@ export default function App() {
                     <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Capture the vision.</h2>
                     <p className="text-muted text-lg">Upload the screenshots or videos that define your application's core value.</p>
                  </div>
-                 
+
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                    <label className="aspect-square bg-ivory border border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-ink transition-all group">
                      <Upload className="mb-4 text-ink/20 group-hover:text-ink transition-colors" size={32} />
                      <span className="mono text-[9px] font-bold uppercase">Add Media</span>
                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*" />
                    </label>
-                   
-                   <button 
+
+                   <button
                      onClick={() => setShowLibrary(true)}
                      className="aspect-square bg-white border border-black/5 flex flex-col items-center justify-center hover:bg-ivory transition-all group"
                    >
                      <ImageIcon className="mb-4 text-ink/20 group-hover:text-ink transition-colors" size={32} />
                      <span className="mono text-[9px] font-bold uppercase">Library</span>
                    </button>
-                   
+
                    {mediaFiles.map((m, i) => (
                      <div key={m.id} className="aspect-square bg-ivory border border-black/5 relative group overflow-hidden p-1">
                        {m.type === 'video' ? (
@@ -3344,9 +3344,9 @@ export default function App() {
                  <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Engine Branding</label>
                  <div className="relative group">
                    <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
-                   <input 
-                     type="text" 
-                     placeholder="e.g. VibeTrailer Elite" 
+                   <input
+                     type="text"
+                     placeholder="e.g. VibeTrailer Elite"
                      className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
                      value={websiteSiteName}
                      onChange={(e) => setWebsiteSiteName(e.target.value)}
@@ -3356,13 +3356,13 @@ export default function App() {
 
                <AnimatePresence>
                  {showLibrary && (
-                   <motion.div 
+                   <motion.div
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
                      className="fixed inset-0 z-[100] bg-cream/90 backdrop-blur-xl flex items-center justify-center p-8"
                    >
-                     <motion.div 
+                     <motion.div
                        initial={{ scale: 0.95, opacity: 0 }}
                        animate={{ scale: 1, opacity: 1 }}
                        exit={{ scale: 0.95, opacity: 0 }}
@@ -3376,7 +3376,7 @@ export default function App() {
                            <X size={28} />
                          </button>
                        </div>
-                       
+
                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
                          {libraryAssets.length === 0 ? (
                            <div className="h-64 flex flex-col items-center justify-center opacity-20">
@@ -3398,7 +3398,7 @@ export default function App() {
                                    ) : (
                                      <img src={asset.url} className="w-full h-full object-cover grayscale" alt={asset.name} />
                                    )}
-                                   <button 
+                                   <button
                                      onClick={(e) => { e.stopPropagation(); deleteLibraryAsset(e, asset); }}
                                      className="absolute top-2 right-2 text-ink opacity-0 group-hover:opacity-100"
                                    >
@@ -3410,7 +3410,7 @@ export default function App() {
                            </div>
                          )}
                        </div>
-                       
+
                        <div className="p-10 border-t border-black/5 bg-ivory/50 flex items-center justify-between">
                          <p className="mono text-[10px] uppercase opacity-40">Add assets to project flow.</p>
                          <button
@@ -3433,7 +3433,7 @@ export default function App() {
 
 
                <div className="flex justify-end mt-12">
-                 <button 
+                 <button
                    onClick={() => setSetupStep(3)}
                    className="btn-primary px-12 py-5 text-lg"
                  >
@@ -3489,11 +3489,11 @@ export default function App() {
                          <p className="mono text-[9px] opacity-40 mb-2 font-bold uppercase">Scene Sequence {idx+1}</p>
                          <p className="text-xl font-bold uppercase tracking-tight line-clamp-2">{line}</p>
                       </div>
-                      
+
                       <div className="flex items-center gap-6 w-full md:w-auto">
                          <label className="flex items-center gap-2 mono text-[10px] font-bold uppercase cursor-pointer hover:text-ink transition-colors opacity-40 hover:opacity-100">
-                           <input 
-                             type="checkbox" 
+                           <input
+                             type="checkbox"
                              checked={textOnlyLines.has(idx)}
                              onChange={() => toggleTextOnly(idx)}
                              className="w-4 h-4 accent-ink"
@@ -3501,7 +3501,7 @@ export default function App() {
                            Text Only
                          </label>
                          {!textOnlyLines.has(idx) && (
-                           <select 
+                           <select
                              value={mediaMapping[idx] || ""}
                              onChange={(e) => setMediaMapping({ ...mediaMapping, [idx]: e.target.value })}
                              className="bg-white border border-black/10 px-4 py-3 mono text-[10px] uppercase font-bold outline-none focus:border-ink transition-colors w-full md:w-64"
@@ -3536,7 +3536,7 @@ export default function App() {
                  <div className="space-y-10">
                     <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Typography System</label>
-                       <select 
+                       <select
                          value={fontFamily}
                          onChange={(e) => setFontFamily(e.target.value as FontFamily)}
                          className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
@@ -3576,21 +3576,21 @@ export default function App() {
                        <div className="p-8 bg-white border border-black/5 space-y-8">
                           <div className="flex items-center justify-between">
                              <div className="flex items-center gap-4">
-                                <button onClick={() => setIsSpatialWorld(!isSpatialWorld)} 
+                                <button onClick={() => setIsSpatialWorld(!isSpatialWorld)}
                                    className={`w-12 h-6 rounded-full relative transition-colors ${isSpatialWorld ? 'bg-ink' : 'bg-black/10'}`}>
                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isSpatialWorld ? 'translate-x-6' : ''}`} />
                                 </button>
                                 <span className="mono text-[10px] font-bold uppercase">Spatial Engine</span>
                              </div>
                              <div className="flex items-center gap-4">
-                                <button onClick={() => setIsMultiColor(!isMultiColor)} 
+                                <button onClick={() => setIsMultiColor(!isMultiColor)}
                                    className={`w-12 h-6 rounded-full relative transition-colors ${isMultiColor ? 'bg-ink' : 'bg-black/10'}`}>
                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isMultiColor ? 'translate-x-6' : ''}`} />
                                 </button>
                                 <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
                              </div>
                           </div>
-                          
+
                           <button onClick={generateWorldTemplate} className="w-full py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase hover:bg-white transition-all flex items-center justify-center gap-3">
                              <Sparkles size={16} /> Recalculate Galaxy Path
                           </button>
@@ -3599,8 +3599,8 @@ export default function App() {
 
                     <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Motion Complexity</label>
-                       <input 
-                         type="range" min="0.5" max="2" step="0.1" 
+                       <input
+                         type="range" min="0.5" max="2" step="0.1"
                          value={textAnimationSpeed}
                          onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
                          className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
@@ -3631,18 +3631,8 @@ export default function App() {
                              ))}
                            </div>
                         </div>
-                        <div className="flex gap-4">
-                          <select 
-                            value={comp.cameraPath || 'static'}
-                            onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
-                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
-                          >
-                            <option value="static">Static</option>
-                            <option value="zoom-in">Zoom In</option>
-                            <option value="orbit-left">Orbit</option>
-                            <option value="dolly-zoom">Dolly</option>
-                          </select>
-                          <select 
+                        <div className="flex flex-wrap gap-4">
+                          <select
                             value={comp.sceneType || 'standard'}
                             onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
@@ -3650,6 +3640,43 @@ export default function App() {
                             <option value="standard">Standard</option>
                             <option value="macos-notification">Notify</option>
                             <option value="instagram-follow">IG Post</option>
+                            <option value="reddit-post">Reddit Card</option>
+                            <option value="x-post">X / Twitter</option>
+                            <option value="spotify-card">Spotify</option>
+                            <option value="data-chart">Data Chart</option>
+                          </select>
+
+                          <select
+                            value={comp.textEffect || 'gsap-glow'}
+                            onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
+                          >
+                            <option value="random">Random Kinetic</option>
+                            <option value="gsap-cascade">Cascade</option>
+                            <option value="gsap-3d-roll">3D Roll</option>
+                            <option value="gsap-elastic">Elastic</option>
+                            <option value="gsap-merge-elastic">Merge Elastic</option>
+                            <option value="gsap-expand">Expand</option>
+                            <option value="gsap-tornado">Tornado</option>
+                            <option value="gsap-funnel">Funnel</option>
+                            <option value="gsap-triangle">Triangle</option>
+                            <option value="gsap-square">Square</option>
+                            <option value="gsap-heart">Heart</option>
+                            <option value="gsap-stack">Stack</option>
+                            <option value="gsap-glow">Glow Pulse</option>
+                            <option value="gsap-focus-flash">Focus</option>
+                          </select>
+
+                          <select
+                            value={comp.cameraPath || 'static'}
+                            onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
+                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
+                          >
+                            <option value="static">Static</option>
+                            <option value="zoom-in">Zoom In</option>
+                            <option value="zoom-out">Zoom Out</option>
+                            <option value="orbit-left">Orbit</option>
+                            <option value="dolly-zoom">Dolly</option>
                           </select>
                         </div>
                       </div>
@@ -3673,7 +3700,7 @@ export default function App() {
   if (appMode === 'playing') {
       const getBackgroundClass = () => {
         const style = currentComp?.activeBackground || backgroundStyles[0] || 'black';
-        
+
         switch (style) {
             case 'vibrant-glow': return 'bg-white';
             case 'midnight': return 'bg-ink';
@@ -3685,8 +3712,8 @@ export default function App() {
       };
 
       return (
-        <div 
-          className="relative w-screen h-screen overflow-hidden bg-cream" 
+        <div
+          className="relative w-screen h-screen overflow-hidden bg-cream"
           style={{ perspective: '2000px' }}
         >
           {/* Spatial Canvas */}
@@ -3707,7 +3734,7 @@ export default function App() {
             <CompositionProvider duration={compositions.length * 5}>
               <motion.div
                 className="absolute inset-0 overflow-visible"
-                style={{ 
+                style={{
                   transformStyle: 'preserve-3d',
                   x: worldX,
                   y: worldY,
@@ -3726,17 +3753,17 @@ export default function App() {
                   else if (index < currentIndex) status = 'past';
 
                   return (
-                    <div 
-                      key={comp.id} 
-                      className="absolute inset-0 pointer-events-none" 
+                    <div
+                      key={comp.id}
+                      className="absolute inset-0 pointer-events-none"
                       style={{ transformStyle: 'preserve-3d' }}
                       data-hf-duration="5"
                       data-hf-trigger={index * 5}
                     >
-                      <CompositionNode 
-                        comp={comp} 
-                        status={status} 
-                        fontSizeOverride={comp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-4xl md:text-6xl'} 
+                      <CompositionNode
+                        comp={comp}
+                        status={status}
+                        fontSizeOverride={comp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-4xl md:text-6xl'}
                         globalTextColor={textColor}
                         globalIsMultiColor={isMultiColor}
                         globalFontFamily={fontFamily}
@@ -3762,7 +3789,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream selection:bg-ink selection:text-cream font-sans">
       <HandDrawnCursor />
-      
+
       <AppHeader
         appMode={appMode}
         user={user}
@@ -3779,26 +3806,26 @@ export default function App() {
         isRendering={isRenderingTrailer}
         renderProgress={renderProgress}
       />
-      
-      {renderContent()}
-      
 
-      
-      <PricingModal 
-        isOpen={showPricing} 
-        onClose={() => setShowPricing(false)} 
-        user={user} 
+      {renderContent()}
+
+
+
+      <PricingModal
+        isOpen={showPricing}
+        onClose={() => setShowPricing(false)}
+        user={user}
       />
 
       {/* Global Overlays Layer */}
       {/* Export Explainer Modal */}
       <AnimatePresence>
         {showExportExplainer && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
               className="bg-white border border-black/10 p-10 max-w-md w-full text-ink shadow-2xl rounded-none"
             >
@@ -3812,15 +3839,15 @@ export default function App() {
               <p className="font-mono text-sm mb-6 leading-relaxed font-bold">
                 3. Do not minimize or switch tabs. A 3-second countdown will start, followed by the actual video export.
               </p>
-              
+
               <div className="flex gap-4">
-                <button 
-                  onClick={() => setShowExportExplainer(false)} 
+                <button
+                  onClick={() => setShowExportExplainer(false)}
                   className="flex-1 p-3 elite-button-secondary rounded-lg font-bold"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={startRecording}
                   className="flex-1 p-3 elite-button rounded-lg font-bold flex items-center justify-center gap-2"
                 >
@@ -3835,11 +3862,11 @@ export default function App() {
       {/* Giphy Search Modal */}
       <AnimatePresence>
         {showGiphyModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[1100] bg-cream/80 backdrop-blur-md flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
               className="bg-white border border-ink/10 w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]"
             >
@@ -3849,12 +3876,12 @@ export default function App() {
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="p-8 border-b border-black/5 bg-white">
                 <form onSubmit={handleGiphySearch} className="relative flex gap-2">
                   <div className="relative flex-1">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={giphySearchQuery}
                       onChange={(e) => setGiphySearchQuery(e.target.value)}
                       placeholder="Search for a sticker..."
@@ -3876,7 +3903,7 @@ export default function App() {
                 ) : giphySearchResults.length > 0 ? (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 p-4">
                     {giphySearchResults.map((gif) => (
-                      <button 
+                      <button
                         key={gif.id}
                         onClick={() => applyStickerToCurrentScene(gif.images.original.url)}
                         className="aspect-square bg-ivory border border-transparent hover:border-ink transition-all p-2 flex items-center justify-center group"

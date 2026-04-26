@@ -115,7 +115,7 @@ export default async function handler(req: any, res: any) {
     `;
     
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-lite', // State-of-the-art for 2026 speed/logic
+      model: 'gemini-3.1-flash-lite-preview', // Precise 2026 preview string
       contents: prompt,
     });
 
