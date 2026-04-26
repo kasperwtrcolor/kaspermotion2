@@ -2342,7 +2342,10 @@ export default function App() {
         })
       });
       
-      if (!res.ok) throw new Error("Elite Render Engine is currently busy.");
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({ error: 'Elite Render Engine is currently offline.' }));
+        throw new Error(errJson.error || "Elite Render Engine is currently busy.");
+      }
       const { jobId } = await res.json();
       
       // 3. Poll for progress

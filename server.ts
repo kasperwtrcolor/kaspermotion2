@@ -479,8 +479,10 @@ H2 Tags: ${h2s.join(' | ')}
 
   // HyperFrames Server-Side Render Trigger
   app.post('/api/render-hyperframes', async (req, res) => {
+    console.log('[HyperFlow] Received render request');
     try {
       const { url, duration, jobId } = req.body;
+      console.log(`[HyperFlow] Job: ${jobId}, Duration: ${duration}s`);
       
       if (!url || !duration) {
         return res.status(400).json({ error: 'URL and duration are required' });
