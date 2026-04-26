@@ -1948,7 +1948,6 @@ export default function App() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   const [notifications, setNotifications] = useState<string[]>([]);
   const setToastMessage = (msg: string | null) => {
     if (!msg) return;
@@ -2756,11 +2755,7 @@ export default function App() {
     throw new Error(JSON.stringify(errInfo));
   }
 
-  useEffect(() => {
-    const handleResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
