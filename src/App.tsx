@@ -2496,7 +2496,6 @@ export default function App() {
     }));
   };
 
-  };
 
   const updateSceneProperty = (idx: number, prop: keyof Composition, value: any) => {
     setCompositions(prev => {
