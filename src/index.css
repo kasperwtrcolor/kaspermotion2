@@ -5,6 +5,12 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-outfit: "Outfit", sans-serif;
+  --font-grotesk: "Space Grotesk", sans-serif;
+  --font-lexend: "Lexend", sans-serif;
+  --font-syne: "Syne", sans-serif;
+  --font-bangers: "Bangers", system-ui;
+  --font-impact: "Archivo Black", sans-serif;
   
   --color-cream: #fcfbf7;
   --color-ivory: #f2eee3;

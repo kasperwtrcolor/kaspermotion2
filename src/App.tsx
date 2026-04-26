@@ -30,10 +30,10 @@ gsap.registerPlugin(useGSAP);
 const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
-type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display';
+type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'font-outfit' | 'font-grotesk' | 'font-syne' | 'font-bangers';
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
-type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
+type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
@@ -109,6 +109,7 @@ type Composition = {
   cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide';
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
+  fontSize?: string;
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -319,10 +320,23 @@ const getWordStyle = (word: string, index: number, customColor?: string, isMulti
   const hash = cleanWord.length + index;
 
   if (isMulti) {
-    if (hash % 7 === 0) return { backgroundColor: '#FF2A6D', color: '#FFFFFF', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(-2deg)' };
-    if (hash % 5 === 0) return { color: '#05D9E8', textShadow: '0 0 10px rgba(5,217,232,0.5)' };
-    if (hash % 11 === 0) return { color: '#FFC200', textShadow: '0 0 10px rgba(255,194,0,0.5)' };
-    if (hash % 13 === 0) return { backgroundColor: '#01FFC3', color: '#000000', padding: '0.1em 0.2em', borderRadius: '0.15em', display: 'inline-block', transform: 'rotate(1deg)' };
+    const gradients = [
+      'linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%)',
+      'linear-gradient(135deg, #A18CD1 0%, #FBC2EB 100%)',
+      'linear-gradient(135deg, #84FAB0 0%, #8FD3F4 100%)',
+      'linear-gradient(120deg, #A1C4FD 0%, #C2E9FB 100%)',
+      'linear-gradient(to top, #FD9644 0%, #FFD17E 100%)',
+    ];
+    return {
+      background: gradients[index % gradients.length],
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      color: 'transparent',
+      fontWeight: '900',
+      textShadow: 'none',
+      display: 'inline-block'
+    };
   }
 
   return customColor ? { color: customColor } : {};
@@ -1857,7 +1871,7 @@ const CompositionNode = ({
               <AnimatedCaption
                 text={comp.caption}
                 effect={comp.textEffect}
-                className={fontSizeOverride || "text-4xl md:text-6xl"}
+                className={comp.fontSize || fontSizeOverride || "text-4xl md:text-6xl"}
                 textColor={comp.textColor || globalTextColor}
                 isMulti={comp.isMultiColor || globalIsMultiColor}
               />
@@ -1924,8 +1938,8 @@ export default function App() {
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
-  const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.0);
-  const [sceneDuration, setSceneDuration] = useState<number>(5.0);
+  const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
+  const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
@@ -1950,7 +1964,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sceneStartTime, setSceneStartTime] = useState(Date.now());
 
-  const [isSpatialWorld, setIsSpatialWorld] = useState(true);
+  const [isSpatialWorld, setIsSpatialWorld] = useState(false);
 
   const generateWorldTemplate = () => {
     setCompositions(prev => {
@@ -2362,12 +2376,15 @@ export default function App() {
 
       if (data.typography) {
         const fontMap: Record<string, FontFamily> = {
-            'sans': 'font-display',
+            'sans': 'font-outfit',
             'serif': 'font-serif',
             'mono': 'font-mono',
-            'display': 'font-syne'
+            'display': 'font-syne',
+            'modern': 'font-grotesk',
+            'bold': 'font-impact',
+            'playful': 'font-bangers'
         };
-        setFontFamily(fontMap[data.typography.vibe] || 'font-display');
+        setFontFamily(fontMap[data.typography.vibe] || 'font-outfit');
       }
 
       // Actionable Brand Intelligence: Pacing & Density
@@ -3125,8 +3142,9 @@ export default function App() {
       stickerScale,
       stickerX,
       stickerY,
-      transitionItemAsset: findBestTransitionItem(media[0]?.caption || '') || undefined,
-      sceneDuration: customSceneDuration
+      transitionItemAsset: findBestTransitionItem(caption || media[0]?.caption || '') || undefined,
+      sceneDuration: customSceneDuration,
+      fontSize: 'text-5xl'
     };
   };
 
@@ -3685,15 +3703,16 @@ export default function App() {
                          className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
                        >
                          {[
-                           { val: 'font-mono', label: 'JetBrains Mono (Elite)' },
-                           { val: 'font-archivo', label: 'Archivo Black' },
-                           { val: 'font-syne', label: 'Syne Experimental' },
-                           { val: 'font-unbounded', label: 'Unbounded Bold' },
-                           { val: 'font-righteous', label: 'Righteous Retro' },
-                           { val: 'font-impact', label: 'Impact Brutalist' }
-                         ].map(f => (
-                           <option key={f.val} value={f.val}>{f.label}</option>
-                         ))}
+                            { val: 'font-outfit', label: 'Outfit (Modern Sans)' },
+                            { val: 'font-grotesk', label: 'Space Grotesk' },
+                            { val: 'font-lexend', label: 'Lexend Reading' },
+                            { val: 'font-syne', label: 'Syne (Elite)' },
+                            { val: 'font-mono', label: 'JetBrains Mono' },
+                            { val: 'font-bangers', label: 'Bangers Kinetic' },
+                            { val: 'font-impact', label: 'Impact Brutalist' }
+                          ].map(f => (
+                            <option key={f.val} value={f.val}>{f.label}</option>
+                          ))}
                        </select>
                     </div>
 
@@ -3796,33 +3815,56 @@ export default function App() {
                            </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
-                          <select
-                            value={comp.sceneType || 'standard'}
-                            onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
-                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
-                          >
-                            <option value="standard">Standard</option>
-                            <option value="macos-notification">Notify</option>
-                            <option value="instagram-follow">IG Post</option>
-                            <option value="reddit-post">Reddit Card</option>
-                            <option value="x-post">X / Twitter</option>
-                            <option value="spotify-card">Spotify</option>
-                            <option value="data-chart">Data Chart</option>
-                          </select>
+                           <select
+                             value={comp.cameraPath || 'static'}
+                             onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="static">Static</option>
+                             <option value="zoom-in">Zoom In</option>
+                             <option value="zoom-out">Zoom Out</option>
+                             <option value="orbit-left">Orbit</option>
+                             <option value="dolly-zoom">Dolly</option>
+                             <option value="hyper-glide">Glide</option>
+                           </select>
 
+                           <select
+                             value={comp.textEffect || 'gsap-stagger'}
+                             onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="gsap-stagger">Stagger</option>
+                             <option value="gsap-cascade">Cascade</option>
+                             <option value="gsap-glow">Glow Pulse</option>
+                             <option value="gsap-3d-roll">3D Roll</option>
+                             <option value="gsap-elastic">Elastic</option>
+                             <option value="gsap-tornado">Tornado</option>
+                             <option value="gsap-funnel">Funnel</option>
+                             <option value="gsap-stack">Stack</option>
+                           </select>
 
+                           <select
+                             value={comp.textPosition || 'bottom'}
+                             onChange={(e) => updateSceneProperty(idx, 'textPosition', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="top">Top</option>
+                             <option value="center">Center</option>
+                             <option value="bottom">Bottom</option>
+                             <option value="left">Left</option>
+                             <option value="right">Right</option>
+                           </select>
 
-                          <select
-                            value={comp.cameraPath || 'static'}
-                            onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
-                            className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors"
-                          >
-                            <option value="static">Static</option>
-                            <option value="zoom-in">Zoom In</option>
-                            <option value="zoom-out">Zoom Out</option>
-                            <option value="orbit-left">Orbit</option>
-                            <option value="dolly-zoom">Dolly</option>
-                          </select>
+                           <select
+                             value={comp.fontSize || 'text-5xl'}
+                             onChange={(e) => updateSceneProperty(idx, 'fontSize', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="text-3xl">Small</option>
+                             <option value="text-5xl">Medium</option>
+                             <option value="text-7xl">Large</option>
+                             <option value="text-[120px]">XL (Elite)</option>
+                           </select>
                         </div>
                       </div>
                     ))}
