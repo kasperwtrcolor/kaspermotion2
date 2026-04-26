@@ -2117,6 +2117,8 @@ export default function App() {
       console.error("Upload failed", err);
       return { url: URL.createObjectURL(file), uploaded: false };
     }
+  };
+
   const sanitizeForFirestore = (obj: any): any => {
     if (Array.isArray(obj)) {
       return obj.map(v => sanitizeForFirestore(v));
