@@ -2342,11 +2342,19 @@ export default function App() {
         })
       });
       
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({ error: 'Elite Render Engine is currently offline.' }));
-        throw new Error(errJson.error || "Elite Render Engine is currently busy.");
+      let responseData: any = null;
+      try {
+        responseData = await res.json();
+      } catch (e) {
+        // Fallback for non-JSON errors (HTML error pages)
+        console.error("Failed to parse render response", e);
       }
-      const { jobId } = await res.json();
+
+      if (!res.ok) {
+        throw new Error(responseData?.error || `Elite Render Engine is currently offline (HTTP ${res.status}).`);
+      }
+      
+      const { jobId } = responseData;
       
       // 3. Poll for progress
       const poll = setInterval(async () => {
