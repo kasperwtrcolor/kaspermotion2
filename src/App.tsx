@@ -211,8 +211,8 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
     resolvedShape = `letter-${firstLetter.match(/[A-Z]/) ? firstLetter : M3_LETTERS[Math.floor(Math.random() * M3_LETTERS.length)]}`;
   }
 
-  if (resolvedShape.startsWith('letter-')) {
-    const letter = resolvedShape.split('-')[1];
+  if (typeof resolvedShape === 'string' && resolvedShape.startsWith('letter-')) {
+    const letter = resolvedShape.split('-')[1] || 'A';
     return {
       className: base,
       style: {
@@ -2213,7 +2213,10 @@ export default function App() {
       if (data.error) throw new Error(data.error);
 
       // 1. Populate Script
-      if (data.script) setScriptText(data.script);
+      if (data.script) {
+        const textValue = Array.isArray(data.script) ? data.script.join('\n') : String(data.script);
+        setScriptText(textValue);
+      }
 
       // 2. Populate Brand Settings
       if (data.brandTitle) setWebsiteSiteName(data.brandTitle);
@@ -3483,7 +3486,7 @@ export default function App() {
                </div>
 
                <div className="space-y-2">
-                 {scriptText.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
+                {(typeof scriptText === 'string' ? scriptText : '').split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
                    <div key={idx} className="p-8 border border-black/5 bg-ivory/20 flex flex-col md:flex-row items-center justify-between gap-8 group hover:bg-white transition-colors">
                       <div className="flex-1">
                          <p className="mono text-[9px] opacity-40 mb-2 font-bold uppercase">Scene Sequence {idx+1}</p>
