@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 const HandDrawnCursor: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const pointsRef = useRef<{ x: number; y: number }[]>([]);
-    const maxPoints = 25;
+    const maxPoints = 50; // Longer trail
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -14,6 +14,11 @@ const HandDrawnCursor: React.FC = () => {
         const resize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // High DPI support
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * ratio;
+            canvas.height = window.innerHeight * ratio;
+            ctx.scale(ratio, ratio);
         };
 
         window.addEventListener('resize', resize);
@@ -30,38 +35,50 @@ const HandDrawnCursor: React.FC = () => {
 
         let animationFrame: number;
         const renderCursor = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
             const points = pointsRef.current;
 
             if (points.length > 2) {
-                ctx.beginPath();
-                ctx.strokeStyle = '#121212';
-                ctx.lineWidth = 1.5;
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-
-                ctx.moveTo(points[0].x, points[0].y);
+                // Draw the trail
                 for (let i = 1; i < points.length; i++) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#121212';
+                    ctx.lineWidth = 1.5;
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+                    
+                    // Progressive Opacity
+                    ctx.globalAlpha = (i / points.length) * 0.8;
+                    
                     const xc = (points[i].x + points[i - 1].x) / 2;
                     const yc = (points[i].y + points[i - 1].y) / 2;
-                    ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, xc, yc);
                     
-                    // Fading effect
-                    ctx.globalAlpha = i / points.length;
-                    
-                    // Add subtle jitter for "hand-drawn" feel
-                    if (i === points.length - 1) {
-                        ctx.save();
-                        ctx.translate(points[i].x, points[i].y);
-                        ctx.beginPath();
-                        ctx.fillStyle = '#121212';
-                        // Pencil tip
-                        ctx.rotate(0.2);
-                        ctx.fillRect(-1, -8, 2, 8);
-                        ctx.restore();
-                    }
+                    ctx.moveTo(points[i-1].x, points[i-1].y);
+                    ctx.quadraticCurveTo(points[i-1].x, points[i-1].y, xc, yc);
+                    ctx.stroke();
                 }
-                ctx.stroke();
+
+                // Draw the "Pencil Tip"
+                const lastPoint = points[points.length - 1];
+                ctx.globalAlpha = 1;
+                ctx.save();
+                ctx.translate(lastPoint.x, lastPoint.y);
+                
+                // Pencil Tip Jitter
+                ctx.rotate(Math.sin(Date.now() / 100) * 0.1);
+                
+                ctx.beginPath();
+                ctx.fillStyle = '#121212';
+                ctx.fillRect(-1, -8, 2, 8); // Tip stem
+                
+                // Tip point
+                ctx.beginPath();
+                ctx.moveTo(-1, 0);
+                ctx.lineTo(1, 0);
+                ctx.lineTo(0, 2);
+                ctx.fill();
+                
+                ctx.restore();
             }
             animationFrame = requestAnimationFrame(renderCursor);
         };
@@ -79,7 +96,8 @@ const HandDrawnCursor: React.FC = () => {
         <canvas
             id="cursor-canvas"
             ref={canvasRef}
-            className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10000]"
+            className="fixed top-0 left-0 w-full h-full pointer-events-none z-[11000]" 
+            style={{ width: '100vw', height: '100vh' }}
         />
     );
 };

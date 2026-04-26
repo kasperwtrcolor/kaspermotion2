@@ -3,6 +3,17 @@ import * as cheerio from 'cheerio';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const resolveUrl = (base: string, relative: string) => {
+  if (!relative) return null;
+  if (/^https?:\/\//i.test(relative)) return relative;
+  if (relative.startsWith('//')) return 'https:' + relative;
+  try {
+    return new URL(relative, base).href;
+  } catch {
+    return relative;
+  }
+};
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -19,7 +30,6 @@ export default async function handler(req: any, res: any) {
       targetUrl = 'https://' + targetUrl;
     }
 
-    // Fetch the URL content with a User-Agent
     const response = await fetch(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -31,42 +41,94 @@ export default async function handler(req: any, res: any) {
     }
     
     const html = await response.text();
-    
-    // Parse HTML with cheerio
     const $ = cheerio.load(html);
     
+    // 1. Extract Basic Metadata
     const title = $('title').text().trim();
     const metaDescription = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
     
-    const h1s: string[] = [];
-    $('h1').each((_, el) => {
-      h1s.push($(el).text().trim());
-    });
+    // 2. Extract Images
+    const images: string[] = [];
     
-    const h2s: string[] = [];
-    $('h2').each((_, el) => {
-      h2s.push($(el).text().trim());
+    // Favicon & OG Image
+    const ogImage = $('meta[property="og:image"]').attr('content');
+    if (ogImage) images.push(resolveUrl(targetUrl, ogImage)!);
+    
+    const favicon = $('link[rel="icon"]').attr('href') || $('link[rel="shortcut icon"]').attr('href');
+    if (favicon) images.push(resolveUrl(targetUrl, favicon)!);
+
+    // Regular Images (filter for potentially usable ones)
+    $('img').each((_, el) => {
+      const src = $(el).attr('src');
+      if (src && !src.includes('data:image') && !src.endsWith('.svg')) {
+        const fullUrl = resolveUrl(targetUrl, src);
+        if (fullUrl && !images.includes(fullUrl)) images.push(fullUrl);
+      }
     });
 
+    // 3. Extract Design Clues (Hex Colors)
+    const hexRegex = /#([a-f0-9]{3,6})\b/gi;
+    const bodyContent = $('body').text().slice(0, 5000); // Sample for text context
+    const styles = $('style').text() + $('[style]').attr('style');
+    const colorMatches = (styles + bodyContent).match(hexRegex) || [];
+    
+    // Get unique colors and count frequency
+    const colorFreq: Record<string, number> = {};
+    colorMatches.forEach(c => {
+      const normalized = c.toLowerCase();
+      colorFreq[normalized] = (colorFreq[normalized] || 0) + 1;
+    });
+    const topColors = Object.entries(colorFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(e => e[0]);
+
+    // 4. AI Analysis
     const extractedData = `
-Title: ${title}
-Meta Description: ${metaDescription}
-H1 Tags: ${h1s.join(' | ')}
-H2 Tags: ${h2s.join(' | ')}
+      Title: ${title}
+      Description: ${metaDescription}
+      Images Found: ${images.length}
+      Top Hex Colors Found: ${topColors.join(', ')}
+      H1/H2 Headers: ${$('h1, h2').text().slice(0, 500)}
     `.trim();
 
-    const prompt = `Based on the following extracted structure from ${url}, identify the primary value proposition and slogans to generate a short, punchy script for a motion graphics trailer. 
-    Return ONLY the script, with each scene's caption on a new line. Do not include scene numbers or prefixes. Keep it under 10 lines.
-    
-    Extracted Content:
-    ${extractedData}`;
+    const prompt = `
+      Analyze this website metadata and provide architectural design tokens for a cinematic motion graphics trailer.
+      
+      WEBSITE DATA:
+      ${extractedData}
+
+      RESPONSE FORMAT (JSON ONLY):
+      {
+        "script": "A 5-8 line punchy script, one line per scene",
+        "colors": {
+          "primary": "Suggest a hex code for primary text",
+          "accent": "Suggest a hex code for highlights",
+          "background": "Suggest a hex code for scene background (ink, ivory, or specific branding)"
+        },
+        "typography": {
+          "vibe": "sans" | "serif" | "mono" | "display",
+          "pairing": "Suggested font style name"
+        },
+        "mood": "energetic" | "professional" | "minimal" | "cinematic"
+      }
+    `;
     
     const aiResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash', // Optimized for fast structured JSON
       contents: prompt,
     });
 
-    res.status(200).json({ script: aiResponse.text?.trim() });
+    const resultText = aiResponse.text?.trim() || '{}';
+    // Handle potential markdown code blocks in response
+    const jsonStr = resultText.replace(/```json|```/g, '').trim();
+    const aiData = JSON.parse(jsonStr);
+
+    res.status(200).json({ 
+      ...aiData,
+      scrapedImages: images.slice(0, 15), // Cap to 15 best candidates
+      brandTitle: title || 'New Project'
+    });
   } catch (error: any) {
     console.error('Scraping error:', error);
     res.status(500).json({ error: error.message || 'Failed to scrape URL or generate script' });
