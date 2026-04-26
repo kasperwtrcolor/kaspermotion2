@@ -2496,15 +2496,6 @@ export default function App() {
     }));
   };
 
-  const handleStartOver = () => {
-    setCurrentProjectId(null);
-    setMediaFiles([]);
-    setScriptText('');
-    setTextOnlyLines(new Set());
-    setCompositions([]);
-    setAppMode('setup');
-    setSetupStep(1);
-    setToastMessage("Started over. Ready for a new project.");
   };
 
   const updateSceneProperty = (idx: number, prop: keyof Composition, value: any) => {
