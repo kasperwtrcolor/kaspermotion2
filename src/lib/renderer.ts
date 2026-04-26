@@ -1,6 +1,7 @@
-import path from 'path';
-import Producer from '@hyperframes/producer';
-import Engine from '@hyperframes/engine';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const Engine = require('@hyperframes/engine').Engine || require('@hyperframes/engine');
+const Producer = require('@hyperframes/producer').Producer || require('@hyperframes/producer');
 import ffmpeg from 'fluent-ffmpeg';
 
 /**
