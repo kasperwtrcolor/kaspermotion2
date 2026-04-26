@@ -147,7 +147,7 @@ const CHOREOGRAPHY_SKELETONS = {
 };
 
 const M3_SHAPES = [
-  'circle', 'triangle', 'square', 'rounded-rect', 'hexagon', 'star', 'sunflower', 'pill', 'rhombus', 'leaf', 'flower', 'heart', 'letter', 'blob', 'organic', 'cutout', 'octogon', 'banner', 'bevel'
+  'circle', 'triangle', 'square', 'rounded-rect', 'letter', 'blob'
 ];
 
 const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1936,6 +1936,7 @@ export default function App() {
   const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
   const [textEffect, setTextEffect] = useState<TextEffect>('random');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
+  const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
@@ -2455,7 +2456,32 @@ export default function App() {
   };
 
   const updateSceneProperty = (idx: number, prop: keyof Composition, value: any) => {
-    setCompositions(prev => prev.map((c, i) => i === idx ? { ...c, [prop]: value } : c));
+    setCompositions(prev => {
+      const newComps = [...prev];
+      newComps[idx] = { ...newComps[idx], [prop]: value };
+      return newComps;
+    });
+  };
+
+  const updateGlobalTextPosition = (pos: TextPosition) => {
+    setPreferredTextPosition(pos);
+    if (pos !== 'random') {
+        setCompositions(prev => prev.map(c => ({ ...c, textPosition: pos })));
+    }
+  };
+
+  const updateGlobalTextSize = (size: string) => {
+    setPreferredTextSize(size);
+    if (size !== 'random') {
+        setCompositions(prev => prev.map(c => ({ ...c, fontSize: size })));
+    }
+  };
+
+  const updateGlobalTextEffect = (effect: TextEffect) => {
+    setTextEffect(effect);
+    if (effect !== 'random') {
+        setCompositions(prev => prev.map(c => ({ ...c, textEffect: effect })));
+    }
   };
 
   const handleToggleFullscreen = (sceneIdx: number, mediaIdx: number) => {
@@ -3009,12 +3035,18 @@ export default function App() {
           : 'standard'
       );
 
-      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow'];
+      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger'];
       const currentEffect: TextEffect = existingComp?.textEffect || sceneChoreography?.textEffect || (
         textEffect === 'random' 
           ? effectList[Math.floor(Math.random() * effectList.length)] 
           : textEffect
       );
+
+      const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
+      const currentTextPosition = existingComp?.textPosition || (preferredTextPosition === 'random' ? posList[Math.floor(Math.random() * posList.length)] : preferredTextPosition);
+
+      const sizeList = ['text-3xl', 'text-5xl', 'text-7xl', 'text-[120px]'];
+      const currentFontSize = existingComp?.fontSize || (preferredTextSize === 'random' ? sizeList[Math.floor(Math.random() * sizeList.length)] : preferredTextSize);
 
       const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
@@ -3041,6 +3073,8 @@ export default function App() {
       comp.sceneType = currentSceneType;
       comp.cameraPath = currentCameraPath;
       comp.activeBackground = currentBackground as BackgroundStyle;
+      comp.textPosition = currentTextPosition;
+      comp.fontSize = currentFontSize;
       
       // Inject AI Shape decision
       if (sceneChoreography?.shape) {
@@ -3696,40 +3730,95 @@ export default function App() {
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
                  <div className="space-y-10">
                     <div>
-                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Typography System</label>
-                       <select
-                         value={fontFamily}
-                         onChange={(e) => setFontFamily(e.target.value as FontFamily)}
-                         className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
-                       >
-                         {[
-                            { val: 'font-outfit', label: 'Outfit (Modern Sans)' },
-                            { val: 'font-grotesk', label: 'Space Grotesk' },
-                            { val: 'font-lexend', label: 'Lexend Reading' },
-                            { val: 'font-syne', label: 'Syne (Elite)' },
-                            { val: 'font-mono', label: 'JetBrains Mono' },
-                            { val: 'font-bangers', label: 'Bangers Kinetic' },
-                            { val: 'font-impact', label: 'Impact Brutalist' }
-                          ].map(f => (
-                            <option key={f.val} value={f.val}>{f.label}</option>
-                          ))}
-                       </select>
-                    </div>
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block text-left">Typography System</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <select
+                              value={fontFamily}
+                              onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
+                           >
+                              {[
+                                 { val: 'font-outfit', label: 'Outfit (Modern)' },
+                                 { val: 'font-grotesk', label: 'Space Grotesk' },
+                                 { val: 'font-lexend', label: 'Lexend' },
+                                 { val: 'font-syne', label: 'Syne (Elite)' },
+                                 { val: 'font-mono', label: 'JetBrains Mono' },
+                                 { val: 'font-bangers', label: 'Bangers Kinetic' },
+                                 { val: 'font-impact', label: 'Impact' }
+                              ].map(f => (
+                                 <option key={f.val} value={f.val}>{f.label}</option>
+                              ))}
+                           </select>
+
+                           <div className="flex items-center gap-4 bg-ivory border border-black/5 p-4">
+                              <input 
+                                 type="color" 
+                                 value={textColor} 
+                                 onChange={(e) => setTextColor(e.target.value)} 
+                                 className="w-12 h-12 bg-transparent border-none cursor-pointer"
+                              />
+                              <span className="mono text-[10px] font-bold uppercase">Accent Color</span>
+                           </div>
+
+                           <select
+                              value={preferredTextPosition}
+                              onChange={(e) => updateGlobalTextPosition(e.target.value as TextPosition)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                           >
+                              <option value="random">Random Position</option>
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                              <option value="left">Left</option>
+                              <option value="right">Right</option>
+                           </select>
+
+                           <select
+                              value={preferredTextSize}
+                              onChange={(e) => updateGlobalTextSize(e.target.value)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                           >
+                              <option value="random">Random Size</option>
+                              <option value="text-3xl">Small</option>
+                              <option value="text-5xl">Medium</option>
+                              <option value="text-7xl">Large</option>
+                              <option value="text-[120px]">XL Massive</option>
+                           </select>
+                        </div>
+                     </div>
 
                     <div>
-                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Engine Atmosphere</label>
-                       <div className="grid grid-cols-2 gap-2">
-                         {['black', 'textured-paper', 'vibrant-glow', 'midnight', 'sunset-fire'].map(bg => (
-                           <button
-                             key={bg}
-                             onClick={() => setBackgroundStyles([bg as any])}
-                             className={`p-4 border mono text-[10px] font-bold uppercase transition-all ${backgroundStyles.includes(bg as any) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Engine Atmosphere</label>
+                        <div className="space-y-4">
+                           <div className="grid grid-cols-2 gap-2">
+                             {['black', 'textured-paper', 'vibrant-glow', 'midnight', 'sunset-fire'].map(bg => (
+                               <button
+                                 key={bg}
+                                 onClick={() => setBackgroundStyles([bg as any])}
+                                 className={`p-4 border mono text-[10px] font-bold uppercase transition-all ${backgroundStyles.includes(bg as any) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                               >
+                                 {bg.replace('-', ' ')}
+                               </button>
+                             ))}
+                           </div>
+
+                           <select
+                              value={textEffect}
+                              onChange={(e) => updateGlobalTextEffect(e.target.value as TextEffect)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
                            >
-                             {bg.replace('-', ' ')}
-                           </button>
-                         ))}
-                       </div>
-                    </div>
+                              <option value="random">Random Kinetic Animation</option>
+                              <option value="gsap-stagger">Stagger Reveal</option>
+                              <option value="gsap-cascade">Cascade Fall</option>
+                              <option value="gsap-glow">Glow Pulse</option>
+                              <option value="gsap-3d-roll">3D Kinetic Roll</option>
+                              <option value="gsap-elastic">Spring Elastic</option>
+                              <option value="gsap-tornado">Vortex Tornado</option>
+                              <option value="gsap-funnel">Gravity Funnel</option>
+                              <option value="gsap-stack">Letter Stack</option>
+                           </select>
+                        </div>
+                     </div>
                  </div>
 
                  <div className="space-y-10">
@@ -3780,19 +3869,35 @@ export default function App() {
                         </div>
                      </div>
 
-                     <div>
-                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Motion Complexity</label>
-                       <input
-                         type="range" min="0.5" max="2" step="0.1"
-                         value={textAnimationSpeed}
-                         onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
-                         className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                       />
-                       <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                          <span>Cinematic</span>
-                          <span>Kinetic ({textAnimationSpeed}x)</span>
-                       </div>
-                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                           <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Animation Speed</label>
+                           <input
+                              type="range" min="0.5" max="2" step="0.1"
+                              value={textAnimationSpeed}
+                              onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
+                              className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                           />
+                           <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                              <span>Cinematic</span>
+                              <span>Kinetic ({textAnimationSpeed}x)</span>
+                           </div>
+                        </div>
+
+                        <div>
+                           <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Scene Pacing</label>
+                           <input
+                              type="range" min="2" max="10" step="0.5"
+                              value={sceneDuration}
+                              onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
+                              className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                           />
+                           <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                              <span>Rapid</span>
+                              <span>Atmospheric ({sceneDuration}s)</span>
+                           </div>
+                        </div>
+                     </div>
                  </div>
                </div>
 
@@ -3816,54 +3921,30 @@ export default function App() {
                         </div>
                         <div className="flex flex-wrap gap-4">
                            <select
+                             value={comp.sceneType || 'standard'}
+                             onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="standard">Standard Scene</option>
+                             <option value="macos-notification">MacOS Notification</option>
+                             <option value="instagram-follow">Instagram Follow</option>
+                             <option value="reddit-post">Reddit Card</option>
+                             <option value="x-post">X / Twitter Post</option>
+                             <option value="spotify-card">Spotify Now Playing</option>
+                             <option value="data-chart">Dynamic Data Chart</option>
+                           </select>
+
+                           <select
                              value={comp.cameraPath || 'static'}
                              onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
                              className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
                            >
-                             <option value="static">Static</option>
+                             <option value="static">Static Camera</option>
                              <option value="zoom-in">Zoom In</option>
                              <option value="zoom-out">Zoom Out</option>
-                             <option value="orbit-left">Orbit</option>
-                             <option value="dolly-zoom">Dolly</option>
-                             <option value="hyper-glide">Glide</option>
-                           </select>
-
-                           <select
-                             value={comp.textEffect || 'gsap-stagger'}
-                             onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
-                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                           >
-                             <option value="gsap-stagger">Stagger</option>
-                             <option value="gsap-cascade">Cascade</option>
-                             <option value="gsap-glow">Glow Pulse</option>
-                             <option value="gsap-3d-roll">3D Roll</option>
-                             <option value="gsap-elastic">Elastic</option>
-                             <option value="gsap-tornado">Tornado</option>
-                             <option value="gsap-funnel">Funnel</option>
-                             <option value="gsap-stack">Stack</option>
-                           </select>
-
-                           <select
-                             value={comp.textPosition || 'bottom'}
-                             onChange={(e) => updateSceneProperty(idx, 'textPosition', e.target.value)}
-                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                           >
-                             <option value="top">Top</option>
-                             <option value="center">Center</option>
-                             <option value="bottom">Bottom</option>
-                             <option value="left">Left</option>
-                             <option value="right">Right</option>
-                           </select>
-
-                           <select
-                             value={comp.fontSize || 'text-5xl'}
-                             onChange={(e) => updateSceneProperty(idx, 'fontSize', e.target.value)}
-                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                           >
-                             <option value="text-3xl">Small</option>
-                             <option value="text-5xl">Medium</option>
-                             <option value="text-7xl">Large</option>
-                             <option value="text-[120px]">XL (Elite)</option>
+                             <option value="orbit-left">Orbit Left</option>
+                             <option value="dolly-zoom">Dolly Zoom</option>
+                             <option value="hyper-glide">Hyper Glide</option>
                            </select>
                         </div>
                       </div>
