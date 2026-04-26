@@ -108,6 +108,41 @@ type Composition = {
   transitionItemAsset?: string;
   cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide';
   secondaryAssets?: SecondaryAsset[];
+  sceneDuration?: number;
+};
+
+const CHOREOGRAPHY_SKELETONS = {
+  launch_teaser: {
+    name: 'Skeleton B: Launch Teaser',
+    description: '25s, 8 scenes, high-energy shader reveals.',
+    scenes: [
+      { duration: 3.0, transition: 'fade' },
+      { duration: 3.0, transition: 'fade' },
+      { duration: 3.0, transition: 'fade' },
+      { duration: 3.5, transition: 'cinematic-zoom' },
+      { duration: 3.0, transition: 'light-leak' },
+      { duration: 3.0, transition: 'fade' },
+      { duration: 3.0, transition: 'cross-warp-morph' },
+      { duration: 3.5, transition: 'fade' }
+    ]
+  },
+  product_explainer: {
+    name: 'Skeleton C: Product Explainer',
+    description: '45s, 12 scenes, rhythmic storytelling.',
+    scenes: [
+      { duration: 3.0 }, { duration: 3.0 }, { duration: 4.0 }, { duration: 3.5 },
+      { duration: 4.0 }, { duration: 5.0 }, { duration: 3.5 }, { duration: 4.0 },
+      { duration: 3.5 }, { duration: 4.0 }, { duration: 4.0 }, { duration: 3.5 }
+    ]
+  },
+  cinematic_title: {
+    name: 'Skeleton D: Cinematic Title',
+    description: '60s, 7 scenes, atmospheric & slow.',
+    scenes: [
+      { duration: 8.0 }, { duration: 7.0 }, { duration: 8.0 }, { duration: 10.0 },
+      { duration: 9.0 }, { duration: 10.0 }, { duration: 8.0 }
+    ]
+  }
 };
 
 const M3_SHAPES = [
@@ -1642,9 +1677,9 @@ const CompositionNode = ({
         initial="future"
         animate={status}
       >
-
         <SceneBackground style={comp.activeBackground} status={status} worldX={worldX} worldY={worldY} />
-
+        <div className="vignette-overlay" />
+        
         {/* Secondary Motion Assets Layer */}
         {comp.secondaryAssets?.map(asset => {
           if (asset.type === '3d-item') {
@@ -1873,6 +1908,7 @@ export default function App() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [scriptText, setScriptText] = useState("");
   const [aiChoreography, setAiChoreography] = useState<any>(null);
+  const [choreographySkeleton, setChoreographySkeleton] = useState<string>('custom');
 
   const [scrapeUrl, setScrapeUrl] = useState("https://");
   const [isScraping, setIsScraping] = useState(false);
@@ -2366,6 +2402,9 @@ export default function App() {
       if (data.choreography) {
         setAiChoreography(data.choreography);
       }
+      if (data.choreographySkeleton) {
+        setChoreographySkeleton(data.choreographySkeleton);
+      }
       setDesignTokens(data);
       setToastMessage("Success! Your brand vibe has been extracted.");
       setSetupStep(2); // Move to Assets review
@@ -2606,7 +2645,7 @@ export default function App() {
       artistryRoll.set(0);
 
       // AI-Driven Camera Path Animations
-      const duration = 5;
+      const duration = currentComp.sceneDuration || 5;
 
       if (currentComp.cameraPath === 'zoom-in') {
         animate(artistryZ, 800, { duration, ease: "linear" });
@@ -2736,13 +2775,14 @@ export default function App() {
 
         setCurrentIndex(nextIdx);
         if (hf) {
-          hf.seek(nextIdx * 5); // 5s per scene
+          const nextTime = compositions.slice(0, nextIdx).reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
+          hf.seek(nextTime);
         }
       };
 
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      const effectiveSceneDuration = Math.max((sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
+      const effectiveSceneDuration = Math.max((currentComp?.sceneDuration || sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
 
       timer = setTimeout(playNext, effectiveSceneDuration);
     }
@@ -2918,12 +2958,13 @@ export default function App() {
     const newComps: Composition[] = [];
     let prev: Composition | undefined = undefined;
 
-    const effectsPool = selectedEffects.length > 0 ? selectedEffects : (['gsap-glow'] as TextEffect[]);
+    const skeletonData = CHOREOGRAPHY_SKELETONS[choreographySkeleton as keyof typeof CHOREOGRAPHY_SKELETONS];
 
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       let caption = scriptLines[sceneIdx] || '';
       const complexity = designTokens?.sceneComplexity || 'standard';
       const sceneChoreography = aiChoreography?.scenes?.[sceneIdx];
+      const skelScene = skeletonData?.scenes?.[sceneIdx % skeletonData.scenes.length];
       
       let isTextOnly = textOnlyLines.has(sceneIdx);
       let sceneItems: MediaItem[] = [];
@@ -2942,7 +2983,7 @@ export default function App() {
         }
       }
 
-      // Dynamic Complexity Logic with AI Choreography Overrides
+      // Dynamic Complexity Logic with AI Choreography/Skeleton Overrides
       const currentSceneType: any = sceneChoreography?.sceneType || (
         complexity === 'dense' || complexity === 'layered' 
           ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post'][Math.floor(Math.random() * 4)]))
@@ -2959,18 +3000,22 @@ export default function App() {
       const currentCameraPath: any = sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
       const currentBackground = sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
+      const customDur = skelScene?.duration || sceneChoreography?.duration;
+      const finalTransition = (skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
+
       const comp = generateCompositionFromData(
         sceneItems, 
         sceneIdx, 
         currentEffect, 
-        transitionType, 
+        finalTransition, 
         transitionDuration, 
         prev, 
         isTextOnly, 
         preset, 
         backgroundStyles,
         undefined, // sticker
-        1, 0, 0
+        1, 0, 0,
+        customDur
       );
       
       comp.sceneType = currentSceneType;
@@ -3041,7 +3086,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number, customSceneDuration?: number): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -3077,7 +3122,8 @@ export default function App() {
       stickerScale,
       stickerX,
       stickerY,
-      transitionItemAsset: findBestTransitionItem(media[0]?.caption || '') || undefined
+      transitionItemAsset: findBestTransitionItem(media[0]?.caption || '') || undefined,
+      sceneDuration: customSceneDuration
     };
   };
 
@@ -3686,13 +3732,34 @@ export default function App() {
                           </div>
 
                           <button onClick={generateWorldTemplate} className="w-full py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase hover:bg-white transition-all flex items-center justify-center gap-3">
-                             <Sparkles size={16} /> Recalculate Galaxy Path
+                                   <Sparkles size={16} /> Recalculate Galaxy Path
                           </button>
                        </div>
                     </div>
 
-                    <div>
-                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Motion Complexity</label>
+                    <div className="md:col-span-2">
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Choreography Architecture (Skeletons)</label>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          {[
+                            { id: 'custom', name: 'Custom (AI)', desc: 'AI-generated flow' },
+                            { id: 'launch_teaser', name: 'Launch Teaser', desc: 'Skel B: 25s, 8 scenes' },
+                            { id: 'product_explainer', name: 'Product Explainer', desc: 'Skel C: 45s, 12 scenes' },
+                            { id: 'cinematic_title', name: 'Cinematic Title', desc: 'Skel D: 60s, 7 scenes' }
+                          ].map(skel => (
+                            <button
+                              key={skel.id}
+                              onClick={() => setChoreographySkeleton(skel.id)}
+                              className={`p-6 border text-left transition-all ${choreographySkeleton === skel.id ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 hover:bg-white'}`}
+                            >
+                              <p className="mono text-[10px] font-bold uppercase mb-1">{skel.name}</p>
+                              <p className="text-[9px] opacity-40 leading-none">{skel.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                     </div>
+
+                     <div>
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Motion Complexity</label>
                        <input
                          type="range" min="0.5" max="2" step="0.1"
                          value={textAnimationSpeed}

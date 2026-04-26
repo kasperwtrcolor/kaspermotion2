@@ -113,6 +113,7 @@ export default async function handler(req: any, res: any) {
         "mood": "energetic" | "professional" | "minimal" | "cinematic",
         "pacing": "rapid-tiktok" | "standard" | "cinematic-slow",
         "sceneComplexity": "simple" | "dense" | "layered",
+        "choreographySkeleton": "launch_teaser" | "product_explainer" | "cinematic_title" | "custom",
         "choreography": {
           "scenes": [
             {

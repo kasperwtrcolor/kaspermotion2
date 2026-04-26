@@ -196,3 +196,11 @@ body::after {
 .gsap-char {
   display: inline-block;
 }
+
+.vignette-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 45;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.6) 110%);
+}
