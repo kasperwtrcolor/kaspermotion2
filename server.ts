@@ -486,16 +486,19 @@ H2 Tags: ${h2s.join(' | ')}
         return res.status(400).json({ error: 'URL and duration are required' });
       }
 
+      const os = await import('os');
+      const tempDir = os.tmpdir();
       const id = jobId || `job_${Date.now()}`;
-      const outputPath = path.join(process.cwd(), 'temp', `${id}.mp4`);
+      const outputPath = path.join(tempDir, `${id}.mp4`);
       
       // Update job status to rendering
+      // Initialize/Update job status to rendering
       if (jobId) {
-        await db.collection('render-jobs').doc(jobId).update({
+        await db.collection('render-jobs').doc(jobId).set({
           status: 'rendering',
           progress: 0,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        }, { merge: true });
       }
 
       // Start asynchronous render
@@ -503,9 +506,9 @@ H2 Tags: ${h2s.join(' | ')}
         duration,
         onProgress: async (p) => {
           if (jobId) {
-            await db.collection('render-jobs').doc(jobId).update({
+            await db.collection('render-jobs').doc(jobId).set({
               progress: Math.round(p * 100)
-            });
+            }, { merge: true });
           }
         }
       }).then(async (renderedPath) => {
@@ -516,7 +519,7 @@ H2 Tags: ${h2s.join(' | ')}
         // 2. Upload to Firebase
         const videoId = `vid_hf_${Date.now()}`;
         const storagePath = `public-videos/${videoId}.mp4`;
-        const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
+        const bucket = admin.storage().bucket();
         const file = bucket.file(storagePath);
         
         await file.save(videoBuffer, {
