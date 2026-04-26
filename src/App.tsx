@@ -34,7 +34,7 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'fo
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak';
+type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak' | 'dream-blur' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 type LibraryAsset = {
@@ -1948,6 +1948,16 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const resetProject = () => {
+    setCompositions([]);
+    setMediaFiles([]);
+    setScriptText("");
+    setDesignTokens(null);
+    setAppMode('landing');
+    setSetupStep(1);
+    setScrapeUrl("https://");
+  };
+
   const currentComp = compositions[currentIndex];
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -2994,17 +3004,23 @@ export default function App() {
       );
 
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger'];
-      const currentEffect: TextEffect = existingComp?.textEffect || sceneChoreography?.textEffect || (
-        textEffect === 'random' 
-          ? effectList[Math.floor(Math.random() * effectList.length)] 
-          : textEffect
-      );
+      const currentEffect: TextEffect = (textEffect === 'random')
+        ? (existingComp?.textEffect || sceneChoreography?.textEffect || effectList[Math.floor(Math.random() * effectList.length)])
+        : textEffect;
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
-      const currentTextPosition = existingComp?.textPosition || (preferredTextPosition === 'random' ? posList[Math.floor(Math.random() * posList.length)] : preferredTextPosition);
+      const currentTextPosition = (preferredTextPosition === 'random')
+        ? (existingComp?.textPosition || posList[Math.floor(Math.random() * posList.length)])
+        : preferredTextPosition;
 
       const sizeList = ['text-3xl', 'text-5xl', 'text-7xl', 'text-[120px]'];
-      const currentFontSize = existingComp?.fontSize || (preferredTextSize === 'random' ? sizeList[Math.floor(Math.random() * sizeList.length)] : preferredTextSize);
+      const currentFontSize = (preferredTextSize === 'random')
+        ? (existingComp?.fontSize || sizeList[Math.floor(Math.random() * sizeList.length)])
+        : preferredTextSize;
+        
+      const currentFontFamily = (fontFamily === 'font-display') // Use display as 'vibe-dependent' fallback
+        ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
+        : fontFamily;
 
       const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
@@ -3025,7 +3041,10 @@ export default function App() {
         undefined, // sticker
         1, 0, 0,
         customDur,
-        caption
+        caption,
+        currentFontFamily,
+        textColor,
+        isMultiColor
       );
       
       comp.sceneType = currentSceneType;
@@ -3705,13 +3724,17 @@ export default function App() {
                               className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
                            >
                               {[
-                                 { val: 'font-outfit', label: 'Outfit (Modern)' },
-                                 { val: 'font-grotesk', label: 'Space Grotesk' },
-                                 { val: 'font-lexend', label: 'Lexend' },
-                                 { val: 'font-syne', label: 'Syne (Elite)' },
-                                 { val: 'font-mono', label: 'JetBrains Mono' },
-                                 { val: 'font-bangers', label: 'Bangers Kinetic' },
-                                 { val: 'font-impact', label: 'Impact' }
+                                  { val: 'font-outfit', label: 'Outfit (Modern)' },
+                                  { val: 'font-grotesk', label: 'Space Grotesk' },
+                                  { val: 'font-lexend', label: 'Lexend' },
+                                  { val: 'font-syne', label: 'Syne (Elite)' },
+                                  { val: 'font-serif', label: 'Cormorant (Elegant)' },
+                                  { val: 'font-bricolage', label: 'Bricolage (Editorial)' },
+                                  { val: 'font-instrument', label: 'Instrument (Clean)' },
+                                  { val: 'font-montserrat', label: 'Montserrat (Brand)' },
+                                  { val: 'font-mono', label: 'JetBrains Mono' },
+                                  { val: 'font-bangers', label: 'Bangers Kinetic' },
+                                  { val: 'font-impact', label: 'Impact' }
                               ].map(f => (
                                  <option key={f.val} value={f.val}>{f.label}</option>
                               ))}
@@ -3784,6 +3807,23 @@ export default function App() {
                               <option value="gsap-funnel">Gravity Funnel</option>
                               <option value="gsap-stack">Letter Stack</option>
                            </select>
+
+                           <select
+                               value={transitionType}
+                               onChange={(e) => setTransitionType(e.target.value as TransitionType)}
+                               className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                            >
+                               <option value="random">Random Transition</option>
+                               <option value="dream-blur">Elite Dream Blur</option>
+                               <option value="minimal-reveal">Minimal Wipe</option>
+                               <option value="cinematic-zoom">Optical Zoom</option>
+                               <option value="whip-pan">Whip Pan</option>
+                               <option value="glitch">Digital Glitch</option>
+                               <option value="sdf-iris">Iris Reveal</option>
+                               <option value="light-leak">Light Leak</option>
+                               <option value="chromatic-split">Chromatic Split</option>
+                               <option value="gravitational-lens">Grav Lens</option>
+                            </select>
                         </div>
                      </div>
                  </div>
@@ -3807,6 +3847,15 @@ export default function App() {
                                 </button>
                                 <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
                              </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                             <button onClick={resetProject} className="flex items-center justify-center gap-3 py-4 bg-red-50 text-red-600 border border-red-100 mono text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all rounded-lg">
+                                <Trash2 size={16} /> New PROD
+                             </button>
+                             <button onClick={() => setShowLibrary(true)} className="flex items-center justify-center gap-3 py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all rounded-lg">
+                                <ImageIcon size={16} /> View Assets
+                             </button>
                           </div>
 
                           <button onClick={generateWorldTemplate} className="w-full py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase hover:bg-white transition-all flex items-center justify-center gap-3">
@@ -4065,7 +4114,7 @@ export default function App() {
           <div className="vignette-overlay z-[450]" />
           <div className="absolute bottom-12 left-12 z-[600] flex items-center gap-4 opacity-40">
              <div className="w-8 h-px bg-ink" />
-             <p className="mono font-bold text-[10px] uppercase tracking-widest">{currentIndex + 1} / {compositions.length}</p>
+
           </div>
         </div>
       );

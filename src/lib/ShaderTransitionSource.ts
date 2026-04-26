@@ -230,6 +230,25 @@ export const SHADER_LIBRARY: Record<string, string> = {
     "overexposed=aces(overexposed);" +
     "gl_FragColor=vec4(mix(overexposed,B.rgb,smoothstep(.15,.85,u_progress)),1.);}",
 
+  "dream-blur": H +
+    "void main(){" +
+    "float blur=u_progress*(1.-u_progress)*0.08;" +
+    "vec4 A=vec4(0.); vec4 B=vec4(0.);" +
+    "for(int i=0;i<8;i++){" +
+    "float ang=float(i)*0.785;" +
+    "vec2 off=vec2(cos(ang),sin(ang))*blur;" +
+    "A+=texture2D(u_from,clamp(v_uv+off,0.,1.));" +
+    "B+=texture2D(u_to,clamp(v_uv+off,0.,1.));" +
+    "} A/=8.; B/=8.;" +
+    "gl_FragColor=mix(A,B,smoothstep(0.,1.,u_progress));}",
+
+  "minimal-reveal": H +
+    "void main(){" +
+    "float m=smoothstep(-0.2, 0.0, v_uv.x - u_progress * 1.2);" +
+    "vec4 A=texture2D(u_from, v_uv);" +
+    "vec4 B=texture2D(u_to, v_uv);" +
+    "gl_FragColor=mix(B, A, m);}",
+
   // Fallback
   "fade": H +
     "void main(){" +
