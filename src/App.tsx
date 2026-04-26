@@ -2132,16 +2132,16 @@ export default function App() {
     return obj;
   };
 
-  const saveProject = async (isAutoSave = false) => {
+  const saveProject = async (isAutoSave = false): Promise<string | null> => {
     if (!user) {
       if (!isAutoSave) {
         setToastMessage("Please login to save your project.");
         setTimeout(() => setToastMessage(null), 3000);
       }
-      return;
+      return null;
     }
 
-    if (mediaFiles.length === 0 && !scriptText.trim()) return;
+    if (mediaFiles.length === 0 && !scriptText.trim()) return currentProjectId;
 
     if (!isAutoSave) setIsSaving(true);
     try {
@@ -2246,18 +2246,22 @@ export default function App() {
 
       const cleanData = sanitizeForFirestore(trailerData);
 
+      let finalId = currentProjectId;
       if (currentProjectId) {
         await setDoc(doc(db, 'trailers', currentProjectId), cleanData, { merge: true });
         if (!isAutoSave) setToastMessage("Project saved successfully!");
       } else {
         cleanData.createdAt = serverTimestamp();
         const docRef = await addDoc(collection(db, 'trailers'), cleanData);
-        setCurrentProjectId(docRef.id);
+        finalId = docRef.id;
+        setCurrentProjectId(finalId);
         if (!isAutoSave) setToastMessage("Project saved successfully!");
       }
+      return finalId;
     } catch (err) {
       console.error("Save project failed:", err);
       if (!isAutoSave) setToastMessage("Failed to save project. Check your connection.");
+      throw err; // Re-throw so callers know it failed
     } finally {
       if (!isAutoSave) setIsSaving(false);
       setTimeout(() => setToastMessage(null), 3000);
@@ -2323,8 +2327,8 @@ export default function App() {
       setRenderProgress(0);
       
       // 1. Save project first
-      await saveProject(true);
-      if (!currentProjectId) throw new Error("Cloud sync failed. Please save project.");
+      const savedId = await saveProject(true);
+      if (!savedId) throw new Error("Cloud sync failed. Please save project.");
       
       // 2. Trigger server-side render
       const totalDuration = compositions.reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
@@ -2332,9 +2336,9 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: `${window.location.origin}/?mode=render&projectId=${currentProjectId}`,
+          url: `${window.location.origin}/?mode=render&projectId=${savedId}`,
           duration: totalDuration,
-          jobId: `render_${currentProjectId}_${Date.now()}`
+          jobId: `render_${savedId}_${Date.now()}`
         })
       });
       
