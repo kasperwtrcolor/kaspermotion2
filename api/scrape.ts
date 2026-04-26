@@ -112,7 +112,18 @@ export default async function handler(req: any, res: any) {
         },
         "mood": "energetic" | "professional" | "minimal" | "cinematic",
         "pacing": "rapid-tiktok" | "standard" | "cinematic-slow",
-        "sceneComplexity": "simple" | "dense" | "layered"
+        "sceneComplexity": "simple" | "dense" | "layered",
+        "choreography": {
+          "scenes": [
+            {
+              "sceneType": "standard" | "macos-notification" | "instagram-follow" | "reddit-post" | "x-post" | "spotify-card",
+              "shape": "pill" | "square" | "circle" | "message" | "star" | "flower",
+              "textEffect": "gsap-cascade" | "gsap-3d-roll" | "gsap-elastic" | "gsap-tornado" | "gsap-funnel" | "gsap-stack",
+              "cameraPath": "zoom-in" | "zoom-out" | "orbit-left" | "dolly-zoom" | "hyper-glide",
+              "backgroundStyle": "black" | "ivory" | "cream" | "vibrant-glow"
+            }
+          ]
+        }
       }
     `;
     

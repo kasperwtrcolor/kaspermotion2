@@ -2344,6 +2344,9 @@ export default function App() {
         setMediaFiles(prev => [...prev, ...newAssets]);
       }
 
+      if (data.choreography) {
+        setAiChoreography(data.choreography);
+      }
       setDesignTokens(data);
       setToastMessage("Success! Your brand vibe has been extracted.");
       setSetupStep(2); // Move to Assets review
@@ -2901,6 +2904,7 @@ export default function App() {
     for (let sceneIdx = 0; sceneIdx < scriptLines.length; sceneIdx++) {
       let caption = scriptLines[sceneIdx] || '';
       const complexity = designTokens?.sceneComplexity || 'standard';
+      const sceneChoreography = aiChoreography?.scenes?.[sceneIdx];
       
       let isTextOnly = textOnlyLines.has(sceneIdx);
       let sceneItems: MediaItem[] = [];
@@ -2919,17 +2923,22 @@ export default function App() {
         }
       }
 
-      // Dynamic Complexity Logic: Add "more things happening"
-      const currentSceneType: any = complexity === 'dense' || complexity === 'layered' 
-        ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post'][Math.floor(Math.random() * 4)]))
-        : 'standard';
+      // Dynamic Complexity Logic with AI Choreography Overrides
+      const currentSceneType: any = sceneChoreography?.sceneType || (
+        complexity === 'dense' || complexity === 'layered' 
+          ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post'][Math.floor(Math.random() * 4)]))
+          : 'standard'
+      );
 
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow'];
-      const currentEffect: TextEffect = textEffect === 'random' 
-        ? effectList[Math.floor(Math.random() * effectList.length)] 
-        : textEffect;
+      const currentEffect: TextEffect = sceneChoreography?.textEffect || (
+        textEffect === 'random' 
+          ? effectList[Math.floor(Math.random() * effectList.length)] 
+          : textEffect
+      );
 
-      const currentCameraPath: any = (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
+      const currentCameraPath: any = sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
+      const currentBackground = sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const comp = generateCompositionFromData(
         sceneItems, 
@@ -2947,6 +2956,12 @@ export default function App() {
       
       comp.sceneType = currentSceneType;
       comp.cameraPath = currentCameraPath;
+      comp.activeBackground = currentBackground as BackgroundStyle;
+      
+      // Inject AI Shape decision
+      if (sceneChoreography?.shape) {
+        comp.media = comp.media.map(m => ({ ...m, m3Shape: sceneChoreography.shape }));
+      }
       
       // Generate Secondary Assets for depth
       const secondaryAssets: SecondaryAsset[] = [];
