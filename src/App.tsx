@@ -1998,6 +1998,9 @@ export default function App() {
   const [giphySearchResults, setGiphySearchResults] = useState<any[]>([]);
   const [isSearchingGiphy, setIsSearchingGiphy] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
+  const [isHyperRendering, setIsHyperRendering] = useState(false);
+  const [hyperRenderProgress, setHyperRenderProgress] = useState(0);
+  const [hyperRenderMessage, setHyperRenderMessage] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
@@ -2365,15 +2368,26 @@ export default function App() {
       
       const { jobId } = responseData;
       
+      setIsHyperRendering(true);
+      setHyperRenderProgress(0);
+      setHyperRenderMessage('Initializing HyperFlow Engine...');
+      
       // 3. Poll for progress
       const poll = setInterval(async () => {
         try {
           const statusRes = await fetch(getApiUrl(`/api/render-job/${jobId}`));
           const statusData = await statusRes.json();
+          setHyperRenderProgress(statusData.progress || 0);
+
+          if (statusData.status === 'rendering') {
+            const messages = ['Igniting Shaders...', 'Orchestrating Director...', 'Capturing Cinematic Frames...', 'Baking 4K Master...'];
+            const msgIndex = Math.min(Math.floor((statusData.progress / 100) * messages.length), messages.length - 1);
+            setHyperRenderMessage(messages[msgIndex]);
+          }
           
           if (statusData.status === 'complete') {
             clearInterval(poll);
-            setIsRenderingTrailer(false);
+            setIsHyperRendering(false);
             setToastMessage("Elite Video Production Complete!");
             if (statusData.videoId) {
               setShareVideoId(statusData.videoId);
@@ -2381,19 +2395,16 @@ export default function App() {
             }
           } else if (statusData.status === 'failed') {
             clearInterval(poll);
-            setIsRenderingTrailer(false);
-            setToastMessage(`Render Error: HF_FAIL_${statusData.error?.substring(0, 4) || 'UNK'}`);
-          } else {
-            setRenderProgress(Math.max(statusData.progress || 5, 2));
+            setIsHyperRendering(false);
+            setToastMessage(`Render failed: ${statusData.error}`);
           }
-        } catch (e) {
-          console.warn("Poll heartbeat failed", e);
+        } catch (err) {
+          console.error("Polling check failed:", err);
         }
-      }, 4000);
-      
+      }, 3000);
     } catch (err: any) {
       console.error(err);
-      setIsRenderingTrailer(false);
+      setIsHyperRendering(false);
       setToastMessage(err.message || "HyperRender failure.");
     }
   };
@@ -4307,6 +4318,60 @@ export default function App() {
 
       {/* Global Overlays Layer */}
       {/* Export Explainer Modal */}
+      {/* HyperFlow Fulfillment Loader */}
+      <AnimatePresence>
+        {isHyperRendering && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[2000] flex items-center justify-center bg-black"
+          >
+            {/* Animated Background Pulse */}
+            <div className="absolute inset-0 overflow-hidden">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/20 blur-[120px] rounded-full animate-pulse" />
+               <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-rose-500/10 blur-[100px] rounded-full" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-lg p-12 text-center">
+              <div className="mb-12 relative">
+                <div className="w-24 h-24 border-4 border-white/5 rounded-full mx-auto flex items-center justify-center p-6 bg-black shadow-2xl">
+                   <Zap size={32} className="text-white animate-pulse" fill="currentColor" />
+                </div>
+                <motion.div 
+                  className="absolute -inset-4 border border-white/10 rounded-full"
+                  animate={{ rotate: 360, scale: [1, 1.1, 1] }} 
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+
+              <h2 className="mono text-2xl font-black uppercase tracking-[0.2em] mb-2 text-white">HyperFlow Rendering</h2>
+              <p className="mono text-[10px] uppercase font-bold tracking-widest text-white/40 mb-12">Elite Fulfillment Cluster: Render.com</p>
+
+              <div className="space-y-6">
+                <div className="relative h-1 bg-white/5 overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${hyperRenderProgress}%` }}
+                    className="absolute inset-y-0 left-0 bg-white"
+                    transition={{ type: "spring", bounce: 0, duration: 2 }}
+                  />
+                </div>
+                
+                <div className="flex justify-between items-center mono text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-white/60">{hyperRenderMessage}</span>
+                  <span className="text-white">{hyperRenderProgress}%</span>
+                </div>
+              </div>
+
+              <div className="mt-20 flex items-center justify-center gap-2 opacity-20">
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showExportExplainer && (
           <motion.div
