@@ -34,7 +34,7 @@ if (getApps().length === 0) {
 }
 
 const db = getFirestore();
-const storageBucket = getStorage().bucket();
+const storageBucket = getStorage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
 
 const adminUtils = {
   firestore: { FieldValue }
