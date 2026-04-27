@@ -3,8 +3,21 @@ import * as HyperProducerModule from '@hyperframes/producer';
 import * as HyperEngineModule from '@hyperframes/engine';
 import ffmpeg from 'fluent-ffmpeg';
 
-const Engine = (HyperEngineModule as any).Engine || (HyperEngineModule as any).default || HyperEngineModule;
-const Producer = (HyperProducerModule as any).Producer || (HyperProducerModule as any).default || HyperProducerModule;
+const resolveClass = (mod: any, className: string) => {
+  if (!mod) return null;
+  // Case 1: Direct named export
+  if (typeof mod[className] === 'function') return mod[className];
+  // Case 2: Default export containing the class
+  if (mod.default && typeof mod.default[className] === 'function') return mod.default[className];
+  // Case 3: Default export IS the class
+  if (typeof mod.default === 'function') return mod.default;
+  // Case 4: Module IS the class (namespace import fallback)
+  if (typeof mod === 'function') return mod;
+  return null;
+};
+
+const Engine = resolveClass(HyperEngineModule, 'Engine');
+const Producer = resolveClass(HyperProducerModule, 'Producer');
 
 /**
  * HyperFrames Renderer — Headless MP4 Generation
