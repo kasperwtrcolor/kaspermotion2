@@ -4,14 +4,17 @@ import * as HyperEngineModule from '@hyperframes/engine';
 import ffmpeg from 'fluent-ffmpeg';
 
 const resolveClass = (mod: any, className: string) => {
+  console.log(`[HyperFlow] Resolving ${className} from:`, {
+    keys: Object.keys(mod || {}),
+    typeof: typeof mod,
+    hasDefault: !!(mod && mod.default),
+    isFunction: typeof mod === 'function'
+  });
+
   if (!mod) return null;
-  // Case 1: Direct named export
   if (typeof mod[className] === 'function') return mod[className];
-  // Case 2: Default export containing the class
   if (mod.default && typeof mod.default[className] === 'function') return mod.default[className];
-  // Case 3: Default export IS the class
   if (typeof mod.default === 'function') return mod.default;
-  // Case 4: Module IS the class (namespace import fallback)
   if (typeof mod === 'function') return mod;
   return null;
 };
