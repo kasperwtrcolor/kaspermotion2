@@ -2368,7 +2368,7 @@ export default function App() {
       // 3. Poll for progress
       const poll = setInterval(async () => {
         try {
-          const statusRes = await fetch(`/api/render-job/${jobId}`);
+          const statusRes = await fetch(getApiUrl(`/api/render-job/${jobId}`));
           const statusData = await statusRes.json();
           
           if (statusData.status === 'complete') {
