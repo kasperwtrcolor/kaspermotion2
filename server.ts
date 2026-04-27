@@ -4,7 +4,9 @@ import { GoogleGenAI } from '@google/genai';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import Stripe from 'stripe';
-import * as admin from 'firebase-admin';
+import { initializeApp, cert, credential, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { renderComposition } from './src/lib/renderer';
 import 'dotenv/config';
 
@@ -12,23 +14,31 @@ import 'dotenv/config';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // Initialize Firebase Admin
-if (process.env.FIREBASE_PROJECT_ID) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-} else {
-  // Try default initialization for local/dev
-  try {
-    admin.initializeApp();
-  } catch (e) {
-    console.warn("Firebase Admin not initialized. Webhooks will fail to update credits.");
+if (getApps().length === 0) {
+  if (process.env.FIREBASE_PROJECT_ID) {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app'
+    });
+  } else {
+    try {
+      initializeApp();
+    } catch (e) {
+      console.warn("Firebase Admin not initialized. Webhooks will fail to update credits.");
+    }
   }
 }
-const db = admin.firestore();
+
+const db = getFirestore();
+const storageBucket = getStorage().bucket();
+
+const adminUtils = {
+  firestore: { FieldValue }
+};
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -343,7 +353,7 @@ H2 Tags: ${h2s.join(' | ')}
       const storagePath = `public-videos/${videoId}.${ext}`;
 
       // Upload to Firebase Storage via Admin SDK
-      const bucket = admin.storage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
+      const bucket = storageBucket;
       const file = bucket.file(storagePath);
       
       await file.save(req.body, {
@@ -370,7 +380,7 @@ H2 Tags: ${h2s.join(' | ')}
         url: publicUrl,
         storagePath,
         status: 'complete',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         views: 0,
         ext
       };
@@ -404,7 +414,7 @@ H2 Tags: ${h2s.join(' | ')}
 
       // Increment view count
       await db.collection('videos').doc(videoId).update({
-        views: admin.firestore.FieldValue.increment(1)
+        views: FieldValue.increment(1)
       });
 
       res.json({
@@ -442,8 +452,8 @@ H2 Tags: ${h2s.join(' | ')}
         status: 'pending',                 // pending → rendering → complete → failed
         videoId: null,
         videoUrl: null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       };
 
       await db.collection('render-jobs').doc(jobId).set(jobDoc);
@@ -502,7 +512,7 @@ H2 Tags: ${h2s.join(' | ')}
         await db.collection('render-jobs').doc(jobId).set({
           status: 'rendering',
           progress: 0,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         }, { merge: true });
       }
 
@@ -524,7 +534,7 @@ H2 Tags: ${h2s.join(' | ')}
         // 2. Upload to Firebase
         const videoId = `vid_hf_${Date.now()}`;
         const storagePath = `public-videos/${videoId}.mp4`;
-        const bucket = admin.storage().bucket();
+        const bucket = storageBucket;
         const file = bucket.file(storagePath);
         
         await file.save(videoBuffer, {
@@ -543,7 +553,7 @@ H2 Tags: ${h2s.join(' | ')}
           url: publicUrl,
           storagePath,
           status: 'complete',
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           views: 0,
           ext: 'mp4'
         });
@@ -555,7 +565,7 @@ H2 Tags: ${h2s.join(' | ')}
             progress: 100,
             videoId: videoId,
             videoUrl: publicUrl,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
         }
         
@@ -567,7 +577,7 @@ H2 Tags: ${h2s.join(' | ')}
           await db.collection('render-jobs').doc(jobId).update({
             status: 'failed',
             error: err.message,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
           });
         }
       });
