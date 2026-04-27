@@ -1,8 +1,10 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const Engine = require('@hyperframes/engine').Engine || require('@hyperframes/engine');
-const Producer = require('@hyperframes/producer').Producer || require('@hyperframes/producer');
+import path from 'path';
+import * as HyperProducerModule from '@hyperframes/producer';
+import * as HyperEngineModule from '@hyperframes/engine';
 import ffmpeg from 'fluent-ffmpeg';
+
+const Engine = (HyperEngineModule as any).Engine || (HyperEngineModule as any).default || HyperEngineModule;
+const Producer = (HyperProducerModule as any).Producer || (HyperProducerModule as any).default || HyperProducerModule;
 
 /**
  * HyperFrames Renderer — Headless MP4 Generation
