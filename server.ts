@@ -4,6 +4,7 @@ import { GoogleGenAI } from '@google/genai';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import Stripe from 'stripe';
+import cors from 'cors';
 import { initializeApp, cert, credential, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -46,8 +47,47 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
+  app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'x-video-title']
+  }));
+
   // Health check for persistent deployment
   app.get('/api/health', (req, res) => res.json({ status: 'healthy', engine: 'HyperFlow' }));
+
+  // Global logging middleware
+  app.use((req, res, next) => {
+    console.log(`[Vibe Engine] ${req.method} ${req.url}`);
+    next();
+  });
+
+  // Dynamic configuration to hide secrets from client
+  app.get('/api/config', (req, res) => {
+    res.json({
+      firebaseConfig: {
+        apiKey: process.env.FIREBASE_API_KEY,
+        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app',
+        messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.FIREBASE_APP_ID
+      }
+    });
+  });
+
+  // Giphy Proxy to hide API Key
+  app.get('/api/giphy/search', async (req, res) => {
+    try {
+      const { q, limit = 20, offset = 0 } = req.query;
+      const apiKey = process.env.GIPHY_API_KEY || 'missing_key';
+      const response = await fetch(`https://api.giphy.com/v1/stickers/search?api_key=${apiKey}&q=${encodeURIComponent(q as string)}&limit=${limit}&offset=${offset}`);
+      const data = await response.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // Webhook for Stripe must use raw body
   app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -586,6 +626,11 @@ H2 Tags: ${h2s.join(' | ')}
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
+  });
+
+  // API 404 Catch-all
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `Elite Route ${req.method} ${req.url} not recognized.` });
   });
 
   // Vite middleware for development

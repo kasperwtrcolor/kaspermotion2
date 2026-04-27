@@ -26,8 +26,17 @@ import WorldNavigationPaths from './components/WorldNavigationPaths';
 
 gsap.registerPlugin(useGSAP);
 
+const getApiUrl = (path: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  return `${baseUrl}${path}`;
+};
 
-const gf = new GiphyFetch(import.meta.env.VITE_GIPHY_API_KEY || 'dummy_key_to_prevent_crash');
+
+// Sensitive keys are now proxied via the server
+const searchGiphy = async (query: string, offset = 0): Promise<any> => {
+  const res = await fetch(getApiUrl(`/api/giphy/search?q=${encodeURIComponent(query)}&offset=${offset}`));
+  return res.json();
+};
 
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'font-outfit' | 'font-grotesk' | 'font-syne' | 'font-bangers';
@@ -2332,7 +2341,7 @@ export default function App() {
       
       // 2. Trigger server-side render
       const totalDuration = compositions.reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
-      const res = await fetch('/api/render-hyperframes', {
+      const res = await fetch(getApiUrl('/api/render-hyperframes'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2395,7 +2404,7 @@ export default function App() {
 
     setIsSearchingGiphy(true);
     try {
-      const { data } = await gf.search(giphySearchQuery, { type: 'stickers', limit: 20 });
+      const { data } = await searchGiphy(giphySearchQuery);
       setGiphySearchResults(data || []);
     } catch (err) {
       console.error("Giphy search failed:", err);
@@ -2424,7 +2433,7 @@ export default function App() {
     setToastMessage("AI Director is analyzing your website...");
 
     try {
-      const resp = await fetch('/api/scrape', {
+      const resp = await fetch(getApiUrl('/api/scrape'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: scrapeUrl })
@@ -2582,7 +2591,7 @@ export default function App() {
     }));
 
     try {
-      const response = await fetch('/api/animate-media', {
+      const response = await fetch(getApiUrl('/api/animate-media'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageUrl: media.url })
@@ -3018,7 +3027,7 @@ export default function App() {
     if (!scrapeUrl) return;
     setIsScraping(true);
     try {
-      const res = await fetch('/api/scrape', {
+      const res = await fetch(getApiUrl('/api/scrape'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: scrapeUrl })
@@ -3342,7 +3351,7 @@ export default function App() {
         try {
           setIsUploadingVideo(true);
           setToastMessage('Generating shareable link...');
-          const uploadRes = await fetch('/api/video/upload', {
+          const uploadRes = await fetch(getApiUrl('/api/video/upload'), {
             method: 'POST',
             headers: {
               'Content-Type': mimeType.split(';')[0],
