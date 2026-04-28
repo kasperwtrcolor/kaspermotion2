@@ -49,7 +49,16 @@ export async function renderComposition(
       totalFrames: Math.ceil(duration * fps),
       executablePath: process.env.CHROME_PATH || undefined,
       ffmpegPath: process.env.FFMPEG_PATH || undefined,
-      headless: true
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ]
     });
 
     await executeRenderJob(job, {
