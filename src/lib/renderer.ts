@@ -18,29 +18,6 @@ export async function renderComposition(
     onProgress?: (progress: number) => void;
   }
 ) {
-  const resolveClass = (mod: any, className: string) => {
-    console.log(`[HyperFlow] Fulfillment Probe (${className}):`, {
-      keys: Object.keys(mod || {}),
-      typeof: typeof mod,
-      hasDefault: !!(mod && mod.default),
-      defaultKeys: mod?.default ? Object.keys(mod.default) : 'n/a'
-    });
-
-    if (!mod) return null;
-    if (typeof mod[className] === 'function') return mod[className];
-    if (mod.default && typeof mod.default[className] === 'function') return mod.default[className];
-    if (typeof mod.default === 'function') return mod.default;
-    if (typeof mod === 'function') return mod;
-    return null;
-  };
-
-  const Engine = resolveClass(HyperEngineModule, 'Engine');
-  const Producer = resolveClass(HyperProducerModule, 'Producer');
-
-  if (!Engine || typeof Engine !== 'function') {
-    throw new Error(`Critical: 'Engine' constructor resolution failed. Value: ${typeof Engine}`);
-  }
-
   const {
     duration,
     fps = 60,
@@ -49,32 +26,35 @@ export async function renderComposition(
     onProgress
   } = options;
 
-  console.log(`[HyperFrames] Starting render for ${url} (${duration}s @ ${fps}fps)`);
+  console.log(`[HyperFrames] Starting functional render for ${url} (${duration}s @ ${fps}fps)`);
 
-  const engine = new Engine({
-    width,
-    height,
-    // HyperFrames BeginFrame hook for deterministic seeking
-    headless: true,
-    executablePath: process.env.CHROME_PATH || undefined
-  });
+  const engineModule = HyperEngineModule as any;
+  const producerModule = HyperProducerModule as any;
 
-  const producer = new Producer(engine, {
-    fps,
-    outputPath,
-    ffmpegPath: process.env.FFMPEG_PATH || (typeof ffmpeg === 'function' ? undefined : undefined) // Use system ffmpeg by default
-  });
+  // Resolve API - Fallback to any method that looks like a renderer
+  const executeRenderJob = producerModule.executeRenderJob || producerModule.renderVideo;
+  const createRenderJob = producerModule.createRenderJob || ((u: string, o: any) => ({ url: u, ...o }));
+
+  if (typeof executeRenderJob !== 'function') {
+    throw new Error('Critical: High-level executeRenderJob not found in @hyperframes/producer');
+  }
 
   try {
-    await engine.init();
-    
-    // Start the capture pipeline
-    await producer.start(url, {
+    // HyperFrames High-Level API Transition
+    const job = createRenderJob(url, {
+      outputPath,
+      width,
+      height,
+      fps,
       totalFrames: Math.ceil(duration * fps),
-      onFrame: (frame, total) => {
-        if (onProgress) {
-          onProgress(frame / total);
-        }
+      executablePath: process.env.CHROME_PATH || undefined,
+      ffmpegPath: process.env.FFMPEG_PATH || undefined,
+      headless: true
+    });
+
+    await executeRenderJob(job, {
+      onProgress: (progress: number) => {
+        if (onProgress) onProgress(progress);
       }
     });
 
@@ -83,7 +63,5 @@ export async function renderComposition(
   } catch (error) {
     console.error('[HyperFrames] Render failed:', error);
     throw error;
-  } finally {
-    await engine.close();
   }
 }
