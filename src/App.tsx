@@ -2091,7 +2091,7 @@ export default function App() {
 
   const globalTransitionProgress = useMotionValue(0);
 
-  const [dailyCreditsClaimed, setDailyCreditsClaimed] = useState(false);
+
   const [showProfile, setShowProfile] = useState(false);
   const [socialHandle, setSocialHandle] = useState('@Handle');
   const [compositions, setCompositions] = useState<Composition[]>([]);
@@ -2236,39 +2236,7 @@ export default function App() {
         handleFirestoreError(error, OperationType.LIST, 'assets');
       });
 
-      const checkAndRewardCredits = async () => {
-        if (dailyCreditsClaimed) return;
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-          // Use local timezone date so refresh only triggers at user's midnight
-          const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local tz
-
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            if (userData.lastRewardDate !== today) {
-              const currentCredits = userData.credits || 0;
-              if (currentCredits < 5) {
-                await setDoc(userRef, { credits: 5, lastRewardDate: today }, { merge: true });
-                setToastMessage("Daily Refresh: Your credits have been topped up to 5!");
-              } else {
-                await setDoc(userRef, { lastRewardDate: today }, { merge: true });
-              }
-              setDailyCreditsClaimed(true);
-            } else {
-              setDailyCreditsClaimed(true);
-            }
-          } else {
-            await setDoc(userRef, { credits: 20, lastRewardDate: today }, { merge: true });
-            setToastMessage("Welcome! You received 20 initial credits.");
-            setDailyCreditsClaimed(true);
-          }
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
-        }
-      };
-
-      checkAndRewardCredits();
+      // Removed daily credit refresh logic as requested
 
       const unsubscribeUser = onSnapshot(doc(db, 'users', user.uid), (doc) => {
         if (doc.exists()) {
@@ -4310,10 +4278,17 @@ export default function App() {
         const style = currentComp?.activeBackground || backgroundStyles[0] || 'black';
 
         switch (style) {
-            case 'vibrant-glow': return 'bg-white';
-            case 'midnight': return 'bg-ink';
-            case 'sunset-fire': return 'bg-[#FF4D00]';
-            case 'textured-paper': return 'bg-cream';
+            case 'vibrant-glow': return 'bg-purple-900';
+            case 'midnight': return 'bg-slate-950';
+            case 'deep-ocean': return 'bg-blue-950';
+            case 'sunset-fire': return 'bg-orange-600';
+            case 'gradient-teal': return 'bg-teal-900';
+            case 'gradient-rose': return 'bg-rose-900';
+            case 'gradient-amber': return 'bg-amber-900';
+            case 'gradient-emerald': return 'bg-emerald-950';
+            case 'gradient-indigo': return 'bg-indigo-950';
+            case 'gradient-slate': return 'bg-slate-800';
+            case 'textured-paper': return 'bg-[#f5f0e8]';
             case 'black': return 'bg-black';
             default: return 'bg-ivory';
           }
@@ -4321,7 +4296,7 @@ export default function App() {
 
       return (
         <div
-          className="relative w-screen h-screen overflow-hidden bg-cream"
+          className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${getBackgroundClass()}`}
           style={{ perspective: '2000px' }}
         >
           <div className="grain-overlay" />

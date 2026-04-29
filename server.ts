@@ -97,7 +97,9 @@ async function startServer() {
     try {
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       if (!webhookSecret) {
-        console.error('❌ STRIPE_WEBHOOK_SECRET is not set in environment variables.');
+        console.error('❌ STRIPE_WEBHOOK_SECRET is NOT set in environment variables! Webhook signature verification WILL fail.');
+      } else {
+        console.log(`📡 Attempting webhook verification with secret (len: ${webhookSecret.length})`);
       }
       
       event = stripe.webhooks.constructEvent(
@@ -106,7 +108,8 @@ async function startServer() {
         webhookSecret || ''
       );
     } catch (err: any) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
+      console.error(`⚠️ Webhook signature verification failed: ${err.message}`);
+      console.log('💡 Tip: Ensure your STRIPE_WEBHOOK_SECRET matches the one in the Stripe Dashboard for this endpoint.');
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
