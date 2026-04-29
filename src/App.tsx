@@ -4382,7 +4382,8 @@ export default function App() {
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
               className="bg-white border border-black/10 p-10 max-w-md w-full text-ink shadow-2xl rounded-none"
             >
-               <h2 className="mono text-2xl font-black uppercase mb-8 text-black">Export Engine</h2>
+               <h2 className="mono text-2xl font-black uppercase mb-2 text-black">Export Engine</h2>
+               <p className="font-sans text-[11px] mb-8 opacity-40">Broadcast-quality video capture</p>
                
                <div className="grid grid-cols-2 gap-4 mb-8">
                  <div className="space-y-2">
@@ -4411,37 +4412,31 @@ export default function App() {
                  </div>
                </div>
 
-               <p className="font-sans text-[11px] mb-4 leading-relaxed opacity-60">
-                 1. Click <span className="bg-ink text-white px-1">PROCEED</span> to select a screen to record.
-               </p>
-               <p className="font-sans text-[11px] mb-4 leading-relaxed opacity-60">
-                 2. Browser will ask to share. Select <span className="underline font-bold">CURRENT TAB</span>.
-               </p>
-               <p className="font-sans text-[11px] mb-8 leading-relaxed opacity-60">
-                 3. Do not switch tabs. A 3s countdown will start.
-               </p>
+               <div className="bg-ivory border border-black/5 p-4 mb-8 space-y-2">
+                 <p className="font-sans text-[11px] leading-relaxed opacity-60">
+                   <span className="font-bold opacity-100">1.</span> Click <span className="bg-ink text-white px-1">EXPORT VIDEO</span> below.
+                 </p>
+                 <p className="font-sans text-[11px] leading-relaxed opacity-60">
+                   <span className="font-bold opacity-100">2.</span> Select <span className="underline font-bold">Current Tab</span> when prompted.
+                 </p>
+                 <p className="font-sans text-[11px] leading-relaxed opacity-60">
+                   <span className="font-bold opacity-100">3.</span> Don't switch tabs. Recording starts after a 3s countdown.
+                 </p>
+               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 <button
-                  onClick={startHyperRender}
-                  className="w-full p-4 mb-2 bg-ink text-cream rounded-none font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl"
+                  onClick={startRecording}
+                  className="w-full p-4 bg-ink text-cream rounded-none font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl"
                 >
-                  <Zap size={18} fill="currentColor" /> Run HyperFlow Engine (5 CR)
+                  <Zap size={18} fill="currentColor" /> Export Video (2 CR)
                 </button>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setShowExportExplainer(false)}
-                    className="flex-1 p-3 elite-button-secondary font-bold uppercase text-[10px]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={startRecording}
-                    className="flex-1 p-3 border border-black/10 hover:bg-black/5 font-bold uppercase text-[10px] flex items-center justify-center gap-2"
-                  >
-                    Manual (2 CR)
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowExportExplainer(false)}
+                  className="w-full p-3 border border-black/10 hover:bg-black/5 font-bold uppercase text-[10px]"
+                >
+                  Cancel
+                </button>
               </div>
             </motion.div>
           </motion.div>
