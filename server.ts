@@ -338,7 +338,7 @@ H2 Tags: ${h2s.join(' | ')}
     try {
       const { userId, credits, amount } = req.body;
 
-      if (!userId || !credits || !amount) {
+      if (!userId || !credits) {
         return res.status(400).json({ error: 'Missing required parameters' });
       }
 
@@ -346,27 +346,20 @@ H2 Tags: ${h2s.join(' | ')}
         payment_method_types: ['card'],
         line_items: [
           {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: `${credits} Credits for VibeTrailer`,
-                description: `Add ${credits} credits to your account.`,
-              },
-              unit_amount: Math.round(amount * 100), // amount in cents
-            },
+            price: 'price_1TRfcMFSTaHO4AGnmVAnhWvh',
             quantity: 1,
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.APP_URL || 'http://localhost:3000'}/profile?success=true`,
-        cancel_url: `${process.env.APP_URL || 'http://localhost:3000'}/profile?canceled=true`,
+        success_url: `${process.env.APP_URL || 'https://vibetrailer.fun'}/?payment=success`,
+        cancel_url: `${process.env.APP_URL || 'https://vibetrailer.fun'}/?payment=canceled`,
         metadata: {
           userId,
           credits: credits.toString(),
         },
       });
 
-      res.json({ id: session.id });
+      res.json({ id: session.id, url: session.url });
     } catch (error: any) {
       console.error('Stripe session error:', error);
       res.status(500).json({ error: error.message });

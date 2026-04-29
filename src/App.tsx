@@ -1881,6 +1881,21 @@ export default function App() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
+  // Detect payment return from Stripe
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      setToastMessage('Payment successful! 30 credits have been added to your account.');
+      setTimeout(() => setToastMessage(null), 6000);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('payment') === 'canceled') {
+      setToastMessage('Payment was canceled.');
+      setTimeout(() => setToastMessage(null), 4000);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const [mediaFiles, setMediaFiles] = useState<MediaItem[]>([]);
   const [libraryAssets, setLibraryAssets] = useState<LibraryAsset[]>([]);
   const [selectedLibraryAssets, setSelectedLibraryAssets] = useState<Set<string>>(new Set());
@@ -2048,7 +2063,8 @@ export default function App() {
         try {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
-          const today = new Date().toISOString().split('T')[0];
+          // Use local timezone date so refresh only triggers at user's midnight
+          const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local tz
 
           if (userSnap.exists()) {
             const userData = userSnap.data();
@@ -3470,7 +3486,7 @@ export default function App() {
 
     if (appMode === 'landing') {
       return (
-        <LandingPage onStart={async () => {
+        <LandingPage user={user} onStart={async () => {
           if (!user) {
             const loggedInUser = await handleLogin();
             if (loggedInUser) {
@@ -3899,14 +3915,28 @@ export default function App() {
                     <div>
                         <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Engine Atmosphere</label>
                         <div className="space-y-4">
-                           <div className="grid grid-cols-2 gap-2">
-                             {['black', 'textured-paper', 'vibrant-glow', 'midnight', 'sunset-fire'].map(bg => (
+                           <div className="grid grid-cols-3 gap-2">
+                             {[
+                               { id: 'black', label: 'Noir', swatch: '#121212' },
+                               { id: 'midnight', label: 'Midnight', swatch: '#1a1a2e' },
+                               { id: 'deep-ocean', label: 'Deep Ocean', swatch: '#0a1628' },
+                               { id: 'sunset-fire', label: 'Sunset Fire', swatch: '#ff6b35' },
+                               { id: 'vibrant-glow', label: 'Neon Glow', swatch: '#7c3aed' },
+                               { id: 'gradient-teal', label: 'Teal Wave', swatch: '#14b8a6' },
+                               { id: 'gradient-rose', label: 'Rose', swatch: '#f43f5e' },
+                               { id: 'gradient-amber', label: 'Amber', swatch: '#f59e0b' },
+                               { id: 'gradient-emerald', label: 'Emerald', swatch: '#10b981' },
+                               { id: 'gradient-indigo', label: 'Indigo', swatch: '#6366f1' },
+                               { id: 'gradient-slate', label: 'Slate', swatch: '#64748b' },
+                               { id: 'textured-paper', label: 'Paper', swatch: '#f5f0e8' },
+                             ].map(bg => (
                                <button
-                                 key={bg}
-                                 onClick={() => setBackgroundStyles([bg as any])}
-                                 className={`p-4 border mono text-[10px] font-bold uppercase transition-all ${backgroundStyles.includes(bg as any) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                                 key={bg.id}
+                                 onClick={() => setBackgroundStyles([bg.id as any])}
+                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${backgroundStyles.includes(bg.id as any) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
                                >
-                                 {bg.replace('-', ' ')}
+                                 <span className="w-3 h-3 rounded-full shrink-0 border border-black/10" style={{ background: bg.swatch }} />
+                                 {bg.label}
                                </button>
                              ))}
                            </div>

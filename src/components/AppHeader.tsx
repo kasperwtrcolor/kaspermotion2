@@ -109,6 +109,13 @@ export default function AppHeader({
                 </button>
                 <div className="w-px h-6 bg-black/10 mx-2" />
                 <button
+                  onClick={onNewProject}
+                  className="btn-outline py-2 px-6 text-xs flex items-center gap-2"
+                >
+                  <Plus size={14} />
+                  Create New
+                </button>
+                <button
                   onClick={onReset}
                   className="btn-outline border-red-500/20 text-red-600 py-2 px-6 text-xs hover:bg-red-50"
                 >

@@ -1,15 +1,53 @@
-import React from 'react';
-import { X, Check, Zap, Sparkles, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Check, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { loadStripe } from '@stripe/stripe-js';
+
+const getApiUrl = (path: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL || '';
+  return `${baseUrl}${path}`;
+};
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPurchase?: (tier: string) => void;
+  user?: any;
 }
 
-const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onPurchase }) => {
+const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   if (!isOpen) return null;
+
+  const handlePurchase = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(getApiUrl('/api/create-checkout-session'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          credits: 30,
+          amount: 5,
+        }),
+      });
+      const { id, url } = await res.json();
+
+      if (url) {
+        window.location.href = url;
+      } else {
+        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+        if (stripe && id) {
+          await stripe.redirectToCheckout({ sessionId: id });
+        }
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -23,7 +61,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onPurchase
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
-          className="bg-white border border-ink/10 w-full max-w-6xl max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl relative p-8 md:p-12 mb-12"
+          className="bg-white border border-ink/10 w-full max-w-md shadow-2xl relative p-10 md:p-12"
         >
           <button 
             onClick={onClose}
@@ -32,95 +70,53 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, onPurchase
             <X size={24} />
           </button>
 
-          <header className="mb-12">
-            <p className="mono text-muted mb-2">Pricing</p>
-            <h2 className="text-4xl md:text-6xl font-black uppercase mb-4 tracking-tighter">Built for results.</h2>
-            <p className="text-muted text-lg max-w-2xl">Simple credit-based usage. No monthly recurring fees. Every second of your trailer is a masterpiece of cinematic motion.</p>
+          <header className="mb-10">
+            <p className="mono text-muted mb-2 text-[10px] uppercase tracking-widest">Credits</p>
+            <h2 className="text-4xl font-black uppercase mb-3 tracking-tighter">Get Credits.</h2>
+            <p className="text-muted text-sm">One-time purchase. No subscriptions. Use credits to export cinematic trailers for your apps.</p>
           </header>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Basic */}
-            <div className="bg-ivory border border-transparent hover:border-ink transition-all p-8 flex flex-col group hover:-translate-y-2">
-              <h4 className="text-xl font-bold uppercase mb-1">Basic</h4>
-              <p className="mono text-[10px] text-muted mb-8">Perfect for exploring</p>
-              <div className="text-5xl font-black mb-2 uppercase">$5</div>
-              <p className="mono text-[10px] text-muted mb-8">/ one-time</p>
-              
-              <ul className="flex-1 space-y-3 mb-10">
-                {['50 Generator Credits', 'HD Quality Export', 'Standard AI Queue', 'All Text Effects'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
-                    <Check size={14} className="text-ink opacity-40" /> {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                onClick={() => onPurchase?.('basic')}
-                className="btn-outline w-full"
-              >
-                Select Plan
-              </button>
+          <div className="bg-ink text-cream p-8 mb-8">
+            <div className="flex items-baseline justify-between mb-6">
+              <div>
+                <div className="text-5xl font-black">$5</div>
+                <p className="mono text-[10px] opacity-60 mt-1">one-time payment</p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-black">30</div>
+                <p className="mono text-[10px] opacity-60 mt-1">credits</p>
+              </div>
             </div>
+            
+            <ul className="space-y-3 mb-8 border-t border-white/10 pt-6">
+              {['HD & 4K Quality Export', 'All Text Effects & Transitions', 'AI Director & Script Generation', 'Commercial License Included'].map(f => (
+                <li key={f} className="flex items-center gap-3 text-xs font-medium uppercase tracking-tight">
+                  <Check size={14} className="text-cream opacity-60" /> {f}
+                </li>
+              ))}
+            </ul>
 
-            {/* Elite */}
-            <div className="bg-ink text-cream p-8 flex flex-col relative group hover:-translate-y-2 transition-transform">
-              <div className="absolute top-0 right-0 bg-white text-ink px-3 py-1 text-[8px] font-bold uppercase">Popular</div>
-              <h4 className="text-xl font-bold uppercase mb-1">Elite Choice</h4>
-              <p className="mono text-[10px] opacity-60 mb-8">Standard Choice</p>
-              <div className="text-5xl font-black mb-2 uppercase">$12</div>
-              <p className="mono text-[10px] opacity-60 mb-8">/ one-time</p>
-              
-              <ul className="flex-1 space-y-3 mb-10">
-                {['150 Generator Credits', '4K Quality Export', 'Priority AI Queue', 'Cinematic Presets'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
-                    <Sparkles size={14} className="text-cream opacity-40" /> {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                onClick={() => onPurchase?.('elite')}
-                className="bg-cream text-ink border border-transparent font-bold uppercase py-3 transition-all hover:bg-white"
-              >
-                Select Plan
-              </button>
-            </div>
-
-            {/* Pro */}
-            <div className="bg-ivory border border-transparent hover:border-ink transition-all p-8 flex flex-col group hover:-translate-y-2">
-              <h4 className="text-xl font-bold uppercase mb-1">Pro</h4>
-              <p className="mono text-[10px] text-muted mb-8">Elite tier for full production</p>
-              <div className="text-5xl font-black mb-2 uppercase">$30</div>
-              <p className="mono text-[10px] text-muted mb-8">/ one-time</p>
-              
-              <ul className="flex-1 space-y-3 mb-10">
-                {['500 Generator Credits', 'Unlimited 4K Exports', 'Instant AI Generation', 'Commercial License'].map(f => (
-                  <li key={f} className="flex items-center gap-2 text-xs font-medium uppercase tracking-tight">
-                    <Zap size={14} className="text-ink opacity-40" /> {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button 
-                onClick={() => onPurchase?.('pro')}
-                className="btn-outline w-full"
-              >
-                Select Plan
-              </button>
-            </div>
-
-            {/* Agency */}
-            <div className="bg-ivory border border-transparent border-dashed p-8 flex flex-col items-center justify-center text-center hover:border-solid hover:border-ink transition-all">
-              <TrendingUp size={32} className="mb-4 opacity-40" />
-              <h4 className="text-xl font-bold uppercase mb-2">Agency Solutions</h4>
-              <p className="mono text-[10px] text-muted mb-6">Order 1,000+ credits for your team or organization.</p>
-              <button 
-                className="btn-outline w-full"
-              >
-                Buy Bulk Credits
-              </button>
-            </div>
+            <button 
+              onClick={handlePurchase}
+              disabled={isLoading || !user}
+              className="w-full bg-cream text-ink font-black uppercase py-4 transition-all hover:bg-white disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-ink/30 border-t-ink rounded-full animate-spin" />
+              ) : (
+                <><Zap size={18} fill="currentColor" /> Get 30 Credits</>
+              )}
+            </button>
           </div>
+
+          <div className="flex flex-wrap gap-4 text-ink/40 mono text-[10px] justify-center">
+            <div className="flex items-center gap-1"><Check size={10} /> Secure Stripe Checkout</div>
+            <div className="flex items-center gap-1"><Check size={10} /> No Recurring Fees</div>
+          </div>
+
+          {!user && (
+            <p className="text-center text-xs text-red-500 mt-4 mono">Please sign in to purchase credits.</p>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
