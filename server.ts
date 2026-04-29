@@ -34,7 +34,7 @@ if (getApps().length === 0) {
   }
 }
 
-const db = getFirestore();
+const db = getFirestore(process.env.FIREBASE_DATABASE_ID || 'ai-studio-05e7b484-8619-4800-9e84-75b7d72457cd');
 const storageBucket = getStorage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
 
 const adminUtils = {
