@@ -31,14 +31,11 @@ const PricingPlanGrid: React.FC<PricingPlanGridProps> = ({ onPurchase, user }) =
           amount: 5,
         }),
       });
-      const { id, url } = await res.json();
+      const { url } = await res.json();
       if (url) {
         window.location.href = url;
       } else {
-        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
-        if (stripe && id) {
-          await stripe.redirectToCheckout({ sessionId: id });
-        }
+        throw new Error('No checkout URL received from server.');
       }
     } catch (err) {
       console.error('Checkout error:', err);
