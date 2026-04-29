@@ -324,9 +324,41 @@ const getM3ShapeStyle = (shape: string = 'square', caption: string = '') => {
   };
 };
 
-const getWordStyle = (word: string, index: number, customColor?: string, isMulti?: boolean) => {
+const GSAPCountUp = ({ value, className = "", textColor }: { value: number, className?: string, textColor?: string }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const countRef = useRef({ val: 0 });
+
+  useGSAP(() => {
+    gsap.to(countRef.current, {
+      val: value,
+      duration: 1.5,
+      ease: "power2.out",
+      onUpdate: () => setDisplayValue(Math.round(countRef.current.val))
+    });
+  }, [value]);
+
+  return <span className={className} style={{ color: textColor }}>{displayValue}</span>;
+};
+
+const getWordStyle = (word: string, index: number, customColor?: string, isMulti?: boolean, commonWord?: string | null) => {
   const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '');
-  const hash = cleanWord.length + index;
+  const lowercaseWord = cleanWord.toLowerCase();
+  
+  // High-contrast but soft pastel for the "anchor" word
+  if (commonWord && lowercaseWord === commonWord.toLowerCase()) {
+    return {
+      background: 'linear-gradient(135deg, #FFEFBA 0%, #FFFFFF 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      color: 'transparent',
+      fontWeight: '900',
+      textShadow: '0 0 15px rgba(255, 239, 186, 0.4)',
+      display: 'inline-block',
+      transform: 'scale(1.1)',
+      zIndex: 10
+    };
+  }
 
   if (isMulti) {
     const gradients = [
@@ -632,7 +664,7 @@ const PerspectiveText = ({ text, className = "", style = {} }: { text: string, c
   );
 };
 
-const GSAPCascadeText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPCascadeText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -645,13 +677,22 @@ const GSAPCascadeText = ({ text, className = "", style = {}, textColor, isMulti 
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="gsap-cascade-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-cascade-word" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+          splitChars={false}
+        />
       ))}
     </div>
   );
 };
 
-const GSAP3DRollText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAP3DRollText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -664,13 +705,22 @@ const GSAP3DRollText = ({ text, className = "", style = {}, textColor, isMulti }
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={{ ...style, perspective: '800px' }}>
       {words.map((word, i) => (
-        <span key={i} className="gsap-roll-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-roll-word" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+          splitChars={false}
+        />
       ))}
     </div>
   );
 };
 
-const GSAPElasticText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPElasticText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -683,13 +733,69 @@ const GSAPElasticText = ({ text, className = "", style = {}, textColor, isMulti 
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="gsap-elastic-word inline-block" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>{word}</span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-elastic-word" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+          splitChars={false}
+        />
       ))}
     </div>
   );
 };
 
-const GSAPSplitText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const WordRenderer = ({ 
+  word, 
+  index, 
+  charClassName, 
+  textColor, 
+  isMulti, 
+  commonWord,
+  splitChars = true
+}: { 
+  word: string, 
+  index: number, 
+  charClassName: string, 
+  textColor?: string, 
+  isMulti?: boolean, 
+  commonWord?: string | null,
+  splitChars?: boolean
+}) => {
+  const isNumber = !isNaN(parseFloat(word.replace(/,/g, ''))) && isFinite(Number(word.replace(/,/g, '')));
+  const style = getWordStyle(word, index, textColor, isMulti, commonWord);
+
+  if (isNumber) {
+    return (
+      <span className={`inline-flex whitespace-pre ${charClassName}`} style={style}>
+        <GSAPCountUp value={parseFloat(word.replace(/,/g, ''))} textColor={style.color || textColor} />
+      </span>
+    );
+  }
+
+  if (!splitChars) {
+    return (
+      <span className={`inline-flex whitespace-pre ${charClassName}`} style={style}>
+        {word}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex whitespace-pre" style={style}>
+      {word.split('').map((char, j) => (
+        <span key={j} className={`${charClassName} inline-block`}>
+          {char}
+        </span>
+      ))}
+    </span>
+  );
+};
+
+const GSAPSplitText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -702,17 +808,21 @@ const GSAPSplitText = ({ text, className = "", style = {}, textColor, isMulti }:
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-split-char inline-block">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-split-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPExpandText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPExpandText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -732,17 +842,21 @@ const GSAPExpandText = ({ text, className = "", style = {}, textColor, isMulti }
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={{ ...style, perspective: 1000 }}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-expand-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-expand-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPTornadoText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPTornadoText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -762,17 +876,21 @@ const GSAPTornadoText = ({ text, className = "", style = {}, textColor, isMulti 
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-tornado-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-tornado-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPMergeElasticText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPMergeElasticText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -791,17 +909,21 @@ const GSAPMergeElasticText = ({ text, className = "", style = {}, textColor, isM
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-elastic-merge-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-elastic-merge-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPFunnelText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPFunnelText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -820,17 +942,21 @@ const GSAPFunnelText = ({ text, className = "", style = {}, textColor, isMulti }
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 overflow-visible ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-funnel-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-funnel-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -854,17 +980,21 @@ const GSAPTriangleText = ({ text, className = "", style = {}, textColor, isMulti
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-triangle-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-triangle-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -888,17 +1018,21 @@ const GSAPSquareText = ({ text, className = "", style = {}, textColor, isMulti }
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-square-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-square-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -922,17 +1056,21 @@ const GSAPHeartText = ({ text, className = "", style = {}, textColor, isMulti }:
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-heart-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-heart-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
+const GSAPGlowText = ({ text, className, textColor, isMulti, commonWord }: { text: string, className?: string, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
 
@@ -965,17 +1103,21 @@ const GSAPGlowText = ({ text, className, textColor, isMulti }: { text: string, c
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-glow-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-glow-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: string, className?: string, textColor?: string, isMulti?: boolean }) => {
+const GSAPFocusFlashText = ({ text, className, textColor, isMulti, commonWord }: { text: string, className?: string, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ').filter(w => w.length > 0);
 
@@ -1031,19 +1173,21 @@ const GSAPFocusFlashText = ({ text, className, textColor, isMulti }: { text: str
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`}>
       {words.map((word, i) => (
-        <span
-          key={i}
-          className="gsap-focus-word inline-flex whitespace-pre"
-          style={{ ...getWordStyle(word, i, textColor, isMulti) }}
-        >
-          {word}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-focus-word" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
+const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const words = text.split(' ');
   useGSAP(() => {
@@ -1062,18 +1206,22 @@ const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti }:
   return (
     <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
       {words.map((word, i) => (
-        <span key={i} className="inline-flex whitespace-pre" style={{ ...getWordStyle(word, i, textColor, isMulti) }}>
-          {word.split('').map((char, j) => (
-            <span key={j} className="gsap-stack-char inline-block whitespace-pre">{char}</span>
-          ))}
-        </span>
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-stack-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
 };
 
-const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean }) => {
-  const props = { text, className, style, textColor, isMulti };
+const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, commonWord }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const props = { text, className, style, textColor, isMulti, commonWord };
   switch (effect) {
     case 'gsap-glow': return <GSAPGlowText {...props} />;
     case 'gsap-cascade': return <GSAPCascadeText {...props} />;
@@ -1099,8 +1247,9 @@ const FilmGrainOverlay = () => {
   );
 };
 
-const GSAPStaggerText = ({ text, className, textColor }: { text: string, className?: string, textColor?: string }) => {
+const GSAPStaggerText = ({ text, className, textColor, isMulti, commonWord }: { text: string, className?: string, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
   
   useGSAP(() => {
     if (!containerRef.current) return;
@@ -1115,11 +1264,17 @@ const GSAPStaggerText = ({ text, className, textColor }: { text: string, classNa
   }, { scope: containerRef });
 
   return (
-    <div ref={containerRef} className={`${className} will-change-transform`} style={{ color: textColor }}>
-      {text.split('').map((char, i) => (
-        <span key={i} className="gsap-char inline-block whitespace-pre opacity-0 translate-y-10">
-          {char === ' ' ? '\u00A0' : char}
-        </span>
+    <div ref={containerRef} className={`${className} will-change-transform flex flex-wrap justify-center gap-x-3 gap-y-1`}>
+      {words.map((word, i) => (
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-char opacity-0 translate-y-10" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
       ))}
     </div>
   );
@@ -1945,6 +2100,29 @@ export default function App() {
 
   const [isSpatialWorld, setIsSpatialWorld] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+
+  // New: Calculate common word across all script lines for highlighting
+  const commonWord = useMemo(() => {
+    if (!scriptText) return null;
+    const lines = scriptText.split('\n').filter(l => l.trim().length > 0);
+    if (lines.length <= 1) return null;
+    
+    const sets = lines.map(line => {
+      const words = line.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+      return new Set(words);
+    });
+    
+    if (sets.length === 0) return null;
+    
+    const candidates = Array.from(sets[0]).filter(word => {
+      // Avoid boring common words if possible, but prioritize literal presence
+      const stopWords = ['the', 'and', 'this', 'that', 'with', 'your', 'from'];
+      if (stopWords.includes(word)) return false;
+      return sets.every(set => set.has(word));
+    });
+    
+    return candidates.length > 0 ? candidates[0] : null;
+  }, [scriptText]);
 
   useEffect(() => {
     if (isRecording) {
@@ -4247,6 +4425,7 @@ export default function App() {
                             className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}
                             textColor={currentComp.textColor || textColor}
                             isMulti={currentComp.isMultiColor || isMultiColor}
+                            commonWord={commonWord}
                           />
                         </motion.div>
                      </div>
