@@ -95,10 +95,15 @@ async function startServer() {
     let event: Stripe.Event;
 
     try {
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error('❌ STRIPE_WEBHOOK_SECRET is not set in environment variables.');
+      }
+      
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET || ''
+        webhookSecret || ''
       );
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`);
@@ -106,23 +111,36 @@ async function startServer() {
     }
 
     // Handle the event
+    console.log(`🔔 Webhook received: ${event.type} [${event.id}]`);
+
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
-      const credits = parseInt(session.metadata?.credits || '0', 10);
+      const creditsToAdd = parseInt(session.metadata?.credits || '0', 10);
 
-      if (userId && credits > 0) {
+      console.log(`💳 Checkout session completed for user: ${userId}, credits: ${creditsToAdd}`);
+
+      if (userId && creditsToAdd > 0) {
         try {
           const userRef = db.collection('users').doc(userId);
           await db.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             const currentCredits = userDoc.exists ? (userDoc.data()?.credits || 0) : 0;
-            transaction.set(userRef, { credits: currentCredits + credits }, { merge: true });
+            const newCredits = currentCredits + creditsToAdd;
+            
+            console.log(`🔄 Transaction: updating user ${userId} credits from ${currentCredits} to ${newCredits}`);
+            
+            transaction.set(userRef, { 
+              credits: newCredits,
+              lastPurchaseDate: new Date().toISOString()
+            }, { merge: true });
           });
-          console.log(`Successfully added ${credits} credits to user ${userId}`);
+          console.log(`✅ Successfully added ${creditsToAdd} credits to user ${userId}`);
         } catch (error) {
-          console.error(`Failed to update credits for user ${userId}:`, error);
+          console.error(`❌ Failed to update credits for user ${userId}:`, error);
         }
+      } else {
+        console.warn(`⚠️ Missing metadata in session: userId=${userId}, credits=${creditsToAdd}`);
       }
     }
 
