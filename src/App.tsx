@@ -46,6 +46,109 @@ type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'f
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak' | 'dream-blur' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
+// ===================== THICC TYPOGRAPHY THEMES =====================
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava';
+
+interface ThiccTheme {
+  id: ThiccThemeId;
+  label: string;
+  fontFamily: string; // CSS font-family string
+  fontClass: string; // Tailwind font class
+  textColor: string;
+  bgColor: string;
+  textShadow: string;
+  textStroke?: string;
+  extraClass?: string;
+  letterSpacing?: string;
+}
+
+const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme> = {
+  chunk: {
+    id: 'chunk',
+    label: 'Chunk',
+    fontFamily: '"Fredoka", sans-serif',
+    fontClass: 'font-fredoka',
+    textColor: '#fcf5e5',
+    bgColor: '#e84c3d',
+    textShadow: '4px 4px 0px rgba(0,0,0,0.15), 0 8px 30px rgba(0,0,0,0.3)',
+    letterSpacing: '-0.03em',
+  },
+  tomato: {
+    id: 'tomato',
+    label: 'Tomato Soup',
+    fontFamily: '"Chango", system-ui',
+    fontClass: 'font-chango',
+    textColor: '#1a6b3c',
+    bgColor: '#f5c6c6',
+    textShadow: '3px 3px 0 rgba(0,0,0,0.08)',
+    letterSpacing: '-0.04em',
+  },
+  oreon: {
+    id: 'oreon',
+    label: 'Oreon',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#111111',
+    bgColor: '#e8e4dd',
+    textShadow: 'none',
+    letterSpacing: '-0.05em',
+    extraClass: 'tracking-tighter',
+  },
+  pomos: {
+    id: 'pomos',
+    label: 'Pomos',
+    fontFamily: '"Bungee", system-ui',
+    fontClass: 'font-bungee',
+    textColor: '#1a1a1a',
+    bgColor: '#f5a623',
+    textShadow: '3px 3px 0 rgba(0,0,0,0.2)',
+    textStroke: '2px rgba(0,0,0,0.1)',
+    letterSpacing: '0.02em',
+  },
+  'neon-drip': {
+    id: 'neon-drip',
+    label: 'Neon Drip',
+    fontFamily: '"Bungee Shade", system-ui',
+    fontClass: 'font-bungee-shade',
+    textColor: '#39ff14',
+    bgColor: '#0a0a0a',
+    textShadow: '0 0 20px #39ff14, 0 0 60px #39ff14, 0 0 100px rgba(57,255,20,0.4)',
+    letterSpacing: '0.03em',
+  },
+  'retro-pop': {
+    id: 'retro-pop',
+    label: 'Retro Pop',
+    fontFamily: '"Luckiest Guy", system-ui',
+    fontClass: 'font-luckiest',
+    textColor: '#fff44f',
+    bgColor: '#ff6b9d',
+    textShadow: '4px 4px 0 #e8320a, 8px 8px 0 rgba(0,0,0,0.15)',
+    letterSpacing: '0.02em',
+  },
+  'ice-cream': {
+    id: 'ice-cream',
+    label: 'Ice Cream',
+    fontFamily: '"Lilita One", sans-serif',
+    fontClass: 'font-lilita',
+    textColor: '#f0e6ff',
+    bgColor: '#7c3aed',
+    textShadow: '3px 3px 0 rgba(255,255,255,0.15), 0 10px 40px rgba(124,58,237,0.5)',
+    letterSpacing: '-0.02em',
+  },
+  lava: {
+    id: 'lava',
+    label: 'Lava',
+    fontFamily: '"Titan One", system-ui',
+    fontClass: 'font-titan',
+    textColor: '#ff4400',
+    bgColor: '#1a0a00',
+    textShadow: '0 0 30px rgba(255,68,0,0.6), 0 0 60px rgba(255,68,0,0.3), 3px 3px 0 rgba(0,0,0,0.4)',
+    letterSpacing: '-0.02em',
+  }
+};
+
+const THICC_THEME_IDS = Object.keys(THICC_THEMES) as Exclude<ThiccThemeId, 'none' | 'random'>[];
+
 type LibraryAsset = {
   id: string;
   url: string;
@@ -119,6 +222,7 @@ type Composition = {
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
+  thiccTheme?: ThiccThemeId;
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -2318,6 +2422,7 @@ export default function App() {
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
   const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
   const [textEffect, setTextEffect] = useState<TextEffect>('random');
+  const [thiccTheme, setThiccTheme] = useState<ThiccThemeId>('none');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
@@ -3592,6 +3697,13 @@ export default function App() {
       comp.textPosition = currentTextPosition;
       comp.fontSize = currentFontSize;
       
+      // Inject Thicc Typography Theme
+      if (thiccTheme === 'random') {
+        comp.thiccTheme = THICC_THEME_IDS[Math.floor(Math.random() * THICC_THEME_IDS.length)];
+      } else if (thiccTheme !== 'none') {
+        comp.thiccTheme = thiccTheme;
+      }
+      
       // Inject AI Shape decision
       if (sceneChoreography?.shape) {
         if (sceneChoreography.shape === 'fullscreen') {
@@ -4386,6 +4498,43 @@ export default function App() {
                                <option value="chromatic-split">Chromatic Split</option>
                                <option value="gravitational-lens">Grav Lens</option>
                             </select>
+
+                           {/* Thicc Typography Themes */}
+                           <div className="space-y-2">
+                              <span className="mono text-[10px] uppercase opacity-40 font-bold">Thicc Font Style</span>
+                              <div className="grid grid-cols-5 gap-2">
+                                <button
+                                  onClick={() => setThiccTheme('none')}
+                                  className={`p-2 border text-[9px] uppercase font-bold transition-all ${thiccTheme === 'none' ? 'border-black bg-black text-white' : 'border-black/10 hover:border-black/30'}`}
+                                >
+                                  None
+                                </button>
+                                <button
+                                  onClick={() => setThiccTheme('random')}
+                                  className={`p-2 border text-[9px] uppercase font-bold transition-all ${thiccTheme === 'random' ? 'border-black bg-black text-white' : 'border-black/10 hover:border-black/30'}`}
+                                >
+                                  🎲 Random
+                                </button>
+                                {THICC_THEME_IDS.map(id => {
+                                  const theme = THICC_THEMES[id];
+                                  return (
+                                    <button
+                                      key={id}
+                                      onClick={() => setThiccTheme(id)}
+                                      className={`p-2 border text-[10px] font-black uppercase transition-all overflow-hidden ${thiccTheme === id ? 'ring-2 ring-black scale-105' : 'hover:scale-102 border-black/10'}`}
+                                      style={{
+                                        backgroundColor: theme.bgColor,
+                                        color: theme.textColor,
+                                        fontFamily: theme.fontFamily,
+                                        textShadow: theme.textShadow !== 'none' ? theme.textShadow : undefined,
+                                      }}
+                                    >
+                                      {theme.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                           </div>
                         </div>
                      </div>
                  </div>
@@ -4542,6 +4691,12 @@ export default function App() {
 
   if (appMode === 'playing') {
       const getBackgroundClass = () => {
+        // If thicc theme is active, use its background color
+        const thiccThemeActive = currentComp?.thiccTheme && currentComp.thiccTheme !== 'none'
+          ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES]
+          : null;
+        if (thiccThemeActive) return '';
+
         const style = currentComp?.activeBackground || backgroundStyles[0] || 'black';
 
         switch (style) {
@@ -4561,18 +4716,23 @@ export default function App() {
           }
       };
 
+      const thiccBgColor = currentComp?.thiccTheme && currentComp.thiccTheme !== 'none'
+        ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES]?.bgColor
+        : undefined;
+
       return (
         <div
           className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${getBackgroundClass()}`}
-          style={{ perspective: '2000px' }}
+          style={{ perspective: '2000px', backgroundColor: thiccBgColor }}
         >
           <div className="grain-overlay" />
           {/* Spatial Canvas */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <AnimatePresence mode="wait">
               <motion.div
-                key={currentComp?.activeBackground || 'default'}
+                key={`${currentComp?.activeBackground || 'default'}-${currentComp?.thiccTheme || ''}`}
                 className={`absolute inset-0 ${getBackgroundClass()}`}
+                style={{ backgroundColor: thiccBgColor }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -4653,25 +4813,40 @@ export default function App() {
                    )}
 
                    {/* 2. Kinetic Typography layer */}
-                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (
+                   {/* 2. Kinetic Typography layer */}
+                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (() => {
+                      const activeTheme = currentComp.thiccTheme && currentComp.thiccTheme !== 'none' 
+                        ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES] 
+                        : null;
+                      
+                      return (
                      <div className={`absolute flex flex-col items-center justify-center text-center px-12 md:px-24 ${getTextPositionClass(currentComp.textPosition)}`}>
                         <motion.div 
                           initial={{ scale: 0.9, y: 30, opacity: 0 }}
                           animate={{ scale: 1, y: 0, opacity: 1 }}
                           transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                          className={`transform -rotate-1 ${currentComp.fontFamily || fontFamily} font-black tracking-tight uppercase drop-shadow-[0_20px_50px_rgba(0,0,0,0.4)] pointer-events-none`}
+                          className={`transform -rotate-1 font-black tracking-tight uppercase pointer-events-none ${activeTheme ? (activeTheme.extraClass || '') : (currentComp.fontFamily || fontFamily)}`}
+                          style={activeTheme ? {
+                            fontFamily: activeTheme.fontFamily,
+                            textShadow: activeTheme.textShadow !== 'none' ? activeTheme.textShadow : undefined,
+                            letterSpacing: activeTheme.letterSpacing,
+                            WebkitTextStroke: activeTheme.textStroke,
+                          } : {
+                            filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.4))'
+                          }}
                         >
                           <AnimatedCaption
                             text={currentComp.caption}
                             effect={currentComp.textEffect}
                             className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}
-                            textColor={currentComp.textColor || textColor}
-                            isMulti={currentComp.isMultiColor || isMultiColor}
+                            textColor={activeTheme ? activeTheme.textColor : (currentComp.textColor || textColor)}
+                            isMulti={activeTheme ? false : (currentComp.isMultiColor || isMultiColor)}
                             commonWord={commonWord}
                           />
                         </motion.div>
                      </div>
-                   )}
+                      );
+                   })()}
                  </motion.div>
                )}
              </AnimatePresence>
