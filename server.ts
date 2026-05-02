@@ -233,7 +233,7 @@ H2 Tags: ${h2s.join(' | ')}
             "backgroundStyle": "one of: vibrant-glow, particles, grid, gradient-teal, gradient-rose, deep-ocean, sunset-fire, midnight",
             "textEffect": "one of: gsap-cascade, gsap-3d-roll, gsap-elastic, gsap-expand, gsap-tornado, gsap-merge-elastic, gsap-glow, gsap-typewriter, gsap-glitch, gsap-wave, gsap-blur-reveal",
             "cameraPath": "one of: zoom-in, zoom-out, orbit-left, orbit-right, pan-down-tilt, static, crane-up, parallax-drift",
-            "shape": "one of: circle, triangle, square, rounded-rect, blob, fullscreen"
+            "shape": "one of: square, rounded-rect, fullscreen"
           }
         ]
       }

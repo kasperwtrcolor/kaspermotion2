@@ -260,7 +260,7 @@ const CHOREOGRAPHY_SKELETONS = {
 };
 
 const M3_SHAPES = [
-  'circle', 'triangle', 'square', 'rounded-rect', 'letter', 'blob'
+  'square', 'rounded-rect'
 ];
 
 const M3_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -3648,8 +3648,9 @@ export default function App() {
       );
 
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
+      const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       const currentEffect: TextEffect = (textEffect === 'random')
-        ? (existingComp?.textEffect || sceneChoreography?.textEffect || effectList[Math.floor(Math.random() * effectList.length)])
+        ? (existingComp?.textEffect || sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
         : textEffect;
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
@@ -4434,53 +4435,42 @@ export default function App() {
                      </div>
 
                     <div>
-                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Engine Atmosphere</label>
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
                         <div className="space-y-4">
-                           <div className="grid grid-cols-3 gap-2">
+                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                              {[
-                               { id: 'black', label: 'Noir', swatch: '#121212' },
-                               { id: 'midnight', label: 'Midnight', swatch: '#1a1a2e' },
-                               { id: 'deep-ocean', label: 'Deep Ocean', swatch: '#0a1628' },
-                               { id: 'sunset-fire', label: 'Sunset Fire', swatch: '#ff6b35' },
-                               { id: 'vibrant-glow', label: 'Neon Glow', swatch: '#7c3aed' },
-                               { id: 'gradient-teal', label: 'Teal Wave', swatch: '#14b8a6' },
-                               { id: 'gradient-rose', label: 'Rose', swatch: '#f43f5e' },
-                               { id: 'gradient-amber', label: 'Amber', swatch: '#f59e0b' },
-                               { id: 'gradient-emerald', label: 'Emerald', swatch: '#10b981' },
-                               { id: 'gradient-indigo', label: 'Indigo', swatch: '#6366f1' },
-                               { id: 'gradient-slate', label: 'Slate', swatch: '#64748b' },
-                               { id: 'textured-paper', label: 'Paper', swatch: '#f5f0e8' },
-                             ].map(bg => (
+                               { id: 'gsap-stagger', label: 'Stagger Reveal' },
+                               { id: 'gsap-cascade', label: 'Cascade Fall' },
+                               { id: 'gsap-glow', label: 'Glow Pulse' },
+                               { id: 'gsap-3d-roll', label: '3D Roll' },
+                               { id: 'gsap-elastic', label: 'Spring Elastic' },
+                               { id: 'gsap-tornado', label: 'Vortex Tornado' },
+                               { id: 'gsap-funnel', label: 'Gravity Funnel' },
+                               { id: 'gsap-stack', label: 'Letter Stack' },
+                               { id: 'gsap-typewriter', label: 'Typewriter' },
+                               { id: 'gsap-glitch', label: 'Glitch' },
+                               { id: 'gsap-wave', label: 'Wave Motion' },
+                               { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
+                             ].map(effect => (
                                <button
-                                 key={bg.id}
-                                 onClick={() => setBackgroundStyles([bg.id as any])}
-                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${backgroundStyles.includes(bg.id as any) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                                 key={effect.id}
+                                 onClick={() => {
+                                   setTextEffect('random');
+                                   setSelectedEffects(prev => 
+                                     prev.includes(effect.id as TextEffect)
+                                       ? prev.filter(e => e !== effect.id)
+                                       : [...prev, effect.id as TextEffect]
+                                   );
+                                 }}
+                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
                                >
-                                 <span className="w-3 h-3 rounded-full shrink-0 border border-black/10" style={{ background: bg.swatch }} />
-                                 {bg.label}
+                                 <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
+                                   {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
+                                 </span>
+                                 {effect.label}
                                </button>
                              ))}
                            </div>
-
-                           <select
-                              value={textEffect}
-                              onChange={(e) => updateGlobalTextEffect(e.target.value as TextEffect)}
-                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
-                           >
-                              <option value="random">Random Kinetic Animation</option>
-                              <option value="gsap-stagger">Stagger Reveal</option>
-                              <option value="gsap-cascade">Cascade Fall</option>
-                              <option value="gsap-glow">Glow Pulse</option>
-                              <option value="gsap-3d-roll">3D Kinetic Roll</option>
-                              <option value="gsap-elastic">Spring Elastic</option>
-                              <option value="gsap-tornado">Vortex Tornado</option>
-                              <option value="gsap-funnel">Gravity Funnel</option>
-                              <option value="gsap-stack">Letter Stack</option>
-                              <option value="gsap-typewriter">Typewriter</option>
-                              <option value="gsap-glitch">Digital Glitch</option>
-                              <option value="gsap-wave">Wave Motion</option>
-                              <option value="gsap-blur-reveal">Blur Reveal</option>
-                           </select>
 
                            <select
                                value={transitionType}

@@ -24,11 +24,22 @@ const HandDrawnCursor: React.FC = () => {
         window.addEventListener('resize', resize);
         resize();
 
+        let idleTimeout: number;
+
         const handleMouseMove = (e: MouseEvent) => {
+            document.body.style.cursor = 'auto';
+            if (canvas) canvas.style.opacity = '1';
+            
             pointsRef.current.push({ x: e.clientX, y: e.clientY });
             if (pointsRef.current.length > maxPoints) {
                 pointsRef.current.shift();
             }
+
+            clearTimeout(idleTimeout);
+            idleTimeout = window.setTimeout(() => {
+                document.body.style.cursor = 'none';
+                if (canvas) canvas.style.opacity = '0';
+            }, 2000);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -54,6 +65,7 @@ const HandDrawnCursor: React.FC = () => {
         return () => {
             window.removeEventListener('resize', resize);
             window.removeEventListener('mousemove', handleMouseMove);
+            clearTimeout(idleTimeout);
             cancelAnimationFrame(animationFrame);
         };
     }, []);
