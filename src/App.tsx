@@ -3582,6 +3582,32 @@ export default function App() {
         if (data.siteName) {
           setWebsiteSiteName(data.siteName);
         }
+
+        // Add scraped images to media assets
+        const newAssets: MediaItem[] = [];
+        if (data.screenshotUrl) {
+          newAssets.push({
+            id: `scrape-screenshot-${Date.now()}`,
+            url: data.screenshotUrl,
+            type: 'image',
+            name: `${data.siteName || 'Website'} Screenshot`
+          });
+        }
+        if (data.pageImages && Array.isArray(data.pageImages)) {
+          data.pageImages.forEach((imgUrl: string, idx: number) => {
+            newAssets.push({
+              id: `scrape-img-${Date.now()}-${idx}`,
+              url: imgUrl,
+              type: 'image',
+              name: `Extracted Image ${idx + 1}`
+            });
+          });
+        }
+        
+        if (newAssets.length > 0) {
+          setMediaFiles(prev => [...prev, ...newAssets]);
+        }
+
       } else {
         setToastMessage(data.error || "Failed to generate script.");
       }
@@ -4491,7 +4517,7 @@ export default function App() {
 
                            {/* Thicc Typography Themes */}
                            <div className="space-y-2">
-                              <span className="mono text-[10px] uppercase opacity-40 font-bold">Thicc Font Style</span>
+                              <span className="mono text-[10px] uppercase opacity-40 font-bold">Theme Style</span>
                               <div className="grid grid-cols-5 gap-2">
                                 <button
                                   onClick={() => setThiccTheme('none')}
@@ -4668,6 +4694,7 @@ export default function App() {
 
                <div className="flex gap-4">
                  <button onClick={() => setSetupStep(3)} className="btn-outline flex-1 py-6 text-sm">Back</button>
+                 <button onClick={resetProject} className="btn-outline flex-1 py-6 text-sm !border-red-500/30 !text-red-500 hover:!bg-red-500 hover:!text-white">Reset & Create New</button>
                  <button onClick={generateWorld} className="btn-primary flex-[3] py-6 text-lg flex items-center justify-center gap-4">
                    <Play size={24} fill="currentColor" /> Generate Cinema Preview
                  </button>
