@@ -231,11 +231,21 @@ H2 Tags: ${h2s.join(' | ')}
             "caption": "...",
             "transitionType": "one of: fade, slide, 3d-flip, zoom, domain-warp, ridged-burn, whip-pan, sdf-iris, ripple-waves, gravitational-lens, cinematic-zoom, chromatic-split, glitch, swirl-vortex, thermal-distortion, flash-through-white, cross-warp-morph, light-leak",
             "backgroundStyle": "one of: vibrant-glow, particles, grid, gradient-teal, gradient-rose, deep-ocean, sunset-fire, midnight",
-            "textEffect": "one of: gsap-cascade, gsap-3d-roll, gsap-elastic, gsap-expand, gsap-tornado, gsap-merge-elastic, gsap-glow",
-            "cameraPath": "one of: zoom-in, zoom-out, orbit-left, orbit-right, pan-down-tilt, static"
+            "textEffect": "one of: gsap-cascade, gsap-3d-roll, gsap-elastic, gsap-expand, gsap-tornado, gsap-merge-elastic, gsap-glow, gsap-typewriter, gsap-glitch, gsap-wave, gsap-blur-reveal",
+            "cameraPath": "one of: zoom-in, zoom-out, orbit-left, orbit-right, pan-down-tilt, static, crane-up, parallax-drift",
+            "shape": "one of: circle, triangle, square, rounded-rect, blob, fullscreen"
           }
         ]
       }
+
+      STYLE GUIDELINES:
+      - Use 'fullscreen' shape for dramatic hero shots, app screenshots, or cinematic reveals where the image should fill the entire background behind the text. Use it for 1-2 scenes maximum per trailer.
+      - Use 'gsap-typewriter' for taglines, product names, or technical descriptions.
+      - Use 'gsap-glitch' for tech/startup brands or dramatic reveals.
+      - Use 'gsap-wave' for playful or creative brands.
+      - Use 'gsap-blur-reveal' for premium or luxury reveals.
+      - Use 'crane-up' camera for dramatic opening or closing scenes.
+      - Use 'parallax-drift' camera for scenes showing depth or layers.
       
       Extracted Content:
       ${extractedData}`;

@@ -115,7 +115,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
-  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide';
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
@@ -1220,6 +1220,227 @@ const GSAPStackText = ({ text, className = "", style = {}, textColor, isMulti, c
   );
 };
 
+// ======= NEW EFFECTS =======
+
+const GSAPTypewriterText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visibleChars, setVisibleChars] = useState(0);
+  const [showCursor, setShowCursor] = useState(true);
+
+  useEffect(() => {
+    let charIdx = 0;
+    const interval = setInterval(() => {
+      charIdx++;
+      setVisibleChars(charIdx);
+      if (charIdx >= text.length) {
+        clearInterval(interval);
+        // Blink cursor a few more times then hide
+        setTimeout(() => setShowCursor(false), 2000);
+      }
+    }, 60);
+    const cursorBlink = setInterval(() => setShowCursor(prev => !prev), 530);
+    return () => { clearInterval(interval); clearInterval(cursorBlink); };
+  }, [text]);
+
+  const words = text.split(' ');
+  let charCount = 0;
+
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, wi) => {
+        const wordStart = charCount;
+        charCount += word.length + 1; // +1 for space
+        const wordStyle = getWordStyle(word, wi, textColor, isMulti, commonWord);
+        const isNumber = !isNaN(parseFloat(word.replace(/,/g, ''))) && isFinite(Number(word.replace(/,/g, '')));
+        
+        if (isNumber && visibleChars > wordStart) {
+          return (
+            <span key={wi} className="inline-flex whitespace-pre" style={wordStyle}>
+              <GSAPCountUp value={parseFloat(word.replace(/,/g, ''))} textColor={wordStyle.color || textColor} />
+            </span>
+          );
+        }
+        
+        return (
+          <span key={wi} className="inline-flex whitespace-pre" style={wordStyle}>
+            {word.split('').map((char, ci) => {
+              const globalIdx = wordStart + ci;
+              return (
+                <span key={ci} className="inline-block" style={{ opacity: globalIdx < visibleChars ? 1 : 0 }}>
+                  {char}
+                </span>
+              );
+            })}
+            {/* Show cursor after last visible char in this word */}
+            {visibleChars >= wordStart && visibleChars <= wordStart + word.length && showCursor && (
+              <span className="inline-block w-[2px] h-[1em] bg-current animate-pulse ml-[1px]" style={{ color: textColor || '#fff' }} />
+            )}
+          </span>
+        );
+      })}
+      {visibleChars >= text.length && showCursor && (
+        <span className="inline-block w-[3px] h-[1em] bg-current" style={{ color: textColor || '#fff', opacity: showCursor ? 1 : 0 }} />
+      )}
+    </div>
+  );
+};
+
+const GSAPGlitchText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const glitchChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?0123456789";
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const chars = containerRef.current.querySelectorAll('.gsap-glitch-char');
+    
+    chars.forEach((charEl, i) => {
+      const original = charEl.getAttribute('data-char') || '';
+      const el = charEl as HTMLElement;
+      
+      // Scramble phase
+      let scrambleCount = 0;
+      const scrambleInterval = setInterval(() => {
+        el.textContent = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+        scrambleCount++;
+        if (scrambleCount > 4 + i * 2) {
+          clearInterval(scrambleInterval);
+          el.textContent = original;
+        }
+      }, 50);
+      
+      // Animate in
+      gsap.fromTo(el, 
+        { opacity: 0, x: () => (Math.random() - 0.5) * 20, color: '#ff0040' },
+        { opacity: 1, x: 0, color: textColor || '#ffffff', duration: 0.3, delay: i * 0.04, ease: "power2.out" }
+      );
+    });
+    
+    // Periodic glitch flicker on random chars
+    const flickerInterval = setInterval(() => {
+      const randomChar = chars[Math.floor(Math.random() * chars.length)] as HTMLElement;
+      if (randomChar) {
+        const original = randomChar.getAttribute('data-char') || '';
+        randomChar.textContent = glitchChars[Math.floor(Math.random() * glitchChars.length)];
+        gsap.to(randomChar, { x: (Math.random() - 0.5) * 5, duration: 0.05 });
+        setTimeout(() => {
+          randomChar.textContent = original;
+          gsap.to(randomChar, { x: 0, duration: 0.1 });
+        }, 80);
+      }
+    }, 800);
+    
+    return () => clearInterval(flickerInterval);
+  }, { scope: containerRef, dependencies: [text] });
+
+  const words = text.split(' ');
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => {
+        const wordStyle = getWordStyle(word, i, textColor, isMulti, commonWord);
+        const isNumber = !isNaN(parseFloat(word.replace(/,/g, ''))) && isFinite(Number(word.replace(/,/g, '')));
+        if (isNumber) {
+          return (
+            <span key={i} className="inline-flex whitespace-pre gsap-glitch-char" style={wordStyle} data-char={word}>
+              <GSAPCountUp value={parseFloat(word.replace(/,/g, ''))} textColor={wordStyle.color || textColor} />
+            </span>
+          );
+        }
+        return (
+          <span key={i} className="inline-flex whitespace-pre" style={wordStyle}>
+            {word.split('').map((char, j) => (
+              <span key={j} className="gsap-glitch-char inline-block" data-char={char}>{char}</span>
+            ))}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+const GSAPWaveText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const chars = containerRef.current.querySelectorAll('.gsap-wave-char');
+    
+    // Entrance
+    gsap.fromTo(chars,
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.03, ease: "back.out(1.7)" }
+    );
+    
+    // Continuous wave
+    chars.forEach((char, i) => {
+      gsap.to(char, {
+        y: -15,
+        duration: 0.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        delay: i * 0.08
+      });
+    });
+  }, { scope: containerRef, dependencies: [text] });
+
+  const words = text.split(' ');
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-wave-char" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+        />
+      ))}
+    </div>
+  );
+};
+
+const GSAPBlurRevealText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const wordEls = containerRef.current.querySelectorAll('.gsap-blur-word');
+    
+    gsap.fromTo(wordEls,
+      { opacity: 0, filter: 'blur(20px)', scale: 1.1, y: 20 },
+      { 
+        opacity: 1, 
+        filter: 'blur(0px)', 
+        scale: 1, 
+        y: 0,
+        duration: 1.0, 
+        stagger: 0.15, 
+        ease: "power3.out" 
+      }
+    );
+  }, { scope: containerRef, dependencies: [text] });
+
+  const words = text.split(' ');
+  return (
+    <div ref={containerRef} className={`flex flex-wrap justify-center gap-x-3 gap-y-1 ${className}`} style={style}>
+      {words.map((word, i) => (
+        <WordRenderer 
+          key={i} 
+          word={word} 
+          index={i} 
+          charClassName="gsap-blur-word" 
+          textColor={textColor} 
+          isMulti={isMulti} 
+          commonWord={commonWord} 
+          splitChars={false}
+        />
+      ))}
+    </div>
+  );
+};
+
 const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, commonWord }: { text: string, effect: TextEffect, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const props = { text, className, style, textColor, isMulti, commonWord };
   switch (effect) {
@@ -1236,6 +1457,10 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, c
     case 'gsap-heart': return <GSAPHeartText {...props} />;
     case 'gsap-stack': return <GSAPStackText {...props} />;
     case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
+    case 'gsap-typewriter': return <GSAPTypewriterText {...props} />;
+    case 'gsap-glitch': return <GSAPGlitchText {...props} />;
+    case 'gsap-wave': return <GSAPWaveText {...props} />;
+    case 'gsap-blur-reveal': return <GSAPBlurRevealText {...props} />;
     case 'gsap-stagger': return <GSAPStaggerText {...props} />;
     default: return <GSAPStaggerText {...props} />;
   }
@@ -1936,6 +2161,17 @@ const CompositionNode = ({
           {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
             const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
 
+            // Ken Burns cinematic motions for fullscreen assets
+            const kenBurnsVariants = [
+              { scale: [1, 1.15], x: [0, 0], y: [0, 0] },           // Slow zoom in
+              { scale: [1.15, 1], x: [0, 0], y: [0, 0] },           // Slow zoom out
+              { scale: [1.08, 1.12], x: ['-3%', '3%'], y: [0, 0] }, // Pan left to right
+              { scale: [1.08, 1.12], x: ['3%', '-3%'], y: [0, 0] }, // Pan right to left
+              { scale: [1.05, 1.15], x: [0, 0], y: ['2%', '-2%'] }, // Slow crane up
+              { scale: [1.1, 1.05], x: ['-2%', '2%'], y: ['1%', '-1%'] }, // Diagonal drift
+            ];
+            const kenBurns = kenBurnsVariants[(i + comp.id.charCodeAt(0)) % kenBurnsVariants.length];
+
             const mediaElement = m.url && (
               m.type === 'video' ? (
                 <motion.video
@@ -1947,11 +2183,14 @@ const CompositionNode = ({
                   className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
-                  animate={(status === 'active' && !m.isFullscreen) ? {
+                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : {
                     scale: [1, 1.05],
                     rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                  } : { scale: 1, rotate: 0 }}
-                  transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                  }) : { scale: 1, rotate: 0 }}
+                  transition={m.isFullscreen 
+                    ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
+                    : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
+                  }
                 />
               ) : (
                 <motion.img
@@ -1960,11 +2199,14 @@ const CompositionNode = ({
                   className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
-                  animate={(status === 'active' && !m.isFullscreen) ? {
+                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : {
                     scale: [1, 1.05],
                     rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                  } : { scale: 1, rotate: 0 }}
-                  transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                  }) : { scale: 1, rotate: 0 }}
+                  transition={m.isFullscreen 
+                    ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
+                    : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
+                  }
                 />
               )
             );
@@ -1972,7 +2214,7 @@ const CompositionNode = ({
             return (
               <motion.div
                 key={i}
-                className={m.isFullscreen ? "absolute inset-0 z-0" : "absolute z-10"}
+                className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute z-10"}
                 style={m.isFullscreen ? { width: '100%', height: '100%' } : {
                   transformStyle: 'preserve-3d',
                   x: m.xOffset || 0,
@@ -1980,6 +2222,12 @@ const CompositionNode = ({
                   scale: m.scale || 1
                 }}
               >
+                {/* Cinematic vignette overlay for fullscreen assets */}
+                {m.isFullscreen && (
+                  <div className="absolute inset-0 z-10 pointer-events-none" style={{
+                    background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
+                  }} />
+                )}
                 {hasError ? (
                   <div className={shapeStyle.className} style={shapeStyle.style}>
                   </div>
@@ -2967,6 +3215,16 @@ export default function App() {
       } else if (currentComp.cameraPath === 'static') {
         // Subtle drift
         animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration, ease: "easeInOut" });
+      } else if (currentComp.cameraPath === 'crane-up') {
+        // Slow upward dolly revealing the scene from below
+        animate(artistryY, 500, { duration, ease: "easeInOut" });
+        animate(artistryRotX, -10, { duration, ease: "easeInOut" });
+        animate(artistryZ, 200, { duration, ease: "easeInOut" });
+      } else if (currentComp.cameraPath === 'parallax-drift') {
+        // Subtle horizontal drift with depth parallax
+        animate(artistryX, [0, 300, 0], { duration, ease: "easeInOut" });
+        animate(artistryZ, [0, 100, -50], { duration, ease: "easeInOut" });
+        animate(artistryRoll, [0, 2, 0], { duration, ease: "easeInOut" });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
@@ -3284,7 +3542,7 @@ export default function App() {
           : 'standard'
       );
 
-      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger'];
+      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
       const currentEffect: TextEffect = (textEffect === 'random')
         ? (existingComp?.textEffect || sceneChoreography?.textEffect || effectList[Math.floor(Math.random() * effectList.length)])
         : textEffect;
@@ -3303,7 +3561,7 @@ export default function App() {
         ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
         : fontFamily;
 
-      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide'][Math.floor(Math.random() * 6)]);
+      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 8)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
@@ -3336,7 +3594,12 @@ export default function App() {
       
       // Inject AI Shape decision
       if (sceneChoreography?.shape) {
-        comp.media = comp.media.map(m => ({ ...m, m3Shape: sceneChoreography.shape }));
+        if (sceneChoreography.shape === 'fullscreen') {
+          // Fullscreen: asset fills entire scene with Ken Burns cinematic effect
+          comp.media = comp.media.map(m => ({ ...m, isFullscreen: true }));
+        } else {
+          comp.media = comp.media.map(m => ({ ...m, m3Shape: sceneChoreography.shape }));
+        }
       }
       
       // Generate Secondary Assets for depth
@@ -4101,6 +4364,10 @@ export default function App() {
                               <option value="gsap-tornado">Vortex Tornado</option>
                               <option value="gsap-funnel">Gravity Funnel</option>
                               <option value="gsap-stack">Letter Stack</option>
+                              <option value="gsap-typewriter">Typewriter</option>
+                              <option value="gsap-glitch">Digital Glitch</option>
+                              <option value="gsap-wave">Wave Motion</option>
+                              <option value="gsap-blur-reveal">Blur Reveal</option>
                            </select>
 
                            <select
