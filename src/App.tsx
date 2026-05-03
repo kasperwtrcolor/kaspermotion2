@@ -25,6 +25,7 @@ import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
 import AuthModal from './components/AuthModal';
 import ExplosionOverlay from './components/ExplosionOverlay';
+import CoinFlipCard from './components/CoinFlipCard';
 
 gsap.registerPlugin(useGSAP);
 
@@ -203,7 +204,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: TextPosition;
-  sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post';
+  sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post' | 'coin-flip';
   textEffect: TextEffect;
   transitionType: TransitionType;
   transitionDuration: number;
@@ -294,7 +295,7 @@ const generateComposition = (
   const rand = Math.random();
 
   if (caption && rand > 0.85) {
-    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'];
+    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip'];
     sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
   }
 
@@ -2264,7 +2265,7 @@ const CompositionNode = ({
         )}
 
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-          {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(comp.sceneType) && comp.media.map((m, i) => {
+          {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip'].includes(comp.sceneType) && comp.media.map((m, i) => {
             const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
 
             // Ken Burns cinematic motions for fullscreen assets
@@ -2373,6 +2374,9 @@ export default function App() {
   const [authModalPromise, setAuthModalPromise] = useState<{ resolve: (user: any) => void; reject: (err: any) => void } | null>(null);
   const [useGiphy, setUseGiphy] = useState(false);
   const [explosionTriggerId, setExplosionTriggerId] = useState(0);
+  const [explosionEnabled, setExplosionEnabled] = useState(true);
+  const [explosionSize, setExplosionSize] = useState(1);
+  const [explosionDuration, setExplosionDuration] = useState(1);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -2530,10 +2534,10 @@ export default function App() {
 
   useEffect(() => {
     // Randomly trigger explosion during playing mode (20% chance per scene)
-    if (appMode === 'playing' && Math.random() < 0.2) {
+    if (appMode === 'playing' && explosionEnabled && Math.random() < 0.2) {
       setExplosionTriggerId(prev => prev + 1);
     }
-  }, [currentIndex, appMode]);
+  }, [currentIndex, appMode, explosionEnabled]);
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -4631,7 +4635,7 @@ export default function App() {
                            </div>
                         </div>
 
-                        <div>
+                         <div>
                            <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Scene Pacing</label>
                            <input
                               type="range" min="2" max="10" step="0.5"
@@ -4642,6 +4646,46 @@ export default function App() {
                            <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
                               <span>Rapid</span>
                               <span>Atmospheric ({sceneDuration}s)</span>
+                           </div>
+                        </div>
+                     </div>
+                     
+                     <div className="mt-8 pt-8 border-t border-black/5">
+                        <div className="flex items-center justify-between mb-6">
+                           <h4 className="mono text-[10px] font-bold uppercase">Automated Explosion Overlay</h4>
+                           <button
+                             onClick={() => setExplosionEnabled(!explosionEnabled)}
+                             className={`px-3 py-1 mono text-[9px] uppercase font-bold border ${explosionEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20'}`}
+                           >
+                             {explosionEnabled ? 'Enabled' : 'Disabled'}
+                           </button>
+                        </div>
+                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-opacity ${explosionEnabled ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                           <div>
+                              <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Particle Size</label>
+                              <input
+                                 type="range" min="0.5" max="3" step="0.1"
+                                 value={explosionSize}
+                                 onChange={(e) => setExplosionSize(parseFloat(e.target.value))}
+                                 className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                              />
+                              <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                                 <span>Small</span>
+                                 <span>Massive ({explosionSize}x)</span>
+                              </div>
+                           </div>
+                           <div>
+                              <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Animation Duration</label>
+                              <input
+                                 type="range" min="0.5" max="3" step="0.1"
+                                 value={explosionDuration}
+                                 onChange={(e) => setExplosionDuration(parseFloat(e.target.value))}
+                                 className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                              />
+                              <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                                 <span>Fast</span>
+                                 <span>Slow ({explosionDuration}x)</span>
+                              </div>
                            </div>
                         </div>
                      </div>
@@ -4679,6 +4723,7 @@ export default function App() {
                              <option value="x-post">X / Twitter Post</option>
                              <option value="spotify-card">Spotify Now Playing</option>
                              <option value="data-chart">Dynamic Data Chart</option>
+                             <option value="coin-flip">3D Coin Flip Card</option>
                            </select>
 
                            <select
@@ -4835,10 +4880,14 @@ export default function App() {
                         />
                       </div>
                    )}
+                   
+                   {currentComp.sceneType === 'coin-flip' && (
+                     <CoinFlipCard caption={currentComp.caption} isActive={appMode === 'playing'} />
+                   )}
 
                    {/* 2. Kinetic Typography layer */}
                    {/* 2. Kinetic Typography layer */}
-                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (() => {
+                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip'].includes(currentComp.sceneType) && (() => {
                       const activeTheme = currentComp.thiccTheme && currentComp.thiccTheme !== 'none' 
                         ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES] 
                         : null;
@@ -5172,8 +5221,8 @@ export default function App() {
       )}
 
       {/* GSAP Explosion Overlay */}
-      {appMode === 'playing' && (
-        <ExplosionOverlay triggerId={explosionTriggerId} />
+      {appMode === 'playing' && explosionEnabled && (
+        <ExplosionOverlay triggerId={explosionTriggerId} sizeMultiplier={explosionSize} durationMultiplier={explosionDuration} />
       )}
     </div>
   );

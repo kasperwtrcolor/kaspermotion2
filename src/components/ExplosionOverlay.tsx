@@ -17,9 +17,11 @@ const EXPLOSION_ASSETS = [
 interface ExplosionOverlayProps {
   triggerId: number; // Increment or change to trigger
   distance?: number;
+  sizeMultiplier?: number;
+  durationMultiplier?: number;
 }
 
-export default function ExplosionOverlay({ triggerId, distance = 600 }: ExplosionOverlayProps) {
+export default function ExplosionOverlay({ triggerId, distance = 600, sizeMultiplier = 1, durationMultiplier = 1 }: ExplosionOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function ExplosionOverlay({ triggerId, distance = 600 }: Explosio
       img.className = 'explosion-particle';
       img.style.position = 'absolute';
       img.style.pointerEvents = 'none';
-      img.style.height = `${gsap.utils.random(20, sizeRange)}px`;
+      img.style.height = `${gsap.utils.random(20 * sizeMultiplier, sizeRange * sizeMultiplier)}px`;
       
       // Initial centered position before physics displacement
       // Offset by half height to center origin
@@ -55,8 +57,8 @@ export default function ExplosionOverlay({ triggerId, distance = 600 }: Explosio
       container.appendChild(img);
 
       const angle = Math.random() * angleSpread;
-      const velocity = gsap.utils.random(500, 1500) * speed;
-      const duration = 1 + Math.random();
+      const velocity = gsap.utils.random(500, 1500) * speed * sizeMultiplier; // Scale velocity with size slightly to shoot further
+      const duration = (1 + Math.random()) * durationMultiplier;
 
       const vx = Math.cos(angle) * velocity;
       // Negative Y because screen Y goes down, so negative is UP.
