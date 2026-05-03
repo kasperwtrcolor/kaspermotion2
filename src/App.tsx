@@ -23,6 +23,7 @@ import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
+import AuthModal from './components/AuthModal';
 
 gsap.registerPlugin(useGSAP);
 
@@ -2368,6 +2369,7 @@ export default function App() {
   const [recordingProgress, setRecordingProgress] = useState(0);
   const [textOnlyLines, setTextOnlyLines] = useState<Set<number>>(new Set());
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
+  const [authModalPromise, setAuthModalPromise] = useState<{ resolve: (user: any) => void; reject: (err: any) => void } | null>(null);
   const [useGiphy, setUseGiphy] = useState(false);
 
   // Detect share page from URL
@@ -2608,13 +2610,9 @@ export default function App() {
   }, [user]);
 
   const handleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      return result.user;
-    } catch (err) {
-      setToastMessage("Login failed. Please try again.");
-      return null;
-    }
+    return new Promise<any>((resolve, reject) => {
+      setAuthModalPromise({ resolve, reject });
+    });
   };
 
   const handleLogout = () => signOut(auth);
@@ -5150,6 +5148,19 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {authModalPromise && (
+        <AuthModal
+          onSuccess={(u) => {
+            authModalPromise.resolve(u);
+            setAuthModalPromise(null);
+          }}
+          onClose={() => {
+            authModalPromise.resolve(null);
+            setAuthModalPromise(null);
+          }}
+        />
+      )}
     </div>
   );
 }
