@@ -20,7 +20,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (request.auth.token.email == "PhilipSimmons67@gmail.com" && request.auth.token.email_verified == true);
+        ((request.auth.token.email == "PhilipSimmons67@gmail.com" || request.auth.token.email == "philipsimmons67@gmail.com") && request.auth.token.email_verified == true);
     }
 
     // ===============================================================
@@ -36,7 +36,7 @@ service cloud.firestore {
       // Allow update: user can only update their own doc
       // Enforce security: client-side balance can only be DECREMENTED, 
       // unless it's a daily reward increment (lastRewardDate changed).
-      allow update: if isOwner(userId) && (
+      allow update: if isAdmin() || (isOwner(userId) && (
         // 1. Service Usage: User is spending credits (new balance < current balance)
         (request.resource.data.credits < resource.data.credits && 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits']))
@@ -47,7 +47,7 @@ service cloud.firestore {
         ||
         // 3. Full metadata sync (on login)
         (request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']))
-      );
+      ));
     }
 
     match /trailers/{trailerId} {

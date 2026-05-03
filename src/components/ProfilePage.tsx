@@ -1,6 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, Sparkles, Zap, ChevronRight, Check } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+
+const AdminDashboard = () => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const qs = await getDocs(collection(db, 'users'));
+      const us: any[] = [];
+      qs.forEach(docSnap => {
+         us.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setUsers(us);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const addCredits = async (userId: string, currentCredits: number, amount: number) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+         credits: (currentCredits || 0) + amount
+      });
+      fetchUsers();
+    } catch(e) {
+      console.error("Error adding credits", e);
+      alert("Error adding credits: " + e);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-black/5 p-12">
+      <h3 className="text-3xl font-black uppercase mb-8 flex items-center gap-4">Admin Dashboard <Zap size={24} /></h3>
+      {loading ? <p className="mono text-xs uppercase opacity-40">Loading users...</p> : (
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead>
+                  <tr className="border-b border-black/10">
+                     <th className="py-4 mono text-[10px] uppercase opacity-40">User Email / ID</th>
+                     <th className="py-4 mono text-[10px] uppercase opacity-40">Credits</th>
+                     <th className="py-4 mono text-[10px] uppercase opacity-40">Action</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  {users.map(u => (
+                     <tr key={u.id} className="border-b border-black/5 last:border-0 hover:bg-ivory transition-colors">
+                        <td className="py-4 px-2">{u.email || u.uid || u.id}</td>
+                        <td className="py-4 px-2 font-black text-xl">{u.credits || 0}</td>
+                        <td className="py-4 px-2 flex gap-2">
+                           <button onClick={() => addCredits(u.id, u.credits, 10)} className="btn-outline py-2 px-4 text-[10px] font-bold">+10 Credits</button>
+                           <button onClick={() => addCredits(u.id, u.credits, 50)} className="btn-outline py-2 px-4 text-[10px] font-bold">+50 Credits</button>
+                        </td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
+      )}
+    </div>
+  );
+};
 
 interface ProfilePageProps {
   user: any;
@@ -15,7 +85,7 @@ interface ProfilePageProps {
   onShowPricing: () => void;
 }
 
-type ProfileTab = 'videos' | 'assets' | 'account';
+type ProfileTab = 'videos' | 'assets' | 'account' | 'admin';
 
 export default function ProfilePage({
   user,
@@ -32,11 +102,17 @@ export default function ProfilePage({
   const [activeTab, setActiveTab] = useState<ProfileTab>('videos');
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
 
+  const isAdmin = user?.email?.toLowerCase() === 'philipsimmons67@gmail.com';
+
   const tabs: { id: ProfileTab; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'videos', label: 'Videos', icon: <Film size={16} />, count: userTrailers.length },
     { id: 'assets', label: 'Assets', icon: <ImageIcon size={16} />, count: libraryAssets.length },
     { id: 'account', label: 'Settings', icon: <UserIcon size={16} /> },
   ];
+
+  if (isAdmin) {
+    tabs.push({ id: 'admin', label: 'Admin Dashboard', icon: <Zap size={16} /> });
+  }
 
   const toggleAssetSelection = (id: string) => {
     setSelectedAssets((prev) => {
@@ -365,6 +441,17 @@ export default function ProfilePage({
                 </div>
               </div>
             </motion.div>
+          )}
+
+          {activeTab === 'admin' && isAdmin && (
+             <motion.div
+               key="admin"
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: 20 }}
+             >
+                <AdminDashboard />
+             </motion.div>
           )}
         </AnimatePresence>
       </div>
