@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
 import { animate } from 'motion';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, RefreshCcw } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -15,16 +15,18 @@ import VideoCanvas from './components/VideoCanvas';
 import HandDrawnCursor from './components/HandDrawnCursor';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
+import TransitionFiller from './components/TransitionFiller';
 import { CompositionProvider } from './components/CompositionProvider';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
+import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
 import AuthModal from './components/AuthModal';
 import ExplosionOverlay from './components/ExplosionOverlay';
 import CoinFlipCard from './components/CoinFlipCard';
 import RainbowPhysicsOverlay from './components/RainbowPhysicsOverlay';
-import RipplingArcOverlay from './components/RipplingArcOverlay';
 
 gsap.registerPlugin(useGSAP);
 
@@ -205,6 +207,8 @@ type Composition = {
   textPosition: TextPosition;
   sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post' | 'coin-flip';
   textEffect: TextEffect;
+  transitionType: TransitionType;
+  transitionDuration: number;
   isTextOnly?: boolean;
   preset?: string;
   backgroundStyles?: string[];
@@ -218,7 +222,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
-  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
@@ -271,6 +275,8 @@ const generateComposition = (
   caption: string,
   preferredPosition: TextPosition,
   preferredEffect: TextEffect,
+  preferredTransition: TransitionType,
+  preferredDuration: number,
   prevComp?: Composition,
   isTextOnly?: boolean,
   preset?: string,
@@ -280,6 +286,9 @@ const generateComposition = (
   textColor?: string,
   isMultiColor?: boolean,
   choreography?: {
+    transitionType?: TransitionType;
+    backgroundStyle?: BackgroundStyle;
+    textEffect?: TextEffect;
     cameraPath?: Composition['cameraPath'];
   }
 ): Composition => {
@@ -339,6 +348,12 @@ const generateComposition = (
     textPosition,
     sceneType,
     textEffect: choreography?.textEffect || preferredEffect,
+    transitionType: choreography?.transitionType || (preferredTransition === 'random'
+      ? (Math.random() > 0.4
+          ? (ALL_SHADER_NAMES[Math.floor(Math.random() * ALL_SHADER_NAMES.length)] as TransitionType)
+          : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
+      : preferredTransition),
+    transitionDuration: preferredDuration,
     isTextOnly,
     preset,
     backgroundStyles,
@@ -2130,10 +2145,22 @@ const CompositionNode = ({
   websiteSiteName: string;
 }) => {
   const accentColor = globalTextColor || '#A855F7';
-
+  const duration = comp.transitionDuration;
   const [hasError, setHasError] = useState(false);
 
+  const getTransitionVariants = (type: TransitionType) => {
+    const ghostOpacity = 0;
+    const ghostBlur = 'blur(40px)';
+    const ghostScale = 0.4;
 
+    return {
+      future: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } },
+      active: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 1.2 } },
+      past: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } }
+    };
+  };
+
+  const transitionVariants = getTransitionVariants(comp.transitionType);
 
   return (
     <div
@@ -2146,6 +2173,9 @@ const CompositionNode = ({
       <motion.div
         className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
         style={{ transformStyle: 'preserve-3d' }}
+        variants={transitionVariants}
+        initial="future"
+        animate={status}
       >
         <SceneBackground style={comp.activeBackground} status={status} />
         <div className="vignette-overlay" />
@@ -2348,12 +2378,8 @@ export default function App() {
   const [explosionEnabled, setExplosionEnabled] = useState(true);
   const [explosionSize, setExplosionSize] = useState(1);
   const [explosionDuration, setExplosionDuration] = useState(1);
-  const [explosionX, setExplosionX] = useState(50);
-  const [explosionY, setExplosionY] = useState(50);
   const [rainbowEnabled, setRainbowEnabled] = useState(true);
-  const [arcEnabled, setArcEnabled] = useState(true);
   const [isRainbowActive, setIsRainbowActive] = useState(false);
-  const [isArcActive, setIsArcActive] = useState(false);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -2412,11 +2438,22 @@ export default function App() {
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
+  const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
   const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
+  const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
+  const [activeShaderTransition, setActiveShaderTransition] = useState<{
+    name: string;
+    fromUrl: string;
+    toUrl: string;
+    isActive: boolean;
+    progress: number;
+  }>({ name: 'whip-pan', fromUrl: '', toUrl: '', isActive: false, progress: 0 });
+
+  const globalTransitionProgress = useMotionValue(0);
 
 
   const [showProfile, setShowProfile] = useState(false);
@@ -2499,36 +2536,22 @@ export default function App() {
   const currentComp = compositions[currentIndex];
 
   useEffect(() => {
-    // 100% Trigger logic: Replace transitions with secondary graphics
+    // Randomly trigger explosion or rainbow during playing mode
     if (appMode === 'playing') {
-      const activeOptions: string[] = [];
-      if (explosionEnabled) activeOptions.push('explosion');
-      if (rainbowEnabled) activeOptions.push('rainbow');
-      if (arcEnabled) activeOptions.push('arc');
-
-      if (activeOptions.length > 0) {
-        const choice = activeOptions[Math.floor(Math.random() * activeOptions.length)];
-        
-        // Reset all
+      const rand = Math.random();
+      
+      if (explosionEnabled && rand < 0.15) {
+        setExplosionTriggerId(prev => prev + 1);
         setIsRainbowActive(false);
-        setIsArcActive(false);
-
-        if (choice === 'explosion') {
-          setExplosionTriggerId(prev => prev + 1);
-        } else if (choice === 'rainbow') {
-          setIsRainbowActive(true);
-        } else if (choice === 'arc') {
-          setIsArcActive(true);
-        }
+      } else if (rainbowEnabled && rand < 0.3) {
+        setIsRainbowActive(true);
       } else {
         setIsRainbowActive(false);
-        setIsArcActive(false);
       }
     } else {
       setIsRainbowActive(false);
-      setIsArcActive(false);
     }
-  }, [currentIndex, appMode, explosionEnabled, rainbowEnabled, arcEnabled]);
+  }, [currentIndex, appMode, explosionEnabled, rainbowEnabled]);
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -2757,6 +2780,8 @@ export default function App() {
           backgroundStyles,
           textEffect,
           selectedEffects,
+          transitionType,
+          transitionDuration,
           textAnimationSpeed,
           sceneDuration,
           backgroundStyles,
@@ -2805,6 +2830,8 @@ export default function App() {
     setBackgroundStyles(loadedBackgrounds);
     setTextEffect(project.settings.textEffect || 'gsap-glow');
     setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-glow']);
+    setTransitionType(project.settings.transitionType);
+    setTransitionDuration(project.settings.transitionDuration);
     setTextAnimationSpeed(project.settings.textAnimationSpeed || 1.0);
     setSceneDuration(project.settings.sceneDuration || 5.0);
 
@@ -2828,7 +2855,7 @@ export default function App() {
       let prev: Composition | undefined = undefined;
       project.media.forEach((m: any, i: number) => {
         const isTextOnly = new Set(project.settings.textOnlyLines || []).has(i);
-        const comp = generateCompositionFromData([m], i, project.settings.textEffect, prev, isTextOnly, project.settings.preset, loadedBackgrounds, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
+        const comp = generateCompositionFromData([m], i, project.settings.textEffect, project.settings.transitionType, project.settings.transitionDuration, prev, isTextOnly, project.settings.preset, loadedBackgrounds, m.giphyStickerUrl, m.stickerScale, m.stickerX, m.stickerY);
         newComps.push(comp);
         prev = comp;
       });
@@ -3016,35 +3043,19 @@ export default function App() {
       if (data.sceneComplexity === 'dense' || data.sceneComplexity === 'layered') {
         // Force random kinetic for maximum dynamism in complex scenes
         setTextEffect('random');
-
+        setTransitionDuration(0.8); // Snappier transitions for density
       }
       setDesignTokens(data);
 
       // 3. Populate Scraped Assets
-      const analyzedAssets: MediaItem[] = [];
-      
       if (data.scrapedImages && data.scrapedImages.length > 0) {
-        data.scrapedImages.forEach((url: string, i: number) => {
-          analyzedAssets.push({
+        const newAssets: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
             id: `scraped-${i}-${Date.now()}`,
             url,
             type: 'image',
             name: `Website Asset ${i + 1}`
-          });
-        });
-      }
-
-      if (data.screenshotUrl) {
-        analyzedAssets.push({
-          id: `screenshot-${Date.now()}`,
-          url: data.screenshotUrl,
-          type: 'image',
-          name: 'Website Screenshot'
-        });
-      }
-
-      if (analyzedAssets.length > 0) {
-        setMediaFiles(prev => [...prev, ...analyzedAssets]);
+        }));
+        setMediaFiles(prev => [...prev, ...newAssets]);
       }
 
       if (data.choreography) {
@@ -3274,7 +3285,7 @@ export default function App() {
 
     // Dolly Zoom compensation logic
     // If artistryZ is increasing (moving in), we scale DOWN to compensate
-    const dollyComp = 1;
+    const dollyComp = currentComp?.cameraPath === 'dolly-zoom' ? 1 - (Number(az) / 4000) : 1;
 
     return speedScale * dollyComp;
   });
@@ -3314,7 +3325,10 @@ export default function App() {
         animate(artistryZ, 800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'zoom-out') {
         animate(artistryZ, -800, { duration, ease: "linear" });
-
+      } else if (currentComp.cameraPath === 'orbit-left') {
+        animate(artistryX, -600, { duration, ease: "linear" });
+        animate(artistryRotY, 20, { duration, ease: "linear" });
+        animate(artistryRoll, -5, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'orbit-right') {
         animate(artistryX, 600, { duration, ease: "linear" });
         animate(artistryRotY, -20, { duration, ease: "linear" });
@@ -3322,7 +3336,9 @@ export default function App() {
       } else if (currentComp.cameraPath === 'pan-down-tilt') {
         animate(artistryY, -400, { duration, ease: "linear" });
         animate(artistryRotX, 15, { duration, ease: "linear" });
-
+      } else if (currentComp.cameraPath === 'dolly-zoom') {
+        // Move camera IN while zooming world OUT
+        animate(artistryZ, 1200, { duration, ease: "easeInOut" });
       } else if (currentComp.cameraPath === 'hyper-glide') {
         animate(artistryZ, [0, 400, 0], { duration, ease: "anticipate" });
         animate(artistryRotY, [0, 10, 0], { duration, ease: "anticipate" });
@@ -3702,15 +3718,18 @@ export default function App() {
         ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
         : fontFamily;
 
-      const currentCameraPath: any = existingComp?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-right', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 7)]);
+      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 8)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
+      const finalTransition = (existingComp?.transitionType || skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
 
       const comp = generateCompositionFromData(
         sceneItems, 
         sceneIdx, 
         currentEffect, 
+        finalTransition, 
+        transitionDuration, 
         prev, 
         isTextOnly, 
         preset, 
@@ -3815,7 +3834,7 @@ export default function App() {
     }
   };
 
-  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number, customSceneDuration?: number, caption?: string): Composition => {
+  const generateCompositionFromData = (media: any[], index: number, effect: TextEffect, tType: TransitionType, tDur: number, prevComp?: Composition, isTextOnly?: boolean, preset?: string, backgroundStyles?: string[], giphyStickerUrl?: string, stickerScale?: number, stickerX?: number, stickerY?: number, customSceneDuration?: number, caption?: string): Composition => {
     const angle = prevComp ? prevComp.angle + (Math.random() * 1.5 - 0.75) : 0;
     const distance = 2000;
     const x = prevComp ? prevComp.x + Math.cos(angle) * distance : 0;
@@ -3841,6 +3860,8 @@ export default function App() {
       textPosition: 'bottom',
       sceneType: 'standard',
       textEffect: effect,
+      transitionType: tType,
+      transitionDuration: tDur,
       isTextOnly,
       preset,
       backgroundStyles,
@@ -4394,25 +4415,10 @@ export default function App() {
 
            {setupStep === 5 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-               <div className="pb-8 border-b border-black/5 mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                  <div>
-                     <p className="mono text-[10px] uppercase opacity-40 mb-2">Final Step</p>
-                     <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Studio Profile.</h2>
-                     <p className="text-muted text-lg">Fine-tune the cinematic engine and engine-wide motion parameters.</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSetupStep(1);
-                      setScriptText("");
-                      setMediaFiles([]);
-                      setCompositions([]);
-                      setScrapeUrl("");
-                      setWebsiteSiteName("");
-                    }}
-                    className="px-6 py-3 bg-red-600 text-white mono text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition-all rounded-lg flex items-center gap-2"
-                  >
-                    <RefreshCcw size={14} /> Reset & Create New
-                  </button>
+               <div className="pb-8 border-b border-black/5 mb-12">
+                  <p className="mono text-[10px] uppercase opacity-40 mb-2">Final Step</p>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Studio Profile.</h2>
+                  <p className="text-muted text-lg">Fine-tune the cinematic engine and engine-wide motion parameters.</p>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
@@ -4517,7 +4523,22 @@ export default function App() {
                              ))}
                            </div>
 
-
+                           <select
+                               value={transitionType}
+                               onChange={(e) => setTransitionType(e.target.value as TransitionType)}
+                               className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                            >
+                               <option value="random">Random Transition</option>
+                               <option value="dream-blur">Elite Dream Blur</option>
+                               <option value="minimal-reveal">Minimal Wipe</option>
+                               <option value="cinematic-zoom">Optical Zoom</option>
+                               <option value="whip-pan">Whip Pan</option>
+                               <option value="glitch">Digital Glitch</option>
+                               <option value="sdf-iris">Iris Reveal</option>
+                               <option value="light-leak">Light Leak</option>
+                               <option value="chromatic-split">Chromatic Split</option>
+                               <option value="gravitational-lens">Grav Lens</option>
+                            </select>
 
                            {/* Thicc Typography Themes */}
                            <div className="space-y-2">
@@ -4658,13 +4679,7 @@ export default function App() {
                              onClick={() => setRainbowEnabled(!rainbowEnabled)}
                              className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${rainbowEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
                            >
-                             {rainbowEnabled ? 'Rainbow: ON' : 'Rainbow: OFF'}
-                           </button>
-                           <button
-                             onClick={() => setArcEnabled(!arcEnabled)}
-                             className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${arcEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
-                           >
-                             {arcEnabled ? 'Arc Ripple: ON' : 'Arc Ripple: OFF'}
+                             {rainbowEnabled ? 'Rainbow Fountain: ON' : 'Rainbow Fountain: OFF'}
                            </button>
                         </div>
                         
@@ -4694,32 +4709,6 @@ export default function App() {
                                 <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
                                    <span>Fast</span>
                                    <span>Slow ({explosionDuration}x)</span>
-                                </div>
-                             </div>
-                             <div>
-                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Position X</label>
-                                <input
-                                   type="range" min="0" max="100" step="1"
-                                   value={explosionX}
-                                   onChange={(e) => setExplosionX(parseInt(e.target.value))}
-                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                                />
-                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                   <span>Left</span>
-                                   <span>Right ({explosionX}%)</span>
-                                </div>
-                             </div>
-                             <div>
-                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Position Y</label>
-                                <input
-                                   type="range" min="0" max="100" step="1"
-                                   value={explosionY}
-                                   onChange={(e) => setExplosionY(parseInt(e.target.value))}
-                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                                />
-                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                   <span>Top</span>
-                                   <span>Bottom ({explosionY}%)</span>
                                 </div>
                              </div>
                           </div>
@@ -4770,6 +4759,8 @@ export default function App() {
                              <option value="static">Static Camera</option>
                              <option value="zoom-in">Zoom In</option>
                              <option value="zoom-out">Zoom Out</option>
+                             <option value="orbit-left">Orbit Left</option>
+                             <option value="dolly-zoom">Dolly Zoom</option>
                              <option value="hyper-glide">Hyper Glide</option>
                            </select>
                         </div>
@@ -4831,11 +4822,17 @@ export default function App() {
           <div className="grain-overlay" />
           {/* Spatial Canvas */}
           <div className="absolute inset-0 z-0 pointer-events-none">
-              <div
+            <AnimatePresence mode="wait">
+              <motion.div
                 key={`${currentComp?.activeBackground || 'default'}-${currentComp?.thiccTheme || ''}`}
                 className={`absolute inset-0 ${getBackgroundClass()}`}
                 style={{ backgroundColor: thiccBgColor }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
               />
+            </AnimatePresence>
           </div>
 
           <VideoCanvas key={recordingKey} isRecording={isRecording}>
@@ -4886,9 +4883,13 @@ export default function App() {
 
           {/* GLOBAL TYPOGRAPHY LAYER - FIXED ABOVE WORLD */}
           <div className="absolute inset-0 z-[500] pointer-events-none overflow-hidden">
+             <AnimatePresence mode="wait">
                {currentComp && (
-                 <div 
+                 <motion.div 
                    key={currentIndex + (currentComp.caption || 'empty')}
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
                    className="absolute inset-0"
                  >
                    {/* 1. Social Overlays layer */}
@@ -4944,8 +4945,9 @@ export default function App() {
                      </div>
                       );
                    })()}
-                 </div>
+                 </motion.div>
                )}
+             </AnimatePresence>
           </div>
 
           {/* Vignette & Grime */}
@@ -5245,14 +5247,11 @@ export default function App() {
 
       {/* GSAP Explosion Overlay */}
       {appMode === 'playing' && explosionEnabled && (
-        <ExplosionOverlay triggerId={explosionTriggerId} sizeMultiplier={explosionSize} durationMultiplier={explosionDuration} x={explosionX} y={explosionY} />
+        <ExplosionOverlay triggerId={explosionTriggerId} sizeMultiplier={explosionSize} durationMultiplier={explosionDuration} />
       )}
 
       {/* GSAP Rainbow Physics Overlay */}
       <RainbowPhysicsOverlay isActive={isRainbowActive} />
-
-      {/* GSAP Rippling Arc Overlay */}
-      <RipplingArcOverlay isActive={isArcActive} />
     </div>
   );
 }
