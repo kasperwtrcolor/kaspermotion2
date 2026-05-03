@@ -21,7 +21,13 @@ export default function CoinFlipCard({ caption, isActive }: CoinFlipCardProps) {
     { bg: '#000000', face: '#ffffff', side: '#e5e7eb', detail: '#9ca3af' },
   ];
 
-  const randomTheme = colors[Math.floor(Math.random() * colors.length)];
+  const [theme, setTheme] = React.useState(colors[0]);
+
+  useEffect(() => {
+    if (isActive) {
+      setTheme(colors[Math.floor(Math.random() * colors.length)]);
+    }
+  }, [isActive]);
 
   useEffect(() => {
     if (!isActive || !buttonRef.current || !coinRef.current || !holeRef.current || !purseRef.current) return;
@@ -99,7 +105,7 @@ export default function CoinFlipCard({ caption, isActive }: CoinFlipCardProps) {
         .coin-flip-btn {
           touch-action: none;
           user-select: none;
-          --bg: ${randomTheme.bg};
+          --bg: ${theme.bg};
           background: var(--bg);
           border-radius: 6px;
           font-size: 1.5rem;
@@ -194,9 +200,9 @@ export default function CoinFlipCard({ caption, isActive }: CoinFlipCardProps) {
 
         .coin-flip-coin {
           --depth: 2;
-          --detail: ${randomTheme.detail};
-          --face: ${randomTheme.face};
-          --side: ${randomTheme.side};
+          --detail: ${theme.detail};
+          --face: ${theme.face};
+          --side: ${theme.side};
           width: 100%;
           aspect-ratio: 1;
           border-radius: 50%;

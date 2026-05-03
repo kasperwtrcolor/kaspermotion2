@@ -19,17 +19,26 @@ interface ExplosionOverlayProps {
   distance?: number;
   sizeMultiplier?: number;
   durationMultiplier?: number;
+  x?: number; // 0-100 percentage
+  y?: number; // 0-100 percentage
 }
 
-export default function ExplosionOverlay({ triggerId, distance = 600, sizeMultiplier = 1, durationMultiplier = 1 }: ExplosionOverlayProps) {
+export default function ExplosionOverlay({ 
+  triggerId, 
+  distance = 600, 
+  sizeMultiplier = 1, 
+  durationMultiplier = 1,
+  x = 50,
+  y = 50 
+}: ExplosionOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (triggerId === 0 || !containerRef.current) return;
 
-    // Center of screen
-    const x = window.innerWidth / 2;
-    const y = window.innerHeight / 2;
+    // Position in pixels based on percentage
+    const posX = (window.innerWidth * x) / 100;
+    const posY = (window.innerHeight * y) / 100;
 
     const count = Math.round(gsap.utils.clamp(3, 100, distance / 20));
     const angleSpread = Math.PI * 2;
@@ -49,8 +58,8 @@ export default function ExplosionOverlay({ triggerId, distance = 600, sizeMultip
       
       // Initial centered position before physics displacement
       // Offset by half height to center origin
-      img.style.left = `${x}px`;
-      img.style.top = `${y}px`;
+      img.style.left = `${posX}px`;
+      img.style.top = `${posY}px`;
       img.style.transform = `translate(-50%, -50%)`;
       img.style.zIndex = '500';
 
@@ -97,7 +106,7 @@ export default function ExplosionOverlay({ triggerId, distance = 600, sizeMultip
       });
     }
 
-  }, [triggerId, distance]);
+  }, [triggerId, distance, sizeMultiplier, durationMultiplier, x, y]);
 
   return (
     <div 
