@@ -24,6 +24,7 @@ import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
 import AuthModal from './components/AuthModal';
+import ExplosionOverlay from './components/ExplosionOverlay';
 
 gsap.registerPlugin(useGSAP);
 
@@ -2371,6 +2372,7 @@ export default function App() {
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [authModalPromise, setAuthModalPromise] = useState<{ resolve: (user: any) => void; reject: (err: any) => void } | null>(null);
   const [useGiphy, setUseGiphy] = useState(false);
+  const [explosionTriggerId, setExplosionTriggerId] = useState(0);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -2525,6 +2527,13 @@ export default function App() {
   };
 
   const currentComp = compositions[currentIndex];
+
+  useEffect(() => {
+    // Randomly trigger explosion during playing mode (20% chance per scene)
+    if (appMode === 'playing' && Math.random() < 0.2) {
+      setExplosionTriggerId(prev => prev + 1);
+    }
+  }, [currentIndex, appMode]);
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -5160,6 +5169,11 @@ export default function App() {
             setAuthModalPromise(null);
           }}
         />
+      )}
+
+      {/* GSAP Explosion Overlay */}
+      {appMode === 'playing' && (
+        <ExplosionOverlay triggerId={explosionTriggerId} />
       )}
     </div>
   );
