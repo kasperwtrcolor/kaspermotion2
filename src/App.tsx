@@ -2146,9 +2146,6 @@ const CompositionNode = ({
       <motion.div
         className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
         style={{ transformStyle: 'preserve-3d' }}
-        variants={transitionVariants}
-        initial="future"
-        animate={status}
       >
         <SceneBackground style={comp.activeBackground} status={status} />
         <div className="vignette-overlay" />
