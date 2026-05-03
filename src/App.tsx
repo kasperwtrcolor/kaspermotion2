@@ -45,7 +45,7 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'font-outfit' | 'font-grotesk' | 'font-syne' | 'font-bangers';
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
-type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash';
+type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash' | 'gsap-stagger' | 'gsap-typewriter' | 'gsap-glitch' | 'gsap-wave' | 'gsap-blur-reveal';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak' | 'dream-blur' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
@@ -2471,7 +2471,7 @@ export default function App() {
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#FFFFFF');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
-  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-glow']);
+  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-stagger', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-typewriter', 'gsap-wave', 'gsap-blur-reveal']);
   const [textEffect, setTextEffect] = useState<TextEffect>('random');
   const [thiccTheme, setThiccTheme] = useState<ThiccThemeId>('none');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
@@ -3730,8 +3730,10 @@ export default function App() {
 
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
+      
+      // If global textEffect is 'random', we re-randomize unless it's the very first run
       const currentEffect: TextEffect = (textEffect === 'random')
-        ? (existingComp?.textEffect || sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
+        ? (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
         : textEffect;
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
@@ -3748,7 +3750,8 @@ export default function App() {
         ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
         : fontFamily;
 
-      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
+      const allowedPaths = ['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift', 'static', 'orbit-right'];
+      const currentCameraPath: any = sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
