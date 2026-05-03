@@ -51,7 +51,7 @@ type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -188,6 +188,36 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     bgColor: '#ffd700',
     textShadow: '3px 3px 0 rgba(255,255,255,0.3)',
     letterSpacing: '-0.01em',
+  },
+  'clean-white': {
+    id: 'clean-white',
+    label: 'Clean White',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#111111',
+    bgColor: '#ffffff',
+    textShadow: 'none',
+    letterSpacing: '-0.04em',
+  },
+  'midnight-neon': {
+    id: 'midnight-neon',
+    label: 'Midnight Neon',
+    fontFamily: '"Bungee", system-ui',
+    fontClass: 'font-bungee',
+    textColor: '#00ffff',
+    bgColor: '#02021a',
+    textShadow: '0 0 15px rgba(0,255,255,0.5)',
+    letterSpacing: '0.02em',
+  },
+  'sunset-vibe': {
+    id: 'sunset-vibe',
+    label: 'Sunset Vibe',
+    fontFamily: '"Titan One", system-ui',
+    fontClass: 'font-titan',
+    textColor: '#5a189a',
+    bgColor: '#ff9100',
+    textShadow: '2px 2px 0 rgba(255,255,255,0.4)',
+    letterSpacing: '-0.02em',
   }
 };
 
@@ -235,6 +265,8 @@ type Composition = {
     m3Shape?: string;
     isFullscreen?: boolean;
     isAnimating?: boolean;
+    objectFit?: 'cover' | 'contain';
+    animation?: 'none' | 'pulse' | 'scale-up' | 'scale-down' | 'breathing';
   }[];
   x: number;
   y: number;
@@ -2328,13 +2360,21 @@ const CompositionNode = ({
                   loop
                   muted
                   playsInline
-                  className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
+                  className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
-                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : {
-                    scale: [1, 1.05],
-                    rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                  }) : { scale: 1, rotate: 0 }}
+                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
+                    switch(m.animation) {
+                      case 'pulse': return { scale: [1, 1.1, 1] };
+                      case 'scale-up': return { scale: [0.8, 1.2] };
+                      case 'scale-down': return { scale: [1.2, 0.8] };
+                      case 'breathing': return { scale: [1, 1.05, 1], y: [0, -10, 0] };
+                      default: return {
+                        scale: [1, 1.05],
+                        rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                      };
+                    }
+                  })()) : { scale: 1, rotate: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -2344,13 +2384,21 @@ const CompositionNode = ({
                 <motion.img
                   src={m.url}
                   alt={comp.caption}
-                  className={m.isFullscreen ? "absolute inset-0 w-full h-full object-cover" : shapeStyle.className}
+                  className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
-                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : {
-                    scale: [1, 1.05],
-                    rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
-                  }) : { scale: 1, rotate: 0 }}
+                  animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
+                    switch(m.animation) {
+                      case 'pulse': return { scale: [1, 1.1, 1] };
+                      case 'scale-up': return { scale: [0.8, 1.2] };
+                      case 'scale-down': return { scale: [1.2, 0.8] };
+                      case 'breathing': return { scale: [1, 1.05, 1], y: [0, -10, 0] };
+                      default: return {
+                        scale: [1, 1.05],
+                        rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                      };
+                    }
+                  })()) : { scale: 1, rotate: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -3751,7 +3799,7 @@ export default function App() {
         : fontFamily;
 
       const allowedPaths = ['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift', 'static', 'orbit-right'];
-      const currentCameraPath: any = sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
+      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
@@ -4763,9 +4811,69 @@ export default function App() {
                            <div className="flex gap-2">
                              {comp.media.map((m, mIdx) => (
                                <div key={mIdx} className="w-16 h-16 border border-black/10 p-1 bg-white">
-                                 <img src={m.url} className="w-full h-full object-cover grayscale" />
+                                 <img src={m.url} className={`w-full h-full grayscale ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}`} />
                                </div>
                              ))}
+                           </div>
+                           
+                           <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-black/5">
+                              <span className="mono text-[8px] uppercase opacity-30 font-bold">Media Assets Controls</span>
+                              {comp.media.map((m, mIdx) => (
+                                <div key={mIdx} className="flex flex-wrap gap-4 items-center bg-white/40 p-2 rounded-sm border border-black/5">
+                                   <div className="w-6 h-6 border border-black/10">
+                                     <img src={m.url} className="w-full h-full object-cover grayscale" />
+                                   </div>
+                                   <div className="flex flex-col gap-1">
+                                     <span className="mono text-[7px] uppercase opacity-40">Fit</span>
+                                     <select
+                                       value={m.objectFit || 'cover'}
+                                       onChange={(e) => {
+                                         const newMedia = [...comp.media];
+                                         newMedia[mIdx] = { ...newMedia[mIdx], objectFit: e.target.value as any };
+                                         updateSceneProperty(idx, 'media', newMedia);
+                                       }}
+                                       className="bg-white border border-black/5 px-2 py-1 mono text-[8px] uppercase font-bold outline-none"
+                                     >
+                                       <option value="cover">Fill (Cover)</option>
+                                       <option value="contain">In Frame (Contain)</option>
+                                     </select>
+                                   </div>
+                                   <div className="flex flex-col gap-1">
+                                     <span className="mono text-[7px] uppercase opacity-40">Motion</span>
+                                     <select
+                                       value={m.animation || 'none'}
+                                       onChange={(e) => {
+                                         const newMedia = [...comp.media];
+                                         newMedia[mIdx] = { ...newMedia[mIdx], animation: e.target.value as any };
+                                         updateSceneProperty(idx, 'media', newMedia);
+                                       }}
+                                       className="bg-white border border-black/5 px-2 py-1 mono text-[8px] uppercase font-bold outline-none"
+                                     >
+                                       <option value="none">Subtle Drift</option>
+                                       <option value="pulse">Pulse</option>
+                                       <option value="scale-up">Scale Up</option>
+                                       <option value="scale-down">Scale Down</option>
+                                       <option value="breathing">Breathing</option>
+                                     </select>
+                                   </div>
+                                   <div className="flex flex-col gap-1 flex-1">
+                                     <div className="flex justify-between items-center">
+                                       <span className="mono text-[7px] uppercase opacity-40">Size</span>
+                                       <span className="mono text-[7px] font-bold">{m.scale || 1}x</span>
+                                     </div>
+                                     <input 
+                                        type="range" min="0.1" max="3" step="0.1" 
+                                        value={m.scale || 1} 
+                                        onChange={(e) => {
+                                          const newMedia = [...comp.media];
+                                          newMedia[mIdx] = { ...newMedia[mIdx], scale: parseFloat(e.target.value) };
+                                          updateSceneProperty(idx, 'media', newMedia);
+                                        }}
+                                        className="w-full h-1 bg-black/10 appearance-none accent-ink"
+                                     />
+                                   </div>
+                                </div>
+                              ))}
                            </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
