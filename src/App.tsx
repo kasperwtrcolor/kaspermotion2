@@ -51,7 +51,7 @@ type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -148,6 +148,46 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     bgColor: '#1a0a00',
     textShadow: '0 0 30px rgba(255,68,0,0.6), 0 0 60px rgba(255,68,0,0.3), 3px 3px 0 rgba(0,0,0,0.4)',
     letterSpacing: '-0.02em',
+  },
+  'cyber-lime': {
+    id: 'cyber-lime',
+    label: 'Cyber Lime',
+    fontFamily: '"Bungee", system-ui',
+    fontClass: 'font-bungee',
+    textColor: '#ccff00',
+    bgColor: '#050505',
+    textShadow: '0 0 15px rgba(204,255,0,0.6)',
+    letterSpacing: '0.05em',
+  },
+  'bubblegum': {
+    id: 'bubblegum',
+    label: 'Bubblegum',
+    fontFamily: '"Luckiest Guy", system-ui',
+    fontClass: 'font-luckiest',
+    textColor: '#00f2ff',
+    bgColor: '#ff49db',
+    textShadow: '4px 4px 0 rgba(0,0,0,0.1)',
+    letterSpacing: '0.02em',
+  },
+  'deep-space': {
+    id: 'deep-space',
+    label: 'Deep Space',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ffffff',
+    bgColor: '#000033',
+    textShadow: '0 0 40px rgba(255,255,255,0.4)',
+    letterSpacing: '-0.03em',
+  },
+  'gold-standard': {
+    id: 'gold-standard',
+    label: 'Gold Standard',
+    fontFamily: '"Titan One", system-ui',
+    fontClass: 'font-titan',
+    textColor: '#0a0a2a',
+    bgColor: '#ffd700',
+    textShadow: '3px 3px 0 rgba(255,255,255,0.3)',
+    letterSpacing: '-0.01em',
   }
 };
 
@@ -222,7 +262,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
-  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-left' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'dolly-zoom' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
@@ -3283,11 +3323,8 @@ export default function App() {
     const speed = Math.sqrt(Math.pow(Number(vx), 2) + Math.pow(Number(vy), 2) + Math.pow(Number(vz), 2));
     const speedScale = 1 + Math.min(speed / 8000, 0.2);
 
-    // Dolly Zoom compensation logic
-    // If artistryZ is increasing (moving in), we scale DOWN to compensate
-    const dollyComp = currentComp?.cameraPath === 'dolly-zoom' ? 1 - (Number(az) / 4000) : 1;
-
-    return speedScale * dollyComp;
+    // Speed scaling logic
+    return speedScale;
   });
 
   const worldX = useTransform([smoothX, smoothPanX, smoothWiggleX, smoothArtX], ([x, px, wx, ax]) => Number(x) + Number(px) + Number(wx) + Number(ax));
@@ -3325,10 +3362,6 @@ export default function App() {
         animate(artistryZ, 800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'zoom-out') {
         animate(artistryZ, -800, { duration, ease: "linear" });
-      } else if (currentComp.cameraPath === 'orbit-left') {
-        animate(artistryX, -600, { duration, ease: "linear" });
-        animate(artistryRotY, 20, { duration, ease: "linear" });
-        animate(artistryRoll, -5, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'orbit-right') {
         animate(artistryX, 600, { duration, ease: "linear" });
         animate(artistryRotY, -20, { duration, ease: "linear" });
@@ -3336,9 +3369,6 @@ export default function App() {
       } else if (currentComp.cameraPath === 'pan-down-tilt') {
         animate(artistryY, -400, { duration, ease: "linear" });
         animate(artistryRotX, 15, { duration, ease: "linear" });
-      } else if (currentComp.cameraPath === 'dolly-zoom') {
-        // Move camera IN while zooming world OUT
-        animate(artistryZ, 1200, { duration, ease: "easeInOut" });
       } else if (currentComp.cameraPath === 'hyper-glide') {
         animate(artistryZ, [0, 400, 0], { duration, ease: "anticipate" });
         animate(artistryRotY, [0, 10, 0], { duration, ease: "anticipate" });
@@ -3718,7 +3748,7 @@ export default function App() {
         ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
         : fontFamily;
 
-      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'orbit-left', 'dolly-zoom', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 8)]);
+      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
@@ -4759,9 +4789,9 @@ export default function App() {
                              <option value="static">Static Camera</option>
                              <option value="zoom-in">Zoom In</option>
                              <option value="zoom-out">Zoom Out</option>
-                             <option value="orbit-left">Orbit Left</option>
-                             <option value="dolly-zoom">Dolly Zoom</option>
                              <option value="hyper-glide">Hyper Glide</option>
+                             <option value="crane-up">Crane Up</option>
+                             <option value="parallax-drift">Parallax Drift</option>
                            </select>
                         </div>
                       </div>
