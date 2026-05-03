@@ -3829,6 +3829,22 @@ export default function App() {
       comp.activeBackground = currentBackground as BackgroundStyle;
       comp.textPosition = currentTextPosition;
       comp.fontSize = currentFontSize;
+
+      // Deep preserve media settings (Scale, Fit, Motion)
+      if (existingComp) {
+        comp.media = comp.media.map(m => {
+          const existingMedia = existingComp.media.find(em => em.url === m.url);
+          if (existingMedia) {
+            return {
+              ...m,
+              scale: existingMedia.scale || m.scale,
+              objectFit: existingMedia.objectFit || m.objectFit,
+              animation: existingMedia.animation || m.animation
+            };
+          }
+          return m;
+        });
+      }
       
       // Inject Thicc Typography Theme
       if (thiccTheme === 'random') {
@@ -3930,7 +3946,9 @@ export default function App() {
         name: m.name || 'Asset',
         xOffset: m.xOffset || 0,
         yOffset: m.yOffset || 0,
-        scale: m.scale || 1
+        scale: m.scale || 1,
+        objectFit: m.objectFit || 'cover',
+        animation: m.animation || 'none'
       })),
       x, y, z,
       rotX: 0,
