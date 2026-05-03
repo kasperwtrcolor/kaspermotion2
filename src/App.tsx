@@ -26,6 +26,7 @@ import WorldNavigationPaths from './components/WorldNavigationPaths';
 import AuthModal from './components/AuthModal';
 import ExplosionOverlay from './components/ExplosionOverlay';
 import CoinFlipCard from './components/CoinFlipCard';
+import RainbowPhysicsOverlay from './components/RainbowPhysicsOverlay';
 
 gsap.registerPlugin(useGSAP);
 
@@ -2377,6 +2378,8 @@ export default function App() {
   const [explosionEnabled, setExplosionEnabled] = useState(true);
   const [explosionSize, setExplosionSize] = useState(1);
   const [explosionDuration, setExplosionDuration] = useState(1);
+  const [rainbowEnabled, setRainbowEnabled] = useState(true);
+  const [isRainbowActive, setIsRainbowActive] = useState(false);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -2533,11 +2536,22 @@ export default function App() {
   const currentComp = compositions[currentIndex];
 
   useEffect(() => {
-    // Randomly trigger explosion during playing mode (20% chance per scene)
-    if (appMode === 'playing' && explosionEnabled && Math.random() < 0.2) {
-      setExplosionTriggerId(prev => prev + 1);
+    // Randomly trigger explosion or rainbow during playing mode
+    if (appMode === 'playing') {
+      const rand = Math.random();
+      
+      if (explosionEnabled && rand < 0.15) {
+        setExplosionTriggerId(prev => prev + 1);
+        setIsRainbowActive(false);
+      } else if (rainbowEnabled && rand < 0.3) {
+        setIsRainbowActive(true);
+      } else {
+        setIsRainbowActive(false);
+      }
+    } else {
+      setIsRainbowActive(false);
     }
-  }, [currentIndex, appMode, explosionEnabled]);
+  }, [currentIndex, appMode, explosionEnabled, rainbowEnabled]);
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -4652,42 +4666,53 @@ export default function App() {
                      
                      <div className="mt-8 pt-8 border-t border-black/5">
                         <div className="flex items-center justify-between mb-6">
-                           <h4 className="mono text-[10px] font-bold uppercase">Automated Explosion Overlay</h4>
+                           <h4 className="mono text-[10px] font-bold uppercase">Automated Secondary Graphics</h4>
+                        </div>
+                        <div className="flex gap-4 mb-6">
                            <button
                              onClick={() => setExplosionEnabled(!explosionEnabled)}
-                             className={`px-3 py-1 mono text-[9px] uppercase font-bold border ${explosionEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20'}`}
+                             className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${explosionEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
                            >
-                             {explosionEnabled ? 'Enabled' : 'Disabled'}
+                             {explosionEnabled ? 'Explosion: ON' : 'Explosion: OFF'}
+                           </button>
+                           <button
+                             onClick={() => setRainbowEnabled(!rainbowEnabled)}
+                             className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${rainbowEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
+                           >
+                             {rainbowEnabled ? 'Rainbow Fountain: ON' : 'Rainbow Fountain: OFF'}
                            </button>
                         </div>
-                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 transition-opacity ${explosionEnabled ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                           <div>
-                              <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Particle Size</label>
-                              <input
-                                 type="range" min="0.5" max="3" step="0.1"
-                                 value={explosionSize}
-                                 onChange={(e) => setExplosionSize(parseFloat(e.target.value))}
-                                 className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                              />
-                              <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                 <span>Small</span>
-                                 <span>Massive ({explosionSize}x)</span>
-                              </div>
-                           </div>
-                           <div>
-                              <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Animation Duration</label>
-                              <input
-                                 type="range" min="0.5" max="3" step="0.1"
-                                 value={explosionDuration}
-                                 onChange={(e) => setExplosionDuration(parseFloat(e.target.value))}
-                                 className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                              />
-                              <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                 <span>Fast</span>
-                                 <span>Slow ({explosionDuration}x)</span>
-                              </div>
-                           </div>
-                        </div>
+                        
+                        {explosionEnabled && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-300">
+                             <div>
+                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Size</label>
+                                <input
+                                   type="range" min="0.5" max="3" step="0.1"
+                                   value={explosionSize}
+                                   onChange={(e) => setExplosionSize(parseFloat(e.target.value))}
+                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                                />
+                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                                   <span>Small</span>
+                                   <span>Massive ({explosionSize}x)</span>
+                                </div>
+                             </div>
+                             <div>
+                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Duration</label>
+                                <input
+                                   type="range" min="0.5" max="3" step="0.1"
+                                   value={explosionDuration}
+                                   onChange={(e) => setExplosionDuration(parseFloat(e.target.value))}
+                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                                />
+                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                                   <span>Fast</span>
+                                   <span>Slow ({explosionDuration}x)</span>
+                                </div>
+                             </div>
+                          </div>
+                        )}
                      </div>
                  </div>
                </div>
@@ -5224,6 +5249,9 @@ export default function App() {
       {appMode === 'playing' && explosionEnabled && (
         <ExplosionOverlay triggerId={explosionTriggerId} sizeMultiplier={explosionSize} durationMultiplier={explosionDuration} />
       )}
+
+      {/* GSAP Rainbow Physics Overlay */}
+      <RainbowPhysicsOverlay isActive={isRainbowActive} />
     </div>
   );
 }
