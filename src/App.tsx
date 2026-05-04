@@ -2602,6 +2602,7 @@ export default function App() {
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
   const [globalAssetScale, setGlobalAssetScale] = useState<number>(1.0);
   const [globalAssetAnimation, setGlobalAssetAnimation] = useState<'none' | 'pulsate' | 'breathe' | 'float'>('float');
+  const [generationId, setGenerationId] = useState(0);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
@@ -3872,10 +3873,10 @@ export default function App() {
           : fontFamily
       );
 
-      const allowedPaths = ['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift', 'static', 'orbit-right'];
+      const allowedPaths = ['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift', 'static'];
       const currentCameraPath: any = (preferredCameraPath !== 'random')
         ? preferredCameraPath
-        : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]));
+        : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift'][Math.floor(Math.random() * 4)]));
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
@@ -3978,6 +3979,7 @@ export default function App() {
     }
 
     setCompositions(newComps);
+    setGenerationId(prev => prev + 1);
     setCurrentIndex(0);
 
     if (newComps.length > 0) {
@@ -4725,11 +4727,8 @@ export default function App() {
                                   <option value="random">Random Path</option>
                                   <option value="zoom-in">Zoom In</option>
                                   <option value="zoom-out">Zoom Out</option>
-                                  <option value="orbit-right">Orbit Right</option>
-                                  <option value="pan-down-tilt">Pan Down Tilt</option>
                                   <option value="hyper-glide">Hyper Glide</option>
                                   <option value="static">Static (Still)</option>
-                                  <option value="crane-up">Crane Up</option>
                                   <option value="parallax-drift">Parallax Drift</option>
                                </select>
                             </div>
@@ -5056,7 +5055,6 @@ export default function App() {
                              <option value="zoom-in">Zoom In</option>
                              <option value="zoom-out">Zoom Out</option>
                              <option value="hyper-glide">Hyper Glide</option>
-                             <option value="crane-up">Crane Up</option>
                              <option value="parallax-drift">Parallax Drift</option>
                            </select>
                         </div>
@@ -5230,7 +5228,7 @@ export default function App() {
                           }}
                         >
                           <AnimatedCaption
-                            key={`${currentComp.id}-${currentComp.textEffect}`}
+                            key={`${currentComp.id}-${currentComp.textEffect}-${generationId}`}
                             text={currentComp.caption}
                             effect={currentComp.textEffect}
                             className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}
