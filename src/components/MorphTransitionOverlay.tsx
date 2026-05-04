@@ -8,18 +8,43 @@ interface MorphTransitionOverlayProps {
   type: string;
   status: 'past' | 'active' | 'future';
   duration?: number;
+  itemUrl?: string;
 }
 
-export default function MorphTransitionOverlay({ children, type, status, duration = 1.5 }: MorphTransitionOverlayProps) {
+export default function MorphTransitionOverlay({ children, type, status, duration = 1.5, itemUrl }: MorphTransitionOverlayProps) {
   const pathRef = useRef<SVGPathElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const maskId = useId().replace(/:/g, ''); // Ensure valid ID for CSS
   
   const shapeKey = type.replace('morph-', '') as keyof typeof MORPH_SHAPES;
   const targetPath = MORPH_SHAPES[shapeKey] || MORPH_SHAPES.circle;
   const squarePath = MORPH_SHAPES.square;
+  const activeItemUrl = itemUrl || (type === 'item-portal' ? '/assets/3D-Items/rocket/rocket-dynamic-premium.png' : null);
 
   useGSAP(() => {
+    // Item Portal logic
+    if (activeItemUrl && itemRef.current) {
+      if (status === 'active') {
+        gsap.fromTo(itemRef.current,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 25,
+            opacity: 1,
+            duration: duration,
+            ease: "expo.inOut",
+            onStart: () => console.log('Item Portal Started:', itemUrl)
+          }
+        );
+      } else if (status === 'past') {
+        gsap.to(itemRef.current, { scale: 0, opacity: 0, duration: duration * 0.5 });
+      } else {
+        gsap.set(itemRef.current, { scale: 0, opacity: 0 });
+      }
+      return;
+    }
+
+    // SVG Morph logic
     if (!pathRef.current) return;
 
     const path = pathRef.current;
@@ -56,24 +81,46 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
        // Future
        gsap.set(path, { scale: 0, opacity: 0 });
     }
-  }, { dependencies: [status, targetPath, squarePath, duration], scope: containerRef });
+  }, { dependencies: [status, targetPath, squarePath, duration, activeItemUrl], scope: containerRef });
 
   return (
-    <div ref={containerRef} className="relative w-full h-full" style={{ clipPath: `url(#${maskId})` }}>
-      {children}
+    <div ref={containerRef} className="relative w-full h-full" style={{ clipPath: activeItemUrl ? 'none' : `url(#${maskId})` }}>
+      {activeItemUrl ? (
+        <div 
+          ref={itemRef}
+          className="absolute inset-0 z-50 pointer-events-none"
+          style={{
+            WebkitMaskImage: `url(${activeItemUrl})`,
+            maskImage: `url(${activeItemUrl})`,
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            backgroundColor: 'white'
+          }}
+        >
+          {children}
+        </div>
+      ) : (
+        children
+      )}
       
       {/* The Mask Definition */}
-      <svg width="0" height="0" className="absolute">
-        <defs>
-          <clipPath id={maskId} clipPathUnits="objectBoundingBox">
-            <path
-              ref={pathRef}
-              d={targetPath}
-              transform="scale(0.01)" 
-            />
-          </clipPath>
-        </defs>
-      </svg>
+      {!activeItemUrl && (
+        <svg width="0" height="0" className="absolute">
+          <defs>
+            <clipPath id={maskId} clipPathUnits="objectBoundingBox">
+              <path
+                ref={pathRef}
+                d={targetPath}
+                transform="scale(0.01)" 
+              />
+            </clipPath>
+          </defs>
+        </svg>
+      )}
       
       {/* Optional: A solid color flash during the morph to give it more "pop" */}
       {status === 'active' && (

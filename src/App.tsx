@@ -51,7 +51,7 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'fo
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash' | 'gsap-stagger' | 'gsap-typewriter' | 'gsap-glitch' | 'gsap-wave' | 'gsap-blur-reveal';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond' | 'morph-hexagon' | 'morph-heart' | 'fade' | 'zoom' | 'minimal-reveal';
+type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond' | 'morph-hexagon' | 'morph-heart' | 'item-portal' | 'fade' | 'zoom' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
@@ -425,7 +425,7 @@ const generateComposition = (
     sceneType,
     textEffect: choreography?.textEffect || preferredEffect,
     transitionType: choreography?.transitionType || (preferredTransition === 'random'
-          ? (['morph-circle', 'morph-star', 'morph-diamond', 'morph-hexagon', 'morph-heart'][Math.floor(Math.random() * 5)] as TransitionType)
+          ? (['morph-circle', 'morph-star', 'morph-diamond', 'morph-hexagon', 'morph-heart', 'item-portal'][Math.floor(Math.random() * 6)] as TransitionType)
           : preferredTransition),
     transitionDuration: preferredDuration,
     isTextOnly,
@@ -2268,11 +2268,12 @@ const CompositionNode = ({
         initial="future"
         animate={status}
       >
-        {comp.transitionType?.startsWith('morph-') ? (
+        {comp.transitionType?.startsWith('morph-') || comp.transitionType === 'item-portal' ? (
           <MorphTransitionOverlay 
             type={comp.transitionType} 
             status={status} 
             duration={comp.transitionDuration} 
+            itemUrl={comp.transitionType === 'item-portal' ? comp.transitionItemAsset : undefined}
           >
             <SceneBackground style={comp.activeBackground} status={status} />
             <div className="vignette-overlay" />
@@ -4659,6 +4660,8 @@ export default function App() {
                                onChange={(e) => setTransitionType(e.target.value as TransitionType)}
                                className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
                             >
+                                <option value="random">Random Transition</option>
+                                <option value="item-portal">3D Item Portal</option>
                                 <option value="morph-star">Morph: Cinematic Star</option>
                                 <option value="morph-circle">Morph: Liquid Circle</option>
                                 <option value="morph-diamond">Morph: Geometric Diamond</option>
@@ -4667,7 +4670,6 @@ export default function App() {
                                 <option value="fade">Classic Fade</option>
                                 <option value="zoom">Optical Zoom</option>
                                 <option value="minimal-reveal">Minimal Wipe</option>
-                                <option value="random">Random Transition</option>
                             </select>
 
                            {/* Thicc Typography Themes */}
