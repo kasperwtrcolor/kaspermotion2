@@ -15,6 +15,9 @@ import VideoCanvas from './components/VideoCanvas';
 import HandDrawnCursor from './components/HandDrawnCursor';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { Physics2DPlugin } from 'gsap/Physics2DPlugin';
+
+gsap.registerPlugin(Physics2DPlugin);
 import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';

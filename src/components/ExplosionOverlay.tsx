@@ -56,32 +56,19 @@ export default function ExplosionOverlay({ triggerId, distance = 600, sizeMultip
 
       container.appendChild(img);
 
-      const angle = Math.random() * angleSpread;
-      const velocity = gsap.utils.random(500, 1500) * speed * sizeMultiplier; // Scale velocity with size slightly to shoot further
+      const angle = gsap.utils.random(0, 360);
+      const velocity = gsap.utils.random(500, 1500) * speed * sizeMultiplier;
       const duration = (1 + Math.random()) * durationMultiplier;
 
-      const vx = Math.cos(angle) * velocity;
-      // Negative Y because screen Y goes down, so negative is UP.
-      const vy = -Math.sin(angle) * velocity; 
-
-      // We'll use two tweens: 
-      // 1. linear X translation
       gsap.to(img, {
-        x: `+=${vx * duration}`,
+        physics2D: {
+          velocity: velocity,
+          angle: angle,
+          gravity: 3000 * durationMultiplier, // Scale gravity with duration to maintain path feel
+        },
         rotation: gsap.utils.random(-180, 180),
         duration: duration,
-        ease: 'linear',
-      });
-
-      // 2. Y translation with power2.in to simulate gravity
-      // Since initial vy can be upwards (negative), it goes up then falls down
-      // Standard gsap eases can't perfectly emulate initial velocity + gravity in one tween without CustomEase
-      // But we can approximate a parabolic arc using a motion path or two tweens
-      
-      gsap.to(img, {
-        y: `+=${vy * duration + 0.5 * 3000 * duration * duration}`,
-        duration: duration,
-        ease: 'power1.in', // starts somewhat slow, accelerates down
+        ease: 'power1.out'
       });
 
       // 3. Fade out
