@@ -70,3 +70,13 @@ export const findBestTransitionItem = (caption: string): string | null => {
 
   return null;
 };
+
+export const MORPH_SHAPES = {
+  square: "M0,0 L100,0 L100,100 L0,100 Z",
+  circle: "M50,0 C77.6,0 100,22.4 100,50 C100,77.6 77.6,100 50,100 C22.4,100 0,77.6 0,50 C0,22.4 22.4,0 50,0 Z",
+  star: "M50,0 L61,35 L98,35 L68,57 L79,91 L50,70 L21,91 L32,57 L2,35 L39,35 Z",
+  diamond: "M50,0 L100,50 L50,100 L0,50 Z",
+  triangle: "M50,0 L100,100 L0,100 Z",
+  hexagon: "M50,0 L93,25 L93,75 L50,100 L7,75 L7,25 Z",
+  heart: "M50,30 C50,10 80,10 80,30 C80,60 50,80 50,80 C50,80 20,60 20,30 C20,10 50,10 50,30 Z"
+};

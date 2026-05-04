@@ -16,13 +16,14 @@ import HandDrawnCursor from './components/HandDrawnCursor';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Physics2DPlugin } from 'gsap/Physics2DPlugin';
+import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
 
-gsap.registerPlugin(Physics2DPlugin);
-import ShaderTransitionCanvas from './components/ShaderTransitionCanvas';
+gsap.registerPlugin(Physics2DPlugin, MorphSVGPlugin);
+import MorphTransitionOverlay from './components/MorphTransitionOverlay';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { CompositionProvider } from './components/CompositionProvider';
-import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES } from './constants/transitionAssets';
+import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES, MORPH_SHAPES } from './constants/transitionAssets';
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
@@ -50,7 +51,7 @@ type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'fo
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
 type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash' | 'gsap-stagger' | 'gsap-typewriter' | 'gsap-glitch' | 'gsap-wave' | 'gsap-blur-reveal';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
-type TransitionType = 'fade' | 'slide' | 'zoom' | 'dissolve' | 'explode' | 'spin' | 'expand' | 'contract' | '3d-flip' | 'random' | 'domain-warp' | 'ridged-burn' | 'whip-pan' | 'sdf-iris' | 'ripple-waves' | 'gravitational-lens' | 'cinematic-zoom' | 'chromatic-split' | 'glitch' | 'swirl-vortex' | 'thermal-distortion' | 'flash-through-white' | 'cross-warp-morph' | 'light-leak' | 'dream-blur' | 'minimal-reveal';
+type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond' | 'morph-hexagon' | 'morph-heart' | 'fade' | 'zoom' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
@@ -424,10 +425,8 @@ const generateComposition = (
     sceneType,
     textEffect: choreography?.textEffect || preferredEffect,
     transitionType: choreography?.transitionType || (preferredTransition === 'random'
-      ? (Math.random() > 0.4
-          ? (ALL_SHADER_NAMES[Math.floor(Math.random() * ALL_SHADER_NAMES.length)] as TransitionType)
-          : (['fade', 'slide', 'zoom', 'dissolve', 'explode', 'spin', 'expand', 'contract'][Math.floor(Math.random() * 8)] as TransitionType))
-      : preferredTransition),
+          ? (['morph-circle', 'morph-star', 'morph-diamond', 'morph-hexagon', 'morph-heart'][Math.floor(Math.random() * 5)] as TransitionType)
+          : preferredTransition),
     transitionDuration: preferredDuration,
     isTextOnly,
     preset,
@@ -2253,6 +2252,15 @@ const CompositionNode = ({
         animate={status}
       >
         <SceneBackground style={comp.activeBackground} status={status} />
+        
+        {comp.transitionType?.startsWith('morph-') && (
+           <MorphTransitionOverlay 
+             type={comp.transitionType} 
+             status={status} 
+             duration={comp.transitionDuration} 
+           />
+        )}
+
         <div className="vignette-overlay" />
         
         {/* Secondary Motion Assets Layer */}
@@ -2529,7 +2537,7 @@ export default function App() {
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
-  const [transitionType, setTransitionType] = useState<TransitionType>('zoom');
+  const [transitionType, setTransitionType] = useState<TransitionType>('morph-star');
   const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
@@ -4630,16 +4638,15 @@ export default function App() {
                                onChange={(e) => setTransitionType(e.target.value as TransitionType)}
                                className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
                             >
-                               <option value="random">Random Transition</option>
-                               <option value="dream-blur">Elite Dream Blur</option>
-                               <option value="minimal-reveal">Minimal Wipe</option>
-                               <option value="cinematic-zoom">Optical Zoom</option>
-                               <option value="whip-pan">Whip Pan</option>
-                               <option value="glitch">Digital Glitch</option>
-                               <option value="sdf-iris">Iris Reveal</option>
-                               <option value="light-leak">Light Leak</option>
-                               <option value="chromatic-split">Chromatic Split</option>
-                               <option value="gravitational-lens">Grav Lens</option>
+                                <option value="morph-star">Morph: Cinematic Star</option>
+                                <option value="morph-circle">Morph: Liquid Circle</option>
+                                <option value="morph-diamond">Morph: Geometric Diamond</option>
+                                <option value="morph-hexagon">Morph: Tech Hexagon</option>
+                                <option value="morph-heart">Morph: Social Heart</option>
+                                <option value="fade">Classic Fade</option>
+                                <option value="zoom">Optical Zoom</option>
+                                <option value="minimal-reveal">Minimal Wipe</option>
+                                <option value="random">Random Transition</option>
                             </select>
 
                            {/* Thicc Typography Themes */}
