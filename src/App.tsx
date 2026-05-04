@@ -55,7 +55,7 @@ type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond'
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'deep-sea' | 'cyber-punk' | 'luxury' | 'brutal' | 'glass' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -138,10 +138,42 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     label: 'Ice Cream',
     fontFamily: '"Lilita One", sans-serif',
     fontClass: 'font-lilita',
-    textColor: '#f0e6ff',
-    bgColor: '#7c3aed',
-    textShadow: '3px 3px 0 rgba(255,255,255,0.15), 0 10px 40px rgba(124,58,237,0.5)',
+    textColor: '#ffffff',
+    bgColor: '#ff9ff3',
+    textShadow: '0 8px 0 #f368e0',
+    letterSpacing: '0.02em',
+  },
+  'pearl-white': {
+    id: 'pearl-white',
+    label: 'Pearl White',
+    fontFamily: '"Outfit", sans-serif',
+    fontClass: 'font-outfit',
+    textColor: '#1a1a1a',
+    bgColor: '#ffffff',
+    textShadow: 'none',
     letterSpacing: '-0.02em',
+    extraClass: 'tracking-tight',
+  },
+  'midnight-gold': {
+    id: 'midnight-gold',
+    label: 'Midnight Gold',
+    fontFamily: '"Cinzel", serif',
+    fontClass: 'font-serif',
+    textColor: '#d4af37',
+    bgColor: '#0f0f0f',
+    textShadow: '0 0 10px rgba(212, 175, 55, 0.5)',
+    letterSpacing: '0.1em',
+  },
+  'emerald-cyber': {
+    id: 'emerald-cyber',
+    label: 'Emerald Cyber',
+    fontFamily: '"Space Grotesk", sans-serif',
+    fontClass: 'font-grotesk',
+    textColor: '#00ff41',
+    bgColor: '#001a00',
+    textShadow: '0 0 5px #00ff41',
+    textStroke: '1px rgba(0,255,65,0.2)',
+    letterSpacing: '-0.01em',
   },
   lava: {
     id: 'lava',
@@ -2564,6 +2596,8 @@ export default function App() {
   const [preset, setPreset] = useState<string>('custom');
   const [transitionDuration, setTransitionDuration] = useState(1.2);
   const [textAnimationSpeed, setTextAnimationSpeed] = useState<number>(1.2);
+  const [globalAssetScale, setGlobalAssetScale] = useState<number>(1.0);
+  const [globalAssetAnimation, setGlobalAssetAnimation] = useState<'none' | 'pulsate' | 'breathe' | 'float'>('float');
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
@@ -4671,6 +4705,48 @@ export default function App() {
                                 <option value="zoom">Optical Zoom</option>
                                 <option value="minimal-reveal">Minimal Wipe</option>
                             </select>
+
+                           {/* Asset Motion Graphics Controls */}
+                           <div className="flex flex-col gap-4 mt-6 p-4 bg-black/5 rounded-xl border border-black/5">
+                              <div className="flex justify-between items-center px-1">
+                                <label className="mono text-[10px] uppercase font-bold text-ink">Global Asset Scale: {(globalAssetScale * 100).toFixed(0)}%</label>
+                                <button 
+                                  onClick={() => setGlobalAssetScale(1.0)}
+                                  className="text-[9px] uppercase font-bold text-ink/40 hover:text-ink"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                              <input 
+                                type="range" 
+                                min="0.5" 
+                                max="3.0" 
+                                step="0.1" 
+                                value={globalAssetScale}
+                                onChange={(e) => setGlobalAssetScale(parseFloat(e.target.value))}
+                                className="w-full h-1 bg-black/10 rounded-lg appearance-none cursor-pointer accent-ink"
+                              />
+
+                              <div className="flex flex-col gap-2">
+                                <label className="mono text-[10px] uppercase font-bold text-ink/60 px-1">Motion Behavior</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                  {[
+                                    { id: 'float', label: 'Float' },
+                                    { id: 'breathe', label: 'Breathe' },
+                                    { id: 'pulsate', label: 'Pulse' },
+                                    { id: 'none', label: 'Static' }
+                                  ].map(opt => (
+                                    <button
+                                      key={opt.id}
+                                      onClick={() => setGlobalAssetAnimation(opt.id as any)}
+                                      className={`py-2 px-1 border mono text-[9px] font-bold uppercase transition-all ${globalAssetAnimation === opt.id ? 'bg-ink text-cream border-ink' : 'bg-white border-black/5 opacity-60 hover:opacity-100'}`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                           </div>
 
                            {/* Thicc Typography Themes */}
                            <div className="space-y-2">
