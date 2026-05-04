@@ -2227,10 +2227,27 @@ const CompositionNode = ({
     const ghostBlur = 'blur(40px)';
     const ghostScale = 0.4;
 
+    const isMorph = type?.startsWith('morph-');
+
     return {
-      future: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } },
-      active: { opacity: 1, scale: 1, filter: 'blur(0px)', transition: { duration: 1.2 } },
-      past: { opacity: ghostOpacity, scale: ghostScale, filter: ghostBlur, transition: { duration: 1.2 } }
+      future: { 
+        opacity: isMorph ? 1 : ghostOpacity, 
+        scale: isMorph ? 1 : ghostScale, 
+        filter: isMorph ? 'none' : ghostBlur, 
+        transition: { duration: 1.2 } 
+      },
+      active: { 
+        opacity: 1, 
+        scale: 1, 
+        filter: 'blur(0px)', 
+        transition: { duration: 1.2 } 
+      },
+      past: { 
+        opacity: isMorph ? 1 : ghostOpacity, 
+        scale: isMorph ? 1 : ghostScale, 
+        filter: isMorph ? 'none' : ghostBlur, 
+        transition: { duration: 1.2 } 
+      }
     };
   };
 
@@ -2251,17 +2268,21 @@ const CompositionNode = ({
         initial="future"
         animate={status}
       >
-        <SceneBackground style={comp.activeBackground} status={status} />
-        
-        {comp.transitionType?.startsWith('morph-') && (
-           <MorphTransitionOverlay 
-             type={comp.transitionType} 
-             status={status} 
-             duration={comp.transitionDuration} 
-           />
+        {comp.transitionType?.startsWith('morph-') ? (
+          <MorphTransitionOverlay 
+            type={comp.transitionType} 
+            status={status} 
+            duration={comp.transitionDuration} 
+          >
+            <SceneBackground style={comp.activeBackground} status={status} />
+            <div className="vignette-overlay" />
+          </MorphTransitionOverlay>
+        ) : (
+          <>
+            <SceneBackground style={comp.activeBackground} status={status} />
+            <div className="vignette-overlay" />
+          </>
         )}
-
-        <div className="vignette-overlay" />
         
         {/* Secondary Motion Assets Layer */}
         {comp.secondaryAssets?.map(asset => {
