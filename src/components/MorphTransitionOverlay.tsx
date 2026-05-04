@@ -15,122 +15,137 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
   const pathRef = useRef<SVGPathElement>(null);
   const itemRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const maskId = useId().replace(/:/g, ''); // Ensure valid ID for CSS
+  const solidRef = useRef<HTMLDivElement>(null);
+  const solidPathRef = useRef<SVGPathElement>(null);
+  const maskId = useId().replace(/:/g, '');
   
   const shapeKey = type.replace('morph-', '') as keyof typeof MORPH_SHAPES;
   const targetPath = MORPH_SHAPES[shapeKey] || MORPH_SHAPES.circle;
   const squarePath = MORPH_SHAPES.square;
   const activeItemUrl = itemUrl || (type === 'item-portal' ? '/assets/3D-Items/rocket/rocket-dynamic-premium.png' : null);
 
+  const transitionColor = useMemo(() => {
+    const colors = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#7c3aed'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }, [type]);
+
   useGSAP(() => {
+    if (!gsap.plugins.morphSVG) {
+      console.warn('MorphSVGPlugin not found! Morphs will not work.');
+    }
+
     // Item Portal logic
-    if (activeItemUrl && itemRef.current) {
+    if (activeItemUrl && itemRef.current && solidRef.current) {
       if (status === 'active') {
+        // Masked content animation
         gsap.fromTo(itemRef.current,
           { scale: 0, opacity: 0 },
           {
             scale: 25,
             opacity: 1,
             duration: duration,
-            ease: "expo.inOut",
-            onStart: () => console.log('Item Portal Started:', itemUrl)
+            ease: "expo.inOut"
           }
         );
-      } else if (status === 'past') {
-        gsap.to(itemRef.current, { scale: 0, opacity: 0, duration: duration * 0.5 });
+        // Solid wipe animation (on top)
+        gsap.fromTo(solidRef.current,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 30,
+            opacity: 1,
+            duration: duration,
+            ease: "expo.inOut",
+            onComplete: () => gsap.to(solidRef.current, { opacity: 0, duration: 0.3 })
+          }
+        );
       } else {
-        gsap.set(itemRef.current, { scale: 0, opacity: 0 });
+        gsap.set([itemRef.current, solidRef.current], { scale: 0, opacity: 0 });
       }
       return;
     }
 
     // SVG Morph logic
-    if (!pathRef.current) return;
+    if (!pathRef.current || !solidPathRef.current) return;
 
-    const path = pathRef.current;
-    
-    // Animation logic
     if (status === 'active') {
-       // Start as small shape in center and morph to full screen
-       gsap.fromTo(path, 
-         { 
-           scale: 0, 
-           opacity: 0, 
-           attr: { d: targetPath },
-           transformOrigin: "50% 50%" 
-         },
+       // Morph both the mask and a solid colored shape
+       gsap.fromTo([pathRef.current, solidPathRef.current], 
+         { scale: 0, opacity: 0, attr: { d: targetPath } },
          { 
            morphSVG: squarePath, 
            scale: 1, 
            opacity: 1, 
            duration: duration, 
            ease: "expo.inOut",
-           onStart: () => console.log('Morph Reveal Started:', type),
-           onComplete: () => console.log('Morph Reveal Complete')
+           transformOrigin: "50% 50%",
+           stagger: 0.05 // Solid shape lead slightly
          }
        );
-    } else if (status === 'past') {
-       // Shrink away
-       gsap.to(path, {
-         scale: 0,
-         opacity: 0,
-         duration: duration * 0.8,
-         ease: "power2.in"
-       });
+       // Fade out solid shape at end
+       gsap.to(solidPathRef.current, { opacity: 0, duration: 0.3, delay: duration - 0.1 });
     } else {
-       // Future
-       gsap.set(path, { scale: 0, opacity: 0 });
+       gsap.set([pathRef.current, solidPathRef.current], { scale: 0, opacity: 0 });
     }
   }, { dependencies: [status, targetPath, squarePath, duration, activeItemUrl], scope: containerRef });
 
   return (
-    <div ref={containerRef} className="relative w-full h-full" style={{ clipPath: activeItemUrl ? 'none' : `url(#${maskId})` }}>
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* Solid Wipe Layer (Top) */}
       {activeItemUrl ? (
         <div 
-          ref={itemRef}
-          className="absolute inset-0 z-50 pointer-events-none"
+          ref={solidRef}
+          className="absolute inset-0 z-[110]"
           style={{
-            WebkitMaskImage: `url(${activeItemUrl})`,
-            maskImage: `url(${activeItemUrl})`,
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-            backgroundColor: 'white'
+            backgroundImage: `url(${activeItemUrl})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'brightness(1.5) drop-shadow(0 0 20px rgba(255,255,255,0.5))'
           }}
-        >
-          {children}
-        </div>
+        />
       ) : (
-        children
+        <svg className="absolute inset-0 z-[110] w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path ref={solidPathRef} fill={transitionColor} style={{ transformOrigin: 'center center' }} />
+        </svg>
       )}
+
+      {/* Masked Reveal Layer */}
+      <div 
+        className="absolute inset-0 z-[100]"
+        style={{ clipPath: activeItemUrl ? 'none' : `url(#${maskId})` }}
+      >
+        {activeItemUrl ? (
+          <div 
+            ref={itemRef}
+            className="absolute inset-0"
+            style={{
+              WebkitMaskImage: `url(${activeItemUrl})`,
+              maskImage: `url(${activeItemUrl})`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              backgroundColor: 'white'
+            }}
+          >
+            {children}
+          </div>
+        ) : (
+          children
+        )}
+      </div>
       
-      {/* The Mask Definition */}
+      {/* Mask Definition */}
       {!activeItemUrl && (
         <svg width="0" height="0" className="absolute">
           <defs>
             <clipPath id={maskId} clipPathUnits="objectBoundingBox">
-              <path
-                ref={pathRef}
-                d={targetPath}
-                transform="scale(0.01)" 
-              />
+              <path ref={pathRef} d={targetPath} transform="scale(0.01)" />
             </clipPath>
           </defs>
         </svg>
-      )}
-      
-      {/* Optional: A solid color flash during the morph to give it more "pop" */}
-      {status === 'active' && (
-        <div 
-          className="absolute inset-0 pointer-events-none z-[-1]"
-          style={{ 
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            mixBlendMode: 'overlay' 
-          }}
-        />
       )}
     </div>
   );

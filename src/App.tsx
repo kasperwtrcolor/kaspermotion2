@@ -3847,9 +3847,11 @@ export default function App() {
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       
       // If global textEffect is 'random', we re-randomize unless it's the very first run
-      const currentEffect: TextEffect = (textEffect === 'random')
-        ? (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
-        : textEffect;
+      const currentEffect: TextEffect = existingComp?.textEffect || (
+        textEffect === 'random'
+          ? (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
+          : textEffect
+      );
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
       const currentTextPosition = (preferredTextPosition === 'random')
@@ -3857,13 +3859,17 @@ export default function App() {
         : preferredTextPosition;
 
       const sizeList = ['text-3xl', 'text-5xl', 'text-7xl', 'text-[120px]'];
-      const currentFontSize = (preferredTextSize === 'random')
-        ? (existingComp?.fontSize || sizeList[Math.floor(Math.random() * sizeList.length)])
-        : preferredTextSize;
+      const currentFontSize = existingComp?.fontSize || (
+        preferredTextSize === 'random'
+          ? (sizeList[Math.floor(Math.random() * sizeList.length)])
+          : preferredTextSize
+      );
         
-      const currentFontFamily = (fontFamily === 'font-display') // Use display as 'vibe-dependent' fallback
-        ? (existingComp?.fontFamily || designTokens?.typography?.pairing || 'font-display')
-        : fontFamily;
+      const currentFontFamily = existingComp?.fontFamily || (
+        fontFamily === 'font-display'
+          ? (designTokens?.typography?.pairing || 'font-display')
+          : fontFamily
+      );
 
       const allowedPaths = ['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift', 'static', 'orbit-right'];
       const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
