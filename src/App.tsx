@@ -455,7 +455,7 @@ const generateComposition = (
     caption,
     textPosition,
     sceneType,
-    textEffect: choreography?.textEffect || preferredEffect,
+    textEffect: preferredEffect || choreography?.textEffect || 'gsap-stagger',
     transitionType: choreography?.transitionType || (preferredTransition === 'random'
           ? (['morph-circle', 'morph-star', 'morph-diamond', 'morph-hexagon', 'morph-heart', 'item-portal'][Math.floor(Math.random() * 6)] as TransitionType)
           : preferredTransition),
@@ -2603,6 +2603,7 @@ export default function App() {
   const [globalAssetScale, setGlobalAssetScale] = useState<number>(1.0);
   const [globalAssetAnimation, setGlobalAssetAnimation] = useState<'none' | 'pulsate' | 'breathe' | 'float'>('float');
   const [generationId, setGenerationId] = useState(0);
+  const [automatedSecondaryAssets, setAutomatedSecondaryAssets] = useState(false);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
@@ -3940,34 +3941,36 @@ export default function App() {
         }
       }
       
-      // Generate Secondary Assets for depth
-      const secondaryAssets: SecondaryAsset[] = [];
-      const assetCount = complexity === 'dense' || complexity === 'layered' ? 3 : 1;
-      
-      for (let i = 0; i < assetCount; i++) {
-        const is3D = Math.random() > 0.5;
-        let content = is3D 
-          ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
-          : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+      // Secondary Assets (floating items)
+      let secondaryAssets: SecondaryAsset[] = [];
+      if (existingComp?.secondaryAssets) {
+        secondaryAssets = existingComp.secondaryAssets;
+      } else if (automatedSecondaryAssets) {
+        const assetCount = complexity === 'dense' || complexity === 'layered' ? 3 : 1;
+        for (let i = 0; i < assetCount; i++) {
+          const is3D = Math.random() > 0.5;
+          let content = is3D 
+            ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+            : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
 
-        // AI Intent Override
-        if (is3D && sceneChoreography?.secondaryAssetIntent) {
-          const matched = findBestTransitionItem(sceneChoreography.secondaryAssetIntent);
-          if (matched) content = matched;
-          else if (i > 0) continue; // Skip if no match and not first asset, more selective
+          if (is3D && sceneChoreography?.secondaryAssetIntent) {
+            const matched = findBestTransitionItem(sceneChoreography.secondaryAssetIntent);
+            if (matched) content = matched;
+            else if (i > 0) continue;
+          }
+
+          secondaryAssets.push({
+            id: `sec-${sceneIdx}-${i}`,
+            type: is3D ? '3d-item' : 'hyper-shape',
+            content,
+            x: (Math.random() * 1200 - 600),
+            y: (Math.random() * 800 - 400),
+            z: (Math.random() * -800 - 200),
+            scale: 0.5 + Math.random() * 0.7,
+            rotation: Math.random() * 360,
+            drift: Math.random() * 100 - 50
+          });
         }
-
-        secondaryAssets.push({
-          id: `sec-${sceneIdx}-${i}`,
-          type: is3D ? '3d-item' : 'hyper-shape',
-          content,
-          x: (Math.random() * 1200 - 600), // More centered to avoid clipping
-          y: (Math.random() * 800 - 400),
-          z: (Math.random() * -800 - 200),
-          scale: 0.5 + Math.random() * 0.7,
-          rotation: Math.random() * 360,
-          drift: Math.random() * 100 - 50 // Reduced drift for stability
-        });
       }
 
       comp.secondaryAssets = secondaryAssets;
@@ -4819,22 +4822,34 @@ export default function App() {
                     <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Director Logic</label>
                        <div className="p-8 bg-white border border-black/5 space-y-8">
-                          <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-4">
-                                <button onClick={() => setIsSpatialWorld(!isSpatialWorld)}
-                                   className={`w-12 h-6 rounded-full relative transition-colors ${isSpatialWorld ? 'bg-ink' : 'bg-black/10'}`}>
-                                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isSpatialWorld ? 'translate-x-6' : ''}`} />
-                                </button>
-                                <span className="mono text-[10px] font-bold uppercase">Spatial Engine</span>
-                             </div>
-                             <div className="flex items-center gap-4">
-                                <button onClick={() => setIsMultiColor(!isMultiColor)}
-                                   className={`w-12 h-6 rounded-full relative transition-colors ${isMultiColor ? 'bg-ink' : 'bg-black/10'}`}>
-                                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isMultiColor ? 'translate-x-6' : ''}`} />
-                                </button>
-                                <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
-                             </div>
-                          </div>
+                           <div className="flex flex-col gap-4">
+                              <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-4">
+                                    <button onClick={() => setIsSpatialWorld(!isSpatialWorld)}
+                                       className={`w-12 h-6 rounded-full relative transition-colors ${isSpatialWorld ? 'bg-ink' : 'bg-black/10'}`}>
+                                       <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isSpatialWorld ? 'translate-x-6' : ''}`} />
+                                    </button>
+                                    <span className="mono text-[10px] font-bold uppercase">Spatial Engine</span>
+                                 </div>
+                                 <div className="flex items-center gap-4">
+                                    <button onClick={() => setIsMultiColor(!isMultiColor)}
+                                       className={`w-12 h-6 rounded-full relative transition-colors ${isMultiColor ? 'bg-ink' : 'bg-black/10'}`}>
+                                       <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isMultiColor ? 'translate-x-6' : ''}`} />
+                                    </button>
+                                    <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
+                                 </div>
+                              </div>
+                              <div className="flex items-center gap-4 border-t border-black/5 pt-4">
+                                 <button onClick={() => setAutomatedSecondaryAssets(!automatedSecondaryAssets)}
+                                    className={`w-12 h-6 rounded-full relative transition-colors ${automatedSecondaryAssets ? 'bg-ink' : 'bg-black/10'}`}>
+                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${automatedSecondaryAssets ? 'translate-x-6' : ''}`} />
+                                 </button>
+                                 <div className="flex flex-col">
+                                    <span className="mono text-[10px] font-bold uppercase leading-none">Auto 3D Decorations</span>
+                                    <span className="text-[8px] opacity-40 uppercase">Secondary floating assets</span>
+                                 </div>
+                              </div>
+                           </div>
 
                           <div className="grid grid-cols-1">
                              <button onClick={() => setShowLibrary(true)} className="flex items-center justify-center gap-3 py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all rounded-lg">
