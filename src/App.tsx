@@ -2592,6 +2592,7 @@ export default function App() {
   const [thiccTheme, setThiccTheme] = useState<ThiccThemeId>('none');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
+  const [preferredCameraPath, setPreferredCameraPath] = useState<string>('random');
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
   const [transitionType, setTransitionType] = useState<TransitionType>('morph-star');
@@ -4713,6 +4714,25 @@ export default function App() {
                                 <option value="zoom">Optical Zoom</option>
                                 <option value="minimal-reveal">Minimal Wipe</option>
                             </select>
+
+                            <div className="flex flex-col gap-2 mt-6">
+                               <label className="mono text-[10px] uppercase opacity-40 font-bold px-1">Global Camera Path</label>
+                               <select
+                                  value={preferredCameraPath}
+                                  onChange={(e) => setPreferredCameraPath(e.target.value)}
+                                  className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                               >
+                                  <option value="random">Random Path</option>
+                                  <option value="zoom-in">Zoom In</option>
+                                  <option value="zoom-out">Zoom Out</option>
+                                  <option value="orbit-right">Orbit Right</option>
+                                  <option value="pan-down-tilt">Pan Down Tilt</option>
+                                  <option value="hyper-glide">Hyper Glide</option>
+                                  <option value="static">Static (Still)</option>
+                                  <option value="crane-up">Crane Up</option>
+                                  <option value="parallax-drift">Parallax Drift</option>
+                               </select>
+                            </div>
 
                            {/* Asset Motion Graphics Controls */}
                            <div className="flex flex-col gap-4 mt-6 p-4 bg-black/5 rounded-xl border border-black/5">
