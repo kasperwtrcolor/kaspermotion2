@@ -1676,7 +1676,10 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, c
     case 'gsap-wave': return <GSAPWaveText {...props} />;
     case 'gsap-blur-reveal': return <GSAPBlurRevealText {...props} />;
     case 'gsap-stagger': return <GSAPStaggerText {...props} />;
-    default: return <GSAPStaggerText {...props} />;
+    default: {
+      console.log(`AnimatedCaption: using default Stagger for ${effect}`);
+      return <GSAPStaggerText {...props} />;
+    }
   }
 };
 
@@ -3847,11 +3850,10 @@ export default function App() {
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       
       // If global textEffect is 'random', we re-randomize unless it's the very first run
-      const currentEffect: TextEffect = existingComp?.textEffect || (
-        textEffect === 'random'
-          ? (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)])
-          : textEffect
-      );
+      // Logic: Global Override (if not random) > Existing Manual/Auto > AI Choreography > Random from Selection
+      const currentEffect: TextEffect = (textEffect !== 'random')
+        ? textEffect
+        : (existingComp?.textEffect || sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]);
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
       const currentTextPosition = (preferredTextPosition === 'random')
@@ -3859,11 +3861,9 @@ export default function App() {
         : preferredTextPosition;
 
       const sizeList = ['text-3xl', 'text-5xl', 'text-7xl', 'text-[120px]'];
-      const currentFontSize = existingComp?.fontSize || (
-        preferredTextSize === 'random'
-          ? (sizeList[Math.floor(Math.random() * sizeList.length)])
-          : preferredTextSize
-      );
+      const currentFontSize = (preferredTextSize !== 'random')
+        ? preferredTextSize
+        : (existingComp?.fontSize || sizeList[Math.floor(Math.random() * sizeList.length)]);
         
       const currentFontFamily = existingComp?.fontFamily || (
         fontFamily === 'font-display'
@@ -3872,7 +3872,9 @@ export default function App() {
       );
 
       const allowedPaths = ['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift', 'static', 'orbit-right'];
-      const currentCameraPath: any = existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]);
+      const currentCameraPath: any = (preferredCameraPath !== 'random')
+        ? preferredCameraPath
+        : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'pan-down-tilt', 'hyper-glide', 'crane-up', 'parallax-drift'][Math.floor(Math.random() * 6)]));
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
@@ -5208,6 +5210,7 @@ export default function App() {
                           }}
                         >
                           <AnimatedCaption
+                            key={`${currentComp.id}-${currentComp.textEffect}`}
                             text={currentComp.caption}
                             effect={currentComp.textEffect}
                             className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}

@@ -1,7 +1,8 @@
-import React, { useRef, useMemo, useId } from 'react';
+import React, { useId, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { MORPH_SHAPES } from '../constants/transitionAssets';
+import { motion } from 'motion/react';
 
 interface MorphTransitionOverlayProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
   }, [type]);
 
   useGSAP(() => {
+    console.log(`MorphTransitionOverlay: ${type} status: ${status} itemUrl: ${activeItemUrl}`);
     if (!gsap.plugins.morphSVG) {
       console.warn('MorphSVGPlugin not found! Morphs will not work.');
     }
@@ -146,6 +148,16 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
             </clipPath>
           </defs>
         </svg>
+      )}
+
+      {/* Transitional Flash */}
+      {status === 'active' && (
+        <motion.div 
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="absolute inset-0 z-[120] bg-white pointer-events-none mix-blend-overlay"
+        />
       )}
     </div>
   );
