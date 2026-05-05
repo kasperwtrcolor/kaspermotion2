@@ -315,6 +315,7 @@ type Composition = {
   textPosition: TextPosition;
   sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post' | 'coin-flip';
   textEffect: TextEffect;
+  textEffectSource?: 'manual' | 'auto';
   transitionType: TransitionType;
   transitionDuration: number;
   isTextOnly?: boolean;
@@ -3251,6 +3252,9 @@ export default function App() {
     setCompositions(prev => {
       const newComps = [...prev];
       newComps[idx] = { ...newComps[idx], [prop]: value };
+      if (prop === 'textEffect') {
+        newComps[idx].textEffectSource = 'manual';
+      }
       return newComps;
     });
   };
@@ -3852,11 +3856,10 @@ export default function App() {
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       
-      // If global textEffect is 'random', we re-randomize unless it's the very first run
-      // Logic: Global Override (if not random) > Existing Manual/Auto > AI Choreography > Random from Selection
+      // Logic: Global Override (if not random) > Manual Scene Edit > AI Choreography > Random from Selection
       const currentEffect: TextEffect = (textEffect !== 'random')
         ? textEffect
-        : (existingComp?.textEffect || sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]);
+        : (existingComp?.textEffectSource === 'manual' ? existingComp.textEffect : (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]));
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
       const currentTextPosition = (preferredTextPosition === 'random')
@@ -4040,6 +4043,7 @@ export default function App() {
       textPosition: 'bottom',
       sceneType: 'standard',
       textEffect: effect,
+      textEffectSource: 'auto',
       transitionType: tType,
       transitionDuration: tDur,
       isTextOnly,
