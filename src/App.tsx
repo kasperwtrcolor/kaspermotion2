@@ -2697,23 +2697,7 @@ export default function App() {
 
   const currentComp = compositions[currentIndex];
 
-  useEffect(() => {
-    // Randomly trigger explosion or rainbow during playing mode
-    if (appMode === 'playing') {
-      const rand = Math.random();
-      
-      if (explosionEnabled && rand < 0.15) {
-        setExplosionTriggerId(prev => prev + 1);
-        setIsRainbowActive(false);
-      } else if (rainbowEnabled && rand < 0.3) {
-        setIsRainbowActive(true);
-      } else {
-        setIsRainbowActive(false);
-      }
-    } else {
-      setIsRainbowActive(false);
-    }
-  }, [currentIndex, appMode, explosionEnabled, rainbowEnabled]);
+  // Secondary graphics trigger removed for cleaner output
 
   const [windowSize, setWindowSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
@@ -3860,6 +3844,7 @@ export default function App() {
       const currentEffect: TextEffect = (textEffect !== 'random')
         ? textEffect
         : (existingComp?.textEffectSource === 'manual' ? existingComp.textEffect : (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]));
+      const currentEffectSource = (textEffect !== 'random') ? 'auto' : (existingComp?.textEffectSource || 'auto');
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
       const currentTextPosition = (preferredTextPosition === 'random')
@@ -3910,6 +3895,7 @@ export default function App() {
       comp.activeBackground = currentBackground as BackgroundStyle;
       comp.textPosition = currentTextPosition;
       comp.fontSize = currentFontSize;
+      comp.textEffectSource = currentEffectSource;
 
       // Deep preserve media settings (Scale, Fit, Motion)
       if (existingComp) {
@@ -4024,16 +4010,25 @@ export default function App() {
 
     return {
       id: Math.random().toString(36).substr(2, 9),
-      media: media.map(m => ({
-        url: m.url,
-        type: m.type,
-        name: m.name || 'Asset',
-        xOffset: m.xOffset || 0,
-        yOffset: m.yOffset || 0,
-        scale: m.scale || 1,
-        objectFit: m.objectFit || 'cover',
-        animation: m.animation || 'none'
-      })),
+      media: media.map((m, i) => {
+        // Constrain positions: center, left-center, or right-center
+        const positions = [
+          { xOffset: 0, yOffset: 0 },       // center
+          { xOffset: -200, yOffset: 0 },     // left-center
+          { xOffset: 200, yOffset: 0 },      // right-center
+        ];
+        const pos = positions[i % positions.length];
+        return {
+          url: m.url,
+          type: m.type,
+          name: m.name || 'Asset',
+          xOffset: m.xOffset || pos.xOffset,
+          yOffset: m.yOffset || pos.yOffset,
+          scale: m.scale || 1,
+          objectFit: m.objectFit || 'cover',
+          animation: m.animation || 'none'
+        };
+      }),
       x, y, z,
       rotX: 0,
       rotY: 0,
@@ -4724,63 +4719,6 @@ export default function App() {
                                 <option value="minimal-reveal">Minimal Wipe</option>
                             </select>
 
-                            <div className="flex flex-col gap-2 mt-6">
-                               <label className="mono text-[10px] uppercase opacity-40 font-bold px-1">Global Camera Path</label>
-                               <select
-                                  value={preferredCameraPath}
-                                  onChange={(e) => setPreferredCameraPath(e.target.value)}
-                                  className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
-                               >
-                                  <option value="random">Random Path</option>
-                                  <option value="zoom-in">Zoom In</option>
-                                  <option value="zoom-out">Zoom Out</option>
-                                  <option value="hyper-glide">Hyper Glide</option>
-                                  <option value="static">Static (Still)</option>
-                                  <option value="parallax-drift">Parallax Drift</option>
-                               </select>
-                            </div>
-
-                           {/* Asset Motion Graphics Controls */}
-                           <div className="flex flex-col gap-4 mt-6 p-4 bg-black/5 rounded-xl border border-black/5">
-                              <div className="flex justify-between items-center px-1">
-                                <label className="mono text-[10px] uppercase font-bold text-ink">Global Asset Scale: {(globalAssetScale * 100).toFixed(0)}%</label>
-                                <button 
-                                  onClick={() => setGlobalAssetScale(1.0)}
-                                  className="text-[9px] uppercase font-bold text-ink/40 hover:text-ink"
-                                >
-                                  Reset
-                                </button>
-                              </div>
-                              <input 
-                                type="range" 
-                                min="0.5" 
-                                max="3.0" 
-                                step="0.1" 
-                                value={globalAssetScale}
-                                onChange={(e) => setGlobalAssetScale(parseFloat(e.target.value))}
-                                className="w-full h-1 bg-black/10 rounded-lg appearance-none cursor-pointer accent-ink"
-                              />
-
-                              <div className="flex flex-col gap-2">
-                                <label className="mono text-[10px] uppercase font-bold text-ink/60 px-1">Motion Behavior</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                  {[
-                                    { id: 'float', label: 'Float' },
-                                    { id: 'breathe', label: 'Breathe' },
-                                    { id: 'pulsate', label: 'Pulse' },
-                                    { id: 'none', label: 'Static' }
-                                  ].map(opt => (
-                                    <button
-                                      key={opt.id}
-                                      onClick={() => setGlobalAssetAnimation(opt.id as any)}
-                                      className={`py-2 px-1 border mono text-[9px] font-bold uppercase transition-all ${globalAssetAnimation === opt.id ? 'bg-ink text-cream border-ink' : 'bg-white border-black/5 opacity-60 hover:opacity-100'}`}
-                                    >
-                                      {opt.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                           </div>
 
                            {/* Thicc Typography Themes */}
                            <div className="space-y-2">
@@ -4841,16 +4779,6 @@ export default function App() {
                                        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isMultiColor ? 'translate-x-6' : ''}`} />
                                     </button>
                                     <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
-                                 </div>
-                              </div>
-                              <div className="flex items-center gap-4 border-t border-black/5 pt-4">
-                                 <button onClick={() => setAutomatedSecondaryAssets(!automatedSecondaryAssets)}
-                                    className={`w-12 h-6 rounded-full relative transition-colors ${automatedSecondaryAssets ? 'bg-ink' : 'bg-black/10'}`}>
-                                    <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${automatedSecondaryAssets ? 'translate-x-6' : ''}`} />
-                                 </button>
-                                 <div className="flex flex-col">
-                                    <span className="mono text-[10px] font-bold uppercase leading-none">Auto 3D Decorations</span>
-                                    <span className="text-[8px] opacity-40 uppercase">Secondary floating assets</span>
                                  </div>
                               </div>
                            </div>
@@ -4917,57 +4845,6 @@ export default function App() {
                            </div>
                         </div>
                      </div>
-                     
-                     <div className="mt-8 pt-8 border-t border-black/5">
-                        <div className="flex items-center justify-between mb-6">
-                           <h4 className="mono text-[10px] font-bold uppercase">Automated Secondary Graphics</h4>
-                        </div>
-                        <div className="flex gap-4 mb-6">
-                           <button
-                             onClick={() => setExplosionEnabled(!explosionEnabled)}
-                             className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${explosionEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
-                           >
-                             {explosionEnabled ? 'Explosion: ON' : 'Explosion: OFF'}
-                           </button>
-                           <button
-                             onClick={() => setRainbowEnabled(!rainbowEnabled)}
-                             className={`flex-1 px-3 py-2 mono text-[9px] uppercase font-bold border transition-colors ${rainbowEnabled ? 'bg-ink text-cream border-ink' : 'bg-transparent text-ink border-black/20 hover:bg-black/5'}`}
-                           >
-                             {rainbowEnabled ? 'Rainbow Fountain: ON' : 'Rainbow Fountain: OFF'}
-                           </button>
-                        </div>
-                        
-                        {explosionEnabled && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 transition-all duration-300">
-                             <div>
-                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Size</label>
-                                <input
-                                   type="range" min="0.5" max="3" step="0.1"
-                                   value={explosionSize}
-                                   onChange={(e) => setExplosionSize(parseFloat(e.target.value))}
-                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                                />
-                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                   <span>Small</span>
-                                   <span>Massive ({explosionSize}x)</span>
-                                </div>
-                             </div>
-                             <div>
-                                <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Explosion Duration</label>
-                                <input
-                                   type="range" min="0.5" max="3" step="0.1"
-                                   value={explosionDuration}
-                                   onChange={(e) => setExplosionDuration(parseFloat(e.target.value))}
-                                   className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
-                                />
-                                <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
-                                   <span>Fast</span>
-                                   <span>Slow ({explosionDuration}x)</span>
-                                </div>
-                             </div>
-                          </div>
-                        )}
-                     </div>
                  </div>
                </div>
 
@@ -4989,65 +4866,6 @@ export default function App() {
                              ))}
                            </div>
                            
-                           <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-black/5">
-                              <span className="mono text-[8px] uppercase opacity-30 font-bold">Media Assets Controls</span>
-                              {comp.media.map((m, mIdx) => (
-                                <div key={mIdx} className="flex flex-wrap gap-4 items-center bg-white/40 p-2 rounded-sm border border-black/5">
-                                   <div className="w-6 h-6 border border-black/10">
-                                     <img src={m.url} className="w-full h-full object-cover grayscale" />
-                                   </div>
-                                   <div className="flex flex-col gap-1">
-                                     <span className="mono text-[7px] uppercase opacity-40">Fit</span>
-                                     <select
-                                       value={m.objectFit || 'cover'}
-                                       onChange={(e) => {
-                                         const newMedia = [...comp.media];
-                                         newMedia[mIdx] = { ...newMedia[mIdx], objectFit: e.target.value as any };
-                                         updateSceneProperty(idx, 'media', newMedia);
-                                       }}
-                                       className="bg-white border border-black/5 px-2 py-1 mono text-[8px] uppercase font-bold outline-none"
-                                     >
-                                       <option value="cover">Fill (Cover)</option>
-                                       <option value="contain">In Frame (Contain)</option>
-                                     </select>
-                                   </div>
-                                   <div className="flex flex-col gap-1">
-                                     <span className="mono text-[7px] uppercase opacity-40">Motion</span>
-                                     <select
-                                       value={m.animation || 'none'}
-                                       onChange={(e) => {
-                                         const newMedia = [...comp.media];
-                                         newMedia[mIdx] = { ...newMedia[mIdx], animation: e.target.value as any };
-                                         updateSceneProperty(idx, 'media', newMedia);
-                                       }}
-                                       className="bg-white border border-black/5 px-2 py-1 mono text-[8px] uppercase font-bold outline-none"
-                                     >
-                                       <option value="none">Subtle Drift</option>
-                                       <option value="pulse">Pulse</option>
-                                       <option value="scale-up">Scale Up</option>
-                                       <option value="scale-down">Scale Down</option>
-                                       <option value="breathing">Breathing</option>
-                                     </select>
-                                   </div>
-                                   <div className="flex flex-col gap-1 flex-1">
-                                     <div className="flex justify-between items-center">
-                                       <span className="mono text-[7px] uppercase opacity-40">Size</span>
-                                       <span className="mono text-[7px] font-bold">{m.scale || 1}x</span>
-                                     </div>
-                                     <input 
-                                        type="range" min="0.1" max="3" step="0.1" 
-                                        value={m.scale || 1} 
-                                        onChange={(e) => {
-                                          const newMedia = [...comp.media];
-                                          newMedia[mIdx] = { ...newMedia[mIdx], scale: parseFloat(e.target.value) };
-                                          updateSceneProperty(idx, 'media', newMedia);
-                                        }}
-                                        className="w-full h-1 bg-black/10 appearance-none accent-ink"
-                                     />
-                                   </div>
-                                </div>
-                              ))}
-                           </div>
                         </div>
                         <div className="flex flex-wrap gap-4">
                            <select
@@ -5066,16 +4884,23 @@ export default function App() {
                            </select>
 
                            <select
-                             value={comp.cameraPath || 'static'}
-                             onChange={(e) => updateSceneProperty(idx, 'cameraPath', e.target.value)}
-                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                           >
-                             <option value="static">Static Camera</option>
-                             <option value="zoom-in">Zoom In</option>
-                             <option value="zoom-out">Zoom Out</option>
-                             <option value="hyper-glide">Hyper Glide</option>
-                             <option value="parallax-drift">Parallax Drift</option>
-                           </select>
+                              value={comp.textEffect || 'gsap-stagger'}
+                              onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                              className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                            >
+                              <option value="gsap-stagger">Stagger Reveal</option>
+                              <option value="gsap-cascade">Cascade Fall</option>
+                              <option value="gsap-glow">Glow Pulse</option>
+                              <option value="gsap-3d-roll">3D Roll</option>
+                              <option value="gsap-elastic">Spring Elastic</option>
+                              <option value="gsap-tornado">Vortex Tornado</option>
+                              <option value="gsap-funnel">Gravity Funnel</option>
+                              <option value="gsap-stack">Letter Stack</option>
+                              <option value="gsap-typewriter">Typewriter</option>
+                              <option value="gsap-glitch">Glitch</option>
+                              <option value="gsap-wave">Wave Motion</option>
+                              <option value="gsap-blur-reveal">Blur Reveal</option>
+                            </select>
                         </div>
                       </div>
                     ))}
@@ -5559,13 +5384,6 @@ export default function App() {
         />
       )}
 
-      {/* GSAP Explosion Overlay */}
-      {appMode === 'playing' && explosionEnabled && (
-        <ExplosionOverlay triggerId={explosionTriggerId} sizeMultiplier={explosionSize} durationMultiplier={explosionDuration} />
-      )}
-
-      {/* GSAP Rainbow Physics Overlay */}
-      <RainbowPhysicsOverlay isActive={isRainbowActive} />
     </div>
   );
 }
