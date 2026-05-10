@@ -3195,13 +3195,28 @@ export default function App() {
       setDesignTokens(data);
 
       // 3. Populate Scraped Assets
+      const newAssets: MediaItem[] = [];
+      
+      if (data.screenshotUrl) {
+        newAssets.push({
+          id: `scraped-screenshot-${Date.now()}`,
+          url: data.screenshotUrl,
+          type: 'image',
+          name: `${data.brandTitle || 'Website'} Screenshot`
+        });
+      }
+
       if (data.scrapedImages && data.scrapedImages.length > 0) {
-        const newAssets: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
+        const scrapedItems: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
             id: `scraped-${i}-${Date.now()}`,
             url,
             type: 'image',
             name: `Website Asset ${i + 1}`
         }));
+        newAssets.push(...scrapedItems);
+      }
+      
+      if (newAssets.length > 0) {
         setMediaFiles(prev => [...prev, ...newAssets]);
       }
 
@@ -4714,45 +4729,7 @@ export default function App() {
                      </div>
 
                     <div>
-                        {/* Kinetic Animations (Multi-Select) Hidden
-                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
-                        <div className="space-y-4">
-                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                             {[
-                               { id: 'gsap-stagger', label: 'Stagger Reveal' },
-                               { id: 'gsap-cascade', label: 'Cascade Fall' },
-                               { id: 'gsap-glow', label: 'Glow Pulse' },
-                               { id: 'gsap-3d-roll', label: '3D Roll' },
-                               { id: 'gsap-elastic', label: 'Spring Elastic' },
-                               { id: 'gsap-tornado', label: 'Vortex Tornado' },
-                               { id: 'gsap-funnel', label: 'Gravity Funnel' },
-                               { id: 'gsap-stack', label: 'Letter Stack' },
-                               { id: 'gsap-typewriter', label: 'Typewriter' },
-                               { id: 'gsap-glitch', label: 'Glitch' },
-                               { id: 'gsap-wave', label: 'Wave Motion' },
-                               { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
-                             ].map(effect => (
-                               <button
-                                 key={effect.id}
-                                 onClick={() => {
-                                   setTextEffect('random');
-                                   setSelectedEffects(prev => 
-                                     prev.includes(effect.id as TextEffect)
-                                       ? prev.filter(e => e !== effect.id)
-                                       : [...prev, effect.id as TextEffect]
-                                   );
-                                 }}
-                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
-                               >
-                                 <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
-                                   {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
-                                 </span>
-                                 {effect.label}
-                               </button>
-                             ))}
-                           </div>
-                        */}
-                        
+
                         <div className="space-y-4">
 
                            <select

@@ -142,6 +142,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ 
       ...aiData,
       scrapedImages: images.slice(0, 15), // Cap to 15 best candidates
+      screenshotUrl: `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&meta=false&embed=screenshot.url`,
       brandTitle: title || 'New Project'
     });
   } catch (error: any) {
