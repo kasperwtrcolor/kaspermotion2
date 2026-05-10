@@ -3243,6 +3243,18 @@ export default function App() {
     });
   };
 
+  const applyTextEffectToAllScenes = (idx: number) => {
+    setCompositions(prev => {
+      const sourceEffect = prev[idx].textEffect;
+      return prev.map((comp, i) => i === idx ? comp : {
+        ...comp,
+        textEffect: sourceEffect,
+        textEffectSource: 'manual'
+      });
+    });
+    setToastMessage("Text animation applied to all scenes");
+  };
+
   const updateGlobalTextPosition = (pos: TextPosition) => {
     setPreferredTextPosition(pos);
     if (pos !== 'random') {
@@ -3754,11 +3766,11 @@ export default function App() {
             id: `scrape-screenshot-${Date.now()}`,
             url: data.screenshotUrl,
             type: 'image',
-            name: `${data.siteName || 'Website'} Screenshot`
+            name: `${data.brandTitle || data.siteName || 'Website'} Screenshot`
           });
         }
-        if (data.pageImages && Array.isArray(data.pageImages)) {
-          data.pageImages.forEach((imgUrl: string, idx: number) => {
+        if (data.scrapedImages && Array.isArray(data.scrapedImages)) {
+          data.scrapedImages.forEach((imgUrl: string, idx: number) => {
             newAssets.push({
               id: `scrape-img-${Date.now()}-${idx}`,
               url: imgUrl,
@@ -4664,43 +4676,42 @@ export default function App() {
                         </div>
                      </div>
 
-                    <div>
-                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
-                        <div className="space-y-4">
-                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                             {[
-                               { id: 'gsap-stagger', label: 'Stagger Reveal' },
-                               { id: 'gsap-cascade', label: 'Cascade Fall' },
-                               { id: 'gsap-glow', label: 'Glow Pulse' },
-                               { id: 'gsap-3d-roll', label: '3D Roll' },
-                               { id: 'gsap-elastic', label: 'Spring Elastic' },
-                               { id: 'gsap-tornado', label: 'Vortex Tornado' },
-                               { id: 'gsap-funnel', label: 'Gravity Funnel' },
-                               { id: 'gsap-stack', label: 'Letter Stack' },
-                               { id: 'gsap-typewriter', label: 'Typewriter' },
-                               { id: 'gsap-glitch', label: 'Glitch' },
-                               { id: 'gsap-wave', label: 'Wave Motion' },
-                               { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
-                             ].map(effect => (
-                               <button
-                                 key={effect.id}
-                                 onClick={() => {
-                                   setTextEffect('random');
-                                   setSelectedEffects(prev => 
-                                     prev.includes(effect.id as TextEffect)
-                                       ? prev.filter(e => e !== effect.id)
-                                       : [...prev, effect.id as TextEffect]
-                                   );
-                                 }}
-                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
-                               >
-                                 <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
-                                   {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
-                                 </span>
-                                 {effect.label}
-                               </button>
-                             ))}
-                           </div>
+                            {/* Kinetic Animations (Multi-Select) Hidden
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {[
+                                { id: 'gsap-stagger', label: 'Stagger Reveal' },
+                                { id: 'gsap-cascade', label: 'Cascade Fall' },
+                                { id: 'gsap-glow', label: 'Glow Pulse' },
+                                { id: 'gsap-3d-roll', label: '3D Roll' },
+                                { id: 'gsap-elastic', label: 'Spring Elastic' },
+                                { id: 'gsap-tornado', label: 'Vortex Tornado' },
+                                { id: 'gsap-funnel', label: 'Gravity Funnel' },
+                                { id: 'gsap-stack', label: 'Letter Stack' },
+                                { id: 'gsap-typewriter', label: 'Typewriter' },
+                                { id: 'gsap-glitch', label: 'Glitch' },
+                                { id: 'gsap-wave', label: 'Wave Motion' },
+                                { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
+                              ].map(effect => (
+                                <button
+                                  key={effect.id}
+                                  onClick={() => {
+                                    setTextEffect('random');
+                                    setSelectedEffects(prev => 
+                                      prev.includes(effect.id as TextEffect)
+                                        ? prev.filter(e => e !== effect.id)
+                                        : [...prev, effect.id as TextEffect]
+                                    );
+                                  }}
+                                  className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                                >
+                                  <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
+                                    {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
+                                  </span>
+                                  {effect.label}
+                                </button>
+                              ))}
+                            </div>
+                            */}
 
                            <select
                                value={transitionType}
@@ -4883,24 +4894,33 @@ export default function App() {
                              <option value="coin-flip">3D Coin Flip Card</option>
                            </select>
 
-                           <select
-                              value={comp.textEffect || 'gsap-stagger'}
-                              onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
-                              className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                            >
-                              <option value="gsap-stagger">Stagger Reveal</option>
-                              <option value="gsap-cascade">Cascade Fall</option>
-                              <option value="gsap-glow">Glow Pulse</option>
-                              <option value="gsap-3d-roll">3D Roll</option>
-                              <option value="gsap-elastic">Spring Elastic</option>
-                              <option value="gsap-tornado">Vortex Tornado</option>
-                              <option value="gsap-funnel">Gravity Funnel</option>
-                              <option value="gsap-stack">Letter Stack</option>
-                              <option value="gsap-typewriter">Typewriter</option>
-                              <option value="gsap-glitch">Glitch</option>
-                              <option value="gsap-wave">Wave Motion</option>
-                              <option value="gsap-blur-reveal">Blur Reveal</option>
-                            </select>
+                           <div className="flex flex-1 gap-2">
+                             <select
+                                value={comp.textEffect || 'gsap-stagger'}
+                                onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                                className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                              >
+                                <option value="gsap-stagger">Stagger Reveal</option>
+                                <option value="gsap-cascade">Cascade Fall</option>
+                                <option value="gsap-glow">Glow Pulse</option>
+                                <option value="gsap-3d-roll">3D Roll</option>
+                                <option value="gsap-elastic">Spring Elastic</option>
+                                <option value="gsap-tornado">Vortex Tornado</option>
+                                <option value="gsap-funnel">Gravity Funnel</option>
+                                <option value="gsap-stack">Letter Stack</option>
+                                <option value="gsap-typewriter">Typewriter</option>
+                                <option value="gsap-glitch">Glitch</option>
+                                <option value="gsap-wave">Wave Motion</option>
+                                <option value="gsap-blur-reveal">Blur Reveal</option>
+                              </select>
+                              <button 
+                                onClick={() => applyTextEffectToAllScenes(idx)}
+                                className="bg-ivory border border-black/10 px-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[8px] font-bold uppercase whitespace-nowrap shrink-0"
+                                title="Apply this text animation to all scenes"
+                              >
+                                Apply All
+                              </button>
+                           </div>
                         </div>
                       </div>
                     ))}
