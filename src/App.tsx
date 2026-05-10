@@ -2531,6 +2531,8 @@ export default function App() {
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [authModalPromise, setAuthModalPromise] = useState<{ resolve: (user: any) => void; reject: (err: any) => void } | null>(null);
   const [useGiphy, setUseGiphy] = useState(false);
+  const [globalAudioUrl, setGlobalAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [explosionTriggerId, setExplosionTriggerId] = useState(0);
   const [explosionEnabled, setExplosionEnabled] = useState(true);
   const [explosionSize, setExplosionSize] = useState(1);
@@ -3619,6 +3621,13 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
 
+  useEffect(() => {
+    if (appMode === 'playing' && currentIndex === 0 && audioRef.current && globalAudioUrl) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+    }
+  }, [appMode, currentIndex, globalAudioUrl]);
+
   const [addingAssetToSceneIdx, setAddingAssetToSceneIdx] = useState<number | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -4107,7 +4116,22 @@ export default function App() {
         }
       }
 
-      const mediaRecorder = new MediaRecorder(stream, {
+      let combinedStream = stream;
+      if (audioRef.current && globalAudioUrl) {
+        try {
+          const audioStream = (audioRef.current as any).captureStream ? (audioRef.current as any).captureStream() : (audioRef.current as any).mozCaptureStream ? (audioRef.current as any).mozCaptureStream() : null;
+          if (audioStream && audioStream.getAudioTracks().length > 0) {
+            combinedStream = new MediaStream([
+              ...stream.getVideoTracks(),
+              ...audioStream.getAudioTracks()
+            ]);
+          }
+        } catch (err) {
+          console.error("Failed to capture audio stream:", err);
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType,
         videoBitsPerSecond: exportResolution === '4K' ? 50000000 : 15000000
       });
@@ -4777,6 +4801,50 @@ export default function App() {
 
                  <div className="space-y-10">
                     <div>
+                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Global Audio Track</label>
+                       <div className="p-8 bg-white border border-black/5 space-y-4">
+                           <div className="flex items-center gap-4">
+                               {globalAudioUrl ? (
+                                   <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
+                                       <Music className="w-4 h-4 text-ink opacity-50" />
+                                       <span className="mono text-[10px] uppercase flex-1 truncate">Custom Audio Selected</span>
+                                       <button 
+                                           onClick={() => {
+                                               if (audioRef.current) {
+                                                   audioRef.current.pause();
+                                                   audioRef.current.src = "";
+                                               }
+                                               setGlobalAudioUrl(null);
+                                           }}
+                                           className="text-red-500 hover:text-red-700 transition-colors"
+                                       >
+                                           <Trash2 className="w-4 h-4" />
+                                       </button>
+                                   </div>
+                               ) : (
+                                   <label className="flex-1 border-2 border-dashed border-black/20 p-8 flex flex-col items-center justify-center cursor-pointer hover:border-black/40 hover:bg-black/5 transition-all text-center">
+                                       <Music className="w-6 h-6 mb-2 opacity-50" />
+                                       <span className="mono text-[10px] font-bold uppercase block mb-1">Upload Audio</span>
+                                       <span className="mono text-[9px] opacity-50">MP3, WAV, etc</span>
+                                       <input 
+                                           type="file" 
+                                           className="hidden" 
+                                           accept="audio/*"
+                                           onChange={(e) => {
+                                               const file = e.target.files?.[0];
+                                               if (file) {
+                                                   const url = URL.createObjectURL(file);
+                                                   setGlobalAudioUrl(url);
+                                               }
+                                           }}
+                                       />
+                                   </label>
+                               )}
+                           </div>
+                       </div>
+                    </div>
+
+                    <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Director Logic</label>
                        <div className="p-8 bg-white border border-black/5 space-y-8">
                            <div className="flex flex-col gap-4">
@@ -4982,6 +5050,16 @@ export default function App() {
           style={{ perspective: '2000px', backgroundColor: thiccBgColor }}
         >
           <div className="grain-overlay" />
+          
+          {globalAudioUrl && (
+            <audio 
+              ref={audioRef} 
+              src={globalAudioUrl} 
+              preload="auto" 
+              className="hidden" 
+            />
+          )}
+
           {/* Spatial Canvas */}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <AnimatePresence mode="wait">
