@@ -4202,6 +4202,8 @@ export default function App() {
       const header = document.querySelector('header');
       if (header) (header as HTMLElement).style.display = 'none';
 
+      setCurrentIndex(0);
+
       const countdownEl = document.createElement('div');
       countdownEl.className = 'recording-countdown';
       countdownEl.innerHTML = '<span>3</span>';
@@ -4213,14 +4215,11 @@ export default function App() {
       await new Promise(r => setTimeout(r, 1000));
       countdownEl.remove();
 
-      await new Promise(r => setTimeout(r, 1000));
-
       setIsRecording(true);
       setRecordingKey(prev => prev + 1);
-      setCurrentIndex(0);
       setRecordingProgress(0);
 
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))));
       mediaRecorder.start();
 
       for (let i = 0; i < compositions.length; i++) {
@@ -4443,19 +4442,34 @@ export default function App() {
                    ))}
                  </div>
 
-                 <div className="mb-12">
-                 <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Engine Branding</label>
-                 <div className="relative group">
-                   <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
-                   <input
-                     type="text"
-                     placeholder="e.g. VibeTrailer Elite"
-                     className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
-                     value={websiteSiteName}
-                     onChange={(e) => setWebsiteSiteName(e.target.value)}
-                   />
+                 <div className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                     <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Engine Branding</label>
+                     <div className="relative group">
+                       <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
+                       <input
+                         type="text"
+                         placeholder="e.g. VibeTrailer Elite"
+                         className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
+                         value={websiteSiteName}
+                         onChange={(e) => setWebsiteSiteName(e.target.value)}
+                       />
+                     </div>
+                   </div>
+                   <div>
+                     <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Social Handle</label>
+                     <div className="relative group">
+                       <span className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors font-bold">@</span>
+                       <input
+                         type="text"
+                         placeholder="e.g. kaspermotion"
+                         className="elite-input w-full py-5 pl-12 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
+                         value={socialHandle.replace('@', '')}
+                         onChange={(e) => setSocialHandle(e.target.value ? `@${e.target.value.replace('@', '')}` : '')}
+                       />
+                     </div>
+                   </div>
                  </div>
-               </div>
 
                <AnimatePresence>
                  {showLibrary && (
