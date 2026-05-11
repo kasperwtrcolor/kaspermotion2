@@ -1771,7 +1771,7 @@ const ThemedParallaxWorld = ({ theme, worldX, worldY }: { theme: string, worldX:
         style={{ x: fgX, y: fgY, z: -200, scale: 4 }}
         className="absolute inset-0 flex items-center justify-center"
       >
-        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" />
+        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" crossOrigin="anonymous" />
       </motion.div>
     </div>
   );
@@ -2429,6 +2429,7 @@ const CompositionNode = ({
                   loop
                   muted
                   playsInline
+                  crossOrigin="anonymous"
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
@@ -2453,6 +2454,7 @@ const CompositionNode = ({
                 <motion.img
                   src={m.url}
                   alt={comp.caption}
+                  crossOrigin="anonymous"
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
@@ -2754,8 +2756,11 @@ export default function App() {
     if (user) {
       const q = query(collection(db, 'trailers'), where('userId', '==', user.uid));
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        setUserTrailers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const trailers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`[Firestore] Loaded ${trailers.length} trailers for user ${user.uid}`);
+        setUserTrailers(trailers);
       }, (error) => {
+        console.error(`[Firestore Error] Trailers:`, error);
         handleFirestoreError(error, OperationType.LIST, 'trailers');
       });
 
@@ -3218,6 +3223,23 @@ export default function App() {
       
       if (newAssets.length > 0) {
         setMediaFiles(prev => [...prev, ...newAssets]);
+        
+        // Also persist scraped assets to user library if logged in
+        if (user) {
+          newAssets.forEach(async (asset) => {
+            try {
+              await addDoc(collection(db, 'assets'), {
+                userId: user.uid,
+                url: asset.url,
+                type: asset.type,
+                name: asset.name,
+                createdAt: serverTimestamp()
+              });
+            } catch (e) {
+              console.error("Error saving scraped asset to library:", e);
+            }
+          });
+        }
       }
 
       if (data.choreography) {
@@ -4241,20 +4263,23 @@ export default function App() {
       setRecordingKey(prev => prev + 1);
       setRecordingProgress(0);
 
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))));
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 300))));
       mediaRecorder.start();
 
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
 
         setCurrentIndex(i);
+        // Add a small delay to ensure DOM updates and assets start loading
+        await new Promise(r => setTimeout(r, 100));
+        
         setRecordingProgress((i / compositions.length) * 100);
 
-        const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
-        const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-        const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
+        const isSocialCard = ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(compositions[i]?.sceneType || '');
+        const defaultDur = isSocialCard ? 3.5 : 5;
+        const effectiveSceneDuration = Math.max((compositions[i]?.sceneDuration || sceneDuration || defaultDur) * 1000, hasText ? animDuration + 1500 : 0);
 
-        await new Promise(r => setTimeout(r, effectiveSceneDuration));
+        await new Promise(r => setTimeout(r, Math.max(0, effectiveSceneDuration - 100)));
       }
 
       if (sequenceActiveRef.current) {
@@ -4530,7 +4555,7 @@ export default function App() {
                                  <div
                                    key={asset.id}
                                    onClick={() => toggleLibraryAssetSelection(asset.id)}
-                                   className={`relative aspect-square border transition-all p-1 cursor-pointer ${isSelected ? 'border-ink bg-ivory' : 'border-black/5 opacity-60 hover:opacity-100'}`}
+                                   className={`relative aspect-square border transition-all p-1 cursor-pointer group ${isSelected ? 'border-ink bg-ivory' : 'border-black/5 opacity-60 hover:opacity-100'}`}
                                  >
                                    {asset.type === 'video' ? (
                                      <video src={asset.url} className="w-full h-full object-cover grayscale" />
