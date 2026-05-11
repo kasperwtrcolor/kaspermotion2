@@ -60,6 +60,9 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
             onComplete: () => gsap.to(solidRef.current, { opacity: 0, duration: 0.3 })
           }
         );
+      } else if (status === 'past') {
+        gsap.set(itemRef.current, { scale: 25, opacity: 1 });
+        gsap.set(solidRef.current, { opacity: 0 });
       } else {
         gsap.set([itemRef.current, solidRef.current], { scale: 0, opacity: 0 });
       }
@@ -85,6 +88,9 @@ export default function MorphTransitionOverlay({ children, type, status, duratio
        );
        // Fade out solid shape at end
        gsap.to(solidPathRef.current, { opacity: 0, duration: 0.3, delay: duration - 0.1 });
+    } else if (status === 'past') {
+       gsap.set(pathRef.current, { scale: 1, opacity: 1, attr: { d: squarePath } });
+       gsap.set(solidPathRef.current, { opacity: 0 });
     } else {
        gsap.set([pathRef.current, solidPathRef.current], { scale: 0, opacity: 0 });
     }

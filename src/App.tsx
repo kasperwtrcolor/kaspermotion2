@@ -2496,7 +2496,7 @@ const CompositionNode = ({
       }}
     >
       <motion.div
-        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-screen h-screen"
         style={{ transformStyle: 'preserve-3d' }}
         variants={transitionVariants}
         initial="future"
