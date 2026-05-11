@@ -2263,7 +2263,7 @@ const CompositionNode = ({
     const ghostBlur = 'blur(40px)';
     const ghostScale = 0.4;
 
-    const isMorph = type?.startsWith('morph-');
+    const isMorph = type?.startsWith('morph-') || type === 'item-portal';
 
     return {
       future: { 
@@ -2279,50 +2279,23 @@ const CompositionNode = ({
         transition: { duration: 1.2 } 
       },
       past: { 
-        opacity: isMorph ? 1 : ghostOpacity, 
-        scale: isMorph ? 1 : ghostScale, 
-        filter: isMorph ? 'none' : ghostBlur, 
-        transition: { duration: 1.2 } 
+        opacity: isMorph ? 0.8 : ghostOpacity, 
+        scale: isMorph ? 1.8 : ghostScale, 
+        filter: isMorph ? 'blur(4px)' : ghostBlur, 
+        transition: { duration: 1.5, ease: 'easeInOut' } 
       }
     };
   };
 
   const transitionVariants = getTransitionVariants(comp.transitionType);
 
-  return (
-    <div
-      className="absolute left-0 top-0"
-      style={{
-        transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
-        transformStyle: 'preserve-3d'
-      }}
-    >
-      <motion.div
-        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
-        style={{ transformStyle: 'preserve-3d' }}
-        variants={transitionVariants}
-        initial="future"
-        animate={status}
-      >
-        {comp.transitionType?.startsWith('morph-') || comp.transitionType === 'item-portal' ? (
-          <MorphTransitionOverlay 
-            type={comp.transitionType} 
-            status={status} 
-            duration={comp.transitionDuration} 
-            itemUrl={comp.transitionType === 'item-portal' ? comp.transitionItemAsset : undefined}
-          >
-            <SceneBackground style={comp.activeBackground} status={status} />
-            <div className="vignette-overlay" />
-          </MorphTransitionOverlay>
-        ) : (
-          <>
-            <SceneBackground style={comp.activeBackground} status={status} />
-            <div className="vignette-overlay" />
-          </>
-        )}
-        
-        {/* Secondary Motion Assets Layer */}
-        {comp.secondaryAssets?.map(asset => {
+  const sceneContent = (
+    <>
+      <SceneBackground style={comp.activeBackground} status={status} />
+      <div className="vignette-overlay" />
+      
+      {/* Secondary Motion Assets Layer */}
+      {comp.secondaryAssets?.map(asset => {
           if (asset.type === '3d-item') {
             return (
               <motion.div
@@ -2511,6 +2484,36 @@ const CompositionNode = ({
           );
         })}
         </div>
+    </>
+  );
+
+  return (
+    <div
+      className="absolute left-0 top-0"
+      style={{
+        transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
+        transformStyle: 'preserve-3d'
+      }}
+    >
+      <motion.div
+        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+        style={{ transformStyle: 'preserve-3d' }}
+        variants={transitionVariants}
+        initial="future"
+        animate={status}
+      >
+        {comp.transitionType?.startsWith('morph-') || comp.transitionType === 'item-portal' ? (
+          <MorphTransitionOverlay 
+            type={comp.transitionType} 
+            status={status} 
+            duration={comp.transitionDuration} 
+            itemUrl={comp.transitionType === 'item-portal' ? comp.transitionItemAsset : undefined}
+          >
+            {sceneContent}
+          </MorphTransitionOverlay>
+        ) : (
+          sceneContent
+        )}
       </motion.div>
     </div>
   );
