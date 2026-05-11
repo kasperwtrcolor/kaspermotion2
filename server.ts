@@ -446,7 +446,8 @@ H2 Tags: ${h2s.join(' | ')}
         status: 'complete',
         createdAt: FieldValue.serverTimestamp(),
         views: 0,
-        ext
+        ext,
+        size: req.body.length
       };
 
       await db.collection('videos').doc(videoId).set(videoDoc);

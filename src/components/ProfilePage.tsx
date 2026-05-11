@@ -83,6 +83,8 @@ interface ProfilePageProps {
   onUseAssetInProject: (assets: any[]) => void;
   notifications: string[];
   onShowPricing: () => void;
+  userVideos: any[];
+  onStartNewProject: () => void;
 }
 
 type ProfileTab = 'videos' | 'assets' | 'account' | 'admin';
@@ -98,6 +100,8 @@ export default function ProfilePage({
   onUseAssetInProject,
   notifications,
   onShowPricing,
+  userVideos,
+  onStartNewProject,
 }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>('videos');
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
@@ -122,6 +126,10 @@ export default function ProfilePage({
       return newSet;
     });
   };
+
+  const totalStorageBytes = [...(libraryAssets || []), ...(userVideos || [])].reduce((acc, curr) => acc + (curr.size || 0), 0);
+  const totalStorageMB = (totalStorageBytes / (1024 * 1024)).toFixed(1);
+  const isOverCap = totalStorageBytes > 500 * 1024 * 1024;
 
   return (
     <div className="min-h-screen bg-cream text-ink font-sans selection:bg-ink selection:text-cream">
@@ -152,6 +160,22 @@ export default function ProfilePage({
             <p className="mono text-xs opacity-40">
               {user?.email}
             </p>
+            <div className="mt-6 flex items-center gap-4">
+              <div className="flex-1 max-w-xs h-2 bg-black/5 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-1000 ${isOverCap ? 'bg-red-500' : 'bg-ink'}`}
+                  style={{ width: `${Math.min((totalStorageBytes / (500 * 1024 * 1024)) * 100, 100)}%` }}
+                />
+              </div>
+              <p className={`mono text-[10px] font-bold uppercase ${isOverCap ? 'text-red-500' : 'opacity-40'}`}>
+                {totalStorageMB}MB / 500MB USED
+              </p>
+            </div>
+            {isOverCap && (
+              <p className="text-[10px] text-red-500 font-bold uppercase mt-2 flex items-center gap-2">
+                <Zap size={12} className="fill-red-500" /> Storage limit reached. Please delete assets or videos.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 w-full md:w-auto">
@@ -209,7 +233,10 @@ export default function ProfilePage({
                   <p className="text-2xl font-black uppercase opacity-20 mb-12">
                     Studio empty. Select your first vision.
                   </p>
-                  <button className="btn-primary py-4 px-12">
+                  <button 
+                    onClick={onStartNewProject}
+                    className="btn-primary py-4 px-12"
+                  >
                      Create New Project
                   </button>
                 </div>

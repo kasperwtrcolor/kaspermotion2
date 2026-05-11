@@ -2521,6 +2521,7 @@ export default function App() {
   const [credits, setCredits] = useState<number>(0);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [userTrailers, setUserTrailers] = useState<any[]>([]);
+  const [userVideos, setUserVideos] = useState<any[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isRenderingTrailer, setIsRenderingTrailer] = useState(false);
@@ -2660,6 +2661,17 @@ export default function App() {
     }
   }, [isRecording]);
 
+  const totalStorageBytes = [...libraryAssets, ...userVideos].reduce((acc, curr) => acc + (curr.size || 0), 0);
+  const isOverStorageCap = totalStorageBytes > 500 * 1024 * 1024;
+
+  const checkStorageCap = () => {
+    if (isOverStorageCap) {
+      setToastMessage("Storage limit reached (500MB). Please delete assets or videos in your profile.");
+      return false;
+    }
+    return true;
+  };
+
   const generateWorldTemplate = () => {
     setCompositions(prev => {
       const newComps = [...prev];
@@ -2766,6 +2778,13 @@ export default function App() {
         handleFirestoreError(error, OperationType.LIST, 'assets');
       });
 
+      const vq = query(collection(db, 'videos'), where('userId', '==', user.uid));
+      const unsubscribeVideos = onSnapshot(vq, (snapshot) => {
+        setUserVideos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'videos');
+      });
+
       // Removed daily credit refresh logic as requested
 
       const unsubscribeUser = onSnapshot(doc(db, 'users', user.uid), (doc) => {
@@ -2779,6 +2798,7 @@ export default function App() {
       return () => {
         unsubscribe();
         unsubscribeAssets();
+        unsubscribeVideos();
         unsubscribeUser();
       };
     }
@@ -2810,6 +2830,7 @@ export default function App() {
         url,
         type: file.type.startsWith('video/') ? 'video' : 'image',
         name: file.name,
+        size: file.size,
         createdAt: serverTimestamp()
       });
       return { url, uploaded: true };
@@ -3631,6 +3652,7 @@ export default function App() {
   const [addingAssetToSceneIdx, setAddingAssetToSceneIdx] = useState<number | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkStorageCap()) return;
     const files = Array.from(e.target.files || []) as File[];
     if (files.length > 0) {
       setIsUploading(true);
@@ -4076,6 +4098,7 @@ export default function App() {
   };
 
   const startRecording = async () => {
+    if (!checkStorageCap()) return;
     const isAdmin = user?.email === 'philipsimmons67@gmail.com';
     if (!isAdmin && credits < 2) {
       setShowPricing(true);
@@ -4296,12 +4319,21 @@ export default function App() {
           onDeleteProject={deleteProject}
           onDeleteAsset={deleteLibraryAsset}
           onUseAssetInProject={(assets) => {
+            if (libraryAssets.length + assets.length > 50) {
+                setToastMessage("Storage limit exceeded. Please delete old assets.");
+                return;
+            }
             addFromLibrary(assets);
             setAppMode('setup');
             setSetupStep(1);
           }}
           notifications={notifications}
           onShowPricing={() => setShowPricing(true)}
+          userVideos={userVideos}
+          onStartNewProject={() => {
+            setAppMode('setup');
+            setSetupStep(1);
+          }}
         />
       );
     }
