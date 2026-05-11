@@ -2170,7 +2170,7 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
         <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
       </div>
       {/* Screen Content */}
-      <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
+      <div className="w-full h-full bg-black/10 relative overflow-hidden flex items-center justify-center">
         {children || (
           <div className="flex flex-col items-center justify-center gap-3 text-white/30">
             <div className="w-16 h-16 border-2 border-white/20 bg-white/5 flex items-center justify-center">
@@ -2256,7 +2256,7 @@ const CompositionNode = ({
 }) => {
   const accentColor = globalTextColor || '#A855F7';
   const duration = comp.transitionDuration;
-  const [hasError, setHasError] = useState(false);
+  const [itemErrors, setItemErrors] = useState<Record<number, boolean>>({});
 
   const getTransitionVariants = (type: TransitionType) => {
     const ghostOpacity = 0;
@@ -2430,8 +2430,8 @@ const CompositionNode = ({
                   muted
                   playsInline
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
-                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
-                  onError={() => setHasError(true)}
+                  style={m.isFullscreen ? { zIndex: 0 } : shapeStyle.style}
+                  onError={() => setItemErrors(prev => ({ ...prev, [i]: true }))}
                   animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
                     switch(m.animation) {
                       case 'pulse': return { scale: [1, 1.1, 1] };
@@ -2454,8 +2454,8 @@ const CompositionNode = ({
                   src={m.url}
                   alt={comp.caption}
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
-                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
-                  onError={() => setHasError(true)}
+                  style={m.isFullscreen ? { zIndex: 0 } : shapeStyle.style}
+                  onError={() => setItemErrors(prev => ({ ...prev, [i]: true }))}
                   animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
                     switch(m.animation) {
                       case 'pulse': return { scale: [1, 1.1, 1] };
@@ -2493,13 +2493,12 @@ const CompositionNode = ({
                     background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
                   }} />
                 )}
-                {hasError ? (
-                  <div className={shapeStyle.className} style={shapeStyle.style}>
-                  </div>
+                {itemErrors[i] ? (
+                  null // Don't render anything if it fails to load, let the background show
                 ) : (
                   comp.preset === 'app-showcase' ? (
                   <MobileMockup status={status} variant={i} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
-                    <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
+                    <div className="w-full h-full bg-black/20 relative overflow-hidden flex items-center justify-center">
                       {mediaElement}
                     </div>
                   </MobileMockup>
@@ -4075,7 +4074,8 @@ export default function App() {
           yOffset: m.yOffset || pos.yOffset,
           scale: m.scale || 1,
           objectFit: m.objectFit || 'cover',
-          animation: m.animation || 'none'
+          animation: m.animation || 'none',
+          isFullscreen: m.isFullscreen ?? (i === 0) // Default first asset to fullscreen for cinematic feel
         };
       }),
       x, y, z,
