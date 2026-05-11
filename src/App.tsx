@@ -335,6 +335,7 @@ type Composition = {
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
+  isTextDisabled?: boolean;
   thiccTheme?: ThiccThemeId;
 };
 
@@ -2703,6 +2704,13 @@ export default function App() {
     setSetupStep(1);
     setScrapeUrl("https://");
     setHistory([]);
+    setMediaMapping({});
+    setTextOnlyLines(new Set());
+    setGlobalAudioUrl(null);
+    setSocialHandle("");
+    setWebsiteSiteName("");
+    setThiccTheme("none");
+    setSiteUrl("");
   };
 
   const handleStartOver = () => {
@@ -4068,7 +4076,8 @@ export default function App() {
           yOffset: m.yOffset || pos.yOffset,
           scale: m.scale || 1,
           objectFit: m.objectFit || 'cover',
-          animation: m.animation || 'none'
+          animation: m.animation || 'none',
+          isFullscreen: true
         };
       }),
       x, y, z,
@@ -4746,7 +4755,7 @@ export default function App() {
                      </div>
 
                     <div>
-                        {/* Kinetic Animations (Multi-Select) Hidden
+                        {/* Kinetic Animations (Multi-Select) Hidden */}
                         <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
                         <div className="space-y-4">
                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -4783,26 +4792,7 @@ export default function App() {
                                </button>
                              ))}
                            </div>
-                        */}
-                        
-                        <div className="space-y-4">
-
-                           <select
-                               value={transitionType}
-                               onChange={(e) => setTransitionType(e.target.value as TransitionType)}
-                               className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
-                            >
-                                <option value="random">Random Transition</option>
-                                <option value="item-portal">3D Item Portal</option>
-                                <option value="morph-star">Morph: Cinematic Star</option>
-                                <option value="morph-circle">Morph: Liquid Circle</option>
-                                <option value="morph-diamond">Morph: Geometric Diamond</option>
-                                <option value="morph-hexagon">Morph: Tech Hexagon</option>
-                                <option value="morph-heart">Morph: Social Heart</option>
-                                <option value="fade">Classic Fade</option>
-                                <option value="zoom">Optical Zoom</option>
-                                <option value="minimal-reveal">Minimal Wipe</option>
-                            </select>
+                        </div>
 
 
                            {/* Thicc Typography Themes */}
@@ -4974,8 +4964,7 @@ export default function App() {
                            </div>
                         </div>
                      </div>
-                 </div>
-               </div>
+                  </div>
 
                <div className="border-t border-black/5 pt-12 mb-16">
                   <h3 className="mono text-[10px] font-bold uppercase opacity-40 mb-8">Scene Sequence Editor</h3>
@@ -4990,7 +4979,7 @@ export default function App() {
                            <div className="flex gap-2">
                              {comp.media.map((m, mIdx) => (
                                <div key={mIdx} className="w-16 h-16 border border-black/10 p-1 bg-white">
-                                 <img src={m.url} className={`w-full h-full grayscale ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}`} />
+                                 <img src={m.url} className={`w-full h-full object-cover grayscale`} />
                                </div>
                              ))}
                            </div>
@@ -5038,6 +5027,12 @@ export default function App() {
                               >
                                 Apply All
                               </button>
+                               <button 
+                                 onClick={() => updateSceneProperty(idx, 'isTextDisabled', !comp.isTextDisabled)}
+                                 className={`px-4 py-3 border mono text-[9px] uppercase font-bold transition-all ${comp.isTextDisabled ? 'bg-red-500 text-white border-red-500' : 'bg-white border-black/10 hover:border-black/30'}`}
+                               >
+                                 {comp.isTextDisabled ? 'Text Hidden' : 'Show Text'}
+                               </button>
                            </div>
                         </div>
                       </div>
@@ -5061,7 +5056,6 @@ export default function App() {
 
   if (appMode === 'playing') {
       const getBackgroundClass = () => {
-        // If thicc theme is active, use its background color
         const thiccThemeActive = currentComp?.thiccTheme && currentComp.thiccTheme !== 'none'
           ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES]
           : null;
@@ -5170,70 +5164,49 @@ export default function App() {
           {/* GLOBAL TYPOGRAPHY LAYER - FIXED ABOVE WORLD */}
           <div key={`typo-layer-${recordingKey}`} className="absolute inset-0 z-[500] pointer-events-none overflow-hidden">
              <AnimatePresence mode="wait">
-               {currentComp && (
-                 <motion.div 
-                   key={currentIndex + (currentComp.caption || 'empty')}
-                   initial={{ opacity: 0 }}
-                   animate={{ opacity: 1 }}
-                   exit={{ opacity: 0 }}
-                   className="absolute inset-0"
-                 >
-                   {/* 1. Social Overlays layer */}
-                   {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (
-                      <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <PremiumSocialOverlays
-                          type={currentComp.sceneType}
-                          status="active"
-                          caption={currentComp.caption}
-                          accentColor={textColor}
-                          handle={socialHandle}
-                          name={websiteSiteName || "KasperMotion"}
-                        />
-                      </div>
-                   )}
-                   
-                   {currentComp.sceneType === 'coin-flip' && (
-                     <CoinFlipCard caption={currentComp.caption} isActive={appMode === 'playing'} />
-                   )}
+                {currentComp && (
+                  <motion.div 
+                    key={currentIndex + (currentComp.caption || 'empty')}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0"
+                  >
+                    {/* 1. Social Overlays layer */}
+                    {!currentComp.isTextDisabled && ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post'].includes(currentComp.sceneType) && (
+                       <div className="absolute inset-0 flex items-center justify-center p-8">
+                         <PremiumSocialOverlays
+                           type={currentComp.sceneType}
+                           status="active"
+                           caption={currentComp.caption}
+                           accentColor={textColor}
+                           handle={socialHandle}
+                           name={websiteSiteName || "KasperMotion"}
+                         />
+                       </div>
+                    )}
+                    
+                    {!currentComp.isTextDisabled && currentComp.sceneType === 'coin-flip' && (
+                      <CoinFlipCard caption={currentComp.caption} isActive={appMode === 'playing'} />
+                    )}
 
-                   {/* 2. Kinetic Typography layer */}
-                   {/* 2. Kinetic Typography layer */}
-                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip'].includes(currentComp.sceneType) && (() => {
-                      const activeTheme = currentComp.thiccTheme && currentComp.thiccTheme !== 'none' 
-                        ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES] 
-                        : null;
-                      
-                      return (
-                     <div className={`absolute flex flex-col items-center justify-center text-center px-12 md:px-24 ${getTextPositionClass(currentComp.textPosition)}`}>
-                        <motion.div 
-                          initial={{ scale: 0.9, y: 30, opacity: 0 }}
-                          animate={{ scale: 1, y: 0, opacity: 1 }}
-                          transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-                          className={`transform -rotate-1 font-black tracking-tight uppercase pointer-events-none ${activeTheme ? (activeTheme.extraClass || '') : (currentComp.fontFamily || fontFamily)}`}
-                          style={activeTheme ? {
-                            fontFamily: activeTheme.fontFamily,
-                            textShadow: activeTheme.textShadow !== 'none' ? activeTheme.textShadow : undefined,
-                            letterSpacing: activeTheme.letterSpacing,
-                            WebkitTextStroke: activeTheme.textStroke,
-                          } : {
-                            filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.4))'
-                          }}
-                        >
-                          <AnimatedCaption
-                            key={`${currentComp.id}-${currentComp.textEffect}-${generationId}`}
-                            text={currentComp.caption}
-                            effect={currentComp.textEffect}
-                            className={`${currentComp.fontSize || (currentComp.isTextOnly ? 'text-7xl md:text-9xl' : 'text-5xl md:text-7xl')} leading-none`}
-                            textColor={activeTheme ? activeTheme.textColor : (currentComp.textColor || textColor)}
-                            isMulti={activeTheme ? false : (currentComp.isMultiColor || isMultiColor)}
-                            commonWord={commonWord}
+                    {/* 2. Kinetic Typography layer */}
+                    {!currentComp.isTextDisabled && (
+                       <div className="absolute inset-0 flex items-center justify-center p-20">
+                          <AnimatedCaption 
+                            key={currentIndex + (currentComp.caption || 'empty')}
+                            text={currentComp.caption} 
+                            effect={currentComp.textEffect || 'gsap-stagger'} 
+                            color={textColor} 
+                            fontFamily={fontFamily}
+                            fontSize={currentComp.fontSize || 'text-7xl'}
+                            speed={textAnimationSpeed}
+                            isRecording={isRecording}
                           />
-                        </motion.div>
-                     </div>
-                      );
-                   })()}
-                 </motion.div>
-               )}
+                       </div>
+                    )}
+                  </motion.div>
+                )}
              </AnimatePresence>
           </div>
 
