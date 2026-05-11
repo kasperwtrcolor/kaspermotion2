@@ -6,12 +6,11 @@ VibeTrailer is an advanced AI-powered video production platform designed to tran
 
 ## Key Features
 
-- **AI Director**: Leverages Gemini 1.5 to analyze URLs or text and generate intelligent scene choreography, typography choices, and camera paths.
+- **AI Director**: Leverages Gemini to analyze URLs or text and generate intelligent scene choreography, typography choices, and camera paths.
 - **Dynamic Kinetic Typography**: Premium text animations with multiple themes (Brutal, Glass, Neon, etc.) and layout options.
 - **Spatial 3D Navigation**: A unique 3D world engine that moves a virtual camera through "composition nodes" for a truly cinematic feel.
 - **Automated Asset Sourcing**: Integrated scraping logic to pull images directly from source URLs to use as scene backgrounds or overlays.
 - **Studio-Grade Export**: Client-side screen recording with synchronized audio capture for high-quality WebM/MP4 output.
-- **Storage Management**: Built-in 500MB user quota system to manage cloud resources effectively.
 
 ## Tech Stack
 
