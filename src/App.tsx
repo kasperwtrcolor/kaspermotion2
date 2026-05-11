@@ -2291,12 +2291,8 @@ const CompositionNode = ({
 
   return (
     <div
-      className="absolute"
+      className="absolute left-0 top-0"
       style={{
-        width: '1920px',
-        height: '1080px',
-        left: '-960px',
-        top: '-540px',
         transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
         transformStyle: 'preserve-3d'
       }}
@@ -2416,11 +2412,12 @@ const CompositionNode = ({
 
             // Ken Burns cinematic motions for fullscreen assets
             const kenBurnsVariants = [
-              { scale: [1.1, 1.25], x: [0, -60], y: [0, -40] },
-              { scale: [1.2, 1.1], x: [-60, 0], y: [-40, 0] },
-              { scale: [1.25, 1.1], x: [60, 0], y: [40, 0] },
-              { scale: [1.1, 1.2], x: [0, 60], y: [0, 40] },
-              { scale: [1.15, 1.3], x: [-40, 40], y: [-30, 30] }
+              { scale: [1, 1.15], x: [0, 0], y: [0, 0] },           // Slow zoom in
+              { scale: [1.15, 1], x: [0, 0], y: [0, 0] },           // Slow zoom out
+              { scale: [1.08, 1.12], x: ['-3%', '3%'], y: [0, 0] }, // Pan left to right
+              { scale: [1.08, 1.12], x: ['3%', '-3%'], y: [0, 0] }, // Pan right to left
+              { scale: [1.05, 1.15], x: [0, 0], y: ['2%', '-2%'] }, // Slow crane up
+              { scale: [1.1, 1.05], x: ['-2%', '2%'], y: ['1%', '-1%'] }, // Diagonal drift
             ];
             const kenBurns = kenBurnsVariants[(i + comp.id.charCodeAt(0)) % kenBurnsVariants.length];
 
@@ -2446,7 +2443,7 @@ const CompositionNode = ({
                         rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
                       };
                     }
-                  })()) : { scale: 1, rotate: 0, x: 0, y: 0 }}
+                  })()) : { scale: 1, rotate: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -2470,7 +2467,7 @@ const CompositionNode = ({
                         rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
                       };
                     }
-                  })()) : { scale: 1, rotate: 0, x: 0, y: 0 }}
+                  })()) : { scale: 1, rotate: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -2482,7 +2479,7 @@ const CompositionNode = ({
             return (
               <motion.div
                 key={i}
-                className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute z-10"}
+                className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute inset-0 z-10 flex items-center justify-center pointer-events-none"}
                 style={m.isFullscreen ? { width: '100%', height: '100%' } : {
                   transformStyle: 'preserve-3d',
                   x: m.xOffset || 0,
@@ -3507,36 +3504,34 @@ export default function App() {
       artistryRotY.set(0);
       artistryRoll.set(0);
 
-      // AI-Driven Camera Path Animations
-      const duration = currentComp.sceneDuration || 5;
+      const delay = 0.5; // Half second delay to center first
+      const animDuration = Math.max(0.1, duration - delay);
 
       if (currentComp.cameraPath === 'zoom-in') {
-        animate(artistryZ, 800, { duration, ease: "linear" });
+        animate(artistryZ, 800, { duration: animDuration, ease: "linear", delay });
       } else if (currentComp.cameraPath === 'zoom-out') {
-        animate(artistryZ, -800, { duration, ease: "linear" });
+        animate(artistryZ, -800, { duration: animDuration, ease: "linear", delay });
       } else if (currentComp.cameraPath === 'orbit-right') {
-        animate(artistryX, 600, { duration, ease: "linear" });
-        animate(artistryRotY, -20, { duration, ease: "linear" });
-        animate(artistryRoll, 5, { duration, ease: "linear" });
+        animate(artistryX, 600, { duration: animDuration, ease: "linear", delay });
+        animate(artistryRotY, -20, { duration: animDuration, ease: "linear", delay });
+        animate(artistryRoll, 5, { duration: animDuration, ease: "linear", delay });
       } else if (currentComp.cameraPath === 'pan-down-tilt') {
-        animate(artistryY, -400, { duration, ease: "linear" });
-        animate(artistryRotX, 15, { duration, ease: "linear" });
+        animate(artistryY, -400, { duration: animDuration, ease: "linear", delay });
+        animate(artistryRotX, 15, { duration: animDuration, ease: "linear", delay });
       } else if (currentComp.cameraPath === 'hyper-glide') {
-        animate(artistryZ, [0, 400, 0], { duration, ease: "anticipate" });
-        animate(artistryRotY, [0, 10, 0], { duration, ease: "anticipate" });
+        animate(artistryZ, [0, 400, 0], { duration: animDuration, ease: "anticipate", delay });
+        animate(artistryRotY, [0, 10, 0], { duration: animDuration, ease: "anticipate", delay });
       } else if (currentComp.cameraPath === 'static') {
         // Subtle drift
-        animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration, ease: "easeInOut" });
+        animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration: animDuration, ease: "easeInOut", delay });
       } else if (currentComp.cameraPath === 'crane-up') {
-        // Slow upward dolly revealing the scene from below
-        animate(artistryY, 500, { duration, ease: "easeInOut" });
-        animate(artistryRotX, -10, { duration, ease: "easeInOut" });
-        animate(artistryZ, 200, { duration, ease: "easeInOut" });
+        animate(artistryY, 500, { duration: animDuration, ease: "easeInOut", delay });
+        animate(artistryRotX, -10, { duration: animDuration, ease: "easeInOut", delay });
+        animate(artistryZ, 200, { duration: animDuration, ease: "easeInOut", delay });
       } else if (currentComp.cameraPath === 'parallax-drift') {
-        // Subtle horizontal drift with depth parallax
-        animate(artistryX, [0, 300, 0], { duration, ease: "easeInOut" });
-        animate(artistryZ, [0, 100, -50], { duration, ease: "easeInOut" });
-        animate(artistryRoll, [0, 2, 0], { duration, ease: "easeInOut" });
+        animate(artistryX, [0, 300, 0], { duration: animDuration, ease: "easeInOut", delay });
+        animate(artistryZ, [0, 100, -50], { duration: animDuration, ease: "easeInOut", delay });
+        animate(artistryRoll, [0, 2, 0], { duration: animDuration, ease: "easeInOut", delay });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
@@ -4065,8 +4060,8 @@ export default function App() {
         // Constrain positions: center, left-center, or right-center
         const positions = [
           { xOffset: 0, yOffset: 0 },       // center
-          { xOffset: -200, yOffset: 0 },     // left-center
-          { xOffset: 200, yOffset: 0 },      // right-center
+          { xOffset: -120, yOffset: 0 },     // left-center
+          { xOffset: 120, yOffset: 0 },      // right-center
         ];
         const pos = positions[i % positions.length];
         return {
@@ -5145,7 +5140,7 @@ export default function App() {
           <VideoCanvas key={recordingKey} isRecording={isRecording}>
             <CompositionProvider duration={compositions.length * 5}>
               <motion.div
-                className="absolute left-1/2 top-1/2 w-0 h-0 overflow-visible"
+                className="absolute inset-0 overflow-visible"
                 style={{
                   transformStyle: 'preserve-3d',
                   x: worldX,
