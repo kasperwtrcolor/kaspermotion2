@@ -2530,7 +2530,6 @@ export default function App() {
   const [renderProgress, setRenderProgress] = useState(0);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [recordingProgress, setRecordingProgress] = useState(0);
-  const [exportBlackScreen, setExportBlackScreen] = useState(false);
   const [textOnlyLines, setTextOnlyLines] = useState<Set<number>>(new Set());
   const [mediaMapping, setMediaMapping] = useState<Record<number, string>>({});
   const [authModalPromise, setAuthModalPromise] = useState<{ resolve: (user: any) => void; reject: (err: any) => void } | null>(null);
@@ -4235,18 +4234,11 @@ export default function App() {
       countdownEl.remove();
 
       setIsRecording(true);
-      setExportBlackScreen(true);
-
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))));
-      mediaRecorder.start();
-
-      await new Promise(r => setTimeout(r, 500));
-      
-      setExportBlackScreen(false);
       setRecordingKey(prev => prev + 1);
       setRecordingProgress(0);
 
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))));
+      mediaRecorder.start();
 
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
@@ -5078,9 +5070,6 @@ export default function App() {
           </div>
 
           <VideoCanvas key={recordingKey} isRecording={isRecording}>
-            {exportBlackScreen && (
-              <div className="absolute inset-0 bg-black z-[99999] pointer-events-none" />
-            )}
             <CompositionProvider duration={compositions.length * 5}>
               <motion.div
                 className="absolute inset-0 overflow-visible"
