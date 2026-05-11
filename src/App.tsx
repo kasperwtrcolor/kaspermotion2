@@ -2170,7 +2170,7 @@ const MobileMockup = ({ children, status, variant = 0, isLandscape = false }: { 
         <div className="w-2 h-2 bg-brutal-green brutal-border"></div>
       </div>
       {/* Screen Content */}
-      <div className="w-full h-full bg-black/10 relative overflow-hidden flex items-center justify-center">
+      <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
         {children || (
           <div className="flex flex-col items-center justify-center gap-3 text-white/30">
             <div className="w-16 h-16 border-2 border-white/20 bg-white/5 flex items-center justify-center">
@@ -2256,7 +2256,7 @@ const CompositionNode = ({
 }) => {
   const accentColor = globalTextColor || '#A855F7';
   const duration = comp.transitionDuration;
-  const [itemErrors, setItemErrors] = useState<Record<number, boolean>>({});
+  const [hasError, setHasError] = useState(false);
 
   const getTransitionVariants = (type: TransitionType) => {
     const ghostOpacity = 0;
@@ -2430,8 +2430,8 @@ const CompositionNode = ({
                   muted
                   playsInline
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
-                  style={m.isFullscreen ? { zIndex: 0 } : shapeStyle.style}
-                  onError={() => setItemErrors(prev => ({ ...prev, [i]: true }))}
+                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
+                  onError={() => setHasError(true)}
                   animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
                     switch(m.animation) {
                       case 'pulse': return { scale: [1, 1.1, 1] };
@@ -2454,8 +2454,8 @@ const CompositionNode = ({
                   src={m.url}
                   alt={comp.caption}
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
-                  style={m.isFullscreen ? { zIndex: 0 } : shapeStyle.style}
-                  onError={() => setItemErrors(prev => ({ ...prev, [i]: true }))}
+                  style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
+                  onError={() => setHasError(true)}
                   animate={status === 'active' ? (m.isFullscreen ? kenBurns : (() => {
                     switch(m.animation) {
                       case 'pulse': return { scale: [1, 1.1, 1] };
@@ -2479,7 +2479,7 @@ const CompositionNode = ({
             return (
               <motion.div
                 key={i}
-                className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute inset-0 z-10 flex items-center justify-center pointer-events-none"}
+                className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute z-10"}
                 style={m.isFullscreen ? { width: '100%', height: '100%' } : {
                   transformStyle: 'preserve-3d',
                   x: m.xOffset || 0,
@@ -2493,12 +2493,13 @@ const CompositionNode = ({
                     background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)'
                   }} />
                 )}
-                {itemErrors[i] ? (
-                  null // Don't render anything if it fails to load, let the background show
+                {hasError ? (
+                  <div className={shapeStyle.className} style={shapeStyle.style}>
+                  </div>
                 ) : (
                   comp.preset === 'app-showcase' ? (
                   <MobileMockup status={status} variant={i} isLandscape={m.url?.toLowerCase().includes('landscape') || (m.scale || 1) > 1.2}>
-                    <div className="w-full h-full bg-black/20 relative overflow-hidden flex items-center justify-center">
+                    <div className="w-full h-full bg-black relative overflow-hidden flex items-center justify-center">
                       {mediaElement}
                     </div>
                   </MobileMockup>
@@ -3503,35 +3504,36 @@ export default function App() {
       artistryRotY.set(0);
       artistryRoll.set(0);
 
+      // AI-Driven Camera Path Animations
       const duration = currentComp.sceneDuration || 5;
-      const delay = 0.5; // Half second delay to center first
-      const animDuration = Math.max(0.1, duration - delay);
 
       if (currentComp.cameraPath === 'zoom-in') {
-        animate(artistryZ, 800, { duration: animDuration, ease: "linear", delay });
+        animate(artistryZ, 800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'zoom-out') {
-        animate(artistryZ, -800, { duration: animDuration, ease: "linear", delay });
+        animate(artistryZ, -800, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'orbit-right') {
-        animate(artistryX, 600, { duration: animDuration, ease: "linear", delay });
-        animate(artistryRotY, -20, { duration: animDuration, ease: "linear", delay });
-        animate(artistryRoll, 5, { duration: animDuration, ease: "linear", delay });
+        animate(artistryX, 600, { duration, ease: "linear" });
+        animate(artistryRotY, -20, { duration, ease: "linear" });
+        animate(artistryRoll, 5, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'pan-down-tilt') {
-        animate(artistryY, -400, { duration: animDuration, ease: "linear", delay });
-        animate(artistryRotX, 15, { duration: animDuration, ease: "linear", delay });
+        animate(artistryY, -400, { duration, ease: "linear" });
+        animate(artistryRotX, 15, { duration, ease: "linear" });
       } else if (currentComp.cameraPath === 'hyper-glide') {
-        animate(artistryZ, [0, 400, 0], { duration: animDuration, ease: "anticipate", delay });
-        animate(artistryRotY, [0, 10, 0], { duration: animDuration, ease: "anticipate", delay });
+        animate(artistryZ, [0, 400, 0], { duration, ease: "anticipate" });
+        animate(artistryRotY, [0, 10, 0], { duration, ease: "anticipate" });
       } else if (currentComp.cameraPath === 'static') {
         // Subtle drift
-        animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration: animDuration, ease: "easeInOut", delay });
+        animate(artistryX, [(Math.random()-0.5)*100, (Math.random()-0.5)*100], { duration, ease: "easeInOut" });
       } else if (currentComp.cameraPath === 'crane-up') {
-        animate(artistryY, 500, { duration: animDuration, ease: "easeInOut", delay });
-        animate(artistryRotX, -10, { duration: animDuration, ease: "easeInOut", delay });
-        animate(artistryZ, 200, { duration: animDuration, ease: "easeInOut", delay });
+        // Slow upward dolly revealing the scene from below
+        animate(artistryY, 500, { duration, ease: "easeInOut" });
+        animate(artistryRotX, -10, { duration, ease: "easeInOut" });
+        animate(artistryZ, 200, { duration, ease: "easeInOut" });
       } else if (currentComp.cameraPath === 'parallax-drift') {
-        animate(artistryX, [0, 300, 0], { duration: animDuration, ease: "easeInOut", delay });
-        animate(artistryZ, [0, 100, -50], { duration: animDuration, ease: "easeInOut", delay });
-        animate(artistryRoll, [0, 2, 0], { duration: animDuration, ease: "easeInOut", delay });
+        // Subtle horizontal drift with depth parallax
+        animate(artistryX, [0, 300, 0], { duration, ease: "easeInOut" });
+        animate(artistryZ, [0, 100, -50], { duration, ease: "easeInOut" });
+        animate(artistryRoll, [0, 2, 0], { duration, ease: "easeInOut" });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
@@ -3617,9 +3619,7 @@ export default function App() {
       path
     }
     console.error('Firestore Error: ', JSON.stringify(errInfo));
-    // Don't throw here to avoid crashing the app on background listener errors
-    setToastMessage(`Database sync issue: ${path}`);
-    setTimeout(() => setToastMessage(null), 3000);
+    throw new Error(JSON.stringify(errInfo));
   }
 
 
@@ -4062,8 +4062,8 @@ export default function App() {
         // Constrain positions: center, left-center, or right-center
         const positions = [
           { xOffset: 0, yOffset: 0 },       // center
-          { xOffset: -120, yOffset: 0 },     // left-center
-          { xOffset: 120, yOffset: 0 },      // right-center
+          { xOffset: -200, yOffset: 0 },     // left-center
+          { xOffset: 200, yOffset: 0 },      // right-center
         ];
         const pos = positions[i % positions.length];
         return {
@@ -4074,8 +4074,7 @@ export default function App() {
           yOffset: m.yOffset || pos.yOffset,
           scale: m.scale || 1,
           objectFit: m.objectFit || 'cover',
-          animation: m.animation || 'none',
-          isFullscreen: m.isFullscreen ?? (i === 0) // Default first asset to fullscreen for cinematic feel
+          animation: m.animation || 'none'
         };
       }),
       x, y, z,
