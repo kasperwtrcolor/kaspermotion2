@@ -20,7 +20,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
     <motion.div
       initial={{ y: 300, opacity: 0 }}
       animate={status === 'active' ? { y: 0, opacity: 1 } : { y: 300, opacity: 0 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 120 }}
+      transition={{ type: 'spring', damping: 15, stiffness: 100 }}
       className="bg-black/70 backdrop-blur-3xl rounded-[1.5rem] pr-10 pl-6 py-6 flex items-center gap-8 shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-white/15 group"
     >
       <div className="relative">
@@ -34,7 +34,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
         <motion.div 
           initial={{ scale: 0 }}
           animate={status === 'active' ? { scale: 1 } : { scale: 0 }}
-          transition={{ delay: 0.4, type: 'spring' }}
+          transition={{ delay: 0.8, type: 'spring' }}
           className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 border-4 border-black"
         >
           <UserPlus size={18} className="text-white" />
@@ -60,7 +60,7 @@ export const InstagramFollowOverlay = ({ status, caption, accentColor = "#0095f6
         <motion.span
           initial={{ opacity: 1 }}
           animate={status === 'active' ? { opacity: [1, 0, 0, 1] } : {}}
-          transition={{ times: [0, 0.4, 0.6, 1], duration: 1.5 }}
+          transition={{ times: [0, 0.4, 0.6, 1], duration: 4 }}
         >
           {status === 'active' ? "Following" : "Follow"}
         </motion.span>
@@ -74,7 +74,6 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle,
     <motion.div
       initial={{ x: -200, opacity: 0, rotateZ: -10 }}
       animate={status === 'active' ? { x: 0, opacity: 1, rotateZ: 0 } : { x: -200, opacity: 0, rotateZ: -10 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
       className="bg-black/90 backdrop-blur-[40px] border border-white/20 rounded-[1.5rem] p-8 md:p-10 w-[620px] max-w-[95vw] shadow-[0_60px_150px_rgba(0,0,0,0.9)] flex flex-col gap-8 font-sans relative"
     >
       {/* Subtle Branding Background */}
@@ -93,7 +92,7 @@ export const XPostOverlay = ({ status, caption, accentColor = "#1d9bf0", handle,
             <motion.div 
                initial={{ scale: 0 }}
                animate={{ scale: 1 }}
-               transition={{ delay: 0.5, type: 'spring' }}
+               transition={{ delay: 1, type: 'spring' }}
                className="absolute -bottom-1 -right-1 bg-[#1d9bf0] rounded-full p-1.5 border-4 border-black"
             >
                <svg viewBox="0 0 24 24" className="w-4 h-4 text-white fill-current">
@@ -157,7 +156,6 @@ export const MacosNotificationOverlay = ({ status, caption }: BlockProps) => {
     <motion.div
       initial={{ x: 400, opacity: 0 }}
       animate={status === 'active' ? { x: 0, opacity: 1 } : { x: 400, opacity: 0 }}
-      transition={{ type: 'spring', damping: 25, stiffness: 150 }}
       className="bg-[#1d1d1d]/70 backdrop-blur-3xl border border-white/10 rounded-[1.5rem] p-5 w-[380px] shadow-[0_30px_70px_rgba(0,0,0,0.5)] flex items-start gap-5 mb-4 fixed top-10 right-10 z-[1000]"
     >
       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8E2DE2] to-[#4A00E0] flex items-center justify-center shadow-[0_10px_20px_rgba(0,0,0,0.3)] shrink-0">
@@ -201,7 +199,7 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
     <motion.div
       initial={{ scale: 0.9, opacity: 0, rotateX: 20 }}
       animate={status === 'active' ? { scale: 1, opacity: 1, rotateX: 0 } : { scale: 0.9, opacity: 0, rotateX: 20 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       className="bg-black/90 backdrop-blur-[50px] rounded-[1.5rem] p-10 md:p-14 w-[850px] max-w-[95vw] border border-white/20 shadow-[0_80px_200px_rgba(0,0,0,0.9)] relative overflow-visible"
     >
       <div className="grain-overlay opacity-10" />
@@ -211,7 +209,7 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
           <motion.h4 
             initial={{ x: -20, opacity: 0 }}
             animate={status === 'active' ? { x: 0, opacity: 1 } : {}}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
             className="text-white font-black text-4xl mb-4 tracking-tighter"
           >
             <span className="highlight-sweep px-2 py-1 inline-block" style={{ "--color-accent": accentColor } as any}>
@@ -243,7 +241,7 @@ export const DataChartOverlay = ({ status, caption, accentColor = "#6366f1" }: B
               <motion.div
                 initial={{ scaleY: 0 }}
                 animate={status === 'active' ? { scaleY: h/100 } : { scaleY: 0 }}
-                transition={{ delay: i * 0.1 + 0.3, duration: 0.5, ease: "circOut" }}
+                transition={{ delay: i * 0.15 + 0.6, duration: 0.8, ease: "circOut" }}
                 style={{ backgroundColor: accentColor, transformOrigin: 'bottom' }}
                 className="w-full rounded-t-xl rounded-b-md relative group overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] border border-white/20 h-full"
               >
@@ -264,7 +262,6 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
     <motion.div
       initial={{ y: 100, opacity: 0, scale: 0.9 }}
       animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.9 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
       className="bg-[#121212]/95 backdrop-blur-3xl border border-white/10 rounded-[2rem] p-8 md:p-10 w-[95vw] max-w-[600px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] flex flex-col md:flex-row items-center gap-8 md:gap-10 relative overflow-visible"
     >
       <div className="absolute top-0 right-0 p-3 opacity-5">
@@ -285,7 +282,7 @@ export const SpotifyCardOverlay = ({ status, caption, accentColor = "#1DB954" }:
             <motion.div 
               initial={{ width: 0 }}
               animate={status === 'active' ? { width: '72%' } : { width: 0 }}
-              transition={{ duration: 2.5, ease: "linear" }}
+              transition={{ duration: 5, ease: "linear" }}
               className="h-full bg-[#1DB954]" 
             />
           </div>
@@ -304,7 +301,6 @@ export const RedditPostOverlay = ({ status, caption, handle = "r/cinematic" }: B
     <motion.div
       initial={{ x: 100, opacity: 0 }}
       animate={status === 'active' ? { x: 0, opacity: 1 } : { x: 100, opacity: 0 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
       className="bg-[#1A1A1B] border border-[#343536] rounded-xl p-6 md:p-8 w-[550px] max-w-[95vw] shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex gap-4 md:gap-6"
     >
       <div className="flex flex-col items-center gap-2 bg-[#151516] p-2 rounded-lg h-fit">

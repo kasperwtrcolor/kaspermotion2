@@ -1771,7 +1771,7 @@ const ThemedParallaxWorld = ({ theme, worldX, worldY }: { theme: string, worldX:
         style={{ x: fgX, y: fgY, z: -200, scale: 4 }}
         className="absolute inset-0 flex items-center justify-center"
       >
-        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" crossOrigin="anonymous" />
+        <img src={url} className="w-full h-full object-cover opacity-30 blur-[4px]" alt="near" />
       </motion.div>
     </div>
   );
@@ -2429,7 +2429,6 @@ const CompositionNode = ({
                   loop
                   muted
                   playsInline
-                  crossOrigin="anonymous"
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
@@ -2454,7 +2453,6 @@ const CompositionNode = ({
                 <motion.img
                   src={m.url}
                   alt={comp.caption}
-                  crossOrigin="anonymous"
                   className={m.isFullscreen ? `absolute inset-0 w-full h-full ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}` : shapeStyle.className}
                   style={m.isFullscreen ? { zIndex: -1 } : shapeStyle.style}
                   onError={() => setHasError(true)}
@@ -2756,11 +2754,8 @@ export default function App() {
     if (user) {
       const q = query(collection(db, 'trailers'), where('userId', '==', user.uid));
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        const trailers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log(`[Firestore] Loaded ${trailers.length} trailers for user ${user.uid}`);
-        setUserTrailers(trailers);
+        setUserTrailers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }, (error) => {
-        console.error(`[Firestore Error] Trailers:`, error);
         handleFirestoreError(error, OperationType.LIST, 'trailers');
       });
 
@@ -3200,46 +3195,14 @@ export default function App() {
       setDesignTokens(data);
 
       // 3. Populate Scraped Assets
-      const newAssets: MediaItem[] = [];
-      
-      if (data.screenshotUrl) {
-        newAssets.push({
-          id: `scraped-screenshot-${Date.now()}`,
-          url: data.screenshotUrl,
-          type: 'image',
-          name: `${data.brandTitle || 'Website'} Screenshot`
-        });
-      }
-
       if (data.scrapedImages && data.scrapedImages.length > 0) {
-        const scrapedItems: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
+        const newAssets: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
             id: `scraped-${i}-${Date.now()}`,
             url,
             type: 'image',
             name: `Website Asset ${i + 1}`
         }));
-        newAssets.push(...scrapedItems);
-      }
-      
-      if (newAssets.length > 0) {
         setMediaFiles(prev => [...prev, ...newAssets]);
-        
-        // Also persist scraped assets to user library if logged in
-        if (user) {
-          newAssets.forEach(async (asset) => {
-            try {
-              await addDoc(collection(db, 'assets'), {
-                userId: user.uid,
-                url: asset.url,
-                type: asset.type,
-                name: asset.name,
-                createdAt: serverTimestamp()
-              });
-            } catch (e) {
-              console.error("Error saving scraped asset to library:", e);
-            }
-          });
-        }
       }
 
       if (data.choreography) {
@@ -3651,9 +3614,7 @@ export default function App() {
 
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      const isSocialCard = ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(currentComp?.sceneType || '');
-      const defaultDur = isSocialCard ? 3.5 : 5;
-      const effectiveSceneDuration = Math.max((currentComp?.sceneDuration || sceneDuration || defaultDur) * 1000, hasText ? animDuration + 500 : 0);
+      const effectiveSceneDuration = Math.max((currentComp?.sceneDuration || sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
 
       timer = setTimeout(playNext, effectiveSceneDuration);
     }
@@ -3927,12 +3888,7 @@ export default function App() {
         : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift'][Math.floor(Math.random() * 4)]));
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
-      let customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
-      
-      // Shorten duration for social cards to make them feel snappier
-      if (!customDur && ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(currentSceneType)) {
-        customDur = 3.5;
-      }
+      const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
       const finalTransition = (existingComp?.transitionType || skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
 
       const comp = generateCompositionFromData(
@@ -4263,23 +4219,20 @@ export default function App() {
       setRecordingKey(prev => prev + 1);
       setRecordingProgress(0);
 
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 300))));
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 50))));
       mediaRecorder.start();
 
       for (let i = 0; i < compositions.length; i++) {
         if (!sequenceActiveRef.current) break;
 
         setCurrentIndex(i);
-        // Add a small delay to ensure DOM updates and assets start loading
-        await new Promise(r => setTimeout(r, 100));
-        
         setRecordingProgress((i / compositions.length) * 100);
 
-        const isSocialCard = ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(compositions[i]?.sceneType || '');
-        const defaultDur = isSocialCard ? 3.5 : 5;
-        const effectiveSceneDuration = Math.max((compositions[i]?.sceneDuration || sceneDuration || defaultDur) * 1000, hasText ? animDuration + 1500 : 0);
+        const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
+        const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
+        const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
 
-        await new Promise(r => setTimeout(r, Math.max(0, effectiveSceneDuration - 100)));
+        await new Promise(r => setTimeout(r, effectiveSceneDuration));
       }
 
       if (sequenceActiveRef.current) {
@@ -4555,7 +4508,7 @@ export default function App() {
                                  <div
                                    key={asset.id}
                                    onClick={() => toggleLibraryAssetSelection(asset.id)}
-                                   className={`relative aspect-square border transition-all p-1 cursor-pointer group ${isSelected ? 'border-ink bg-ivory' : 'border-black/5 opacity-60 hover:opacity-100'}`}
+                                   className={`relative aspect-square border transition-all p-1 cursor-pointer ${isSelected ? 'border-ink bg-ivory' : 'border-black/5 opacity-60 hover:opacity-100'}`}
                                  >
                                    {asset.type === 'video' ? (
                                      <video src={asset.url} className="w-full h-full object-cover grayscale" />
@@ -4761,7 +4714,45 @@ export default function App() {
                      </div>
 
                     <div>
-
+                        {/* Kinetic Animations (Multi-Select) Hidden
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
+                        <div className="space-y-4">
+                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                             {[
+                               { id: 'gsap-stagger', label: 'Stagger Reveal' },
+                               { id: 'gsap-cascade', label: 'Cascade Fall' },
+                               { id: 'gsap-glow', label: 'Glow Pulse' },
+                               { id: 'gsap-3d-roll', label: '3D Roll' },
+                               { id: 'gsap-elastic', label: 'Spring Elastic' },
+                               { id: 'gsap-tornado', label: 'Vortex Tornado' },
+                               { id: 'gsap-funnel', label: 'Gravity Funnel' },
+                               { id: 'gsap-stack', label: 'Letter Stack' },
+                               { id: 'gsap-typewriter', label: 'Typewriter' },
+                               { id: 'gsap-glitch', label: 'Glitch' },
+                               { id: 'gsap-wave', label: 'Wave Motion' },
+                               { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
+                             ].map(effect => (
+                               <button
+                                 key={effect.id}
+                                 onClick={() => {
+                                   setTextEffect('random');
+                                   setSelectedEffects(prev => 
+                                     prev.includes(effect.id as TextEffect)
+                                       ? prev.filter(e => e !== effect.id)
+                                       : [...prev, effect.id as TextEffect]
+                                   );
+                                 }}
+                                 className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                               >
+                                 <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
+                                   {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
+                                 </span>
+                                 {effect.label}
+                               </button>
+                             ))}
+                           </div>
+                        */}
+                        
                         <div className="space-y-4">
 
                            <select
