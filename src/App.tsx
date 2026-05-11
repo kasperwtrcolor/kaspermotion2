@@ -3626,7 +3626,7 @@ export default function App() {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(e => console.error("Audio play failed:", e));
     }
-  }, [appMode, currentIndex, globalAudioUrl]);
+  }, [appMode, currentIndex, globalAudioUrl, isRecording, recordingKey]);
 
   const [addingAssetToSceneIdx, setAddingAssetToSceneIdx] = useState<number | null>(null);
 
@@ -5136,7 +5136,7 @@ export default function App() {
           </VideoCanvas>
 
           {/* GLOBAL TYPOGRAPHY LAYER - FIXED ABOVE WORLD */}
-          <div className="absolute inset-0 z-[500] pointer-events-none overflow-hidden">
+          <div key={`typo-layer-${recordingKey}`} className="absolute inset-0 z-[500] pointer-events-none overflow-hidden">
              <AnimatePresence mode="wait">
                {currentComp && (
                  <motion.div 
