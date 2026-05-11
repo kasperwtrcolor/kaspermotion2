@@ -32,16 +32,16 @@ export default function VideoCanvas({ children, isRecording }: VideoCanvasProps)
     <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none bg-transparent">
       <div
         id="video-canvas"
-        className="relative pointer-events-auto"
+        className="relative pointer-events-auto shadow-2xl overflow-hidden bg-black"
         style={{
-          width: '100vw',
-          height: '100vh',
+          width: '1920px',
+          height: '1080px',
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+          flexShrink: 0
         }}
       >
-        {/* Overflow hidden container for clipping */}
-        <div className="absolute inset-0 overflow-hidden">
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );

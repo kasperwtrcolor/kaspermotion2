@@ -2291,8 +2291,12 @@ const CompositionNode = ({
 
   return (
     <div
-      className="absolute left-0 top-0"
+      className="absolute"
       style={{
+        width: '1920px',
+        height: '1080px',
+        left: '-960px',
+        top: '-540px',
         transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
         transformStyle: 'preserve-3d'
       }}
@@ -2412,12 +2416,11 @@ const CompositionNode = ({
 
             // Ken Burns cinematic motions for fullscreen assets
             const kenBurnsVariants = [
-              { scale: [1, 1.15], x: [0, 0], y: [0, 0] },           // Slow zoom in
-              { scale: [1.15, 1], x: [0, 0], y: [0, 0] },           // Slow zoom out
-              { scale: [1.08, 1.12], x: ['-3%', '3%'], y: [0, 0] }, // Pan left to right
-              { scale: [1.08, 1.12], x: ['3%', '-3%'], y: [0, 0] }, // Pan right to left
-              { scale: [1.05, 1.15], x: [0, 0], y: ['2%', '-2%'] }, // Slow crane up
-              { scale: [1.1, 1.05], x: ['-2%', '2%'], y: ['1%', '-1%'] }, // Diagonal drift
+              { scale: [1.1, 1.25], x: [0, -60], y: [0, -40] },
+              { scale: [1.2, 1.1], x: [-60, 0], y: [-40, 0] },
+              { scale: [1.25, 1.1], x: [60, 0], y: [40, 0] },
+              { scale: [1.1, 1.2], x: [0, 60], y: [0, 40] },
+              { scale: [1.15, 1.3], x: [-40, 40], y: [-30, 30] }
             ];
             const kenBurns = kenBurnsVariants[(i + comp.id.charCodeAt(0)) % kenBurnsVariants.length];
 
@@ -2443,7 +2446,7 @@ const CompositionNode = ({
                         rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
                       };
                     }
-                  })()) : { scale: 1, rotate: 0 }}
+                  })()) : { scale: 1, rotate: 0, x: 0, y: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -2467,7 +2470,7 @@ const CompositionNode = ({
                         rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
                       };
                     }
-                  })()) : { scale: 1, rotate: 0 }}
+                  })()) : { scale: 1, rotate: 0, x: 0, y: 0 }}
                   transition={m.isFullscreen 
                     ? { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }
                     : { duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }
@@ -5142,7 +5145,7 @@ export default function App() {
           <VideoCanvas key={recordingKey} isRecording={isRecording}>
             <CompositionProvider duration={compositions.length * 5}>
               <motion.div
-                className="absolute inset-0 overflow-visible"
+                className="absolute left-1/2 top-1/2 w-0 h-0 overflow-visible"
                 style={{
                   transformStyle: 'preserve-3d',
                   x: worldX,
