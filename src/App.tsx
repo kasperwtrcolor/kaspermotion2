@@ -2263,7 +2263,7 @@ const CompositionNode = ({
     const ghostBlur = 'blur(40px)';
     const ghostScale = 0.4;
 
-    const isMorph = type?.startsWith('morph-') || type === 'item-portal';
+    const isMorph = type?.startsWith('morph-');
 
     return {
       future: { 
@@ -2279,23 +2279,50 @@ const CompositionNode = ({
         transition: { duration: 1.2 } 
       },
       past: { 
-        opacity: isMorph ? 0.8 : ghostOpacity, 
-        scale: isMorph ? 1.8 : ghostScale, 
-        filter: isMorph ? 'blur(4px)' : ghostBlur, 
-        transition: { duration: 1.5, ease: 'easeInOut' } 
+        opacity: isMorph ? 1 : ghostOpacity, 
+        scale: isMorph ? 1 : ghostScale, 
+        filter: isMorph ? 'none' : ghostBlur, 
+        transition: { duration: 1.2 } 
       }
     };
   };
 
   const transitionVariants = getTransitionVariants(comp.transitionType);
 
-  const sceneContent = (
-    <>
-      <SceneBackground style={comp.activeBackground} status={status} />
-      <div className="vignette-overlay" />
-      
-      {/* Secondary Motion Assets Layer */}
-      {comp.secondaryAssets?.map(asset => {
+  return (
+    <div
+      className="absolute left-0 top-0"
+      style={{
+        transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
+        transformStyle: 'preserve-3d'
+      }}
+    >
+      <motion.div
+        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+        style={{ transformStyle: 'preserve-3d' }}
+        variants={transitionVariants}
+        initial="future"
+        animate={status}
+      >
+        {comp.transitionType?.startsWith('morph-') || comp.transitionType === 'item-portal' ? (
+          <MorphTransitionOverlay 
+            type={comp.transitionType} 
+            status={status} 
+            duration={comp.transitionDuration} 
+            itemUrl={comp.transitionType === 'item-portal' ? comp.transitionItemAsset : undefined}
+          >
+            <SceneBackground style={comp.activeBackground} status={status} />
+            <div className="vignette-overlay" />
+          </MorphTransitionOverlay>
+        ) : (
+          <>
+            <SceneBackground style={comp.activeBackground} status={status} />
+            <div className="vignette-overlay" />
+          </>
+        )}
+        
+        {/* Secondary Motion Assets Layer */}
+        {comp.secondaryAssets?.map(asset => {
           if (asset.type === '3d-item') {
             return (
               <motion.div
@@ -2484,36 +2511,6 @@ const CompositionNode = ({
           );
         })}
         </div>
-    </>
-  );
-
-  return (
-    <div
-      className="absolute left-0 top-0"
-      style={{
-        transform: `translate3d(${comp.x}px, ${comp.y}px, ${comp.z}px) rotateX(${comp.rotX}deg) rotateY(${comp.rotY}deg) rotateZ(${comp.rotZ}deg)`,
-        transformStyle: 'preserve-3d'
-      }}
-    >
-      <motion.div
-        className="relative -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-screen h-screen"
-        style={{ transformStyle: 'preserve-3d' }}
-        variants={transitionVariants}
-        initial="future"
-        animate={status}
-      >
-        {comp.transitionType?.startsWith('morph-') || comp.transitionType === 'item-portal' ? (
-          <MorphTransitionOverlay 
-            type={comp.transitionType} 
-            status={status} 
-            duration={comp.transitionDuration} 
-            itemUrl={comp.transitionType === 'item-portal' ? comp.transitionItemAsset : undefined}
-          >
-            {sceneContent}
-          </MorphTransitionOverlay>
-        ) : (
-          sceneContent
-        )}
       </motion.div>
     </div>
   );
@@ -3632,7 +3629,9 @@ export default function App() {
 
       const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
       const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-      const effectiveSceneDuration = Math.max((currentComp?.sceneDuration || sceneDuration || 5) * 1000, hasText ? animDuration + 500 : 0);
+      const isSocialCard = ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(currentComp?.sceneType || '');
+      const defaultDur = isSocialCard ? 3.5 : 5;
+      const effectiveSceneDuration = Math.max((currentComp?.sceneDuration || sceneDuration || defaultDur) * 1000, hasText ? animDuration + 500 : 0);
 
       timer = setTimeout(playNext, effectiveSceneDuration);
     }
@@ -3906,7 +3905,12 @@ export default function App() {
         : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift'][Math.floor(Math.random() * 4)]));
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
-      const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
+      let customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
+      
+      // Shorten duration for social cards to make them feel snappier
+      if (!customDur && ['instagram-follow', 'x-post', 'macos-notification', 'reddit-post', 'spotify-card', 'data-chart'].includes(currentSceneType)) {
+        customDur = 3.5;
+      }
       const finalTransition = (existingComp?.transitionType || skelScene?.transition || sceneChoreography?.transition || transitionType) as TransitionType;
 
       const comp = generateCompositionFromData(
