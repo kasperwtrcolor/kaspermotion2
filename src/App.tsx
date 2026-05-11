@@ -3504,6 +3504,7 @@ export default function App() {
       artistryRotY.set(0);
       artistryRoll.set(0);
 
+      const duration = currentComp.sceneDuration || 5;
       const delay = 0.5; // Half second delay to center first
       const animDuration = Math.max(0.1, duration - delay);
 
