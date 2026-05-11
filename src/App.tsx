@@ -3617,7 +3617,9 @@ export default function App() {
       path
     }
     console.error('Firestore Error: ', JSON.stringify(errInfo));
-    throw new Error(JSON.stringify(errInfo));
+    // Don't throw here to avoid crashing the app on background listener errors
+    setToastMessage(`Database sync issue: ${path}`);
+    setTimeout(() => setToastMessage(null), 3000);
   }
 
 
