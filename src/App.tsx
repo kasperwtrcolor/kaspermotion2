@@ -4041,11 +4041,18 @@ export default function App() {
               }
             }
           } else {
-            const is3D = Math.random() > 0.5;
-            type = is3D ? '3d-item' : 'hyper-shape';
-            content = is3D 
-              ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
-              : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+            // Force a 40% chance for a motion icon even if no intent is matched
+            if (Math.random() > 0.6) {
+               const iconKeys = Object.keys(MOTION_ICON_MAP);
+               type = 'motion-icon';
+               content = iconKeys[Math.floor(Math.random() * iconKeys.length)];
+            } else {
+              const is3D = Math.random() > 0.5;
+              type = is3D ? '3d-item' : 'hyper-shape';
+              content = is3D 
+                ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+                : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+            }
           }
 
           secondaryAssets.push({
