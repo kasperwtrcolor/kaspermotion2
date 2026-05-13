@@ -24,6 +24,7 @@ import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { CompositionProvider } from './components/CompositionProvider';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES, MORPH_SHAPES } from './constants/transitionAssets';
+import { findBestMotionIcon, MotionIcon } from './components/motion-icons/MotionIconRegistry';
 import SharePage from './components/SharePage';
 import { ALL_SHADER_NAMES } from './lib/ShaderTransitionSource';
 import WorldNavigationPaths from './components/WorldNavigationPaths';
@@ -278,7 +279,7 @@ type MediaItem = {
 
 type SecondaryAsset = {
   id: string;
-  type: 'hyper-shape' | '3d-item';
+  type: 'hyper-shape' | '3d-item' | 'motion-icon';
   content: string;
   x: number;
   y: number;
@@ -2352,6 +2353,36 @@ const CompositionNode = ({
                 />
               </motion.div>
             );
+          } else if (asset.type === 'motion-icon') {
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  x: asset.drift,
+                  rotateZ: asset.rotation,
+                  scale: [asset.scale, asset.scale * 1.1, asset.scale],
+                } : {}}
+                transition={{ 
+                   x: { duration: 15, repeat: Infinity, ease: 'linear' },
+                   scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                }}
+              >
+                <MotionIcon 
+                  name={asset.content} 
+                  size={120} 
+                  color="#fff" 
+                  autoAnimate={status === 'active'}
+                  className="drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]"
+                />
+              </motion.div>
+            );
           } else {
             const shapeData = getM3ShapeStyle(asset.content, comp.caption);
             return (
@@ -3985,26 +4016,47 @@ export default function App() {
       } else if (automatedSecondaryAssets) {
         const assetCount = complexity === 'dense' || complexity === 'layered' ? 3 : 1;
         for (let i = 0; i < assetCount; i++) {
-          const is3D = Math.random() > 0.5;
-          let content = is3D 
-            ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
-            : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+          let type: SecondaryAsset['type'] = '3d-item';
+          let content = '';
 
-          if (is3D && sceneChoreography?.secondaryAssetIntent) {
-            const matched = findBestTransitionItem(sceneChoreography.secondaryAssetIntent);
-            if (matched) content = matched;
-            else if (i > 0) continue;
+          if (sceneChoreography?.secondaryAssetIntent) {
+            const motionIcon = findBestMotionIcon(sceneChoreography.secondaryAssetIntent);
+            if (motionIcon) {
+              type = 'motion-icon';
+              content = motionIcon;
+            } else {
+              const matched = findBestTransitionItem(sceneChoreography.secondaryAssetIntent);
+              if (matched) {
+                type = '3d-item';
+                content = matched;
+              } else if (i > 0) {
+                continue;
+              } else {
+                // Fallback to random
+                const is3D = Math.random() > 0.5;
+                type = is3D ? '3d-item' : 'hyper-shape';
+                content = is3D 
+                  ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+                  : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
+              }
+            }
+          } else {
+            const is3D = Math.random() > 0.5;
+            type = is3D ? '3d-item' : 'hyper-shape';
+            content = is3D 
+              ? SECONDARY_3D_ITEMS[Math.floor(Math.random() * SECONDARY_3D_ITEMS.length)]
+              : HYPER_SHAPES[Math.floor(Math.random() * HYPER_SHAPES.length)];
           }
 
           secondaryAssets.push({
             id: `sec-${sceneIdx}-${i}`,
-            type: is3D ? '3d-item' : 'hyper-shape',
+            type,
             content,
             x: (Math.random() * 1200 - 600),
             y: (Math.random() * 800 - 400),
             z: (Math.random() * -800 - 200),
-            scale: 0.5 + Math.random() * 0.7,
-            rotation: Math.random() * 360,
+            scale: type === 'motion-icon' ? (0.8 + Math.random() * 0.4) : (0.5 + Math.random() * 0.7),
+            rotation: type === 'motion-icon' ? (Math.random() * 20 - 10) : (Math.random() * 360),
             drift: Math.random() * 100 - 50
           });
         }
