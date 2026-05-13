@@ -4019,8 +4019,9 @@ export default function App() {
           let type: SecondaryAsset['type'] = '3d-item';
           let content = '';
 
-          if (sceneChoreography?.secondaryAssetIntent) {
-            const motionIcon = findBestMotionIcon(sceneChoreography.secondaryAssetIntent);
+          const intent = sceneChoreography?.secondaryAssetIntent || caption;
+          if (intent) {
+            const motionIcon = findBestMotionIcon(intent);
             if (motionIcon) {
               type = 'motion-icon';
               content = motionIcon;
