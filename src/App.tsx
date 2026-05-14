@@ -2322,98 +2322,6 @@ const CompositionNode = ({
           </>
         )}
         
-        {/* Secondary Motion Assets Layer */}
-        {comp.secondaryAssets?.map(asset => {
-          if (asset.type === '3d-item') {
-            return (
-              <motion.div
-                key={asset.id}
-                className="absolute pointer-events-none select-none"
-                style={{
-                  left: asset.x,
-                  top: asset.y,
-                  translateZ: asset.z,
-                  transformStyle: 'preserve-3d'
-                }}
-                animate={status === 'active' ? {
-                  x: asset.drift,
-                  rotateZ: asset.rotation + 360,
-                  y: [0, -10, 0] // Breathing float
-                } : {}}
-                transition={{ 
-                   x: { duration: 20, repeat: Infinity, ease: 'linear' },
-                   rotateZ: { duration: 20, repeat: Infinity, ease: 'linear' },
-                   y: { duration: 3, repeat: Infinity, ease: 'sine.inOut' }
-                }}
-              >
-                <img 
-                  src={asset.content} 
-                  className="w-48 h-48 object-contain opacity-60 filter blur-[1px] hover:blur-0 transition-all duration-700" 
-                  style={{ transform: `scale(${asset.scale})` }} 
-                />
-              </motion.div>
-            );
-          } else if (asset.type === 'motion-icon') {
-            return (
-              <motion.div
-                key={asset.id}
-                className="absolute pointer-events-none select-none"
-                style={{
-                  left: asset.x,
-                  top: asset.y,
-                  translateZ: asset.z,
-                  transformStyle: 'preserve-3d'
-                }}
-                animate={status === 'active' ? {
-                  x: asset.drift,
-                  rotateZ: asset.rotation,
-                  scale: [asset.scale, asset.scale * 1.1, asset.scale],
-                } : {}}
-                transition={{ 
-                   x: { duration: 15, repeat: Infinity, ease: 'linear' },
-                   scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
-                }}
-              >
-                <MotionIcon 
-                  name={asset.content} 
-                  size={120} 
-                  color="#fff" 
-                  autoAnimate={status === 'active'}
-                  className="drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]"
-                />
-              </motion.div>
-            );
-          } else {
-            const shapeData = getM3ShapeStyle(asset.content, comp.caption);
-            return (
-              <motion.div
-                key={asset.id}
-                className="absolute pointer-events-none select-none flex items-center justify-center"
-                style={{
-                  left: asset.x,
-                  top: asset.y,
-                  translateZ: asset.z,
-                  transformStyle: 'preserve-3d'
-                }}
-                animate={status === 'active' ? {
-                  y: asset.drift,
-                  rotateX: 360,
-                  rotateY: 180
-                } : {}}
-                transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <div 
-                  className={`w-32 h-32 ${shapeData.className} opacity-10`}
-                  style={{ 
-                    ...shapeData.style, 
-                    backgroundColor: accentColor,
-                    transform: `scale(${asset.scale})`
-                  }}
-                />
-              </motion.div>
-            );
-          }
-        })}
         {comp.giphyStickerUrl && (
           <motion.div
             className="absolute z-50 flex items-center justify-center"
@@ -2542,6 +2450,99 @@ const CompositionNode = ({
           );
         })}
         </div>
+
+        {/* TOP LAYER: Secondary Motion Assets (Floating on top) */}
+        {comp.secondaryAssets?.map(asset => {
+          if (asset.type === '3d-item') {
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none z-[100]"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  x: asset.drift,
+                  rotateZ: asset.rotation + 360,
+                  y: [0, -10, 0] // Breathing float
+                } : {}}
+                transition={{ 
+                   x: { duration: 20, repeat: Infinity, ease: 'linear' },
+                   rotateZ: { duration: 20, repeat: Infinity, ease: 'linear' },
+                   y: { duration: 3, repeat: Infinity, ease: 'sine.inOut' }
+                }}
+              >
+                <img 
+                  src={asset.content} 
+                  className="w-48 h-48 object-contain opacity-60 filter blur-[1px] hover:blur-0 transition-all duration-700" 
+                  style={{ transform: `scale(${asset.scale})` }} 
+                />
+              </motion.div>
+            );
+          } else if (asset.type === 'motion-icon') {
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none z-[100]"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  x: asset.drift,
+                  rotateZ: asset.rotation,
+                  scale: [asset.scale, asset.scale * 1.1, asset.scale],
+                } : {}}
+                transition={{ 
+                   x: { duration: 15, repeat: Infinity, ease: 'linear' },
+                   scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                }}
+              >
+                <MotionIcon 
+                  name={asset.content} 
+                  size={220} 
+                  color="#fff" 
+                  autoAnimate={status === 'active'}
+                  className="drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]"
+                />
+              </motion.div>
+            );
+          } else {
+            const shapeData = getM3ShapeStyle(asset.content, comp.caption);
+            return (
+              <motion.div
+                key={asset.id}
+                className="absolute pointer-events-none select-none flex items-center justify-center z-[100]"
+                style={{
+                  left: asset.x,
+                  top: asset.y,
+                  translateZ: asset.z,
+                  transformStyle: 'preserve-3d'
+                }}
+                animate={status === 'active' ? {
+                  y: asset.drift,
+                  rotateX: 360,
+                  rotateY: 180
+                } : {}}
+                transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <div 
+                  className={`w-32 h-32 ${shapeData.className} opacity-10`}
+                  style={{ 
+                    ...shapeData.style, 
+                    backgroundColor: accentColor,
+                    transform: `scale(${asset.scale})`
+                  }}
+                />
+              </motion.div>
+            );
+          }
+        })}
       </motion.div>
     </div>
   );
@@ -4056,17 +4057,17 @@ export default function App() {
             }
           }
 
-          secondaryAssets.push({
-            id: `sec-${sceneIdx}-${i}`,
-            type,
-            content,
-            x: (Math.random() * 1200 - 600),
-            y: (Math.random() * 800 - 400),
-            z: (Math.random() * -800 - 200),
-            scale: type === 'motion-icon' ? (0.8 + Math.random() * 0.4) : (0.5 + Math.random() * 0.7),
-            rotation: type === 'motion-icon' ? (Math.random() * 20 - 10) : (Math.random() * 360),
-            drift: Math.random() * 100 - 50
-          });
+            secondaryAssets.push({
+              id: `sec-${sceneIdx}-${i}`,
+              type,
+              content,
+              x: (Math.random() * 1400 - 700),
+              y: (Math.random() * 1000 - 500),
+              z: type === 'motion-icon' ? (Math.random() * 400 + 100) : (Math.random() * -800 - 200),
+              scale: type === 'motion-icon' ? (1.5 + Math.random() * 1.5) : (0.5 + Math.random() * 0.7),
+              rotation: type === 'motion-icon' ? (Math.random() * 40 - 20) : (Math.random() * 360),
+              drift: Math.random() * 200 - 100
+            });
         }
       }
 
