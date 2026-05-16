@@ -233,8 +233,7 @@ H2 Tags: ${h2s.join(' | ')}
             "backgroundStyle": "one of: vibrant-glow, particles, grid, gradient-teal, gradient-rose, deep-ocean, sunset-fire, midnight",
             "textEffect": "one of: gsap-cascade, gsap-3d-roll, gsap-elastic, gsap-expand, gsap-tornado, gsap-merge-elastic, gsap-glow, gsap-typewriter, gsap-glitch, gsap-wave, gsap-blur-reveal",
             "cameraPath": "one of: zoom-in, zoom-out, orbit-left, orbit-right, pan-down-tilt, static, crane-up, parallax-drift",
-            "shape": "one of: square, rounded-rect, fullscreen",
-            "imagePrompt": "Detailed prompt for generating a high-quality background image for this scene using an AI image generator. Describe the lighting, composition, and style (e.g., cinematic, 3d render, minimalist)."
+            "shape": "one of: square, rounded-rect, fullscreen"
           }
         ]
       }
@@ -252,7 +251,7 @@ H2 Tags: ${h2s.join(' | ')}
       ${extractedData}`;
       
       const aiResponse = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
       });
 
@@ -281,89 +280,60 @@ H2 Tags: ${h2s.join(' | ')}
     }
   });
 
-  // API Route for generating images using Gemini
-  app.post('/api/generate-image', async (req, res) => {
-    try {
-      const { prompt, aspectRatio = "16:9" } = req.body;
-      if (!prompt) {
-        return res.status(400).json({ error: 'prompt is required' });
-      }
-
-      console.log(`[Gemini Image] Generating: ${prompt}`);
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
-        contents: prompt,
-        config: {
-          // @ts-ignore - Preview SDK features
-          imageConfig: {
-            aspectRatio,
-            imageSize: '1K'
-          }
-        }
-      });
-
-      // Assuming the SDK returns a URL or base64. 
-      // For the preview, we'll handle the candidate response.
-      const candidate = response.candidates?.[0];
-      if (!candidate) throw new Error("No image generated.");
-
-      // In a real implementation with the GenAI SDK, we might need to handle the output format.
-      // For now, we'll assume it returns a manageable reference or data.
-      // If it's inlineData (base64), we'll return it as a data URL.
-      const part = candidate.content?.parts?.[0];
-      if (part?.inlineData) {
-        const dataUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        return res.json({ imageUrl: dataUrl });
-      }
-
-      res.json({ imageUrl: part?.text || "failed_to_extract" });
-    } catch (error: any) {
-      console.error('Image generation error:', error);
-      res.status(500).json({ error: error.message || 'Failed to generate image' });
-    }
-  });
-
-  // API Route for animating images using Veo
+  // API Route for animating images using AI (Replicate)
   app.post('/api/animate-media', async (req, res) => {
     try {
-      const { imageUrl, prompt } = req.body;
+      const { imageUrl } = req.body;
       if (!imageUrl) {
         return res.status(400).json({ error: 'imageUrl is required' });
       }
 
-      console.log(`[Veo Video] Animating image with prompt: ${prompt || 'subtle motion'}`);
+      const token = process.env.REPLICATE_API_TOKEN;
+      if (!token) {
+        return res.status(500).json({ error: 'REPLICATE_API_TOKEN is not configured.' });
+      }
 
-      // Using the GenAI SDK for Veo 3.1 Lite
-      // @ts-ignore - Preview features
-      const operation = await ai.models.generateVideos({
-        model: 'veo-3.1-lite-generate-preview',
-        prompt: prompt || 'add subtle cinematic motion and depth to this image',
-        image: imageUrl // Some versions support image-to-video directly
+      // 1. Create prediction using Stable Video Diffusion
+      const response = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          version: '3f0c2787034b394856f4d54b83ca6498c8c6b758da4f4ed781f8d4610ed98020',
+          input: {
+            image: imageUrl,
+            video_length: '14_frames_with_svd',
+            fps: 6,
+            motion_bucket_id: 127
+          }
+        })
       });
 
-      // In this environment, we might need to poll if it's a long-running operation
-      // However, if the SDK handle it synchronously or we have a simplified flow:
+      const prediction = await response.json();
+      if (prediction.error) throw new Error(prediction.error);
+
+      // 2. Simple polling to wait for completion (max 2 minutes)
       let finalUrl = null;
-      
-      // Basic polling simulation or actual operation check
-      if (operation.done) {
-        finalUrl = operation.result?.videoUrl;
-      } else {
-        // Simple wait for preview
-        await new Promise(r => setTimeout(r, 15000));
-        // Re-check or return a job ID. To keep it simple for the user, we'll return a simulated success if needed,
-        // but ideally we return the video.
-        finalUrl = operation.output?.videoUrl || operation.result?.videoUrl;
+      for (let i = 0; i < 40; i++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+        const pollData = await pollRes.json();
+        
+        if (pollData.status === 'succeeded') {
+          // Replicate returns an array or string for SVD
+          finalUrl = Array.isArray(pollData.output) ? pollData.output[0] : pollData.output;
+          break;
+        } else if (pollData.status === 'failed') {
+          throw new Error('Animation failed.');
+        }
       }
 
       if (!finalUrl) {
-        // Fallback for demo if needed, but let's try to be accurate
-        return res.status(202).json({ 
-          message: 'Video generation started', 
-          jobId: operation.id,
-          status: 'pending' 
-        });
+        return res.status(504).json({ error: 'Animation timed out.' });
       }
 
       res.json({ videoUrl: finalUrl });

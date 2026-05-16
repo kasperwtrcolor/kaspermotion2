@@ -32,8 +32,6 @@ import AuthModal from './components/AuthModal';
 import ExplosionOverlay from './components/ExplosionOverlay';
 import CoinFlipCard from './components/CoinFlipCard';
 import RainbowPhysicsOverlay from './components/RainbowPhysicsOverlay';
-import { ChatInterface } from './components/ChatInterface';
-import { ArtifactWindow } from './components/ArtifactWindow';
 
 gsap.registerPlugin(useGSAP);
 
@@ -2574,8 +2572,6 @@ export default function App() {
   const [explosionDuration, setExplosionDuration] = useState(1);
   const [rainbowEnabled, setRainbowEnabled] = useState(true);
   const [isRainbowActive, setIsRainbowActive] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [isAILoading, setIsAILoading] = useState(false);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -3188,88 +3184,102 @@ export default function App() {
 
 
 
-  const handleChatPrompt = async (prompt: string) => {
-    setIsAILoading(true);
-    setAppMode('setup'); // Switch to editor mode if not already
-    
-    // Add user message
-    const userMsg = { id: Date.now().toString(), role: 'user', content: prompt, timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+  const handleUrlAnalysis = async () => {
+    if (!scrapeUrl || !scrapeUrl.includes('.')) return;
+    setIsScraping(true);
+    setToastMessage("AI Director is analyzing your website...");
 
     try {
-      setToastMessage("AI Director is composing your trailer...");
-      
       const resp = await fetch(getApiUrl('/api/scrape'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: prompt.includes('http') ? prompt : `Search: ${prompt}` })
+        body: JSON.stringify({ url: scrapeUrl })
       });
 
       const data = await resp.json();
+
       if (data.error) throw new Error(data.error);
 
-      // 1. Update Project State
-      if (data.script) setScriptText(Array.isArray(data.script) ? data.script.join('\n') : String(data.script));
-      if (data.siteName) setWebsiteSiteName(data.siteName);
-      
-      // 2. Generate Images for scenes
-      if (data.choreography?.scenes) {
-        setToastMessage("Generating cinematic assets...");
-        const scenesWithImages = await Promise.all(data.choreography.scenes.map(async (scene: any, idx: number) => {
-          try {
-            const imgResp = await fetch(getApiUrl('/api/generate-image'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: scene.imagePrompt || scene.caption })
-            });
-            const imgData = await imgResp.json();
-            return { ...scene, imageUrl: imgData.imageUrl };
-          } catch (e) {
-            console.error("Image generation failed for scene", idx, e);
-            return scene;
-          }
-        }));
-
-        // 3. Create Compositions
-        const newComps: Composition[] = [];
-        let prev: Composition | undefined = undefined;
-        
-        for (let i = 0; i < scenesWithImages.length; i++) {
-          const s = scenesWithImages[i];
-          const media = [{ url: s.imageUrl, type: 'image', name: `Scene ${i+1}` }];
-          const comp = generateCompositionFromData(media, i, s.textEffect || 'gsap-glow', s.transitionType || 'morph-star', 1.2, prev, false, 'custom', ['black'], undefined, 1, 0, 0, 4.5, s.caption);
-          comp.cameraPath = s.cameraPath || 'zoom-in';
-          newComps.push(comp);
-          prev = comp;
-        }
-        
-        setCompositions(newComps);
-        setMediaFiles(newComps.map(c => ({ id: c.id, url: c.media[0].url, type: 'image', name: c.media[0].name })));
-        
-        // Add assistant message
-        const assistantMsg = { 
-          id: (Date.now() + 1).toString(), 
-          role: 'assistant', 
-          content: `I've created a custom trailer for you with ${newComps.length} scenes. You can preview it on the right and make any adjustments!`, 
-          timestamp: new Date() 
-        };
-        setMessages(prev => [...prev, assistantMsg]);
+      // 1. Populate Script
+      if (data.script) {
+        const textValue = Array.isArray(data.script) ? data.script.join('\n') : String(data.script);
+        setScriptText(textValue);
       }
 
-      setToastMessage("Trailer generated successfully!");
-    } catch (err: any) {
-      console.error("AI Generation failed:", err);
-      setToastMessage(err.message || "Failed to generate trailer.");
-      const errorMsg = { id: Date.now().toString(), role: 'assistant', content: "Sorry, I encountered an error while creating your trailer. Please try again with a different prompt.", timestamp: new Date() };
-      setMessages(prev => [...prev, errorMsg]);
-    } finally {
-      setIsAILoading(false);
-    }
-  };
+      // 2. Populate Brand Settings
+      if (data.brandTitle) setWebsiteSiteName(data.brandTitle);
 
-  const handleUrlAnalysis = async () => {
-    if (!scrapeUrl || !scrapeUrl.includes('.')) return;
-    handleChatPrompt(scrapeUrl);
+      if (data.colors) {
+        if (data.colors.primary) setTextColor(data.colors.primary);
+        if (data.colors.background) {
+            // Check if it's a known style or just a color
+            const colors = ['black', 'ivory', 'cream'];
+            if (colors.includes(data.colors.background.toLowerCase())) {
+              setBackgroundStyles([data.colors.background.toLowerCase()]);
+            } else {
+              setBackgroundStyles([data.colors.background]);
+            }
+        }
+      }
+
+      if (data.typography) {
+        const fontMap: Record<string, FontFamily> = {
+            'sans': 'font-outfit',
+            'serif': 'font-serif',
+            'mono': 'font-mono',
+            'display': 'font-syne',
+            'modern': 'font-grotesk',
+            'bold': 'font-impact',
+            'playful': 'font-bangers'
+        };
+        setFontFamily(fontMap[data.typography.vibe] || 'font-outfit');
+      }
+
+      // Actionable Brand Intelligence: Pacing & Density
+      if (data.pacing) {
+        const pacingMap: Record<string, number> = {
+          'rapid-tiktok': 1.8,
+          'standard': 1.0,
+          'cinematic-slow': 0.6
+        };
+        setTextAnimationSpeed(pacingMap[data.pacing] || 1.0);
+        setSceneDuration(data.pacing === 'rapid-tiktok' ? 3.5 : 5.5);
+      }
+
+      if (data.sceneComplexity === 'dense' || data.sceneComplexity === 'layered') {
+        // Force random kinetic for maximum dynamism in complex scenes
+        setTextEffect('random');
+        setTransitionDuration(0.8); // Snappier transitions for density
+      }
+      setDesignTokens(data);
+
+      // 3. Populate Scraped Assets
+      if (data.scrapedImages && data.scrapedImages.length > 0) {
+        const newAssets: MediaItem[] = data.scrapedImages.map((url: string, i: number) => ({
+            id: `scraped-${i}-${Date.now()}`,
+            url,
+            type: 'image',
+            name: `Website Asset ${i + 1}`
+        }));
+        setMediaFiles(prev => [...prev, ...newAssets]);
+      }
+
+      if (data.choreography) {
+        setAiChoreography(data.choreography);
+      }
+      if (data.choreographySkeleton) {
+        setChoreographySkeleton(data.choreographySkeleton);
+      }
+      setDesignTokens(data);
+      setToastMessage("Success! Your brand vibe has been extracted.");
+      setSetupStep(2); // Move to Assets review
+    } catch (err: any) {
+      console.error("AI Analysis failed:", err);
+      setToastMessage(err.message || "Failed to analyze URL.");
+    } finally {
+      setIsScraping(false);
+      setTimeout(() => setToastMessage(null), 3000);
+    }
   };
 
   const updateCurrentStickerTransform = (scale: number, x: number, y: number) => {
@@ -4397,121 +4407,736 @@ export default function App() {
 
     if (appMode === 'setup') {
       return (
-        <div className="flex h-screen w-screen bg-[#fcfcfc] overflow-hidden pt-16">
-          {/* Chat Pane */}
-          <div className="w-[400px] border-r border-gray-200 h-full flex flex-col bg-white">
-            <ChatInterface 
-              messages={messages}
-              onSendMessage={handleChatPrompt}
-              isLoading={isAILoading}
-            />
-          </div>
+        <div className="min-h-screen bg-cream text-ink font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-24 overflow-y-auto relative z-10">
+          <div className="w-full max-w-4xl border border-black/10 bg-white p-8 md:p-16 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative shadow-2xl">
+            <AnimatePresence>
+              {(isUploading || isSaving) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-50 bg-ivory/95 backdrop-blur-md flex flex-col items-center justify-center border border-black/10"
+                >
+                  <div className="w-16 h-16 border-4 border-black/10 border-t-ink rounded-full animate-spin mb-6"></div>
+                  <p className="mono font-bold uppercase text-lg">
+                    {isUploading ? "Uploading Assets..." : "Saving World..."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {/* Artifact Pane */}
-          <div className="flex-1 h-full bg-[#f9fafb]">
-            <ArtifactWindow 
-              title={websiteSiteName || "New Project"}
-              compositions={compositions}
-              onExport={() => setShowExportExplainer(true)}
-              onRemoveScene={(idx) => {
-                const newComps = [...compositions];
-                newComps.splice(idx, 1);
-                setCompositions(newComps);
-              }}
-              onAnimateScene={async (idx) => {
-                const comp = compositions[idx];
-                if (!comp.url || comp.isAnimated) return;
+            {/* Step Indicators */}
+            <div className="flex items-center gap-1 mb-12 overflow-x-auto pb-4 custom-scrollbar">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <button
+                  key={step}
+                  onClick={() => user && setSetupStep(step as any)}
+                  disabled={!user || (step > setupStep && !mediaFiles.length && !scriptText && step > 2)}
+                  className={`flex items-center gap-4 px-8 py-4 mono text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    setupStep === step
+                      ? 'bg-ink text-cream'
+                      : 'bg-ivory text-ink/30 hover:text-ink border border-black/5'
+                  }`}
+                >
+                  <span className="opacity-30">0{step}.</span>
+                  {['Vision', 'Assets', 'Script', 'Mapping', 'Studio'][step - 1]}
+                </button>
+              ))}
+            </div>
 
-                setToastMessage("Generating kinetic motion with Veo...");
-                try {
-                  const res = await fetch(getApiUrl('/api/animate-media'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                      imageUrl: comp.url,
-                      prompt: `add cinematic kinetic motion to: ${comp.caption}`
-                    })
-                  });
-                  const data = await res.json();
-                  if (data.videoUrl) {
-                    const newComps = [...compositions];
-                    newComps[idx] = { 
-                      ...comp, 
-                      url: data.videoUrl, 
-                      isAnimated: true,
-                      type: 'video'
-                    };
-                    setCompositions(newComps);
-                    setToastMessage("Scene animated successfully!");
-                  }
-                } catch (err) {
-                  console.error("Animation failed", err);
-                  setToastMessage("Failed to animate scene.");
-                }
-              }}
-            >
-              <div className="w-full h-full relative overflow-hidden bg-black flex items-center justify-center">
-                {compositions.length > 0 ? (
-                  <VideoCanvas isRecording={false}>
-                    <CompositionProvider duration={compositions.length * 5}>
-                      <div className="relative w-full h-full" style={{ perspective: '2000px' }}>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <CompositionNode
-                            comp={compositions[currentIndex]}
-                            status="active"
-                            globalTextColor={textColor}
-                            globalIsMultiColor={isMultiColor}
-                            globalFontFamily={fontFamily}
-                            socialHandle={socialHandle}
-                            websiteSiteName={websiteSiteName}
-                          />
+            {setupStep === 1 && (
+               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <div className="pb-8 border-b border-black/5">
+                    <p className="mono text-[10px] uppercase opacity-40 mb-2">Step One</p>
+                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Establish the Vibe.</h2>
+                    <p className="text-muted text-lg">Input your website URL or project goal. Our AI Director will analyze your brand, extract assets, and draft your cinematic script instantly.</p>
+                 </div>
+
+                 <div className="space-y-8">
+                   <div className="relative group">
+                     <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
+                     <input
+                       type="text"
+                       placeholder="https://your-website.com"
+                       className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
+                       value={scrapeUrl}
+                       onChange={(e) => setScrapeUrl(e.target.value)}
+                       onKeyDown={(e) => e.key === 'Enter' && handleUrlAnalysis()}
+                     />
+                   </div>
+
+                   <div className="flex flex-col md:flex-row gap-4">
+                     <button
+                       onClick={handleUrlAnalysis}
+                       disabled={isScraping || !scrapeUrl.includes('.')}
+                       className="btn-primary flex-1 py-6 text-lg flex items-center justify-center gap-4 disabled:opacity-50"
+                     >
+                       {isScraping ? (
+                         <>
+                           <Loader2 className="animate-spin" size={24} />
+                           Analyzing Brand...
+                         </>
+                       ) : (
+                         <>
+                           <Sparkles size={24} />
+                           Run AI Analysis
+                         </>
+                       )}
+                     </button>
+                     <button
+                       onClick={() => setSetupStep(2)}
+                       className="btn-outline px-12 py-6 text-sm"
+                     >
+                       Skip & Manual Setup
+                     </button>
+                   </div>
+                 </div>
+
+                 <div className="p-8 bg-ivory border border-black/5 flex gap-6">
+                    <Zap className="text-ink/20 shrink-0" size={32} />
+                    <div className="space-y-2">
+                      <p className="mono text-[10px] font-bold uppercase tracking-widest">Automation Note</p>
+                      <p className="text-xs text-ink/60 leading-relaxed">The AI analyzes your homepage for color palettes, font styles, and high-quality imagery to pre-populate your studio world.</p>
+                    </div>
+                 </div>
+               </motion.div>
+            )}
+
+            {setupStep === 2 && (
+               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <div className="pb-8 border-b border-black/5">
+                    <p className="mono text-[10px] uppercase opacity-40 mb-2">Step Two</p>
+                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Capture the vision.</h2>
+                    <p className="text-muted text-lg">Upload the screenshots or videos that define your application's core value.</p>
+                 </div>
+
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                   <label className="aspect-square bg-ivory border border-dashed border-ink/20 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:border-ink transition-all group">
+                     <Upload className="mb-4 text-ink/20 group-hover:text-ink transition-colors" size={32} />
+                     <span className="mono text-[9px] font-bold uppercase">Add Media</span>
+                     <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*" />
+                   </label>
+
+                   <button
+                     onClick={() => setShowLibrary(true)}
+                     className="aspect-square bg-white border border-black/5 flex flex-col items-center justify-center hover:bg-ivory transition-all group"
+                   >
+                     <ImageIcon className="mb-4 text-ink/20 group-hover:text-ink transition-colors" size={32} />
+                     <span className="mono text-[9px] font-bold uppercase">Library</span>
+                   </button>
+
+                   {mediaFiles.map((m, i) => (
+                     <div key={m.id} className="aspect-square bg-ivory border border-black/5 relative group overflow-hidden p-1">
+                       {m.type === 'video' ? (
+                         <video src={m.url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" muted />
+                       ) : (
+                         <img src={m.url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                       )}
+                       <div className="absolute inset-0 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <button onClick={() => removeFile(i)} className="w-10 h-10 bg-ivory text-red-500 flex items-center justify-center hover:bg-white transition-colors">
+                           <Trash2 size={16} />
+                         </button>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+
+                 <div className="mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                     <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Engine Branding</label>
+                     <div className="relative group">
+                       <Sparkles className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
+                       <input
+                         type="text"
+                         placeholder="e.g. VibeTrailer Elite"
+                         className="elite-input w-full py-5 pl-16 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
+                         value={websiteSiteName}
+                         onChange={(e) => setWebsiteSiteName(e.target.value)}
+                       />
+                     </div>
+                   </div>
+                   <div>
+                     <label className="mono text-[10px] font-bold uppercase opacity-40 mb-4 block">Social Handle</label>
+                     <div className="relative group">
+                       <span className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors font-bold">@</span>
+                       <input
+                         type="text"
+                         placeholder="e.g. kaspermotion"
+                         className="elite-input w-full py-5 pl-12 pr-8 text-xl font-bold bg-ivory/30 border-black/5"
+                         value={socialHandle.replace('@', '')}
+                         onChange={(e) => setSocialHandle(e.target.value ? `@${e.target.value.replace('@', '')}` : '')}
+                       />
+                     </div>
+                   </div>
+                 </div>
+
+               <AnimatePresence>
+                 {showLibrary && (
+                   <motion.div
+                     initial={{ opacity: 0 }}
+                     animate={{ opacity: 1 }}
+                     exit={{ opacity: 0 }}
+                     className="fixed inset-0 z-[100] bg-cream/90 backdrop-blur-xl flex items-center justify-center p-8"
+                   >
+                     <motion.div
+                       initial={{ scale: 0.95, opacity: 0 }}
+                       animate={{ scale: 1, opacity: 1 }}
+                       exit={{ scale: 0.95, opacity: 0 }}
+                       className="bg-white border border-black/10 w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl"
+                     >
+                       <div className="p-10 border-b border-black/5 flex items-center justify-between">
+                         <h3 className="text-3xl font-black uppercase flex items-center gap-4">
+                           <History size={28} /> Asset Collection
+                         </h3>
+                         <button onClick={() => setShowLibrary(false)} className="p-2 hover:bg-ivory transition-colors">
+                           <X size={28} />
+                         </button>
+                       </div>
+
+                       <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                         {libraryAssets.length === 0 ? (
+                           <div className="h-64 flex flex-col items-center justify-center opacity-20">
+                             <ImageIcon size={64} className="mb-6" />
+                             <p className="mono font-bold uppercase tracking-widest">Library is empty.</p>
+                           </div>
+                         ) : (
+                           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-1">
+                             {libraryAssets.map((asset) => {
+                               const isSelected = selectedLibraryAssets.has(asset.id);
+                               return (
+                                 <div
+                                   key={asset.id}
+                                   onClick={() => toggleLibraryAssetSelection(asset.id)}
+                                   className={`relative aspect-square border transition-all p-1 cursor-pointer ${isSelected ? 'border-ink bg-ivory' : 'border-black/5 opacity-60 hover:opacity-100'}`}
+                                 >
+                                   {asset.type === 'video' ? (
+                                     <video src={asset.url} className="w-full h-full object-cover grayscale" />
+                                   ) : (
+                                     <img src={asset.url} className="w-full h-full object-cover grayscale" alt={asset.name} />
+                                   )}
+                                   <button
+                                     onClick={(e) => { e.stopPropagation(); deleteLibraryAsset(e, asset); }}
+                                     className="absolute top-2 right-2 text-ink opacity-0 group-hover:opacity-100"
+                                   >
+                                     <Trash2 size={14} />
+                                   </button>
+                                 </div>
+                               );
+                             })}
+                           </div>
+                         )}
+                       </div>
+
+                       <div className="p-10 border-t border-black/5 bg-ivory/50 flex items-center justify-between">
+                         <p className="mono text-[10px] uppercase opacity-40">Add assets to project flow.</p>
+                         <button
+                           disabled={selectedLibraryAssets.size === 0}
+                           onClick={() => {
+                             const selectedAssets = libraryAssets.filter(a => selectedLibraryAssets.has(a.id));
+                             addFromLibrary(selectedAssets);
+                             setShowLibrary(false);
+                             setSelectedLibraryAssets(new Set());
+                           }}
+                           className="bg-ink text-cream px-10 py-4 mono text-[10px] font-bold uppercase disabled:opacity-20"
+                         >
+                           Import ({selectedLibraryAssets.size})
+                         </button>
+                       </div>
+                     </motion.div>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
+
+
+               <div className="flex justify-end mt-12">
+                 <button
+                   onClick={() => setSetupStep(3)}
+                   className="btn-primary px-12 py-5 text-lg"
+                 >
+                   Proceed to Scripts <ArrowRight size={20} className="ml-3" />
+                 </button>
+               </div>
+            </motion.div>
+           )}
+
+          {setupStep === 3 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+               <div className="pb-8 border-b border-black/5 mb-12">
+                  <p className="mono text-[10px] uppercase opacity-40 mb-2">Step Three</p>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Draft the Beats.</h2>
+                  <p className="text-muted text-lg">Every line break creates a new cinematic scene. Be concise, be kinetic.</p>
+               </div>
+
+               <div className="space-y-8">
+                 <textarea
+                   value={scriptText}
+                   onChange={(e) => handleScriptChange(e.target.value)}
+                   placeholder="Showcase Your Vision...\nThe Future of Interaction\nKinetic Motion"
+                   className="elite-input h-64 resize-none text-xl md:text-2xl font-bold p-8"
+                 />
+                 <div className="p-8 bg-ivory border border-black/5 flex gap-6">
+                    <Sparkles className="text-ink/20 shrink-0" size={32} />
+                    <div className="space-y-2">
+                      <p className="mono text-[10px] font-bold uppercase tracking-widest">Engine Tips</p>
+                      <p className="text-xs text-ink/60 leading-relaxed">The AI director calculates camera timing based on script length. Keep lines between 4-10 words for the most professional flow.</p>
+                    </div>
+                 </div>
+               </div>
+
+               <div className="flex gap-4 mt-12">
+                 <button onClick={() => setSetupStep(2)} className="btn-outline flex-1 py-5">Back</button>
+                 <button onClick={() => setSetupStep(4)} className="btn-primary flex-[2] py-5">Proceed to Mapping</button>
+               </div>
+            </motion.div>
+          )}
+
+          {setupStep === 4 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+               <div className="pb-8 border-b border-black/5 mb-12">
+                  <p className="mono text-[10px] uppercase opacity-40 mb-2">Step Four</p>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Logic Flow.</h2>
+                  <p className="text-muted text-lg">Assign your visual assets to the corresponding beats in your script.</p>
+               </div>
+
+               <div className="space-y-2">
+                {(typeof scriptText === 'string' ? scriptText : '').split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
+                   <div key={idx} className="p-8 border border-black/5 bg-ivory/20 flex flex-col md:flex-row items-center justify-between gap-8 group hover:bg-white transition-colors">
+                      <div className="flex-1">
+                         <p className="mono text-[9px] opacity-40 mb-2 font-bold uppercase">Scene Sequence {idx+1}</p>
+                         <p className="text-xl font-bold uppercase tracking-tight line-clamp-2">{line}</p>
+                      </div>
+
+                      <div className="flex items-center gap-6 w-full md:w-auto">
+                         <label className="flex items-center gap-2 mono text-[10px] font-bold uppercase cursor-pointer hover:text-ink transition-colors opacity-40 hover:opacity-100">
+                           <input
+                             type="checkbox"
+                             checked={textOnlyLines.has(idx)}
+                             onChange={() => toggleTextOnly(idx)}
+                             className="w-4 h-4 accent-ink"
+                           />
+                           Text Only
+                         </label>
+                         {!textOnlyLines.has(idx) && (
+                           <select
+                             value={mediaMapping[idx] || ""}
+                             onChange={(e) => setMediaMapping({ ...mediaMapping, [idx]: e.target.value })}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[10px] uppercase font-bold outline-none focus:border-ink transition-colors w-full md:w-64"
+                           >
+                             <option value="">Select Asset...</option>
+                             {mediaFiles.map(m => (
+                               <option key={m.id} value={m.id}>{m.name.slice(0, 30)}</option>
+                             ))}
+                           </select>
+                         )}
+                      </div>
+                   </div>
+                 ))}
+               </div>
+
+               <div className="flex gap-4 mt-12">
+                 <button onClick={() => setSetupStep(3)} className="btn-outline flex-1 py-5 text-sm">Back</button>
+                 <button onClick={() => setSetupStep(5)} className="btn-primary flex-[2] py-5 text-sm">Proceed to Studio</button>
+               </div>
+            </motion.div>
+           )}
+
+           {setupStep === 5 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+               <div className="pb-8 border-b border-black/5 mb-12">
+                  <p className="mono text-[10px] uppercase opacity-40 mb-2">Final Step</p>
+                  <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-4">Studio Profile.</h2>
+                  <p className="text-muted text-lg">Fine-tune the cinematic engine and engine-wide motion parameters.</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+                 <div className="space-y-10">
+                    <div>
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block text-left">Typography System</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <select
+                              value={fontFamily}
+                              onChange={(e) => setFontFamily(e.target.value as FontFamily)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase transition-transform focus:scale-[1.02]"
+                           >
+                              {[
+                                  { val: 'font-outfit', label: 'Outfit (Modern)' },
+                                  { val: 'font-grotesk', label: 'Space Grotesk' },
+                                  { val: 'font-lexend', label: 'Lexend' },
+                                  { val: 'font-syne', label: 'Syne (Elite)' },
+                                  { val: 'font-serif', label: 'Cormorant (Elegant)' },
+                                  { val: 'font-bricolage', label: 'Bricolage (Editorial)' },
+                                  { val: 'font-instrument', label: 'Instrument (Clean)' },
+                                  { val: 'font-montserrat', label: 'Montserrat (Brand)' },
+                                  { val: 'font-mono', label: 'JetBrains Mono' },
+                                  { val: 'font-bangers', label: 'Bangers Kinetic' },
+                                  { val: 'font-impact', label: 'Impact' }
+                              ].map(f => (
+                                 <option key={f.val} value={f.val}>{f.label}</option>
+                              ))}
+                           </select>
+
+                           <div className="flex items-center gap-4 bg-ivory border border-black/5 p-4">
+                              <input 
+                                 type="color" 
+                                 value={textColor} 
+                                 onChange={(e) => setTextColor(e.target.value)} 
+                                 className="w-12 h-12 bg-transparent border-none cursor-pointer"
+                              />
+                              <span className="mono text-[10px] font-bold uppercase">Accent Color</span>
+                           </div>
+
+                           <select
+                              value={preferredTextPosition}
+                              onChange={(e) => updateGlobalTextPosition(e.target.value as TextPosition)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                           >
+                              <option value="random">Random Position</option>
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                              <option value="left">Left</option>
+                              <option value="right">Right</option>
+                           </select>
+
+                           <select
+                              value={preferredTextSize}
+                              onChange={(e) => updateGlobalTextSize(e.target.value)}
+                              className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                           >
+                              <option value="random">Random Size</option>
+                              <option value="text-3xl">Small</option>
+                              <option value="text-5xl">Medium</option>
+                              <option value="text-7xl">Large</option>
+                              <option value="text-[120px]">XL Massive</option>
+                           </select>
+                        </div>
+                     </div>
+
+                    <div>
+                        {/* Kinetic Animations (Multi-Select) Hidden
+                         <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Kinetic Animations (Multi-Select)</label>
+                         <div className="space-y-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {[
+                                { id: 'gsap-stagger', label: 'Stagger Reveal' },
+                                { id: 'gsap-cascade', label: 'Cascade Fall' },
+                                { id: 'gsap-glow', label: 'Glow Pulse' },
+                                { id: 'gsap-3d-roll', label: '3D Roll' },
+                                { id: 'gsap-elastic', label: 'Spring Elastic' },
+                                { id: 'gsap-tornado', label: 'Vortex Tornado' },
+                                { id: 'gsap-funnel', label: 'Gravity Funnel' },
+                                { id: 'gsap-stack', label: 'Letter Stack' },
+                                { id: 'gsap-typewriter', label: 'Typewriter' },
+                                { id: 'gsap-glitch', label: 'Glitch' },
+                                { id: 'gsap-wave', label: 'Wave Motion' },
+                                { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
+                              ].map(effect => (
+                                <button
+                                  key={effect.id}
+                                  onClick={() => {
+                                    setTextEffect('random');
+                                    setSelectedEffects(prev => 
+                                      prev.includes(effect.id as TextEffect)
+                                        ? prev.filter(e => e !== effect.id)
+                                        : [...prev, effect.id as TextEffect]
+                                    );
+                                  }}
+                                  className={`p-3 border mono text-[9px] font-bold uppercase transition-all flex items-center gap-2 ${selectedEffects.includes(effect.id as TextEffect) ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 opacity-60 hover:opacity-100'}`}
+                                >
+                                  <span className={`w-3 h-3 flex items-center justify-center rounded-sm shrink-0 border ${selectedEffects.includes(effect.id as TextEffect) ? 'border-cream bg-ink' : 'border-black/20'}`}>
+                                    {selectedEffects.includes(effect.id as TextEffect) && <div className="w-1.5 h-1.5 bg-cream rounded-sm" />}
+                                  </span>
+                                  {effect.label}
+                                </button>
+                              ))}
+                            </div>
+                         </div>
+                         */}
+                         
+                         <div className="space-y-4">
+                            <div className="hidden">
+                               <select
+                                   value={transitionType}
+                                   onChange={(e) => setTransitionType(e.target.value as TransitionType)}
+                                   className="elite-input w-full p-5 mono text-[10px] font-bold uppercase"
+                                >
+                                    <option value="random">Random Transition</option>
+                                    <option value="item-portal">3D Item Portal</option>
+                                    <option value="morph-star">Morph: Cinematic Star</option>
+                                    <option value="morph-circle">Morph: Liquid Circle</option>
+                                    <option value="morph-diamond">Morph: Geometric Diamond</option>
+                                    <option value="morph-hexagon">Morph: Tech Hexagon</option>
+                                    <option value="morph-heart">Morph: Social Heart</option>
+                                    <option value="fade">Classic Fade</option>
+                                    <option value="zoom">Optical Zoom</option>
+                                    <option value="minimal-reveal">Minimal Wipe</option>
+                                </select>
+                             </div>
+
+                           {/* Thicc Typography Themes */}
+                           <div className="space-y-2">
+                              <span className="mono text-[10px] uppercase opacity-40 font-bold">Theme Style</span>
+                              <div className="grid grid-cols-5 gap-2">
+                                <button
+                                  onClick={() => setThiccTheme('none')}
+                                  className={`p-2 border text-[9px] uppercase font-bold transition-all ${thiccTheme === 'none' ? 'border-black bg-black text-white' : 'border-black/10 hover:border-black/30'}`}
+                                >
+                                  None
+                                </button>
+                                <button
+                                  onClick={() => setThiccTheme('random')}
+                                  className={`p-2 border text-[9px] uppercase font-bold transition-all ${thiccTheme === 'random' ? 'border-black bg-black text-white' : 'border-black/10 hover:border-black/30'}`}
+                                >
+                                  🎲 Random
+                                </button>
+                                {THICC_THEME_IDS.map(id => {
+                                  const theme = THICC_THEMES[id];
+                                  return (
+                                    <button
+                                      key={id}
+                                      onClick={() => setThiccTheme(id)}
+                                      className={`p-2 border text-[10px] font-black uppercase transition-all overflow-hidden ${thiccTheme === id ? 'ring-2 ring-black scale-105' : 'hover:scale-102 border-black/10'}`}
+                                      style={{
+                                        backgroundColor: theme.bgColor,
+                                        color: theme.textColor,
+                                        fontFamily: theme.fontFamily,
+                                        textShadow: theme.textShadow !== 'none' ? theme.textShadow : undefined,
+                                      }}
+                                    >
+                                      {theme.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                 </div>
+
+                 <div className="space-y-10">
+                    <div>
+                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Global Audio Track</label>
+                       <div className="p-8 bg-white border border-black/5 space-y-4">
+                           <div className="flex items-center gap-4">
+                               {globalAudioUrl ? (
+                                   <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
+                                       <Music className="w-4 h-4 text-ink opacity-50" />
+                                       <span className="mono text-[10px] uppercase flex-1 truncate">Custom Audio Selected</span>
+                                       <button 
+                                           onClick={() => {
+                                               if (audioRef.current) {
+                                                   audioRef.current.pause();
+                                                   audioRef.current.src = "";
+                                               }
+                                               setGlobalAudioUrl(null);
+                                           }}
+                                           className="text-red-500 hover:text-red-700 transition-colors"
+                                       >
+                                           <Trash2 className="w-4 h-4" />
+                                       </button>
+                                   </div>
+                               ) : (
+                                   <label className="flex-1 border-2 border-dashed border-black/20 p-8 flex flex-col items-center justify-center cursor-pointer hover:border-black/40 hover:bg-black/5 transition-all text-center">
+                                       <Music className="w-6 h-6 mb-2 opacity-50" />
+                                       <span className="mono text-[10px] font-bold uppercase block mb-1">Upload Audio</span>
+                                       <span className="mono text-[9px] opacity-50">MP3, WAV, etc</span>
+                                       <input 
+                                           type="file" 
+                                           className="hidden" 
+                                           accept="audio/*"
+                                           onChange={(e) => {
+                                               const file = e.target.files?.[0];
+                                               if (file) {
+                                                   const url = URL.createObjectURL(file);
+                                                   setGlobalAudioUrl(url);
+                                               }
+                                           }}
+                                       />
+                                   </label>
+                               )}
+                           </div>
+                       </div>
+                    </div>
+
+                    <div>
+                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Director Logic</label>
+                       <div className="p-8 bg-white border border-black/5 space-y-8">
+                           <div className="flex flex-col gap-4">
+                              <div className="flex items-center justify-between">
+                                 <div className="flex items-center gap-4">
+                                    <button onClick={() => setIsSpatialWorld(!isSpatialWorld)}
+                                       className={`w-12 h-6 rounded-full relative transition-colors ${isSpatialWorld ? 'bg-ink' : 'bg-black/10'}`}>
+                                       <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isSpatialWorld ? 'translate-x-6' : ''}`} />
+                                    </button>
+                                    <span className="mono text-[10px] font-bold uppercase">Spatial Engine</span>
+                                 </div>
+                                 <div className="flex items-center gap-4">
+                                    <button onClick={() => setIsMultiColor(!isMultiColor)}
+                                       className={`w-12 h-6 rounded-full relative transition-colors ${isMultiColor ? 'bg-ink' : 'bg-black/10'}`}>
+                                       <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-cream transition-transform ${isMultiColor ? 'translate-x-6' : ''}`} />
+                                    </button>
+                                    <span className="mono text-[10px] font-bold uppercase">Vibrant Multi</span>
+                                 </div>
+                              </div>
+                           </div>
+
+                          <div className="grid grid-cols-1">
+                             <button onClick={() => setShowLibrary(true)} className="flex items-center justify-center gap-3 py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all rounded-lg">
+                                <ImageIcon size={16} /> View Assets
+                             </button>
+                          </div>
+
+                          <button onClick={generateWorldTemplate} className="w-full py-4 bg-ivory border border-black/5 mono text-[10px] font-bold uppercase hover:bg-white transition-all flex items-center justify-center gap-3">
+                                   <Sparkles size={16} /> Recalculate Galaxy Path
+                          </button>
+                       </div>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Choreography Architecture (Skeletons)</label>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          {[
+                            { id: 'custom', name: 'Custom (AI)', desc: 'AI-generated flow' },
+                            { id: 'launch_teaser', name: 'Launch Teaser', desc: 'Skel B: 25s, 8 scenes' },
+                            { id: 'product_explainer', name: 'Product Explainer', desc: 'Skel C: 45s, 12 scenes' },
+                            { id: 'cinematic_title', name: 'Cinematic Title', desc: 'Skel D: 60s, 7 scenes' }
+                          ].map(skel => (
+                            <button
+                              key={skel.id}
+                              onClick={() => setChoreographySkeleton(skel.id)}
+                              className={`p-6 border text-left transition-all ${choreographySkeleton === skel.id ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/5 hover:bg-white'}`}
+                            >
+                              <p className="mono text-[10px] font-bold uppercase mb-1">{skel.name}</p>
+                              <p className="text-[9px] opacity-40 leading-none">{skel.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                           <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Animation Speed</label>
+                           <input
+                              type="range" min="0.5" max="2" step="0.1"
+                              value={textAnimationSpeed}
+                              onChange={(e) => setTextAnimationSpeed(parseFloat(e.target.value))}
+                              className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                           />
+                           <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                              <span>Cinematic</span>
+                              <span>Kinetic ({textAnimationSpeed}x)</span>
+                           </div>
+                        </div>
+
+                         <div>
+                           <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Scene Pacing</label>
+                           <input
+                              type="range" min="2" max="10" step="0.5"
+                              value={sceneDuration}
+                              onChange={(e) => setSceneDuration(parseFloat(e.target.value))}
+                              className="w-full h-1 bg-black/10 appearance-none accent-ink mb-2"
+                           />
+                           <div className="flex justify-between mono text-[9px] opacity-40 font-bold uppercase">
+                              <span>Rapid</span>
+                              <span>Atmospheric ({sceneDuration}s)</span>
+                           </div>
+                        </div>
+                     </div>
+                 </div>
+               </div>
+
+               <div className="border-t border-black/5 pt-12 mb-16">
+                  <h3 className="mono text-[10px] font-bold uppercase opacity-40 mb-8">Scene Sequence Editor</h3>
+                  <div className="space-y-4">
+                    {compositions.map((comp, idx) => (
+                      <div key={comp.id} className="p-8 border border-black/5 bg-ivory/30 flex flex-col md:flex-row items-center gap-12 group hover:bg-white transition-all">
+                        <div className="w-12 h-12 bg-ink text-cream flex items-center justify-center font-black text-xl shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                           <p className="text-xl font-bold uppercase tracking-tight truncate mb-4">{comp.caption || "Untitled Scene"}</p>
+                           <div className="flex gap-2">
+                             {comp.media.map((m, mIdx) => (
+                               <div key={mIdx} className="w-16 h-16 border border-black/10 p-1 bg-white">
+                                 <img src={m.url} className={`w-full h-full grayscale ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}`} />
+                               </div>
+                             ))}
+                           </div>
+                           
+                        </div>
+                        <div className="flex flex-wrap gap-4">
+                           <select
+                             value={comp.sceneType || 'standard'}
+                             onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
+                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                           >
+                             <option value="standard">Standard Scene</option>
+                             <option value="asset-only">Asset Only (No Text)</option>
+                             <option value="macos-notification">MacOS Notification</option>
+                             <option value="instagram-follow">Instagram Follow</option>
+                             <option value="reddit-post">Reddit Card</option>
+                             <option value="x-post">X / Twitter Post</option>
+                             <option value="spotify-card">Spotify Now Playing</option>
+                             <option value="data-chart">Dynamic Data Chart</option>
+                             <option value="coin-flip">3D Coin Flip Card</option>
+                           </select>
+                           
+                           <button
+                              onClick={() => {
+                                setAddingAssetToSceneIdx(idx);
+                                setShowLibrary(true);
+                              }}
+                              className="bg-ivory border border-black/10 px-4 py-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[9px] font-bold uppercase whitespace-nowrap shrink-0 gap-2"
+                            >
+                              <ImageIcon size={12} /> Swap Asset
+                            </button>
+
+                           <div className="flex flex-1 gap-2">
+                             <select
+                                value={comp.textEffect || 'gsap-stagger'}
+                                onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                                className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                              >
+                                <option value="gsap-stagger">Stagger Reveal</option>
+                                <option value="gsap-cascade">Cascade Fall</option>
+                                <option value="gsap-glow">Glow Pulse</option>
+                                <option value="gsap-3d-roll">3D Roll</option>
+                                <option value="gsap-elastic">Spring Elastic</option>
+                                <option value="gsap-tornado">Vortex Tornado</option>
+                                <option value="gsap-funnel">Gravity Funnel</option>
+                                <option value="gsap-stack">Letter Stack</option>
+                                <option value="gsap-typewriter">Typewriter</option>
+                                <option value="gsap-glitch">Glitch</option>
+                                <option value="gsap-wave">Wave Motion</option>
+                                <option value="gsap-blur-reveal">Blur Reveal</option>
+                              </select>
+                              <button 
+                                onClick={() => applyTextEffectToAllScenes(idx)}
+                                className="bg-ivory border border-black/10 px-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[8px] font-bold uppercase whitespace-nowrap shrink-0"
+                                title="Apply this text animation to all scenes"
+                              >
+                                Apply All
+                              </button>
+                           </div>
                         </div>
                       </div>
-                    </CompositionProvider>
-                  </VideoCanvas>
-                ) : (
-                  <div className="flex flex-col items-center gap-6 text-gray-400">
-                    <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Sparkles className="w-8 h-8 opacity-20" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-white/60 mb-1">Waiting for your vision</p>
-                      <p className="text-xs text-white/40">Enter a prompt or URL to start generating</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Scene Navigation Overlay */}
-              {compositions.length > 1 && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
-                  <button 
-                    onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-                    className="p-1.5 hover:bg-white/10 rounded-full text-white/80 transition-colors"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <div className="flex gap-1.5">
-                    {compositions.map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentIndex ? 'bg-white w-4' : 'bg-white/20'}`} 
-                      />
                     ))}
                   </div>
-                  <button 
-                    onClick={() => setCurrentIndex(Math.min(compositions.length - 1, currentIndex + 1))}
-                    className="p-1.5 hover:bg-white/10 rounded-full text-white/80 transition-colors"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-            </ArtifactWindow>
-          </div>
+               </div>
+
+               <div className="flex gap-4">
+                 <button onClick={() => setSetupStep(3)} className="btn-outline flex-1 py-6 text-sm">Back</button>
+                 <button onClick={resetProject} className="btn-outline flex-1 py-6 text-sm !border-red-500/30 !text-red-500 hover:!bg-red-500 hover:!text-white">Reset & Create New</button>
+                 <button onClick={generateWorld} className="btn-primary flex-[3] py-6 text-lg flex items-center justify-center gap-4">
+                   <Play size={24} fill="currentColor" /> Generate Cinema Preview
+                 </button>
+               </div>
+            </motion.div>
+          )}
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   if (appMode === 'playing') {
       const getBackgroundClass = () => {
