@@ -3190,7 +3190,7 @@ export default function App() {
     setToastMessage("AI Director is analyzing your website...");
 
     try {
-      const resp = await fetch(getApiUrl('/api/scrape'), {
+      const resp = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: scrapeUrl })
@@ -3807,7 +3807,7 @@ export default function App() {
     if (!scrapeUrl) return;
     setIsScraping(true);
     try {
-      const res = await fetch(getApiUrl('/api/scrape'), {
+      const res = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: scrapeUrl })

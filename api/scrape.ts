@@ -59,7 +59,10 @@ export default async function handler(req: any, res: any) {
 
     // Regular Images (filter for potentially usable ones)
     $('img').each((_, el) => {
-      const src = $(el).attr('src');
+      let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src');
+      if (!src && $(el).attr('srcset')) {
+        src = $(el).attr('srcset')?.split(',')[0].trim().split(' ')[0];
+      }
       if (src && !src.includes('data:image') && !src.endsWith('.svg')) {
         const fullUrl = resolveUrl(targetUrl, src);
         if (fullUrl && !images.includes(fullUrl)) images.push(fullUrl);
@@ -70,11 +73,11 @@ export default async function handler(req: any, res: any) {
     const hexRegex = /#([a-f0-9]{3,6})\b/gi;
     const bodyContent = $('body').text().slice(0, 5000); // Sample for text context
     const styles = $('style').text() + $('[style]').attr('style');
-    const colorMatches = (styles + bodyContent).match(hexRegex) || [];
+    const colorMatches: string[] = (styles + bodyContent).match(hexRegex) || [];
     
     // Get unique colors and count frequency
     const colorFreq: Record<string, number> = {};
-    colorMatches.forEach(c => {
+    colorMatches.forEach((c: string) => {
       const normalized = c.toLowerCase();
       colorFreq[normalized] = (colorFreq[normalized] || 0) + 1;
     });
@@ -137,11 +140,38 @@ export default async function handler(req: any, res: any) {
     const resultText = aiResponse.text?.trim() || '{}';
     // Handle potential markdown code blocks in response
     const jsonStr = resultText.replace(/```json|```/g, '').trim();
-    const aiData = JSON.parse(jsonStr);
+    let aiData = {};
+    try {
+      aiData = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Failed to parse AI response:', jsonStr);
+    }
+
+    // Fetch and convert top images to base64 to avoid CORS on client
+    const fetchedImages: string[] = [];
+    const imageCandidates = images.slice(0, 10);
+    
+    await Promise.allSettled(
+      imageCandidates.map(async (imgUrl) => {
+        try {
+          const imgRes = await fetch(imgUrl, { 
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+          });
+          if (imgRes.ok) {
+            const buffer = await imgRes.arrayBuffer();
+            const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+            const base64 = Buffer.from(buffer).toString('base64');
+            fetchedImages.push(`data:${mimeType};base64,${base64}`);
+          }
+        } catch (e) {
+          console.error('Failed to fetch image:', imgUrl, e);
+        }
+      })
+    );
 
     res.status(200).json({ 
       ...aiData,
-      scrapedImages: images.slice(0, 15), // Cap to 15 best candidates
+      scrapedImages: fetchedImages.length > 0 ? fetchedImages.slice(0, 8) : images.slice(0, 8),
       brandTitle: title || 'New Project'
     });
   } catch (error: any) {
