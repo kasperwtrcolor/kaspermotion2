@@ -67,13 +67,21 @@ export default function AppHeader({
   return (
     <>
       <motion.header
-        initial={{ y: -80 }}
-        animate={{ y: headerVisible ? 0 : -80 }}
+        initial={{ y: -120 }}
+        animate={{ y: headerVisible ? 0 : -120 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed top-0 left-0 right-0 z-[500] bg-ivory/80 backdrop-blur-md border-b border-black/5"
+        className="fixed top-0 left-0 right-0 z-[500] flex flex-col"
       >
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          {/* Logo */}
+        {/* Beta Banner */}
+        <div className="bg-ink text-cream py-2 px-4 text-center w-full">
+          <p className="text-[10px] md:text-[11px] font-mono uppercase tracking-wide opacity-90">
+            Hi there! 👋 VibeTrailer is currently in early beta. It's not a finished product yet, so expect frequent updates and improvements.
+          </p>
+        </div>
+
+        <div className="bg-ivory/80 backdrop-blur-md border-b border-black/5 w-full">
+          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            {/* Logo */}
           <button
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-2 group"
@@ -214,6 +222,7 @@ export default function AppHeader({
             </button>
           </div>
         </div>
+        </div>
         
         {/* Progress Bar (Visible when AI is working) */}
         <AnimatePresence>
@@ -310,7 +319,7 @@ export default function AppHeader({
       </AnimatePresence>
 
       {/* Spacer to prevent content from going under the fixed header */}
-      {appMode !== 'playing' && <div className="h-20" />}
+      {appMode !== 'playing' && <div className="h-28" />}
     </>
   );
 }
