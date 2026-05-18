@@ -50,7 +50,7 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'font-outfit' | 'font-grotesk' | 'font-syne' | 'font-bangers';
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
-type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash' | 'gsap-stagger' | 'gsap-typewriter' | 'gsap-glitch' | 'gsap-wave' | 'gsap-blur-reveal';
+type TextEffect = 'random' | 'gsap-cascade' | 'gsap-3d-roll' | 'gsap-elastic' | 'gsap-expand' | 'gsap-tornado' | 'gsap-merge-elastic' | 'gsap-funnel' | 'gsap-triangle' | 'gsap-square' | 'gsap-heart' | 'gsap-stack' | 'gsap-glow' | 'gsap-focus-flash' | 'gsap-stagger' | 'gsap-typewriter' | 'gsap-slide-type' | 'gsap-glitch' | 'gsap-wave' | 'gsap-blur-reveal';
 type FontFamily = 'font-sans' | 'font-display' | 'font-serif' | 'font-mono' | 'font-archivo' | 'font-bebas' | 'font-outfit' | 'font-grotesk' | 'font-lexend' | 'font-syne' | 'font-unbounded' | 'font-kanit' | 'font-public' | 'font-work' | 'font-montserrat' | 'font-impact' | 'font-pixel' | 'font-pixel-arcade' | 'font-righteous' | 'font-space-tech' | 'font-bangers';
 type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond' | 'morph-hexagon' | 'morph-heart' | 'item-portal' | 'fade' | 'zoom' | 'minimal-reveal';
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
@@ -1501,6 +1501,56 @@ const GSAPTypewriterText = ({ text, className = "", style = {}, textColor, isMul
   );
 };
 
+const GSAPSlideTypeText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const words = text.split(' ');
+  
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    const chars = containerRef.current.querySelectorAll('.gsap-slide-type-char');
+    
+    gsap.set(chars, { opacity: 0 });
+    
+    const totalDuration = chars.length * 0.08;
+    
+    const tl = gsap.timeline();
+    
+    // Animate container out of screen to the left over the total duration
+    tl.fromTo(containerRef.current,
+      { x: "30vw" },
+      { x: "-150vw", duration: totalDuration + 2.5, ease: "power1.inOut" },
+      0
+    );
+    
+    // Typewriter effect
+    tl.to(chars, {
+      opacity: 1,
+      duration: 0.01,
+      stagger: 0.08,
+      ease: "none"
+    }, 0);
+  }, { scope: containerRef, dependencies: [text] });
+
+  return (
+    <div className="w-full overflow-visible flex items-center justify-center">
+      <div ref={containerRef} className={`flex flex-nowrap whitespace-nowrap gap-x-3 gap-y-1 ${className}`} style={{ ...style, width: 'max-content' }}>
+        {words.map((word, i) => (
+          <WordRenderer 
+            key={i} 
+            word={word} 
+            index={i} 
+            charClassName="gsap-slide-type-char" 
+            textColor={textColor} 
+            isMulti={isMulti} 
+            commonWord={commonWord} 
+            splitChars={true}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const GSAPGlitchText = ({ text, className = "", style = {}, textColor, isMulti, commonWord }: { text: string, className?: string, style?: any, textColor?: string, isMulti?: boolean, commonWord?: string | null }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const glitchChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?0123456789";
@@ -1674,6 +1724,7 @@ const AnimatedCaption = ({ text, effect, className, style, textColor, isMulti, c
     case 'gsap-stack': return <GSAPStackText {...props} />;
     case 'gsap-focus-flash': return <GSAPFocusFlashText {...props} />;
     case 'gsap-typewriter': return <GSAPTypewriterText {...props} />;
+    case 'gsap-slide-type': return <GSAPSlideTypeText {...props} />;
     case 'gsap-glitch': return <GSAPGlitchText {...props} />;
     case 'gsap-wave': return <GSAPWaveText {...props} />;
     case 'gsap-blur-reveal': return <GSAPBlurRevealText {...props} />;
@@ -2623,7 +2674,7 @@ export default function App() {
   const [fontFamily, setFontFamily] = useState<FontFamily>('font-display');
   const [textColor, setTextColor] = useState<string>('#FFFFFF');
   const [isMultiColor, setIsMultiColor] = useState<boolean>(false);
-  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-stagger', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-typewriter', 'gsap-wave', 'gsap-blur-reveal']);
+  const [selectedEffects, setSelectedEffects] = useState<TextEffect[]>(['gsap-stagger', 'gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-typewriter', 'gsap-slide-type', 'gsap-wave', 'gsap-blur-reveal']);
   const [textEffect, setTextEffect] = useState<TextEffect>('random');
   const [thiccTheme, setThiccTheme] = useState<ThiccThemeId>('none');
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
@@ -3917,7 +3968,7 @@ export default function App() {
           : 'standard'
       );
 
-      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
+      const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-slide-type', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       
       // Logic: Global Override (if not random) > Manual Scene Edit > AI Choreography > Random from Selection
@@ -4826,7 +4877,9 @@ export default function App() {
                                 { id: 'gsap-tornado', label: 'Vortex Tornado' },
                                 { id: 'gsap-funnel', label: 'Gravity Funnel' },
                                 { id: 'gsap-stack', label: 'Letter Stack' },
+                                { id: 'gsap-focus-flash', label: 'Focus Flash' },
                                 { id: 'gsap-typewriter', label: 'Typewriter' },
+                                { id: 'gsap-slide-type', label: 'Slide Typewriter' },
                                 { id: 'gsap-glitch', label: 'Glitch' },
                                 { id: 'gsap-wave', label: 'Wave Motion' },
                                 { id: 'gsap-blur-reveal', label: 'Blur Reveal' },
@@ -5106,6 +5159,7 @@ export default function App() {
                                 <option value="gsap-funnel">Gravity Funnel</option>
                                 <option value="gsap-stack">Letter Stack</option>
                                 <option value="gsap-typewriter">Typewriter</option>
+                                <option value="gsap-slide-type">Slide Typewriter</option>
                                 <option value="gsap-glitch">Glitch</option>
                                 <option value="gsap-wave">Wave Motion</option>
                                 <option value="gsap-blur-reveal">Blur Reveal</option>
