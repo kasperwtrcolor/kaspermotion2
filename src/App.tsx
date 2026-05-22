@@ -56,7 +56,7 @@ type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond'
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'deep-sea' | 'cyber-punk' | 'luxury' | 'brutal' | 'glass' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts' | 'playful-cutout' | 'hit-run' | 'fat-chubby' | 'long-shadow';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -310,6 +310,51 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     textShadow: 'none',
     letterSpacing: '-0.03em',
     extraClass: 'tracking-tight font-black',
+  },
+  'playful-cutout': {
+    id: 'playful-cutout',
+    label: 'Playful Cutout',
+    fontFamily: '"Chango", system-ui',
+    fontClass: 'font-chango',
+    textColor: 'playful-multi',
+    bgColor: '#0f0f11',
+    textShadow: '4px 4px 0px rgba(0,0,0,0.35)',
+    letterSpacing: '-0.02em',
+    extraClass: 'tracking-tight uppercase font-black',
+  },
+  'hit-run': {
+    id: 'hit-run',
+    label: 'Hit and Run',
+    fontFamily: '"Lilita One", sans-serif',
+    fontClass: 'font-lilita',
+    textColor: '#ff6b00',
+    bgColor: '#5ec5f2',
+    textShadow: '4px 4px 0px #ffffff, 6px 6px 0px rgba(0,0,0,0.15)',
+    textStroke: '2px #ffffff',
+    letterSpacing: '-0.02em',
+    extraClass: 'italic tracking-wide uppercase font-black',
+  },
+  'fat-chubby': {
+    id: 'fat-chubby',
+    label: 'Fat Chubby',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ff9ff3',
+    bgColor: '#d60032',
+    textShadow: 'none',
+    letterSpacing: '-0.06em',
+    extraClass: 'tracking-tighter uppercase font-black',
+  },
+  'long-shadow': {
+    id: 'long-shadow',
+    label: 'Long Shadow',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ffffff',
+    bgColor: '#f3f4f6',
+    textShadow: '1px 1px 0 #0f172a, 2px 2px 0 #0f172a, 3px 3px 0 #0f172a, 4px 4px 0 #0f172a, 5px 5px 0 #0f172a, 6px 6px 0 #0f172a, 7px 7px 0 #0f172a, 8px 8px 0 #0f172a, 9px 9px 0 #0f172a, 10px 10px 0 #0f172a, 11px 11px 0 #0f172a, 12px 12px 0 #0f172a, 13px 13px 0 #0f172a, 14px 14px 0 #0f172a, 15px 15px 0 #0f172a, 16px 16px 0 #0f172a, 17px 17px 0 #0f172a, 18px 18px 0 #0f172a, 19px 19px 0 #0f172a, 20px 20px 0 #0f172a, 21px 21px 0 #0f172a, 22px 22px 0 #0f172a, 23px 23px 0 #0f172a, 24px 24px 0 #0f172a, 25px 25px 0 #0f172a, 26px 26px 0 #0f172a, 27px 27px 0 #0f172a, 28px 28px 0 #0f172a, 29px 29px 0 #0f172a, 30px 30px 0 #0f172a, 31px 31px 0 #0f172a, 32px 32px 0 #0f172a, 33px 33px 0 #0f172a, 34px 34px 0 #0f172a, 35px 35px 0 #0f172a',
+    letterSpacing: '-0.04em',
+    extraClass: 'tracking-tighter uppercase font-black',
   }
 };
 
@@ -628,6 +673,13 @@ const getWordStyle = (word: string, index: number, customColor?: string, isMulti
       display: 'inline-block',
       transform: 'scale(1.1)',
       zIndex: 10
+    };
+  }
+
+  if (customColor === 'playful-multi') {
+    return {
+      fontWeight: '900',
+      display: 'inline-block'
     };
   }
 
@@ -1040,16 +1092,20 @@ const WordRenderer = ({
   const style = getWordStyle(word, index, textColor, isMulti, commonWord);
 
   if (isNumber) {
+    const numColor = textColor === 'playful-multi' ? '#ffd200' : (style.color || textColor);
     return (
       <span className={`inline-flex whitespace-pre ${charClassName}`} style={style}>
-        <GSAPCountUp value={parseFloat(word.replace(/,/g, ''))} textColor={style.color || textColor} />
+        <GSAPCountUp value={parseFloat(word.replace(/,/g, ''))} textColor={numColor} />
       </span>
     );
   }
 
   if (!splitChars) {
+    const fallbackStyle = textColor === 'playful-multi' ? {
+      color: ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][index % 5]
+    } : {};
     return (
-      <span className={`inline-flex whitespace-pre ${charClassName}`} style={style}>
+      <span className={`inline-flex whitespace-pre ${charClassName}`} style={{ ...style, ...fallbackStyle }}>
         {word}
       </span>
     );
@@ -1057,11 +1113,16 @@ const WordRenderer = ({
 
   return (
     <span className="inline-flex whitespace-pre" style={style}>
-      {word.split('').map((char, j) => (
-        <span key={j} className={`${charClassName} inline-block`}>
-          {char}
-        </span>
-      ))}
+      {word.split('').map((char, j) => {
+        const charStyle = textColor === 'playful-multi' ? {
+          color: ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][(index + j) % 5]
+        } : {};
+        return (
+          <span key={j} className={`${charClassName} inline-block`} style={charStyle}>
+            {char}
+          </span>
+        );
+      })}
     </span>
   );
 };
