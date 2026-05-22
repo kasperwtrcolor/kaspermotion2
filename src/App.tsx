@@ -56,7 +56,7 @@ type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond'
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'deep-sea' | 'cyber-punk' | 'luxury' | 'brutal' | 'glass' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'deep-sea' | 'cyber-punk' | 'luxury' | 'brutal' | 'glass' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -255,6 +255,61 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     bgColor: '#ff9100',
     textShadow: '2px 2px 0 rgba(255,255,255,0.4)',
     letterSpacing: '-0.02em',
+  },
+  'monday-bold': {
+    id: 'monday-bold',
+    label: 'Monday Bold',
+    fontFamily: '"Titan One", system-ui',
+    fontClass: 'font-titan',
+    textColor: '#121212',
+    bgColor: '#eedb08',
+    textShadow: 'none',
+    letterSpacing: '-0.06em',
+    extraClass: 'tracking-tighter uppercase',
+  },
+  'heavy-web': {
+    id: 'heavy-web',
+    label: 'Heavy Web',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ffffff',
+    bgColor: '#ff5e62',
+    textShadow: 'none',
+    letterSpacing: '-0.05em',
+    extraClass: 'tracking-tighter uppercase -rotate-3',
+  },
+  'pure-grapes': {
+    id: 'pure-grapes',
+    label: 'Pure Grapes',
+    fontFamily: '"Lilita One", sans-serif',
+    fontClass: 'font-lilita',
+    textColor: '#ff5e62',
+    bgColor: '#fdf6ed',
+    textShadow: '3px 3px 0px #1e293b, 6px 6px 0px #0f172a',
+    letterSpacing: '-0.02em',
+    extraClass: 'tracking-tight',
+  },
+  'retro-thick': {
+    id: 'retro-thick',
+    label: 'Retro Thick',
+    fontFamily: '"Chango", system-ui',
+    fontClass: 'font-chango',
+    textColor: '#ff8da7',
+    bgColor: '#fbf0c8',
+    textShadow: '3px 3px 0px #5c3d2e',
+    textStroke: '2px #5c3d2e',
+    letterSpacing: '-0.03em',
+  },
+  'thick-fonts': {
+    id: 'thick-fonts',
+    label: 'Thick Fonts',
+    fontFamily: '"Fredoka", sans-serif',
+    fontClass: 'font-fredoka',
+    textColor: '#e0533c',
+    bgColor: '#f5ece6',
+    textShadow: 'none',
+    letterSpacing: '-0.03em',
+    extraClass: 'tracking-tight font-black',
   }
 };
 
