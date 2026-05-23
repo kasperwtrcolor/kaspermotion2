@@ -3111,6 +3111,11 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u && !u.emailVerified && u.providerData.some(p => p.providerId === 'password')) {
+        setUser(null);
+        setIsAuthReady(true);
+        return;
+      }
       setUser(u);
       setIsAuthReady(true);
       if (u) {

@@ -5,7 +5,9 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithPopup, 
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  sendEmailVerification,
+  signOut
 } from 'firebase/auth';
 import { auth } from '../firebase';
 
@@ -19,21 +21,31 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setIsLoading(true);
 
     try {
-      let result;
       if (isLogin) {
-        result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        if (!result.user.emailVerified) {
+          await signOut(auth);
+          setError('Please verify your email address before signing in. Check your inbox for the verification link.');
+          return;
+        }
+        onSuccess(result.user);
       } else {
-        result = await createUserWithEmailAndPassword(auth, email, password);
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await sendEmailVerification(result.user);
+        await signOut(auth);
+        setSuccessMessage(`Account created! A verification link has been sent to ${email}. Please verify your email before signing in.`);
+        setIsLogin(true);
       }
-      onSuccess(result.user);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Authentication failed. Please try again.');
@@ -88,6 +100,12 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
         {error && (
           <div className="bg-red-50 text-red-500 p-4 border border-red-500/20 text-xs mb-6 font-mono uppercase">
             {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="bg-emerald-50 text-emerald-600 p-4 border border-emerald-500/20 text-xs mb-6 font-mono uppercase">
+            {successMessage}
           </div>
         )}
 
@@ -163,7 +181,11 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
         <p className="mt-8 text-center mono text-[10px] uppercase font-bold text-ink/60">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError(null);
+              setSuccessMessage(null);
+            }}
             className="text-ink hover:underline"
           >
             {isLogin ? 'Sign Up' : 'Sign In'}
