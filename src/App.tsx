@@ -56,7 +56,7 @@ type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond'
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts' | 'playful-cutout' | 'hit-run' | 'fat-chubby' | 'long-shadow' | 'vintage-poster' | 'halftone-cut' | 'condensed-pink' | 'neon-skew' | 'swiss-bauhaus' | 'vintage-western' | 'halftone-acid' | 'condensed-tangerine' | 'cyber-skew' | 'bauhaus-yellow';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts' | 'playful-cutout' | 'hit-run' | 'fat-chubby' | 'long-shadow' | 'vintage-poster' | 'halftone-cut' | 'condensed-pink' | 'neon-skew' | 'swiss-bauhaus' | 'vintage-western' | 'halftone-acid' | 'condensed-tangerine' | 'cyber-skew' | 'bauhaus-yellow' | 'super-thick' | 'layered-fun' | 'brave-3d' | 'graffiti-bubble' | 'bison-3d';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -465,6 +465,63 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     textShadow: '3px 3px 0px #ef5350, -3px -3px 0px #00e5ff',
     letterSpacing: '-0.02em',
     extraClass: 'tracking-tight uppercase font-black',
+  },
+  'super-thick': {
+    id: 'super-thick',
+    label: 'Super Thick',
+    fontFamily: '"Luckiest Guy", system-ui',
+    fontClass: 'font-luckiest',
+    textColor: '#1a1a1a',
+    bgColor: '#faf8f5',
+    textShadow: '0px 0px 0px #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, -4px 0px 0 #fff, 4px 0px 0 #fff, 0px -4px 0 #fff, 0px 4px 0 #fff, -4px -4px 0 #fff, 4px -4px 0 #fff, -4px 4px 0 #fff, 4px 4px 0 #fff, 0px 6px 12px rgba(0,0,0,0.1)',
+    letterSpacing: '-0.02em',
+    extraClass: 'tracking-tight uppercase font-black',
+  },
+  'layered-fun': {
+    id: 'layered-fun',
+    label: 'Layered Fun',
+    fontFamily: '"Chango", system-ui',
+    fontClass: 'font-chango',
+    textColor: '#ec5d99',
+    bgColor: '#1f74c6',
+    textStroke: '2px #000000',
+    textShadow: '6px 6px 0px #0a2d59',
+    letterSpacing: '-0.04em',
+    extraClass: 'tracking-tighter uppercase font-black',
+  },
+  'brave-3d': {
+    id: 'brave-3d',
+    label: 'Brave 3D',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ff3a5b',
+    bgColor: '#ffe200',
+    textShadow: '1px 1px 0px #0c1b2c, 2px 2px 0px #0c1b2c, 3px 3px 0px #0c1b2c, 4px 4px 0px #0c1b2c, 5px 5px 0px #0c1b2c, 6px 6px 0px #0c1b2c, 7px 7px 0px #0c1b2c, 8px 8px 0px #0c1b2c, 9px 9px 0px #0c1b2c, 10px 10px 0px #0c1b2c, 10px 12px 10px rgba(0,0,0,0.3)',
+    letterSpacing: '-0.05em',
+    extraClass: 'tracking-tighter uppercase font-black',
+  },
+  'graffiti-bubble': {
+    id: 'graffiti-bubble',
+    label: 'Graffiti Bubble',
+    fontFamily: '"Chango", system-ui',
+    fontClass: 'font-chango',
+    textColor: '#ffffff',
+    bgColor: '#f5f6f8',
+    textStroke: '4px #000000',
+    textShadow: '6px 6px 0px rgba(0,0,0,0.08)',
+    letterSpacing: '-0.03em',
+    extraClass: 'tracking-tight uppercase font-black',
+  },
+  'bison-3d': {
+    id: 'bison-3d',
+    label: 'Bison 3D',
+    fontFamily: '"Archivo Black", sans-serif',
+    fontClass: 'font-impact',
+    textColor: '#ffffff',
+    bgColor: '#2d98da',
+    textShadow: '1px 1px 0px #1e3799, 2px 2px 0px #1e3799, 3px 3px 0px #1e3799, 4px 4px 0px #1e3799, 5px 5px 0px #1e3799, 6px 6px 0px #1e3799, 7px 7px 0px #1e3799, 8px 8px 0px #1e3799, 9px 9px 0px #1e3799, 10px 10px 0px #1e3799, 10px 12px 12px rgba(0,0,0,0.15)',
+    letterSpacing: '-0.04em',
+    extraClass: 'tracking-tight uppercase font-black scale-y-125 origin-center py-2',
   }
 };
 
