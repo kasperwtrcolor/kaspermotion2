@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "redirects": [
+    {
+      "source": "/_auth/action",
+      "destination": "https://writeiq-44dd8.firebaseapp.com/__/auth/action",
+      "permanent": false
+    },
+    {
+      "source": "/__/auth/action",
+      "destination": "https://writeiq-44dd8.firebaseapp.com/__/auth/action",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/|assets/|favicon.ico|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
