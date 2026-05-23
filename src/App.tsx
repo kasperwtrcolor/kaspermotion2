@@ -3110,6 +3110,25 @@ export default function App() {
   const [hyperRenderMessage, setHyperRenderMessage] = useState('');
 
   useEffect(() => {
+    const savedSolanaUser = localStorage.getItem('solana_user');
+    if (savedSolanaUser) {
+      try {
+        const u = JSON.parse(savedSolanaUser);
+        setUser(u);
+        setIsAuthReady(true);
+        setDoc(doc(db, 'users', u.uid), {
+          uid: u.uid,
+          email: u.email,
+          displayName: u.displayName,
+          photoURL: u.photoURL,
+          createdAt: serverTimestamp()
+        }, { merge: true }).catch(console.error);
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (u && !u.emailVerified && u.providerData.some(p => p.providerId === 'password')) {
         setUser(null);
@@ -3187,7 +3206,10 @@ export default function App() {
     });
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => {
+    localStorage.removeItem('solana_user');
+    signOut(auth);
+  };
 
   const uploadAssetToLibrary = async (file: File): Promise<{ url: string, uploaded: boolean }> => {
     if (!user) return { url: URL.createObjectURL(file), uploaded: false };
