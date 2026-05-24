@@ -56,7 +56,7 @@ type TransitionType = 'random' | 'morph-circle' | 'morph-star' | 'morph-diamond'
 type CinematicMood = 'standard' | 'golden-hour' | 'cyberpunk' | 'noir' | 'teal-and-orange';
 
 // ===================== THICC TYPOGRAPHY THEMES =====================
-type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts' | 'playful-cutout' | 'hit-run' | 'fat-chubby' | 'long-shadow' | 'vintage-poster' | 'halftone-cut' | 'condensed-pink' | 'neon-skew' | 'swiss-bauhaus' | 'vintage-western' | 'halftone-acid' | 'condensed-tangerine' | 'cyber-skew' | 'bauhaus-yellow' | 'super-thick' | 'layered-fun' | 'brave-3d' | 'graffiti-bubble' | 'bison-3d';
+type ThiccThemeId = 'none' | 'random' | 'chunk' | 'tomato' | 'oreon' | 'pomos' | 'neon-drip' | 'retro-pop' | 'ice-cream' | 'pearl-white' | 'midnight-gold' | 'emerald-cyber' | 'lava' | 'cyber-lime' | 'bubblegum' | 'deep-space' | 'gold-standard' | 'clean-white' | 'midnight-neon' | 'sunset-vibe' | 'monday-bold' | 'heavy-web' | 'pure-grapes' | 'retro-thick' | 'thick-fonts' | 'playful-cutout' | 'hit-run' | 'fat-chubby' | 'long-shadow' | 'vintage-poster' | 'halftone-cut' | 'condensed-pink' | 'neon-skew' | 'swiss-bauhaus' | 'vintage-western' | 'halftone-acid' | 'condensed-tangerine' | 'cyber-skew' | 'bauhaus-yellow' | 'super-thick' | 'layered-fun' | 'brave-3d' | 'graffiti-bubble' | 'bison-3d' | 'scarface-red' | 'super-pixels' | 'retro-arcade' | 'brick-pixel';
 
 interface ThiccTheme {
   id: ThiccThemeId;
@@ -522,6 +522,53 @@ const THICC_THEMES: Record<Exclude<ThiccThemeId, 'none' | 'random'>, ThiccTheme>
     textShadow: '1px 1px 0px #1e3799, 2px 2px 0px #1e3799, 3px 3px 0px #1e3799, 4px 4px 0px #1e3799, 5px 5px 0px #1e3799, 6px 6px 0px #1e3799, 7px 7px 0px #1e3799, 8px 8px 0px #1e3799, 9px 9px 0px #1e3799, 10px 10px 0px #1e3799, 10px 12px 12px rgba(0,0,0,0.15)',
     letterSpacing: '-0.04em',
     extraClass: 'tracking-tight uppercase font-black scale-y-125 origin-center py-2',
+  },
+  'scarface-red': {
+    id: 'scarface-red',
+    label: 'Scarface Red',
+    fontFamily: '"Cormorant Garamond", serif',
+    fontClass: 'font-serif',
+    textColor: '#e81e25',
+    bgColor: '#0f0f11',
+    textShadow: '0 0 10px rgba(232,30,37,0.1)',
+    letterSpacing: '-0.04em',
+    extraClass: 'tracking-tighter uppercase scale-x-75 scale-y-150 origin-center py-4 font-black',
+  },
+  'super-pixels': {
+    id: 'super-pixels',
+    label: 'Super Pixels',
+    fontFamily: '"VT323", monospace',
+    fontClass: 'font-pixel',
+    textColor: 'pixel-multi',
+    bgColor: '#5ea5d8',
+    textStroke: '3px #000000',
+    textShadow: '0px 4px 0px rgba(0,0,0,0.15)',
+    letterSpacing: '0.02em',
+    extraClass: 'tracking-normal uppercase font-black',
+  },
+  'retro-arcade': {
+    id: 'retro-arcade',
+    label: 'Retro Arcade',
+    fontFamily: '"VT323", monospace',
+    fontClass: 'font-pixel',
+    textColor: '#ff007f',
+    bgColor: '#0b0c20',
+    textStroke: '1px #00e5ff',
+    textShadow: '4px 4px 0px #0a2d59, 8px 8px 0px rgba(0,229,255,0.2)',
+    letterSpacing: '0.04em',
+    extraClass: 'tracking-widest uppercase font-bold italic',
+  },
+  'brick-pixel': {
+    id: 'brick-pixel',
+    label: 'Brick Pixel',
+    fontFamily: '"VT323", monospace',
+    fontClass: 'font-pixel',
+    textColor: '#f5f2eb',
+    bgColor: '#0f172a',
+    textStroke: '2px #f1c40f',
+    textShadow: '4px 4px 0px rgba(0,0,0,0.4)',
+    letterSpacing: '0.01em',
+    extraClass: 'tracking-tight uppercase font-black',
   }
 };
 
@@ -843,7 +890,7 @@ const getWordStyle = (word: string, index: number, customColor?: string, isMulti
     };
   }
 
-  if (customColor === 'playful-multi') {
+  if (customColor === 'playful-multi' || customColor === 'pixel-multi') {
     return {
       fontWeight: '900',
       display: 'inline-block'
@@ -1268,8 +1315,10 @@ const WordRenderer = ({
   }
 
   if (!splitChars) {
-    const fallbackStyle = textColor === 'playful-multi' ? {
-      color: ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][index % 5]
+    const fallbackStyle = (textColor === 'playful-multi' || textColor === 'pixel-multi') ? {
+      color: textColor === 'pixel-multi'
+        ? ['#ff3838', '#2ecc71', '#3498db', '#f1c40f', '#ffffff'][index % 5]
+        : ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][index % 5]
     } : {};
     return (
       <span className={`inline-flex whitespace-pre ${charClassName}`} style={{ ...style, ...fallbackStyle }}>
@@ -1281,8 +1330,10 @@ const WordRenderer = ({
   return (
     <span className="inline-flex whitespace-pre" style={style}>
       {word.split('').map((char, j) => {
-        const charStyle = textColor === 'playful-multi' ? {
-          color: ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][(index + j) % 5]
+        const charStyle = (textColor === 'playful-multi' || textColor === 'pixel-multi') ? {
+          color: textColor === 'pixel-multi'
+            ? ['#ff3838', '#2ecc71', '#3498db', '#f1c40f', '#ffffff'][(index + j) % 5]
+            : ['#ffd200', '#ffffff', '#00bfff', '#ff3366', '#2dd4bf'][(index + j) % 5]
         } : {};
         return (
           <span key={j} className={`${charClassName} inline-block`} style={charStyle}>
