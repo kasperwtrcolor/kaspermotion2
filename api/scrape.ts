@@ -123,7 +123,7 @@ export default async function handler(req: any, res: any) {
               "sceneType": "standard" | "macos-notification" | "instagram-follow" | "reddit-post" | "x-post" | "spotify-card",
               "shape": "pill" | "square" | "circle" | "message" | "star" | "flower",
               "textEffect": "gsap-cascade" | "gsap-3d-roll" | "gsap-elastic" | "gsap-tornado" | "gsap-funnel" | "gsap-stack",
-              "cameraPath": "zoom-in" | "zoom-out" | "orbit-left" | "dolly-zoom" | "hyper-glide",
+              "cameraPath": "zoom-in" | "zoom-out" | "orbit-left" | "dolly-zoom" | "hyper-glide" | "parallax-sweep",
               "backgroundStyle": "black" | "ivory" | "cream" | "vibrant-glow",
               "secondaryAssetIntent": "Thematic keyword for animated motion icons or 3D assets. MUST CHOOSE ONE from: 'growth', 'launch', 'secure', 'connect', 'cloud', 'data', 'idea', 'victory', 'alert', 'social'. LEAVE EMPTY ONLY IF UNRELATED."
             }
@@ -145,6 +145,22 @@ export default async function handler(req: any, res: any) {
       aiData = JSON.parse(jsonStr);
     } catch (e) {
       console.error('Failed to parse AI response:', jsonStr);
+    }
+
+    // Fetch live website screenshot using Microlink
+    let screenshotUrl = '';
+    try {
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&embed=screenshot.url`;
+      const screenshotRes = await fetch(microlinkUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+      });
+      if (screenshotRes.ok) {
+        const buffer = await screenshotRes.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString('base64');
+        screenshotUrl = `data:image/png;base64,${base64}`;
+      }
+    } catch (e) {
+      console.error('Failed to capture screenshot via Microlink:', e);
     }
 
     // Fetch and convert top images to base64 to avoid CORS on client
@@ -172,6 +188,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ 
       ...aiData,
       scrapedImages: fetchedImages.length > 0 ? fetchedImages.slice(0, 8) : images.slice(0, 8),
+      screenshotUrl,
       brandTitle: title || 'New Project'
     });
   } catch (error: any) {

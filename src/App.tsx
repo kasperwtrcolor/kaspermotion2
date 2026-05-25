@@ -646,7 +646,7 @@ type Composition = {
   textColor?: string;
   isMultiColor?: boolean;
   transitionItemAsset?: string;
-  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'hyper-glide' | 'crane-up' | 'parallax-drift';
+  cameraPath?: 'zoom-in' | 'zoom-out' | 'orbit-right' | 'pan-down-tilt' | 'static' | 'hyper-glide' | 'crane-up' | 'parallax-drift' | 'parallax-sweep';
   secondaryAssets?: SecondaryAsset[];
   sceneDuration?: number;
   fontSize?: string;
@@ -3959,6 +3959,12 @@ export default function App() {
         animate(artistryX, [0, 300, 0], { duration, ease: "easeInOut" });
         animate(artistryZ, [0, 100, -50], { duration, ease: "easeInOut" });
         animate(artistryRoll, [0, 2, 0], { duration, ease: "easeInOut" });
+      } else if (currentComp.cameraPath === 'parallax-sweep') {
+        // Dramatic, horizontal-sliding, depth-pivoting, fluidly rolling camera choreography
+        animate(artistryX, [-600, 600], { duration, ease: "easeInOut" });
+        animate(artistryZ, [-400, 400], { duration, ease: "easeInOut" });
+        animate(artistryRotY, [-20, 20], { duration, ease: "easeInOut" });
+        animate(artistryRoll, [-4, 4], { duration, ease: "easeInOut" });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
@@ -4335,10 +4341,10 @@ export default function App() {
           : fontFamily
       );
 
-      const allowedPaths = ['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift', 'static'];
+      const allowedPaths = ['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift', 'static', 'parallax-sweep'];
       const currentCameraPath: any = (preferredCameraPath !== 'random')
         ? preferredCameraPath
-        : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift'][Math.floor(Math.random() * 4)]));
+        : (existingComp?.cameraPath || sceneChoreography?.cameraPath || (['zoom-in', 'zoom-out', 'hyper-glide', 'parallax-drift', 'parallax-sweep'][Math.floor(Math.random() * 5)]));
       const currentBackground = existingComp?.activeBackground || sceneChoreography?.backgroundStyle || (backgroundStyles[sceneIdx % backgroundStyles.length] || 'black');
 
       const customDur = existingComp?.sceneDuration || skelScene?.duration || sceneChoreography?.duration;
