@@ -64,6 +64,24 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     }
   };
 
+  const handleConnectWallet = async () => {
+    setError(null);
+    setIsSolanaLoading(true);
+    try {
+      const provider = (window as any).solana || (window as any).phantom?.solana;
+      if (!provider) {
+        throw new Error('Solana wallet extension (Phantom/Backpack) not detected. Please install one!');
+      }
+      const resp = await provider.connect();
+      setConnectedWallet(resp.publicKey.toString());
+    } catch (err: any) {
+      console.error('Wallet connection error:', err);
+      setError(err.message || 'Failed to connect wallet.');
+    } finally {
+      setIsSolanaLoading(false);
+    }
+  };
+
   const handleSolanaPurchase = async () => {
     if (!user) return;
     setIsSolanaLoading(true);
@@ -106,23 +124,24 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
         return address;
       };
 
-      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
       const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
 
       // 3. Fetch secure blockhash and check USDC balance server-side (100% immune to browser 403 CORS blocks!)
       let blockhash = '';
       let balance = 0;
       let balanceExists = false;
+      let backendSenderATAStr = '';
 
       try {
-        console.log(`[PricingModal] Fetching blockhash and balance for ATA: ${senderATA.toString()}`);
-        const blockhashRes = await fetch(`/api/solana-blockhash?ata=${senderATA.toString()}`);
+        console.log(`[PricingModal] Fetching blockhash and balance for Wallet: ${userPublicKeyStr}`);
+        const blockhashRes = await fetch(`/api/solana-blockhash?wallet=${userPublicKeyStr}`);
         if (blockhashRes.ok) {
           const data = await blockhashRes.json();
           blockhash = data.blockhash;
           balance = Number(data.balance || 0);
           balanceExists = !!data.balanceExists;
-          console.log(`[PricingModal] Backend reported balance: ${balance} USDC (Exists: ${balanceExists})`);
+          backendSenderATAStr = data.senderATA || '';
+          console.log(`[PricingModal] Backend reported balance: ${balance} USDC (ATA: ${backendSenderATAStr}, Exists: ${balanceExists})`);
         } else {
           console.warn('Backend blockhash fetch returned non-ok status, trying client-side fallback...');
         }
@@ -174,6 +193,8 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
           throw new Error(`Failed to retrieve secure transaction blockhash: ${clientError?.message || 'Access Forbidden (403)'}`);
         }
       }
+
+      const senderATA = backendSenderATAStr ? new PublicKey(backendSenderATAStr) : getAssociatedTokenAddress(USDC_MINT, senderKey);
 
       // 4. Validate sender's USDC token balance (Client-side pool fallback if backend check failed!)
       const checkNodes = [];
@@ -438,31 +459,43 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                     )}
                   </button>
 
-                  {connectedWallet && (
-                    <div className="flex flex-col gap-2 p-4 bg-white/5 border border-white/10 text-xs rounded-sm mb-1 text-left">
-                      <div className="flex items-center justify-between text-cream/70">
-                        <span className="mono uppercase tracking-widest text-[9px] opacity-60">Connected Solana Wallet</span>
-                        <button 
-                          type="button"
-                          onClick={handleDisconnectWallet}
-                          className="text-red-400 hover:text-red-300 font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer"
-                        >
-                          Disconnect
-                        </button>
+                  {connectedWallet ? (
+                    <>
+                      <div className="flex flex-col gap-2 p-4 bg-white/5 border border-white/10 text-xs rounded-sm mb-1 text-left">
+                        <div className="flex items-center justify-between text-cream/70">
+                          <span className="mono uppercase tracking-widest text-[9px] opacity-60">Connected Solana Wallet</span>
+                          <button 
+                            type="button"
+                            onClick={handleDisconnectWallet}
+                            className="text-red-400 hover:text-red-300 font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer"
+                          >
+                            Disconnect
+                          </button>
+                        </div>
+                        <div className="font-mono text-cream font-bold truncate text-xs select-all" title={connectedWallet}>
+                          {connectedWallet.substring(0, 8)}...{connectedWallet.substring(connectedWallet.length - 8)}
+                        </div>
                       </div>
-                      <div className="font-mono text-cream font-bold truncate text-xs select-all" title={connectedWallet}>
-                        {connectedWallet.substring(0, 8)}...{connectedWallet.substring(connectedWallet.length - 8)}
-                      </div>
-                    </div>
-                  )}
 
-                  <button 
-                    onClick={handleSolanaPurchase}
-                    disabled={isLoading || isSolanaLoading || !user}
-                    className="w-full bg-[#14F195] text-black font-black uppercase py-4 transition-all hover:bg-[#00ff99] disabled:opacity-50 flex items-center justify-center gap-3 border border-transparent shadow-lg shadow-[#14F195]/20"
-                  >
-                    <Wallet size={18} /> Pay with Solana (5 USDC)
-                  </button>
+                      <button 
+                        type="button"
+                        onClick={handleSolanaPurchase}
+                        disabled={isLoading || isSolanaLoading || !user}
+                        className="w-full bg-[#14F195] text-black font-black uppercase py-4 transition-all hover:bg-[#00ff99] disabled:opacity-50 flex items-center justify-center gap-3 border border-transparent shadow-lg shadow-[#14F195]/20 cursor-pointer"
+                      >
+                        <Zap size={18} fill="currentColor" /> Confirm & Pay 5 USDC
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      type="button"
+                      onClick={handleConnectWallet}
+                      disabled={isLoading || isSolanaLoading || !user}
+                      className="w-full bg-[#14F195]/20 hover:bg-[#14F195]/30 text-[#14F195] border border-[#14F195]/30 font-black uppercase py-4 transition-all disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer"
+                    >
+                      <Wallet size={18} /> Connect Solana Wallet
+                    </button>
+                  )}
                 </div>
               </div>
 
