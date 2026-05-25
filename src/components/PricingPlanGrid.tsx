@@ -22,7 +22,7 @@ const PricingPlanGrid: React.FC<PricingPlanGridProps> = ({ onPurchase, user }) =
     }
     setIsLoading(true);
     try {
-      const res = await fetch(getApiUrl('/api/create-checkout-session'), {
+      const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

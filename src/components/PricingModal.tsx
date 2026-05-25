@@ -27,7 +27,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     if (!user) return;
     setIsLoading(true);
     try {
-      const res = await fetch(getApiUrl('/api/create-checkout-session'), {
+      const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
