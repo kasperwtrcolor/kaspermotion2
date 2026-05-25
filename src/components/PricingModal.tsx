@@ -49,6 +49,22 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     }
   };
 
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+
+  const handleDisconnectWallet = async () => {
+    setError(null);
+    try {
+      const provider = (window as any).solana || (window as any).phantom?.solana;
+      if (provider) {
+        await provider.disconnect();
+      }
+      setConnectedWallet(null);
+    } catch (err: any) {
+      console.error('Disconnect error:', err);
+      setConnectedWallet(null);
+    }
+  };
+
   const handleSolanaPurchase = async () => {
     if (!user) return;
     setIsSolanaLoading(true);
@@ -61,9 +77,14 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
         throw new Error('Solana wallet extension (Phantom/Backpack) not detected. Please install one to use Solana Pay!');
       }
 
-      // 1. Await wallet connection
-      const resp = await provider.connect();
-      const userPublicKeyStr = resp.publicKey.toString();
+      // 1. Await wallet connection if not already stored
+      let activeWallet = connectedWallet;
+      if (!activeWallet) {
+        const resp = await provider.connect();
+        activeWallet = resp.publicKey.toString();
+        setConnectedWallet(activeWallet);
+      }
+      const userPublicKeyStr = activeWallet;
 
       setSolanaStep('confirming');
 
@@ -131,7 +152,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
       const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5AcWH25jdwGsxAuGs');
 
       const senderKey = new PublicKey(userPublicKeyStr);
       const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
@@ -411,6 +432,24 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                       <><Zap size={18} fill="currentColor" /> Pay with Stripe</>
                     )}
                   </button>
+
+                  {connectedWallet && (
+                    <div className="flex flex-col gap-2 p-4 bg-white/5 border border-white/10 text-xs rounded-sm mb-1 text-left">
+                      <div className="flex items-center justify-between text-cream/70">
+                        <span className="mono uppercase tracking-widest text-[9px] opacity-60">Connected Solana Wallet</span>
+                        <button 
+                          type="button"
+                          onClick={handleDisconnectWallet}
+                          className="text-red-400 hover:text-red-300 font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                      <div className="font-mono text-cream font-bold truncate text-xs select-all" title={connectedWallet}>
+                        {connectedWallet.substring(0, 8)}...{connectedWallet.substring(connectedWallet.length - 8)}
+                      </div>
+                    </div>
+                  )}
 
                   <button 
                     onClick={handleSolanaPurchase}
