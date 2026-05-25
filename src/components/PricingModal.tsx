@@ -20,6 +20,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
   const [isSolanaLoading, setIsSolanaLoading] = useState(false);
   const [solanaStep, setSolanaStep] = useState<'idle' | 'confirming' | 'processing' | 'success'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -48,8 +49,6 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       setIsLoading(false);
     }
   };
-
-  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
   const handleDisconnectWallet = async () => {
     setError(null);
