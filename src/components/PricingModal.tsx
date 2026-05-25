@@ -219,11 +219,12 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       // 6. Build the transaction
       const transaction = new Transaction();
 
-      // Create recipient ATA if needed
-      if (!recipientAtaExists) {
-        console.log('[PricingModal] Prepending CreateAssociatedTokenAccount for recipient');
+      // Always prepend createIdempotent ATA instruction for recipient
+      // Instruction index 1 = CreateIdempotent — succeeds even if the account already exists
+      // This eliminates race conditions between the backend check and actual on-chain state
+      {
+        console.log('[PricingModal] Adding CreateIdempotent ATA instruction for recipient');
         const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
-        const RENT_SYSVAR_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
         transaction.add(new TransactionInstruction({
           keys: [
             { pubkey: senderKey, isSigner: true, isWritable: true },
@@ -232,10 +233,9 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
             { pubkey: USDC_MINT, isSigner: false, isWritable: false },
             { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-            { pubkey: RENT_SYSVAR_ID, isSigner: false, isWritable: false },
           ],
           programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-          data: new Uint8Array(0),
+          data: new Uint8Array([1]), // 1 = CreateIdempotent
         }));
       }
 
