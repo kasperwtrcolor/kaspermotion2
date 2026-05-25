@@ -14,8 +14,12 @@ export default async function handler(req: any, res: any) {
 
   try {
     const userHeliusRpc = process.env.HELIUS_RPC_URL || process.env.VITE_HELIUS_RPC_URL || process.env.HELIUS_RPC;
-    const ataAddress = req.query.ata;
+    // Accept wallet owner address (the actual connected wallet public key)
+    const walletAddress = req.query.wallet;
     const recipientAtaAddress = req.query.recipientAta;
+
+    const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    const TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 
     const rpcNodes: string[] = [];
     if (userHeliusRpc) {
@@ -24,19 +28,19 @@ export default async function handler(req: any, res: any) {
     // Fallbacks
     rpcNodes.push('https://rpc.ankr.com/solana');
     rpcNodes.push('https://solana-mainnet.public.blastapi.io');
-    rpcNodes.push('https://solana-mainnet.g.allthatnode.com');
     rpcNodes.push('https://api.mainnet-beta.solana.com');
 
     let blockhash = '';
     let balance = 0;
     let balanceExists = false;
+    let senderATA = '';
     let recipientAtaExists = false;
     let lastError: any = null;
 
     for (const nodeUrl of rpcNodes) {
       try {
-        console.log(`Connecting to Solana RPC node: ${nodeUrl}`);
-        
+        console.log(`[solana-blockhash] Connecting to RPC: ${nodeUrl}`);
+
         // 1. Fetch latest blockhash
         const blockhashResponse = await fetch(nodeUrl, {
           method: 'POST',
@@ -55,47 +59,67 @@ export default async function handler(req: any, res: any) {
 
         const blockhashData: any = await blockhashResponse.json();
         if (blockhashData.error) {
-          throw new Error(`RPC error fetching blockhash: ${blockhashData.error.message || JSON.stringify(blockhashData.error)}`);
+          throw new Error(`RPC error: ${blockhashData.error.message || JSON.stringify(blockhashData.error)}`);
         }
 
         if (blockhashData.result?.value?.blockhash) {
           blockhash = blockhashData.result.value.blockhash;
-          console.log(`Successfully retrieved blockhash from ${nodeUrl}`);
+          console.log(`[solana-blockhash] Got blockhash from ${nodeUrl}`);
         } else {
-          throw new Error('Invalid blockhash RPC response format');
+          throw new Error('Invalid blockhash response');
         }
 
-        // 2. Fetch token balance if ata is provided
-        if (ataAddress) {
-          console.log(`Checking balance for ATA ${ataAddress} on ${nodeUrl}...`);
-          const balanceResponse = await fetch(nodeUrl, {
+        // 2. Discover sender's USDC token account using getTokenAccountsByOwner
+        if (walletAddress) {
+          console.log(`[solana-blockhash] Discovering USDC accounts for wallet: ${walletAddress}`);
+          const tokenAccountsResponse = await fetch(nodeUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               jsonrpc: '2.0',
               id: 2,
-              method: 'getTokenAccountBalance',
-              params: [ataAddress],
+              method: 'getTokenAccountsByOwner',
+              params: [
+                walletAddress,
+                { mint: USDC_MINT },
+                { encoding: 'jsonParsed' }
+              ],
             }),
           });
 
-          if (balanceResponse.ok) {
-            const balanceData: any = await balanceResponse.json();
-            if (balanceData.result?.value) {
-              balance = Number(balanceData.result.value.uiAmount || 0);
+          if (tokenAccountsResponse.ok) {
+            const tokenData: any = await tokenAccountsResponse.json();
+            if (tokenData.result?.value && tokenData.result.value.length > 0) {
+              // Find the account with the highest balance
+              let bestAccount = tokenData.result.value[0];
+              let bestBalance = 0;
+              for (const account of tokenData.result.value) {
+                const info = account.account?.data?.parsed?.info;
+                if (info) {
+                  const amt = Number(info.tokenAmount?.uiAmount || 0);
+                  if (amt >= bestBalance) {
+                    bestBalance = amt;
+                    bestAccount = account;
+                  }
+                }
+              }
+              senderATA = bestAccount.pubkey;
+              const info = bestAccount.account?.data?.parsed?.info;
+              balance = Number(info?.tokenAmount?.uiAmount || 0);
               balanceExists = true;
-              console.log(`Successfully retrieved token balance: ${balance} USDC`);
-            } else if (balanceData.error) {
-              console.warn(`RPC returned balance error (account might be empty/uninitialized):`, balanceData.error);
+              console.log(`[solana-blockhash] Found USDC account: ${senderATA}, balance: ${balance}`);
+            } else {
+              // No USDC token accounts found for this wallet
+              balanceExists = true;
               balance = 0;
-              balanceExists = true;
+              console.log(`[solana-blockhash] No USDC accounts found for wallet ${walletAddress}`);
             }
           }
         }
 
-        // 3. Fetch recipient ATA existence if recipientAta is provided
+        // 3. Check recipient ATA existence
         if (recipientAtaAddress) {
-          console.log(`Checking existence for recipient ATA ${recipientAtaAddress} on ${nodeUrl}...`);
+          console.log(`[solana-blockhash] Checking recipient ATA: ${recipientAtaAddress}`);
           const accountResponse = await fetch(nodeUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -109,30 +133,25 @@ export default async function handler(req: any, res: any) {
 
           if (accountResponse.ok) {
             const accountData: any = await accountResponse.json();
-            if (accountData.result && accountData.result.value !== null) {
-              recipientAtaExists = true;
-              console.log(`Recipient ATA exists on-chain: true`);
-            } else {
-              recipientAtaExists = false;
-              console.log(`Recipient ATA exists on-chain: false`);
-            }
+            recipientAtaExists = !!(accountData.result && accountData.result.value !== null);
+            console.log(`[solana-blockhash] Recipient ATA exists: ${recipientAtaExists}`);
           }
         }
 
-        break; // successfully retrieved blockhash!
+        break; // success
       } catch (err: any) {
-        console.warn(`Failed to connect to ${nodeUrl}:`, err.message || err);
+        console.warn(`[solana-blockhash] Failed on ${nodeUrl}:`, err.message || err);
         lastError = err;
       }
     }
 
     if (!blockhash) {
-      throw new Error(`Failed to establish a secure Solana RPC connection: ${lastError?.message || 'Access Forbidden (403)'}`);
+      throw new Error(`Failed to connect to Solana RPC: ${lastError?.message || 'All nodes failed'}`);
     }
 
-    res.status(200).json({ blockhash, balance, balanceExists, recipientAtaExists });
+    res.status(200).json({ blockhash, balance, balanceExists, senderATA, recipientAtaExists });
   } catch (error: any) {
-    console.error('Failed to fetch blockhash on backend:', error);
+    console.error('[solana-blockhash] Error:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch blockhash' });
   }
 }

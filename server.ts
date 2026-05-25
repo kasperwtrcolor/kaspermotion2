@@ -370,8 +370,10 @@ H2 Tags: ${h2s.join(' | ')}
   app.get('/api/solana-blockhash', async (req, res) => {
     try {
       const userHeliusRpc = process.env.HELIUS_RPC_URL || process.env.VITE_HELIUS_RPC_URL || process.env.HELIUS_RPC;
-      const ataAddress = req.query.ata as string;
+      const walletAddress = req.query.wallet as string;
       const recipientAtaAddress = req.query.recipientAta as string;
+
+      const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
       const rpcNodes: string[] = [];
       if (userHeliusRpc) {
@@ -379,19 +381,19 @@ H2 Tags: ${h2s.join(' | ')}
       }
       rpcNodes.push('https://rpc.ankr.com/solana');
       rpcNodes.push('https://solana-mainnet.public.blastapi.io');
-      rpcNodes.push('https://solana-mainnet.g.allthatnode.com');
       rpcNodes.push('https://api.mainnet-beta.solana.com');
 
       let blockhash = '';
       let balance = 0;
       let balanceExists = false;
+      let senderATA = '';
       let recipientAtaExists = false;
       let lastError: any = null;
 
       for (const nodeUrl of rpcNodes) {
         try {
-          console.log(`[Vibe Engine] Connecting to Solana RPC node: ${nodeUrl}`);
-          
+          console.log(`[Vibe Engine] Connecting to Solana RPC: ${nodeUrl}`);
+
           // 1. Fetch latest blockhash
           const response = await fetch(nodeUrl, {
             method: 'POST',
@@ -404,53 +406,66 @@ H2 Tags: ${h2s.join(' | ')}
             }),
           });
 
-          if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-          }
-
+          if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
           const data: any = await response.json();
-          if (data.error) {
-            throw new Error(`RPC error: ${data.error.message || JSON.stringify(data.error)}`);
-          }
+          if (data.error) throw new Error(`RPC error: ${data.error.message || JSON.stringify(data.error)}`);
 
           if (data.result?.value?.blockhash) {
             blockhash = data.result.value.blockhash;
-            console.log(`[Vibe Engine] Successfully retrieved blockhash: ${blockhash} from ${nodeUrl}`);
+            console.log(`[Vibe Engine] Got blockhash from ${nodeUrl}`);
           } else {
-            throw new Error('Invalid RPC response format');
+            throw new Error('Invalid blockhash response');
           }
 
-          // 2. Fetch token balance if ata is provided
-          if (ataAddress) {
-            console.log(`[Vibe Engine] Checking balance for ATA ${ataAddress} on ${nodeUrl}...`);
-            const balanceResponse = await fetch(nodeUrl, {
+          // 2. Discover sender's USDC token account using getTokenAccountsByOwner
+          if (walletAddress) {
+            console.log(`[Vibe Engine] Discovering USDC accounts for wallet: ${walletAddress}`);
+            const tokenAccountsResponse = await fetch(nodeUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 jsonrpc: '2.0',
                 id: 2,
-                method: 'getTokenAccountBalance',
-                params: [ataAddress],
+                method: 'getTokenAccountsByOwner',
+                params: [
+                  walletAddress,
+                  { mint: USDC_MINT },
+                  { encoding: 'jsonParsed' },
+                ],
               }),
             });
 
-            if (balanceResponse.ok) {
-              const balanceData: any = await balanceResponse.json();
-              if (balanceData.result?.value) {
-                balance = Number(balanceData.result.value.uiAmount || 0);
+            if (tokenAccountsResponse.ok) {
+              const tokenData: any = await tokenAccountsResponse.json();
+              if (tokenData.result?.value && tokenData.result.value.length > 0) {
+                let bestAccount = tokenData.result.value[0];
+                let bestBalance = 0;
+                for (const account of tokenData.result.value) {
+                  const info = account.account?.data?.parsed?.info;
+                  if (info) {
+                    const amt = Number(info.tokenAmount?.uiAmount || 0);
+                    if (amt >= bestBalance) {
+                      bestBalance = amt;
+                      bestAccount = account;
+                    }
+                  }
+                }
+                senderATA = bestAccount.pubkey;
+                const info = bestAccount.account?.data?.parsed?.info;
+                balance = Number(info?.tokenAmount?.uiAmount || 0);
                 balanceExists = true;
-                console.log(`[Vibe Engine] Successfully retrieved token balance: ${balance} USDC`);
-              } else if (balanceData.error) {
-                console.warn(`[Vibe Engine] RPC balance error:`, balanceData.error);
+                console.log(`[Vibe Engine] Found USDC account: ${senderATA}, balance: ${balance}`);
+              } else {
+                balanceExists = true;
                 balance = 0;
-                balanceExists = true;
+                console.log(`[Vibe Engine] No USDC accounts found for wallet ${walletAddress}`);
               }
             }
           }
 
-          // 3. Fetch recipient ATA existence if recipientAta is provided
+          // 3. Check recipient ATA existence
           if (recipientAtaAddress) {
-            console.log(`[Vibe Engine] Checking existence for recipient ATA ${recipientAtaAddress} on ${nodeUrl}...`);
+            console.log(`[Vibe Engine] Checking recipient ATA: ${recipientAtaAddress}`);
             const accountResponse = await fetch(nodeUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -464,28 +479,23 @@ H2 Tags: ${h2s.join(' | ')}
 
             if (accountResponse.ok) {
               const accountData: any = await accountResponse.json();
-              if (accountData.result && accountData.result.value !== null) {
-                recipientAtaExists = true;
-                console.log(`[Vibe Engine] Recipient ATA exists on-chain: true`);
-              } else {
-                recipientAtaExists = false;
-                console.log(`[Vibe Engine] Recipient ATA exists on-chain: false`);
-              }
+              recipientAtaExists = !!(accountData.result && accountData.result.value !== null);
+              console.log(`[Vibe Engine] Recipient ATA exists: ${recipientAtaExists}`);
             }
           }
 
-          break; // successfully retrieved blockhash!
+          break; // success
         } catch (err: any) {
-          console.warn(`[Vibe Engine] Failed to connect to ${nodeUrl}:`, err.message || err);
+          console.warn(`[Vibe Engine] Failed on ${nodeUrl}:`, err.message || err);
           lastError = err;
         }
       }
 
       if (!blockhash) {
-        throw new Error(`Failed to establish a secure Solana RPC connection: ${lastError?.message || 'Access Forbidden (403)'}`);
+        throw new Error(`Failed to connect to Solana RPC: ${lastError?.message || 'All nodes failed'}`);
       }
 
-      res.json({ blockhash, balance, balanceExists, recipientAtaExists });
+      res.json({ blockhash, balance, balanceExists, senderATA, recipientAtaExists });
     } catch (error: any) {
       console.error('[Vibe Engine] Failed to fetch blockhash:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch blockhash' });

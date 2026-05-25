@@ -1,13 +1,8 @@
-import React, { useState } from 'react';
-import { X, Check, Zap, Wallet } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Check, Zap, Wallet, RefreshCw, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { doc, setDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
-
-const getApiUrl = (path: string) => {
-  const baseUrl = import.meta.env.VITE_API_URL || '';
-  return `${baseUrl}${path}`;
-};
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -22,44 +17,51 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
   const [error, setError] = useState<string | null>(null);
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  // Helper to get the Phantom/Backpack provider
+  const getProvider = useCallback(() => {
+    return (window as any).phantom?.solana || (window as any).solana || null;
+  }, []);
+
+  // Sync wallet state with the actual provider on modal open and account changes
+  useEffect(() => {
     if (!isOpen) return;
-    
-    const checkConnection = async () => {
-      try {
-        const provider = (window as any).solana || (window as any).phantom?.solana;
-        if (provider) {
-          // Check if already connected (eager connection)
-          if (provider.publicKey) {
-            setConnectedWallet(provider.publicKey.toString());
-          }
-          
-          // Listen to account changes
-          provider.on('accountChanged', (publicKey: any) => {
-            if (publicKey) {
-              setConnectedWallet(publicKey.toString());
-            } else {
-              setConnectedWallet(null);
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('Failed to check eager wallet connection:', e);
+
+    const provider = getProvider();
+    if (!provider) return;
+
+    // Read the current public key if already connected
+    if (provider.isConnected && provider.publicKey) {
+      setConnectedWallet(provider.publicKey.toString());
+    }
+
+    // Listen for account switches inside the wallet extension
+    const onAccountChanged = (pubkey: any) => {
+      if (pubkey) {
+        setConnectedWallet(pubkey.toString());
+      } else {
+        // User switched to an account that hasn't approved this site
+        setConnectedWallet(null);
       }
     };
-    
-    checkConnection();
-    
+
+    const onDisconnect = () => {
+      setConnectedWallet(null);
+    };
+
+    provider.on('accountChanged', onAccountChanged);
+    provider.on('disconnect', onDisconnect);
+
     return () => {
-      const provider = (window as any).solana || (window as any).phantom?.solana;
-      if (provider) {
-        provider.removeAllListeners?.('accountChanged');
-      }
+      try {
+        provider.removeListener('accountChanged', onAccountChanged);
+        provider.removeListener('disconnect', onDisconnect);
+      } catch (_) { /* ignore */ }
     };
-  }, [isOpen]);
+  }, [isOpen, getProvider]);
 
   if (!isOpen) return null;
 
+  // ─── Stripe purchase ──────────────────────────────────────────────
   const handlePurchase = async () => {
     if (!user) return;
     setIsLoading(true);
@@ -67,11 +69,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       const res = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.uid,
-          credits: 30,
-          amount: 5,
-        }),
+        body: JSON.stringify({ userId: user.uid, credits: 30, amount: 5 }),
       });
       const { url } = await res.json();
       if (url) {
@@ -86,38 +84,56 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     }
   };
 
-  const handleDisconnectWallet = async () => {
-    setError(null);
-    try {
-      const provider = (window as any).solana || (window as any).phantom?.solana;
-      if (provider) {
-        await provider.disconnect();
-      }
-      setConnectedWallet(null);
-    } catch (err: any) {
-      console.error('Disconnect error:', err);
-      setConnectedWallet(null);
-    }
-  };
-
+  // ─── Wallet connect / disconnect / change ─────────────────────────
   const handleConnectWallet = async () => {
     setError(null);
     setIsSolanaLoading(true);
     try {
-      const provider = (window as any).solana || (window as any).phantom?.solana;
+      const provider = getProvider();
       if (!provider) {
-        throw new Error('Solana wallet extension (Phantom/Backpack) not detected. Please install one!');
+        throw new Error('Solana wallet not found. Please install Phantom or Backpack.');
       }
       const resp = await provider.connect();
       setConnectedWallet(resp.publicKey.toString());
     } catch (err: any) {
-      console.error('Wallet connection error:', err);
       setError(err.message || 'Failed to connect wallet.');
     } finally {
       setIsSolanaLoading(false);
     }
   };
 
+  const handleDisconnectWallet = async () => {
+    setError(null);
+    try {
+      const provider = getProvider();
+      if (provider) {
+        await provider.disconnect();
+      }
+    } catch (_) { /* ignore */ }
+    setConnectedWallet(null);
+  };
+
+  const handleChangeWallet = async () => {
+    setError(null);
+    setIsSolanaLoading(true);
+    try {
+      const provider = getProvider();
+      if (!provider) {
+        throw new Error('Solana wallet not found.');
+      }
+      // Disconnect first, then reconnect to force the wallet selection popup
+      await provider.disconnect();
+      setConnectedWallet(null);
+      const resp = await provider.connect();
+      setConnectedWallet(resp.publicKey.toString());
+    } catch (err: any) {
+      setError(err.message || 'Failed to change wallet.');
+    } finally {
+      setIsSolanaLoading(false);
+    }
+  };
+
+  // ─── Solana USDC purchase ─────────────────────────────────────────
   const handleSolanaPurchase = async () => {
     if (!user) return;
     setIsSolanaLoading(true);
@@ -125,87 +141,90 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     setSolanaStep('confirming');
 
     try {
-      const provider = (window as any).solana || (window as any).phantom?.solana;
+      const provider = getProvider();
       if (!provider) {
-        throw new Error('Solana wallet extension (Phantom/Backpack) not detected. Please install one to use Solana Pay!');
+        throw new Error('Solana wallet not found. Please install Phantom or Backpack.');
       }
 
-      // 1. Always retrieve the absolute latest active public key from the provider to support extension-level account switching
-      let activeWallet = provider.publicKey ? provider.publicKey.toString() : null;
-      if (!activeWallet) {
+      // 1. Get the live public key from the provider (not from React state)
+      let walletPubkey: string;
+      if (provider.isConnected && provider.publicKey) {
+        walletPubkey = provider.publicKey.toString();
+      } else {
         const resp = await provider.connect();
-        activeWallet = resp.publicKey.toString();
+        walletPubkey = resp.publicKey.toString();
       }
-      if (activeWallet !== connectedWallet) {
-        setConnectedWallet(activeWallet);
+
+      // Sync React state
+      if (walletPubkey !== connectedWallet) {
+        setConnectedWallet(walletPubkey);
       }
-      const userPublicKeyStr = activeWallet;
 
-      setSolanaStep('confirming');
+      console.log(`[PricingModal] Using wallet: ${walletPubkey}`);
 
-      // 2. Load Solana Web3 library dynamically first
+      // 2. Load Solana Web3 library
       const { Transaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
 
       const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
       const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
       const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5AcWH25jdwGsxAuGs');
 
-      const senderKey = new PublicKey(userPublicKeyStr);
+      const senderKey = new PublicKey(walletPubkey);
       const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
 
-      // Derive Associated Token Accounts (ATA)
-      const getAssociatedTokenAddress = (mint: any, owner: any) => {
-        const [address] = PublicKey.findProgramAddressSync(
-          [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        );
-        return address;
-      };
+      // Derive recipient ATA (deterministic, always correct)
+      const [recipientATA] = PublicKey.findProgramAddressSync(
+        [recipientOwnerKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
 
-      const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
-      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
+      // 3. Ask the backend to: get blockhash, discover sender's actual USDC account, check recipient ATA
+      //    We send the WALLET ADDRESS, and the backend uses getTokenAccountsByOwner to find the real USDC account
+      console.log(`[PricingModal] Calling backend with wallet=${walletPubkey}`);
+      const blockhashRes = await fetch(`/api/solana-blockhash?wallet=${walletPubkey}&recipientAta=${recipientATA.toString()}`);
 
-      // 3. Fetch secure blockhash, check USDC balance, and check recipient ATA existence server-side (100% immune to browser 403 CORS blocks!)
-      let blockhash = '';
-      let balance = 0;
-      let balanceExists = false;
-      let recipientAtaExists = false;
-
-      try {
-        console.log(`[PricingModal] Fetching blockhash, balance, and recipient ATA existence for Wallet: ${userPublicKeyStr}`);
-        const blockhashRes = await fetch(`/api/solana-blockhash?ata=${senderATA.toString()}&recipientAta=${recipientATA.toString()}`);
-        if (blockhashRes.ok) {
-          const data = await blockhashRes.json();
-          blockhash = data.blockhash;
-          balance = Number(data.balance || 0);
-          balanceExists = !!data.balanceExists;
-          recipientAtaExists = !!data.recipientAtaExists;
-          console.log(`[PricingModal] Backend reported: balance = ${balance} USDC, exists = ${balanceExists}, recipientExists = ${recipientAtaExists}`);
-        } else {
-          console.warn('Backend blockhash fetch returned non-ok status.');
-        }
-      } catch (err) {
-        console.warn('Backend blockhash fetch failed:', err);
+      if (!blockhashRes.ok) {
+        const errData = await blockhashRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to connect to Solana network.');
       }
+
+      const backendData = await blockhashRes.json();
+      const { blockhash, balance, balanceExists, senderATA: backendSenderATA, recipientAtaExists } = backendData;
+
+      console.log(`[PricingModal] Backend response: blockhash=${blockhash}, balance=${balance}, senderATA=${backendSenderATA}, recipientExists=${recipientAtaExists}`);
 
       if (!blockhash) {
-        throw new Error('Failed to retrieve secure transaction blockhash from serverless backend.');
+        throw new Error('Failed to get blockhash from Solana network.');
       }
 
-      // Check balance - allow proceeding if balance is verified, or fail if we proved balance < 5
+      // 4. Validate balance
       if (balanceExists && balance < 5) {
-        throw new Error(`Insufficient USDC balance. Your wallet has ${balance.toFixed(2)} USDC, but 5.00 USDC is required.`);
+        throw new Error(`Insufficient USDC balance. Your wallet (${walletPubkey.slice(0, 4)}...${walletPubkey.slice(-4)}) has ${balance.toFixed(2)} USDC, but 5.00 USDC is required.`);
       }
 
+      // 5. Determine the sender ATA to use in the transfer instruction
+      //    Use the one the backend discovered, or fall back to the standard derived one
+      let senderATAKey: InstanceType<typeof PublicKey>;
+      if (backendSenderATA) {
+        senderATAKey = new PublicKey(backendSenderATA);
+      } else {
+        // Derive the standard ATA as fallback
+        const [derivedATA] = PublicKey.findProgramAddressSync(
+          [senderKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        senderATAKey = derivedATA;
+      }
+
+      // 6. Build the transaction
       const transaction = new Transaction();
 
-      // Prepend instruction to create the recipient's ATA if it doesn't exist
+      // Create recipient ATA if needed
       if (!recipientAtaExists) {
-        console.log('Recipient USDC Associated Token Account does not exist. Prepending ATA creation instruction...');
+        console.log('[PricingModal] Prepending CreateAssociatedTokenAccount for recipient');
         const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
         const RENT_SYSVAR_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
-
-        const createAtaInstruction = new TransactionInstruction({
+        transaction.add(new TransactionInstruction({
           keys: [
             { pubkey: senderKey, isSigner: true, isWritable: true },
             { pubkey: recipientATA, isSigner: false, isWritable: true },
@@ -213,91 +232,72 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
             { pubkey: USDC_MINT, isSigner: false, isWritable: false },
             { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-            { pubkey: RENT_SYSVAR_ID, isSigner: false, isWritable: false }
+            { pubkey: RENT_SYSVAR_ID, isSigner: false, isWritable: false },
           ],
           programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-          data: new Uint8Array(0)
-        });
-        transaction.add(createAtaInstruction);
+          data: new Uint8Array(0),
+        }));
       }
 
-      // Build browser-safe little-endian 64-bit integer buffer for 5 USDC (5,000,000 units, 6 decimals)
-      const amount = 5000000;
+      // SPL TransferChecked: 5 USDC = 5_000_000 (6 decimals)
+      const amount = 5_000_000;
       const data = new Uint8Array(10);
-      data[0] = 12; // SPL TransferChecked instruction index
-      
+      data[0] = 12; // TransferChecked instruction index
       let temp = BigInt(amount);
       for (let i = 1; i <= 8; i++) {
         data[i] = Number(temp & BigInt(0xff));
         temp = temp >> BigInt(8);
       }
-      data[9] = 6; // Decimals for USDC (6)
+      data[9] = 6; // USDC decimals
 
-      const transferInstruction = new TransactionInstruction({
+      transaction.add(new TransactionInstruction({
         keys: [
-          { pubkey: senderATA, isSigner: false, isWritable: true },
+          { pubkey: senderATAKey, isSigner: false, isWritable: true },
           { pubkey: USDC_MINT, isSigner: false, isWritable: false },
           { pubkey: recipientATA, isSigner: false, isWritable: true },
-          { pubkey: senderKey, isSigner: true, isWritable: false }
+          { pubkey: senderKey, isSigner: true, isWritable: false },
         ],
         programId: TOKEN_PROGRAM_ID,
-        data: data
-      });
+        data,
+      }));
 
-      transaction.add(transferInstruction);
-
-      // Set blockhash and fee payer
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = senderKey;
 
-      // 6. Request signature and broadcast transaction via Phantom's premium private RPC channel
+      // 7. Sign and send via the wallet extension
       const { signature } = await provider.signAndSendTransaction(transaction);
+      console.log(`[PricingModal] Transaction sent: ${signature}`);
 
       setSolanaStep('processing');
 
-      // 7. Securely verify signature status on the Solana ledger before applying credits (100% server-side via Helius!)
-      console.log(`[PricingModal] Polling backend to confirm transaction: ${signature}`);
+      // 8. Confirm via backend (server-side Helius RPC)
       let txConfirmed = false;
-      let checkAttempts = 0;
-      const maxAttempts = 20; // 20 attempts * 2 seconds = 40 seconds max timeout
-      let txErrorDetail = '';
-
-      while (checkAttempts < maxAttempts && !txConfirmed) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        checkAttempts++;
-        
+      for (let attempt = 1; attempt <= 25; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
         try {
-          console.log(`[PricingModal] Checking signature status on backend (Attempt ${checkAttempts}/${maxAttempts})...`);
-          const response = await fetch(`/api/solana-confirm?signature=${signature}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.error) {
-              txErrorDetail = typeof data.error === 'object' ? JSON.stringify(data.error) : String(data.error);
-              throw new Error(`Transaction failed on-chain: ${txErrorDetail}`);
+          const confirmRes = await fetch(`/api/solana-confirm?signature=${signature}`);
+          if (confirmRes.ok) {
+            const confirmData = await confirmRes.json();
+            if (confirmData.error) {
+              throw new Error(`Transaction failed on-chain: ${JSON.stringify(confirmData.error)}`);
             }
-            if (data.confirmed) {
+            if (confirmData.confirmed) {
               txConfirmed = true;
               break;
             }
-          } else {
-            console.warn(`[PricingModal] Backend signature confirmation returned non-ok status: ${response.status}`);
           }
         } catch (e: any) {
-          console.warn('[PricingModal] Failed to verify signature status via backend:', e);
-          if (e.message && e.message.includes('Transaction failed on-chain')) {
-            throw e;
-          }
+          if (e.message?.includes('Transaction failed on-chain')) throw e;
+          console.warn(`[PricingModal] Confirm attempt ${attempt} failed:`, e);
         }
       }
 
       if (!txConfirmed) {
-        throw new Error('Transaction confirmation timed out. Please check your wallet history to verify if the payment succeeded.');
+        throw new Error('Transaction confirmation timed out. Please check your wallet history.');
       }
 
-      // 8. Update balance directly in Firestore (Only after 100% verified on-chain confirmation!)
-      await setDoc(doc(db, 'users', user.uid), {
-        credits: increment(30)
-      }, { merge: true });
+      // 9. Credit the user
+      await setDoc(doc(db, 'users', user.uid), { credits: increment(30) }, { merge: true });
 
       setSolanaStep('success');
     } catch (err: any) {
@@ -309,21 +309,22 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
     }
   };
 
+  // ─── Render ───────────────────────────────────────────────────────
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[1000] bg-cream/80 backdrop-blur-md flex items-center justify-center p-4"
       >
-        <motion.div 
+        <motion.div
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
           className="bg-white border border-ink/10 w-full max-w-md shadow-2xl relative p-10 md:p-12"
         >
-          <button 
+          <button
             onClick={onClose}
             className="absolute top-6 right-6 p-2 rounded-full hover:bg-black/5 transition-colors"
           >
@@ -339,7 +340,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
               </header>
 
               {error && (
-                <div className="bg-red-50 text-red-500 p-4 border border-red-500/20 text-xs mb-4 font-mono uppercase">
+                <div className="bg-red-50 text-red-500 p-4 border border-red-500/20 text-xs mb-4 font-mono">
                   {error}
                 </div>
               )}
@@ -355,7 +356,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                     <p className="mono text-[10px] opacity-60 mt-1">credits</p>
                   </div>
                 </div>
-                
+
                 <ul className="space-y-3 mb-6 border-t border-white/10 pt-6">
                   {['HD & 4K Quality Export', 'All Text Effects & Transitions', 'AI Director & Script Generation', 'Commercial License Included'].map(f => (
                     <li key={f} className="flex items-center gap-3 text-xs font-medium uppercase tracking-tight">
@@ -365,7 +366,8 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                 </ul>
 
                 <div className="flex flex-col gap-3">
-                  <button 
+                  {/* Stripe button */}
+                  <button
                     onClick={handlePurchase}
                     disabled={isLoading || isSolanaLoading || !user}
                     className="w-full bg-cream text-ink font-black uppercase py-4 transition-all hover:bg-white disabled:opacity-50 flex items-center justify-center gap-3"
@@ -377,35 +379,52 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                     )}
                   </button>
 
+                  {/* Solana wallet section */}
                   {connectedWallet ? (
                     <>
+                      {/* Connected wallet card */}
                       <div className="flex flex-col gap-2 p-4 bg-white/5 border border-white/10 text-xs rounded-sm mb-1 text-left">
                         <div className="flex items-center justify-between text-cream/70">
-                          <span className="mono uppercase tracking-widest text-[9px] opacity-60">Connected Solana Wallet</span>
-                          <button 
-                            type="button"
-                            onClick={handleDisconnectWallet}
-                            className="text-red-400 hover:text-red-300 font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer"
-                          >
-                            Disconnect
-                          </button>
+                          <span className="mono uppercase tracking-widest text-[9px] opacity-60">Connected Wallet</span>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={handleChangeWallet}
+                              disabled={isSolanaLoading}
+                              className="text-[#14F195] hover:text-[#00ff99] font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                            >
+                              <RefreshCw size={10} /> Change
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDisconnectWallet}
+                              className="text-red-400 hover:text-red-300 font-bold uppercase text-[9px] tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                            >
+                              <LogOut size={10} /> Disconnect
+                            </button>
+                          </div>
                         </div>
                         <div className="font-mono text-cream font-bold truncate text-xs select-all" title={connectedWallet}>
-                          {connectedWallet.substring(0, 8)}...{connectedWallet.substring(connectedWallet.length - 8)}
+                          {connectedWallet.substring(0, 6)}...{connectedWallet.substring(connectedWallet.length - 6)}
                         </div>
                       </div>
 
-                      <button 
+                      {/* Pay button */}
+                      <button
                         type="button"
                         onClick={handleSolanaPurchase}
                         disabled={isLoading || isSolanaLoading || !user}
                         className="w-full bg-[#14F195] text-black font-black uppercase py-4 transition-all hover:bg-[#00ff99] disabled:opacity-50 flex items-center justify-center gap-3 border border-transparent shadow-lg shadow-[#14F195]/20 cursor-pointer"
                       >
-                        <Zap size={18} fill="currentColor" /> Confirm & Pay 5 USDC
+                        {isSolanaLoading ? (
+                          <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : (
+                          <><Zap size={18} fill="currentColor" /> Confirm & Pay 5 USDC</>
+                        )}
                       </button>
                     </>
                   ) : (
-                    <button 
+                    <button
                       type="button"
                       onClick={handleConnectWallet}
                       disabled={isLoading || isSolanaLoading || !user}
@@ -435,7 +454,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
               </div>
               <h3 className="text-2xl font-black uppercase mb-3">Awaiting Approval</h3>
               <p className="text-muted text-sm max-w-xs mx-auto leading-relaxed">
-                Please authorize the transaction of <span className="text-ink font-bold font-mono">5 USDC</span> inside your Solana wallet window extension.
+                Please authorize the transaction of <span className="text-ink font-bold font-mono">5 USDC</span> inside your Solana wallet extension.
               </p>
             </div>
           )}
@@ -459,7 +478,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
               <p className="text-emerald-600 font-mono text-xs uppercase tracking-wider mb-6">
                 +30 VibeTrailer credits added!
               </p>
-              <button 
+              <button
                 onClick={() => {
                   setSolanaStep('idle');
                   onClose();
