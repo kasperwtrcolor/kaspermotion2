@@ -443,7 +443,14 @@ H2 Tags: ${h2s.join(' | ')}
         payment_method_types: ['card'],
         line_items: [
           {
-            price: 'price_1TRfcMFSTaHO4AGnmVAnhWvh',
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: '30 VibeTrailer Credits',
+                description: 'One-time purchase of 30 export credits for cinematic trailers.',
+              },
+              unit_amount: 500, // $5.00 in cents
+            },
             quantity: 1,
           },
         ],

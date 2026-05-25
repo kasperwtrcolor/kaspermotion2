@@ -127,23 +127,110 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       }
 
       // 3. Load Solana Web3 library dynamically (only need Transaction types, no Connection needed!)
-      const { Transaction, SystemProgram, PublicKey } = await import('@solana/web3.js');
+      const { Transaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
 
-      const recipientAddress = 'FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq';
-      const solAmount = 0.04; // $5 USD worth of SOL at hackathon rates
-      const lamports = Math.round(solAmount * 1_000_000_000); // 1 SOL = 10^9 lamports
+      const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+      const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: new PublicKey(userPublicKeyStr),
-          toPubkey: new PublicKey(recipientAddress),
-          lamports: lamports,
-        })
-      );
+      const senderKey = new PublicKey(userPublicKeyStr);
+      const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
+
+      // Derive Associated Token Accounts (ATA)
+      const getAssociatedTokenAddress = (mint: any, owner: any) => {
+        const [address] = PublicKey.findProgramAddressSync(
+          [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        return address;
+      };
+
+      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
+      const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
+
+      // Check if recipient's USDC ATA already exists on-chain via our RPC nodes
+      let recipientAtaExists = false;
+      const checkNodes = [];
+      const clientHeliusRpc = import.meta.env.VITE_HELIUS_RPC_URL || import.meta.env.HELIUS_RPC_URL || (window as any).HELIUS_RPC_URL;
+      if (clientHeliusRpc) checkNodes.push(clientHeliusRpc);
+      checkNodes.push('https://rpc.ankr.com/solana');
+      checkNodes.push('https://solana-mainnet.public.blastapi.io');
+      checkNodes.push('https://api.mainnet-beta.solana.com');
+
+      for (const nodeUrl of checkNodes) {
+        try {
+          const response = await fetch(nodeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getAccountInfo',
+              params: [recipientATA.toString(), { encoding: 'jsonParsed' }],
+            }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.result && data.result.value !== null) {
+              recipientAtaExists = true;
+            }
+            break;
+          }
+        } catch (e) {
+          console.warn('Failed to query account info from', nodeUrl, e);
+        }
+      }
+
+      const transaction = new Transaction();
+
+      // Prepend instruction to create the recipient's ATA if it doesn't exist
+      if (!recipientAtaExists) {
+        console.log('Recipient USDC Associated Token Account does not exist. Prepending ATA creation instruction...');
+        const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+        const RENT_SYSVAR_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
+
+        const createAtaInstruction = new TransactionInstruction({
+          keys: [
+            { pubkey: senderKey, isSigner: true, isWritable: true },
+            { pubkey: recipientATA, isSigner: false, isWritable: true },
+            { pubkey: recipientOwnerKey, isSigner: false, isWritable: false },
+            { pubkey: USDC_MINT, isSigner: false, isWritable: false },
+            { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            { pubkey: RENT_SYSVAR_ID, isSigner: false, isWritable: false }
+          ],
+          programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+          data: new Uint8Array(0)
+        });
+        transaction.add(createAtaInstruction);
+      }
+
+      // Build browser-safe little-endian 64-bit integer buffer for 5 USDC (5,000,000 units, 6 decimals)
+      const amount = 5000000;
+      const data = new Uint8Array(9);
+      data[0] = 3; // SPL Transfer instruction index
+      
+      let temp = BigInt(amount);
+      for (let i = 1; i <= 8; i++) {
+        data[i] = Number(temp & BigInt(0xff));
+        temp = temp >> BigInt(8);
+      }
+
+      const transferInstruction = new TransactionInstruction({
+        keys: [
+          { pubkey: senderATA, isSigner: false, isWritable: true },
+          { pubkey: recipientATA, isSigner: false, isWritable: true },
+          { pubkey: senderKey, isSigner: true, isWritable: false }
+        ],
+        programId: TOKEN_PROGRAM_ID,
+        data: data
+      });
+
+      transaction.add(transferInstruction);
 
       // Set blockhash and fee payer
       transaction.recentBlockhash = blockhash;
-      transaction.feePayer = new PublicKey(userPublicKeyStr);
+      transaction.feePayer = senderKey;
 
       // 4. Request signature and broadcast transaction via Phantom's premium private RPC channel!
       const { signature } = await provider.signAndSendTransaction(transaction);
@@ -241,7 +328,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                     disabled={isLoading || isSolanaLoading || !user}
                     className="w-full bg-[#14F195] text-black font-black uppercase py-4 transition-all hover:bg-[#00ff99] disabled:opacity-50 flex items-center justify-center gap-3 border border-transparent shadow-lg shadow-[#14F195]/20"
                   >
-                    <Wallet size={18} /> Pay with Solana (SOL)
+                    <Wallet size={18} /> Pay with Solana (5 USDC)
                   </button>
                 </div>
               </div>
@@ -264,7 +351,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
               </div>
               <h3 className="text-2xl font-black uppercase mb-3">Awaiting Approval</h3>
               <p className="text-muted text-sm max-w-xs mx-auto leading-relaxed">
-                Please authorize the transaction of <span className="text-ink font-bold font-mono">0.04 SOL</span> inside your Solana wallet window extension.
+                Please authorize the transaction of <span className="text-ink font-bold font-mono">5 USDC</span> inside your Solana wallet window extension.
               </p>
             </div>
           )}
