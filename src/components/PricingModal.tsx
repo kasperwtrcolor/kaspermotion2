@@ -155,8 +155,46 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       if (clientHeliusRpc) checkNodes.push(clientHeliusRpc);
       checkNodes.push('https://rpc.ankr.com/solana');
       checkNodes.push('https://solana-mainnet.public.blastapi.io');
+      checkNodes.push('https://solana-mainnet.g.allthatnode.com');
       checkNodes.push('https://api.mainnet-beta.solana.com');
 
+      // 4. Validate sender's USDC token balance before triggering signature
+      let senderUSDCBalance = 0;
+      let senderAtaExists = false;
+
+      for (const nodeUrl of checkNodes) {
+        try {
+          console.log(`[PricingModal] Checking sender USDC balance on: ${nodeUrl}`);
+          const response = await fetch(nodeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getTokenAccountBalance',
+              params: [senderATA.toString()],
+            }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.result?.value) {
+              senderUSDCBalance = Number(data.result.value.uiAmount || 0);
+              senderAtaExists = true;
+            } else if (data.error) {
+              console.warn('[PricingModal] RPC returned error for sender balance:', data.error);
+            }
+            break;
+          }
+        } catch (e) {
+          console.warn('[PricingModal] Failed to query sender token balance from', nodeUrl, e);
+        }
+      }
+
+      if (!senderAtaExists || senderUSDCBalance < 5) {
+        throw new Error(`Insufficient USDC balance. Your wallet has ${senderAtaExists ? senderUSDCBalance.toFixed(2) : '0.00'} USDC, but 5.00 USDC is required.`);
+      }
+
+      // 5. Query if recipient ATA exists on-chain
       for (const nodeUrl of checkNodes) {
         try {
           const response = await fetch(nodeUrl, {
@@ -207,18 +245,20 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       // Build browser-safe little-endian 64-bit integer buffer for 5 USDC (5,000,000 units, 6 decimals)
       const amount = 5000000;
-      const data = new Uint8Array(9);
-      data[0] = 3; // SPL Transfer instruction index
+      const data = new Uint8Array(10);
+      data[0] = 12; // SPL TransferChecked instruction index
       
       let temp = BigInt(amount);
       for (let i = 1; i <= 8; i++) {
         data[i] = Number(temp & BigInt(0xff));
         temp = temp >> BigInt(8);
       }
+      data[9] = 6; // Decimals for USDC (6)
 
       const transferInstruction = new TransactionInstruction({
         keys: [
           { pubkey: senderATA, isSigner: false, isWritable: true },
+          { pubkey: USDC_MINT, isSigner: false, isWritable: false },
           { pubkey: recipientATA, isSigner: false, isWritable: true },
           { pubkey: senderKey, isSigner: true, isWritable: false }
         ],
@@ -232,15 +272,64 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = senderKey;
 
-      // 4. Request signature and broadcast transaction via Phantom's premium private RPC channel!
+      // 6. Request signature and broadcast transaction via Phantom's premium private RPC channel
       const { signature } = await provider.signAndSendTransaction(transaction);
 
       setSolanaStep('processing');
 
-      // 5. Direct safety confirmation delay to let the transaction clear on mainnet blocks
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      // 7. Securely verify signature status on the Solana ledger before applying credits
+      console.log(`[PricingModal] Polling RPC nodes to confirm transaction: ${signature}`);
+      let txConfirmed = false;
+      let checkAttempts = 0;
+      const maxAttempts = 15; // 15 attempts * 2 seconds = 30 seconds max timeout
+      let txErrorDetail = '';
 
-      // 6. Update balance directly in Firestore!
+      while (checkAttempts < maxAttempts && !txConfirmed) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        checkAttempts++;
+        
+        for (const nodeUrl of checkNodes) {
+          try {
+            console.log(`[PricingModal] Checking signature status on ${nodeUrl} (Attempt ${checkAttempts}/${maxAttempts})...`);
+            const response = await fetch(nodeUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'getSignatureStatuses',
+                params: [[signature], { searchTransactionHistory: true }],
+              }),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              const status = data.result?.value?.[0];
+              if (status) {
+                console.log('[PricingModal] Received signature status:', status);
+                if (status.err) {
+                  txErrorDetail = JSON.stringify(status.err);
+                  throw new Error(`Transaction failed on-chain: ${txErrorDetail}`);
+                }
+                if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
+                  txConfirmed = true;
+                  break;
+                }
+              }
+            }
+          } catch (e: any) {
+            console.warn('[PricingModal] Failed to verify signature status:', e);
+            if (e.message && e.message.includes('Transaction failed on-chain')) {
+              throw e;
+            }
+          }
+        }
+      }
+
+      if (!txConfirmed) {
+        throw new Error('Transaction confirmation timed out. Please check your wallet history to verify if the payment succeeded.');
+      }
+
+      // 8. Update balance directly in Firestore (Only after 100% verified on-chain confirmation!)
       await setDoc(doc(db, 'users', user.uid), {
         credits: increment(30)
       }, { merge: true });
