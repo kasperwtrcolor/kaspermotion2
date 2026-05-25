@@ -68,11 +68,63 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       setSolanaStep('confirming');
 
       // 2. Fetch secure blockhash from Vercel backend (100% immune to browser 403 CORS blocks)
-      const blockhashRes = await fetch('/api/solana-blockhash');
-      if (!blockhashRes.ok) {
-        throw new Error('Failed to retrieve secure transaction blockhash from serverless backend.');
+      let blockhash = '';
+      try {
+        const blockhashRes = await fetch('/api/solana-blockhash');
+        if (blockhashRes.ok) {
+          const data = await blockhashRes.json();
+          blockhash = data.blockhash;
+        } else {
+          console.warn('Backend blockhash fetch returned non-ok status, trying client-side fallback...');
+        }
+      } catch (err) {
+        console.warn('Backend blockhash fetch failed, trying client-side fallback:', err);
       }
-      const { blockhash } = await blockhashRes.json();
+
+      // Client-side fallback if backend fails
+      if (!blockhash) {
+        const clientHeliusRpc = import.meta.env.VITE_HELIUS_RPC_URL || import.meta.env.HELIUS_RPC_URL || (window as any).HELIUS_RPC_URL;
+        const fallbackNodes = [];
+        if (clientHeliusRpc) {
+          fallbackNodes.push(clientHeliusRpc);
+        }
+        fallbackNodes.push('https://rpc.ankr.com/solana');
+        fallbackNodes.push('https://solana-mainnet.public.blastapi.io');
+        fallbackNodes.push('https://solana-mainnet.g.allthatnode.com');
+        fallbackNodes.push('https://api.mainnet-beta.solana.com');
+
+        let clientError: any = null;
+        for (const nodeUrl of fallbackNodes) {
+          try {
+            console.log(`[PricingModal] Client fetching blockhash from: ${nodeUrl}`);
+            const response = await fetch(nodeUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'getLatestBlockhash',
+                params: [{ commitment: 'confirmed' }],
+              }),
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message || 'RPC Error');
+            if (data.result?.value?.blockhash) {
+              blockhash = data.result.value.blockhash;
+              console.log(`[PricingModal] Successfully retrieved blockhash on client from ${nodeUrl}`);
+              break;
+            }
+          } catch (err: any) {
+            console.warn(`[PricingModal] Client failed to connect to ${nodeUrl}:`, err);
+            clientError = err;
+          }
+        }
+
+        if (!blockhash) {
+          throw new Error(`Failed to retrieve secure transaction blockhash: ${clientError?.message || 'Access Forbidden (403)'}`);
+        }
+      }
 
       // 3. Load Solana Web3 library dynamically (only need Transaction types, no Connection needed!)
       const { Transaction, SystemProgram, PublicKey } = await import('@solana/web3.js');

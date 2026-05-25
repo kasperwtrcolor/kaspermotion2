@@ -364,6 +364,72 @@ H2 Tags: ${h2s.join(' | ')}
     }
   });
 
+  // Solana Blockhash Fetching endpoint
+  app.get('/api/solana-blockhash', async (req, res) => {
+    try {
+      const userHeliusRpc = process.env.HELIUS_RPC_URL || process.env.VITE_HELIUS_RPC_URL || process.env.HELIUS_RPC;
+      
+      const rpcNodes: string[] = [];
+      if (userHeliusRpc) {
+        rpcNodes.push(userHeliusRpc);
+      }
+      rpcNodes.push('https://rpc.ankr.com/solana');
+      rpcNodes.push('https://solana-mainnet.public.blastapi.io');
+      rpcNodes.push('https://solana-mainnet.g.allthatnode.com');
+      rpcNodes.push('https://api.mainnet-beta.solana.com');
+
+      let blockhash = '';
+      let lastError: any = null;
+
+      for (const nodeUrl of rpcNodes) {
+        try {
+          console.log(`[Vibe Engine] Connecting to Solana RPC node: ${nodeUrl}`);
+          const response = await fetch(nodeUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'getLatestBlockhash',
+              params: [{ commitment: 'confirmed' }],
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+          }
+
+          const data: any = await response.json();
+          if (data.error) {
+            throw new Error(`RPC error: ${data.error.message || JSON.stringify(data.error)}`);
+          }
+
+          if (data.result?.value?.blockhash) {
+            blockhash = data.result.value.blockhash;
+            console.log(`[Vibe Engine] Successfully retrieved blockhash: ${blockhash} from ${nodeUrl}`);
+            break;
+          } else {
+            throw new Error('Invalid RPC response format');
+          }
+        } catch (err: any) {
+          console.warn(`[Vibe Engine] Failed to connect to ${nodeUrl}:`, err.message || err);
+          lastError = err;
+        }
+      }
+
+      if (!blockhash) {
+        throw new Error(`Failed to establish a secure Solana RPC connection: ${lastError?.message || 'Access Forbidden (403)'}`);
+      }
+
+      res.json({ blockhash });
+    } catch (error: any) {
+      console.error('[Vibe Engine] Failed to fetch blockhash:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch blockhash' });
+    }
+  });
+
   // Stripe Checkout Session Creation
   app.post('/api/create-checkout-session', async (req, res) => {
     try {
