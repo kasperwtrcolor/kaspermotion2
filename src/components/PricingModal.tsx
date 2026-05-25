@@ -70,8 +70,34 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       // 2. Load Solana Web3 library dynamically
       const { Connection, Transaction, SystemProgram, PublicKey } = await import('@solana/web3.js');
 
-      // 3. Establish RPC connection (mainnet-beta)
-      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+      // 3. Establish RPC connection with multi-node fallback to prevent 403 rate limits
+      const rpcNodes = [
+        'https://rpc.ankr.com/solana',
+        'https://solana-mainnet.public.blastapi.io',
+        'https://api.mainnet-beta.solana.com'
+      ];
+
+      let connection: any = null;
+      let blockhash = '';
+      let rpcError: any = null;
+
+      for (const nodeUrl of rpcNodes) {
+        try {
+          console.log(`Connecting to Solana RPC node: ${nodeUrl}`);
+          const conn = new Connection(nodeUrl, 'confirmed');
+          const latest = await conn.getLatestBlockhash('confirmed');
+          connection = conn;
+          blockhash = latest.blockhash;
+          break; // successfully retrieved blockhash!
+        } catch (err) {
+          console.warn(`Failed to connect to ${nodeUrl}, trying next node:`, err);
+          rpcError = err;
+        }
+      }
+
+      if (!connection || !blockhash) {
+        throw new Error(`Failed to establish a secure Solana RPC connection: ${rpcError?.message || 'Access Forbidden (403)'}`);
+      }
 
       const recipientAddress = 'FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq';
       const solAmount = 0.04; // $5 USD worth of SOL at hackathon rates
@@ -86,7 +112,6 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       );
 
       // Set blockhash and fee payer
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = new PublicKey(userPublicKeyStr);
 
