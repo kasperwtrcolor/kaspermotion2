@@ -87,13 +87,42 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       setSolanaStep('confirming');
 
-      // 2. Fetch secure blockhash from Vercel backend (100% immune to browser 403 CORS blocks)
+      // 2. Load Solana Web3 library dynamically first
+      const { Transaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
+
+      const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+      const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5AcWH25jdwGsxAuGs');
+
+      const senderKey = new PublicKey(userPublicKeyStr);
+      const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
+
+      // Derive Associated Token Accounts (ATA)
+      const getAssociatedTokenAddress = (mint: any, owner: any) => {
+        const [address] = PublicKey.findProgramAddressSync(
+          [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        return address;
+      };
+
+      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
+      const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
+
+      // 3. Fetch secure blockhash and check USDC balance server-side (100% immune to browser 403 CORS blocks!)
       let blockhash = '';
+      let balance = 0;
+      let balanceExists = false;
+
       try {
-        const blockhashRes = await fetch('/api/solana-blockhash');
+        console.log(`[PricingModal] Fetching blockhash and balance for ATA: ${senderATA.toString()}`);
+        const blockhashRes = await fetch(`/api/solana-blockhash?ata=${senderATA.toString()}`);
         if (blockhashRes.ok) {
           const data = await blockhashRes.json();
           blockhash = data.blockhash;
+          balance = Number(data.balance || 0);
+          balanceExists = !!data.balanceExists;
+          console.log(`[PricingModal] Backend reported balance: ${balance} USDC (Exists: ${balanceExists})`);
         } else {
           console.warn('Backend blockhash fetch returned non-ok status, trying client-side fallback...');
         }
@@ -146,30 +175,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
         }
       }
 
-      // 3. Load Solana Web3 library dynamically (only need Transaction types, no Connection needed!)
-      const { Transaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
-
-      const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
-      const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5AcWH25jdwGsxAuGs');
-
-      const senderKey = new PublicKey(userPublicKeyStr);
-      const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
-
-      // Derive Associated Token Accounts (ATA)
-      const getAssociatedTokenAddress = (mint: any, owner: any) => {
-        const [address] = PublicKey.findProgramAddressSync(
-          [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-          ASSOCIATED_TOKEN_PROGRAM_ID
-        );
-        return address;
-      };
-
-      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
-      const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
-
-      // Check if recipient's USDC ATA already exists on-chain via our RPC nodes
-      let recipientAtaExists = false;
+      // 4. Validate sender's USDC token balance (Client-side pool fallback if backend check failed!)
       const checkNodes = [];
       const clientHeliusRpc = import.meta.env.VITE_HELIUS_RPC_URL || import.meta.env.HELIUS_RPC_URL || (window as any).HELIUS_RPC_URL;
       if (clientHeliusRpc) checkNodes.push(clientHeliusRpc);
@@ -178,43 +184,43 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       checkNodes.push('https://solana-mainnet.g.allthatnode.com');
       checkNodes.push('https://api.mainnet-beta.solana.com');
 
-      // 4. Validate sender's USDC token balance before triggering signature
-      let senderUSDCBalance = 0;
-      let senderAtaExists = false;
-
-      for (const nodeUrl of checkNodes) {
-        try {
-          console.log(`[PricingModal] Checking sender USDC balance on: ${nodeUrl}`);
-          const response = await fetch(nodeUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 1,
-              method: 'getTokenAccountBalance',
-              params: [senderATA.toString()],
-            }),
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.result?.value) {
-              senderUSDCBalance = Number(data.result.value.uiAmount || 0);
-              senderAtaExists = true;
-            } else if (data.error) {
-              console.warn('[PricingModal] RPC returned error for sender balance:', data.error);
+      if (!balanceExists) {
+        let senderAtaExists = false;
+        for (const nodeUrl of checkNodes) {
+          try {
+            console.log(`[PricingModal] Fallback checking sender USDC balance on: ${nodeUrl}`);
+            const response = await fetch(nodeUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'getTokenAccountBalance',
+                params: [senderATA.toString()],
+              }),
+            });
+            if (response.ok) {
+              const data = await response.json();
+              if (data.result?.value) {
+                balance = Number(data.result.value.uiAmount || 0);
+                senderAtaExists = true;
+                balanceExists = true;
+              }
+              break;
             }
-            break;
+          } catch (e) {
+            console.warn('[PricingModal] Failed to query sender token balance from', nodeUrl, e);
           }
-        } catch (e) {
-          console.warn('[PricingModal] Failed to query sender token balance from', nodeUrl, e);
         }
       }
 
-      if (!senderAtaExists || senderUSDCBalance < 5) {
-        throw new Error(`Insufficient USDC balance. Your wallet has ${senderAtaExists ? senderUSDCBalance.toFixed(2) : '0.00'} USDC, but 5.00 USDC is required.`);
+      // Check balance - allow proceeding if balance is verified, or fail if we proved balance < 5
+      if (balanceExists && balance < 5) {
+        throw new Error(`Insufficient USDC balance. Your wallet has ${balance.toFixed(2)} USDC, but 5.00 USDC is required.`);
       }
 
       // 5. Query if recipient ATA exists on-chain
+      let recipientAtaExists = false;
       for (const nodeUrl of checkNodes) {
         try {
           const response = await fetch(nodeUrl, {

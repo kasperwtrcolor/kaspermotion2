@@ -9,7 +9,9 @@ import { initializeApp, cert, credential, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { renderComposition } from './src/lib/renderer';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config();
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
@@ -368,7 +370,8 @@ H2 Tags: ${h2s.join(' | ')}
   app.get('/api/solana-blockhash', async (req, res) => {
     try {
       const userHeliusRpc = process.env.HELIUS_RPC_URL || process.env.VITE_HELIUS_RPC_URL || process.env.HELIUS_RPC;
-      
+      const ataAddress = req.query.ata as string;
+
       const rpcNodes: string[] = [];
       if (userHeliusRpc) {
         rpcNodes.push(userHeliusRpc);
@@ -379,16 +382,18 @@ H2 Tags: ${h2s.join(' | ')}
       rpcNodes.push('https://api.mainnet-beta.solana.com');
 
       let blockhash = '';
+      let balance = 0;
+      let balanceExists = false;
       let lastError: any = null;
 
       for (const nodeUrl of rpcNodes) {
         try {
           console.log(`[Vibe Engine] Connecting to Solana RPC node: ${nodeUrl}`);
+          
+          // 1. Fetch latest blockhash
           const response = await fetch(nodeUrl, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               jsonrpc: '2.0',
               id: 1,
@@ -398,7 +403,7 @@ H2 Tags: ${h2s.join(' | ')}
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
+            throw new Error(`HTTP error: ${response.status}`);
           }
 
           const data: any = await response.json();
@@ -409,10 +414,39 @@ H2 Tags: ${h2s.join(' | ')}
           if (data.result?.value?.blockhash) {
             blockhash = data.result.value.blockhash;
             console.log(`[Vibe Engine] Successfully retrieved blockhash: ${blockhash} from ${nodeUrl}`);
-            break;
           } else {
             throw new Error('Invalid RPC response format');
           }
+
+          // 2. Fetch token balance if ata is provided
+          if (ataAddress) {
+            console.log(`[Vibe Engine] Checking balance for ATA ${ataAddress} on ${nodeUrl}...`);
+            const balanceResponse = await fetch(nodeUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 2,
+                method: 'getTokenAccountBalance',
+                params: [ataAddress],
+              }),
+            });
+
+            if (balanceResponse.ok) {
+              const balanceData: any = await balanceResponse.json();
+              if (balanceData.result?.value) {
+                balance = Number(balanceData.result.value.uiAmount || 0);
+                balanceExists = true;
+                console.log(`[Vibe Engine] Successfully retrieved token balance: ${balance} USDC`);
+              } else if (balanceData.error) {
+                console.warn(`[Vibe Engine] RPC balance error:`, balanceData.error);
+                balance = 0;
+                balanceExists = true;
+              }
+            }
+          }
+
+          break; // successfully retrieved blockhash!
         } catch (err: any) {
           console.warn(`[Vibe Engine] Failed to connect to ${nodeUrl}:`, err.message || err);
           lastError = err;
@@ -423,7 +457,7 @@ H2 Tags: ${h2s.join(' | ')}
         throw new Error(`Failed to establish a secure Solana RPC connection: ${lastError?.message || 'Access Forbidden (403)'}`);
       }
 
-      res.json({ blockhash });
+      res.json({ blockhash, balance, balanceExists });
     } catch (error: any) {
       console.error('[Vibe Engine] Failed to fetch blockhash:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch blockhash' });
