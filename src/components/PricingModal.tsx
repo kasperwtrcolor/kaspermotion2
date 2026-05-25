@@ -22,6 +22,42 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
   const [error, setError] = useState<string | null>(null);
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    
+    const checkConnection = async () => {
+      try {
+        const provider = (window as any).solana || (window as any).phantom?.solana;
+        if (provider) {
+          // Check if already connected (eager connection)
+          if (provider.publicKey) {
+            setConnectedWallet(provider.publicKey.toString());
+          }
+          
+          // Listen to account changes
+          provider.on('accountChanged', (publicKey: any) => {
+            if (publicKey) {
+              setConnectedWallet(publicKey.toString());
+            } else {
+              setConnectedWallet(null);
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to check eager wallet connection:', e);
+      }
+    };
+    
+    checkConnection();
+    
+    return () => {
+      const provider = (window as any).solana || (window as any).phantom?.solana;
+      if (provider) {
+        provider.removeAllListeners?.('accountChanged');
+      }
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handlePurchase = async () => {
@@ -94,11 +130,13 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
         throw new Error('Solana wallet extension (Phantom/Backpack) not detected. Please install one to use Solana Pay!');
       }
 
-      // 1. Await wallet connection if not already stored
-      let activeWallet = connectedWallet;
+      // 1. Always retrieve the absolute latest active public key from the provider to support extension-level account switching
+      let activeWallet = provider.publicKey ? provider.publicKey.toString() : null;
       if (!activeWallet) {
         const resp = await provider.connect();
         activeWallet = resp.publicKey.toString();
+      }
+      if (activeWallet !== connectedWallet) {
         setConnectedWallet(activeWallet);
       }
       const userPublicKeyStr = activeWallet;
