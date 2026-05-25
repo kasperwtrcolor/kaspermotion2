@@ -3050,6 +3050,7 @@ export default function App() {
   const [explosionDuration, setExplosionDuration] = useState(1);
   const [rainbowEnabled, setRainbowEnabled] = useState(true);
   const [isRainbowActive, setIsRainbowActive] = useState(false);
+  const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
 
   // Detect share page from URL
   const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
@@ -3073,8 +3074,7 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
-      setToastMessage('Payment successful! 30 credits have been added to your account.');
-      setTimeout(() => setToastMessage(null), 6000);
+      setShowPaymentSuccessModal(true);
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     } else if (params.get('payment') === 'canceled') {
@@ -5968,6 +5968,98 @@ export default function App() {
                 <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPaymentSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-cream/70 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.85, y: 30, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 180, damping: 20 }}
+              className="relative w-full max-w-md bg-white border border-black/10 p-12 text-center shadow-2xl overflow-hidden"
+            >
+              {/* Particle Explosion Effects */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+                {[
+                  { x: -90, y: -90, scale: 1.3, delay: 0.05 },
+                  { x: 90, y: -80, scale: 1.1, delay: 0.1 },
+                  { x: -110, y: 30, scale: 0.9, delay: 0.15 },
+                  { x: 100, y: 40, scale: 1.2, delay: 0.2 },
+                  { x: -50, y: -130, scale: 0.85, delay: 0.25 },
+                  { x: 50, y: -120, scale: 1.05, delay: 0.3 },
+                  { x: -10, y: 110, scale: 1.25, delay: 0.35 }
+                ].map((p, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="absolute text-amber-500"
+                    initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+                    animate={{ 
+                      x: p.x, 
+                      y: p.y, 
+                      scale: [0, p.scale, p.scale * 0.8], 
+                      opacity: [0, 1, 1, 0] 
+                    }}
+                    transition={{ 
+                      duration: 1.8, 
+                      delay: p.delay, 
+                      repeat: Infinity, 
+                      repeatType: "loop",
+                      ease: "easeOut"
+                    }}
+                  >
+                    <Sparkles className="w-8 h-8 fill-amber-400 filter drop-shadow-[0_0_12px_rgba(245,158,11,0.5)]" />
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Success Badge */}
+              <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.1 }}
+                className="relative z-10 w-24 h-24 bg-emerald-500 rounded-full mx-auto flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.3)] mb-8"
+              >
+                <CheckCircle2 size={44} className="text-white" />
+              </motion.div>
+
+              {/* Text Information */}
+              <div className="relative z-10 space-y-4 mb-10">
+                <h2 className="mono text-2xl font-black uppercase tracking-wider text-black">Payment Confirmed!</h2>
+                
+                {/* Credits Awarded Badge */}
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="inline-flex items-center gap-3 bg-amber-500/10 border border-amber-500/25 px-5 py-2.5 rounded-full mono text-amber-500 text-sm font-black uppercase tracking-widest mx-auto"
+                >
+                  <Zap size={14} fill="currentColor" /> +30 Credits Awarded <Zap size={14} fill="currentColor" />
+                </motion.div>
+                
+                <p className="font-sans text-[11px] leading-relaxed text-ink/60 max-w-xs mx-auto">
+                  Your creative balance has been refilled successfully. You are now equipped to render elite-quality motion graphics trailers!
+                </p>
+              </div>
+
+              {/* Continue Button */}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowPaymentSuccessModal(false)}
+                className="relative z-10 w-full bg-ink text-cream hover:bg-black py-4 px-6 font-bold mono text-xs uppercase tracking-[0.2em] transition-colors shadow-lg cursor-pointer"
+              >
+                Continue to Studio
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
