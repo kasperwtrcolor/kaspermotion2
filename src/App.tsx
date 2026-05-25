@@ -2763,8 +2763,8 @@ const CompositionNode = ({
                       case 'scale-down': return { scale: [1.2, 0.8] };
                       case 'breathing': return { scale: [1, 1.05, 1], y: [0, -10, 0] };
                       default: return {
-                        scale: [1, 1.05],
-                        rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                        scale: [1, 1.03, 1],
+                        rotate: 0,
                       };
                     }
                   })()) : { scale: 1, rotate: 0 }}
@@ -2787,8 +2787,8 @@ const CompositionNode = ({
                       case 'scale-down': return { scale: [1.2, 0.8] };
                       case 'breathing': return { scale: [1, 1.05, 1], y: [0, -10, 0] };
                       default: return {
-                        scale: [1, 1.05],
-                        rotate: [(i % 2 === 0 ? 1 : -1), (i % 2 === 0 ? -1 : 1)],
+                        scale: [1, 1.03, 1],
+                        rotate: 0,
                       };
                     }
                   })()) : { scale: 1, rotate: 0 }}
@@ -2800,15 +2800,108 @@ const CompositionNode = ({
               )
             );
 
+            // Design a sharp, snappy entrance and size expansion (up/down or both sides)
+            // for non-fullscreen assets to glide snappily and settle.
+            const sharpTransition = {
+              type: "spring",
+              stiffness: 180,
+              damping: 20,
+              mass: 0.9,
+              delay: i * 0.15
+            };
+
+            const expandTransition = {
+              type: "spring",
+              stiffness: 140,
+              damping: 15,
+              mass: 0.9,
+              delay: 0.4 + (i * 0.15)
+            };
+
+            let initialX = m.xOffset || 0;
+            let initialY = m.yOffset || 0;
+            let targetX = m.xOffset || 0;
+            let targetY = m.yOffset || 0;
+            let initialScaleX = 1;
+            let initialScaleY = 1;
+            let targetScaleX: any = m.scale || 1;
+            let targetScaleY: any = m.scale || 1;
+
+            if (!m.isFullscreen) {
+              if (comp.media.length === 1) {
+                // Single asset: Glide in from bottom to center, and expand both sides
+                initialY = 800;
+                targetY = m.yOffset || 0;
+                initialScaleX = 0.1;
+                initialScaleY = 0.1;
+                targetScaleX = [0.1, m.scale || 1];
+                targetScaleY = [0.1, m.scale || 1];
+              } else {
+                // Multiple assets: Glide in and set on left or right side with sharp snap
+                if (i === 0) {
+                  initialX = -1200;
+                  targetX = m.xOffset || -350;
+                  initialScaleX = 0.1; // expand both sides horizontally
+                  initialScaleY = 1;
+                  targetScaleX = [0.1, m.scale || 1.15];
+                  targetScaleY = [1, m.scale || 1.15];
+                } else if (i === 1) {
+                  initialX = 1200;
+                  targetX = m.xOffset || 350;
+                  initialScaleX = 1;
+                  initialScaleY = 0.1; // expand vertically (up/down)
+                  targetScaleX = [1, m.scale || 1.15];
+                  targetScaleY = [0.1, m.scale || 1.15];
+                } else {
+                  initialY = 800;
+                  targetY = m.yOffset || 0;
+                  initialScaleX = 0.2;
+                  initialScaleY = 0.2;
+                  targetScaleX = [0.2, m.scale || 1];
+                  targetScaleY = [0.2, m.scale || 1];
+                }
+              }
+            }
+
+            const initialProps = m.isFullscreen ? {} : {
+              x: initialX,
+              y: initialY,
+              scaleX: initialScaleX,
+              scaleY: initialScaleY,
+              opacity: 0,
+            };
+
+            const animateProps = status === 'active' ? (m.isFullscreen ? {} : {
+              x: targetX,
+              y: targetY,
+              scaleX: targetScaleX,
+              scaleY: targetScaleY,
+              opacity: 1,
+            }) : (m.isFullscreen ? {} : {
+              x: initialX,
+              y: initialY,
+              scaleX: initialScaleX,
+              scaleY: initialScaleY,
+              opacity: 0,
+            });
+
+            const motionTransition = m.isFullscreen ? {} : {
+              x: sharpTransition,
+              y: sharpTransition,
+              scaleX: expandTransition,
+              scaleY: expandTransition,
+              opacity: { duration: 0.3 }
+            };
+
             return (
               <motion.div
                 key={i}
                 className={m.isFullscreen ? "absolute inset-0 z-0 overflow-hidden" : "absolute z-10"}
+                initial={initialProps}
+                animate={animateProps}
+                transition={motionTransition}
                 style={m.isFullscreen ? { width: '100%', height: '100%' } : {
                   transformStyle: 'preserve-3d',
-                  x: m.xOffset || 0,
-                  y: m.yOffset || 0,
-                  scale: m.scale || 1
                 }}
               >
                 {/* Cinematic vignette overlay for fullscreen assets */}
@@ -3960,11 +4053,27 @@ export default function App() {
         animate(artistryZ, [0, 100, -50], { duration, ease: "easeInOut" });
         animate(artistryRoll, [0, 2, 0], { duration, ease: "easeInOut" });
       } else if (currentComp.cameraPath === 'parallax-sweep') {
-        // Dramatic, horizontal-sliding, depth-pivoting, fluidly rolling camera choreography
-        animate(artistryX, [-600, 600], { duration, ease: "easeInOut" });
-        animate(artistryZ, [-400, 400], { duration, ease: "easeInOut" });
-        animate(artistryRotY, [-20, 20], { duration, ease: "easeInOut" });
-        animate(artistryRoll, [-4, 4], { duration, ease: "easeInOut" });
+        // Zoom in rapidly to highlight the asset, then slowly sweep from left to right with rich 3D depth parallax
+        animate(artistryZ, [0, 450, 500], {
+          duration,
+          times: [0, 0.25, 1],
+          ease: "easeInOut"
+        });
+        animate(artistryX, [-550, -350, 550], {
+          duration,
+          times: [0, 0.25, 1],
+          ease: "easeInOut"
+        });
+        animate(artistryRotY, [-18, -12, 18], {
+          duration,
+          times: [0, 0.25, 1],
+          ease: "easeInOut"
+        });
+        animate(artistryRoll, [-3, -2, 3], {
+          duration,
+          times: [0, 0.25, 1],
+          ease: "easeInOut"
+        });
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);

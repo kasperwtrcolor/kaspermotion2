@@ -147,20 +147,37 @@ export default async function handler(req: any, res: any) {
       console.error('Failed to parse AI response:', jsonStr);
     }
 
-    // Fetch live website screenshot using Microlink
+    // Fetch live website screenshot using Microlink JSON API
     let screenshotUrl = '';
     try {
-      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true&embed=screenshot.url`;
+      const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}&screenshot=true`;
       const screenshotRes = await fetch(microlinkUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
       });
       if (screenshotRes.ok) {
-        const buffer = await screenshotRes.arrayBuffer();
-        const base64 = Buffer.from(buffer).toString('base64');
-        screenshotUrl = `data:image/png;base64,${base64}`;
+        const json = await screenshotRes.json();
+        const directUrl = json.data?.screenshot?.url;
+        if (directUrl) {
+          try {
+            const imgRes = await fetch(directUrl, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+            });
+            if (imgRes.ok) {
+              const buffer = await imgRes.arrayBuffer();
+              const mimeType = imgRes.headers.get('content-type') || 'image/png';
+              const base64 = Buffer.from(buffer).toString('base64');
+              screenshotUrl = `data:${mimeType};base64,${base64}`;
+            } else {
+              screenshotUrl = directUrl; // Fallback to direct CDN URL
+            }
+          } catch (fetchErr) {
+            console.error('Failed to encode screenshot to base64, using direct URL:', fetchErr);
+            screenshotUrl = directUrl; // Fallback to direct CDN URL
+          }
+        }
       }
     } catch (e) {
-      console.error('Failed to capture screenshot via Microlink:', e);
+      console.error('Failed to capture screenshot via Microlink JSON API:', e);
     }
 
     // Fetch and convert top images to base64 to avoid CORS on client
