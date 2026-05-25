@@ -15,6 +15,7 @@ export default async function handler(req: any, res: any) {
   try {
     const userHeliusRpc = process.env.HELIUS_RPC_URL || process.env.VITE_HELIUS_RPC_URL || process.env.HELIUS_RPC;
     const ataAddress = req.query.ata;
+    const recipientAtaAddress = req.query.recipientAta;
 
     const rpcNodes: string[] = [];
     if (userHeliusRpc) {
@@ -29,6 +30,7 @@ export default async function handler(req: any, res: any) {
     let blockhash = '';
     let balance = 0;
     let balanceExists = false;
+    let recipientAtaExists = false;
     let lastError: any = null;
 
     for (const nodeUrl of rpcNodes) {
@@ -85,9 +87,34 @@ export default async function handler(req: any, res: any) {
               console.log(`Successfully retrieved token balance: ${balance} USDC`);
             } else if (balanceData.error) {
               console.warn(`RPC returned balance error (account might be empty/uninitialized):`, balanceData.error);
-              // Set balanceExists to true with 0 balance if it's a known empty token account error
               balance = 0;
               balanceExists = true;
+            }
+          }
+        }
+
+        // 3. Fetch recipient ATA existence if recipientAta is provided
+        if (recipientAtaAddress) {
+          console.log(`Checking existence for recipient ATA ${recipientAtaAddress} on ${nodeUrl}...`);
+          const accountResponse = await fetch(nodeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 3,
+              method: 'getAccountInfo',
+              params: [recipientAtaAddress, { encoding: 'jsonParsed' }],
+            }),
+          });
+
+          if (accountResponse.ok) {
+            const accountData: any = await accountResponse.json();
+            if (accountData.result && accountData.result.value !== null) {
+              recipientAtaExists = true;
+              console.log(`Recipient ATA exists on-chain: true`);
+            } else {
+              recipientAtaExists = false;
+              console.log(`Recipient ATA exists on-chain: false`);
             }
           }
         }
@@ -103,7 +130,7 @@ export default async function handler(req: any, res: any) {
       throw new Error(`Failed to establish a secure Solana RPC connection: ${lastError?.message || 'Access Forbidden (403)'}`);
     }
 
-    res.status(200).json({ blockhash, balance, balanceExists });
+    res.status(200).json({ blockhash, balance, balanceExists, recipientAtaExists });
   } catch (error: any) {
     console.error('Failed to fetch blockhash on backend:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch blockhash' });

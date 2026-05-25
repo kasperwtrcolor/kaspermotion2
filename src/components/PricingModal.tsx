@@ -125,145 +125,38 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
       };
 
       const recipientATA = getAssociatedTokenAddress(USDC_MINT, recipientOwnerKey);
+      const senderATA = getAssociatedTokenAddress(USDC_MINT, senderKey);
 
-      // 3. Fetch secure blockhash and check USDC balance server-side (100% immune to browser 403 CORS blocks!)
+      // 3. Fetch secure blockhash, check USDC balance, and check recipient ATA existence server-side (100% immune to browser 403 CORS blocks!)
       let blockhash = '';
       let balance = 0;
       let balanceExists = false;
-      let backendSenderATAStr = '';
+      let recipientAtaExists = false;
 
       try {
-        console.log(`[PricingModal] Fetching blockhash and balance for Wallet: ${userPublicKeyStr}`);
-        const blockhashRes = await fetch(`/api/solana-blockhash?wallet=${userPublicKeyStr}`);
+        console.log(`[PricingModal] Fetching blockhash, balance, and recipient ATA existence for Wallet: ${userPublicKeyStr}`);
+        const blockhashRes = await fetch(`/api/solana-blockhash?ata=${senderATA.toString()}&recipientAta=${recipientATA.toString()}`);
         if (blockhashRes.ok) {
           const data = await blockhashRes.json();
           blockhash = data.blockhash;
           balance = Number(data.balance || 0);
           balanceExists = !!data.balanceExists;
-          backendSenderATAStr = data.senderATA || '';
-          console.log(`[PricingModal] Backend reported balance: ${balance} USDC (ATA: ${backendSenderATAStr}, Exists: ${balanceExists})`);
+          recipientAtaExists = !!data.recipientAtaExists;
+          console.log(`[PricingModal] Backend reported: balance = ${balance} USDC, exists = ${balanceExists}, recipientExists = ${recipientAtaExists}`);
         } else {
-          console.warn('Backend blockhash fetch returned non-ok status, trying client-side fallback...');
+          console.warn('Backend blockhash fetch returned non-ok status.');
         }
       } catch (err) {
-        console.warn('Backend blockhash fetch failed, trying client-side fallback:', err);
+        console.warn('Backend blockhash fetch failed:', err);
       }
 
-      // Client-side fallback if backend fails
       if (!blockhash) {
-        const clientHeliusRpc = import.meta.env.VITE_HELIUS_RPC_URL || import.meta.env.HELIUS_RPC_URL || (window as any).HELIUS_RPC_URL;
-        const fallbackNodes = [];
-        if (clientHeliusRpc) {
-          fallbackNodes.push(clientHeliusRpc);
-        }
-        fallbackNodes.push('https://rpc.ankr.com/solana');
-        fallbackNodes.push('https://solana-mainnet.public.blastapi.io');
-        fallbackNodes.push('https://solana-mainnet.g.allthatnode.com');
-        fallbackNodes.push('https://api.mainnet-beta.solana.com');
-
-        let clientError: any = null;
-        for (const nodeUrl of fallbackNodes) {
-          try {
-            console.log(`[PricingModal] Client fetching blockhash from: ${nodeUrl}`);
-            const response = await fetch(nodeUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'getLatestBlockhash',
-                params: [{ commitment: 'confirmed' }],
-              }),
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message || 'RPC Error');
-            if (data.result?.value?.blockhash) {
-              blockhash = data.result.value.blockhash;
-              console.log(`[PricingModal] Successfully retrieved blockhash on client from ${nodeUrl}`);
-              break;
-            }
-          } catch (err: any) {
-            console.warn(`[PricingModal] Client failed to connect to ${nodeUrl}:`, err);
-            clientError = err;
-          }
-        }
-
-        if (!blockhash) {
-          throw new Error(`Failed to retrieve secure transaction blockhash: ${clientError?.message || 'Access Forbidden (403)'}`);
-        }
-      }
-
-      const senderATA = backendSenderATAStr ? new PublicKey(backendSenderATAStr) : getAssociatedTokenAddress(USDC_MINT, senderKey);
-
-      // 4. Validate sender's USDC token balance (Client-side pool fallback if backend check failed!)
-      const checkNodes = [];
-      const clientHeliusRpc = import.meta.env.VITE_HELIUS_RPC_URL || import.meta.env.HELIUS_RPC_URL || (window as any).HELIUS_RPC_URL;
-      if (clientHeliusRpc) checkNodes.push(clientHeliusRpc);
-      checkNodes.push('https://rpc.ankr.com/solana');
-      checkNodes.push('https://solana-mainnet.public.blastapi.io');
-      checkNodes.push('https://solana-mainnet.g.allthatnode.com');
-      checkNodes.push('https://api.mainnet-beta.solana.com');
-
-      if (!balanceExists) {
-        let senderAtaExists = false;
-        for (const nodeUrl of checkNodes) {
-          try {
-            console.log(`[PricingModal] Fallback checking sender USDC balance on: ${nodeUrl}`);
-            const response = await fetch(nodeUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'getTokenAccountBalance',
-                params: [senderATA.toString()],
-              }),
-            });
-            if (response.ok) {
-              const data = await response.json();
-              if (data.result?.value) {
-                balance = Number(data.result.value.uiAmount || 0);
-                senderAtaExists = true;
-                balanceExists = true;
-              }
-              break;
-            }
-          } catch (e) {
-            console.warn('[PricingModal] Failed to query sender token balance from', nodeUrl, e);
-          }
-        }
+        throw new Error('Failed to retrieve secure transaction blockhash from serverless backend.');
       }
 
       // Check balance - allow proceeding if balance is verified, or fail if we proved balance < 5
       if (balanceExists && balance < 5) {
         throw new Error(`Insufficient USDC balance. Your wallet has ${balance.toFixed(2)} USDC, but 5.00 USDC is required.`);
-      }
-
-      // 5. Query if recipient ATA exists on-chain
-      let recipientAtaExists = false;
-      for (const nodeUrl of checkNodes) {
-        try {
-          const response = await fetch(nodeUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: 1,
-              method: 'getAccountInfo',
-              params: [recipientATA.toString(), { encoding: 'jsonParsed' }],
-            }),
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.result && data.result.value !== null) {
-              recipientAtaExists = true;
-            }
-            break;
-          }
-        } catch (e) {
-          console.warn('Failed to query account info from', nodeUrl, e);
-        }
       }
 
       const transaction = new Transaction();
@@ -324,50 +217,37 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       setSolanaStep('processing');
 
-      // 7. Securely verify signature status on the Solana ledger before applying credits
-      console.log(`[PricingModal] Polling RPC nodes to confirm transaction: ${signature}`);
+      // 7. Securely verify signature status on the Solana ledger before applying credits (100% server-side via Helius!)
+      console.log(`[PricingModal] Polling backend to confirm transaction: ${signature}`);
       let txConfirmed = false;
       let checkAttempts = 0;
-      const maxAttempts = 15; // 15 attempts * 2 seconds = 30 seconds max timeout
+      const maxAttempts = 20; // 20 attempts * 2 seconds = 40 seconds max timeout
       let txErrorDetail = '';
 
       while (checkAttempts < maxAttempts && !txConfirmed) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         checkAttempts++;
         
-        for (const nodeUrl of checkNodes) {
-          try {
-            console.log(`[PricingModal] Checking signature status on ${nodeUrl} (Attempt ${checkAttempts}/${maxAttempts})...`);
-            const response = await fetch(nodeUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'getSignatureStatuses',
-                params: [[signature], { searchTransactionHistory: true }],
-              }),
-            });
-            if (response.ok) {
-              const data = await response.json();
-              const status = data.result?.value?.[0];
-              if (status) {
-                console.log('[PricingModal] Received signature status:', status);
-                if (status.err) {
-                  txErrorDetail = JSON.stringify(status.err);
-                  throw new Error(`Transaction failed on-chain: ${txErrorDetail}`);
-                }
-                if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
-                  txConfirmed = true;
-                  break;
-                }
-              }
+        try {
+          console.log(`[PricingModal] Checking signature status on backend (Attempt ${checkAttempts}/${maxAttempts})...`);
+          const response = await fetch(`/api/solana-confirm?signature=${signature}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.error) {
+              txErrorDetail = typeof data.error === 'object' ? JSON.stringify(data.error) : String(data.error);
+              throw new Error(`Transaction failed on-chain: ${txErrorDetail}`);
             }
-          } catch (e: any) {
-            console.warn('[PricingModal] Failed to verify signature status:', e);
-            if (e.message && e.message.includes('Transaction failed on-chain')) {
-              throw e;
+            if (data.confirmed) {
+              txConfirmed = true;
+              break;
             }
+          } else {
+            console.warn(`[PricingModal] Backend signature confirmation returned non-ok status: ${response.status}`);
+          }
+        } catch (e: any) {
+          console.warn('[PricingModal] Failed to verify signature status via backend:', e);
+          if (e.message && e.message.includes('Transaction failed on-chain')) {
+            throw e;
           }
         }
       }
