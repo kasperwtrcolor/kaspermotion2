@@ -63,19 +63,47 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       // 1. Await wallet connection
       const resp = await provider.connect();
-      const publicKey = resp.publicKey.toString();
+      const userPublicKeyStr = resp.publicKey.toString();
 
-      // 2. Cryptographic signature verification - triggers satisfying wallet approval popup!
-      const message = `Authorize 30 VibeTrailer credits purchase of $5.00 (0.04 SOL) for user: ${user.uid}`;
-      const encodedMessage = new TextEncoder().encode(message);
-      await provider.signMessage(encodedMessage, "utf8");
+      setSolanaStep('confirming');
+
+      // 2. Load Solana Web3 library dynamically
+      const { Connection, Transaction, SystemProgram, PublicKey } = await import('@solana/web3.js');
+
+      // 3. Establish RPC connection (mainnet-beta)
+      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+
+      const recipientAddress = 'FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq';
+      const solAmount = 0.04; // $5 USD worth of SOL at hackathon rates
+      const lamports = Math.round(solAmount * 1_000_000_000); // 1 SOL = 10^9 lamports
+
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: new PublicKey(userPublicKeyStr),
+          toPubkey: new PublicKey(recipientAddress),
+          lamports: lamports,
+        })
+      );
+
+      // Set blockhash and fee payer
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = new PublicKey(userPublicKeyStr);
+
+      // 4. Request signature and broadcast transaction from Phantom!
+      const { signature } = await provider.signAndSendTransaction(transaction);
 
       setSolanaStep('processing');
 
-      // 3. Simulated delay for chain confirmation
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 5. Wait for transaction confirmation on-chain with fallback delay
+      try {
+        await connection.confirmTransaction(signature, 'confirmed');
+      } catch (confirmErr) {
+        console.warn('On-chain confirmation timed out or rate-limited. Progressing to award credits:', confirmErr);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
 
-      // 4. Update balance directly in Firestore!
+      // 6. Update balance directly in Firestore!
       await setDoc(doc(db, 'users', user.uid), {
         credits: increment(30)
       }, { merge: true });
