@@ -329,6 +329,160 @@ export const RedditPostOverlay = ({ status, caption, handle = "r/cinematic" }: B
   );
 };
 
+export const SearchBarOverlay = ({ status, caption, accentColor = "#4285F4" }: BlockProps) => {
+  const text = caption || "How to build a cinematic trailer with AI";
+  const [displayedText, setDisplayedText] = React.useState("");
+  const [typingDone, setTypingDone] = React.useState(false);
+  const [pressed, setPressed] = React.useState(false);
+  const [glowing, setGlowing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (status !== 'active') {
+      setDisplayedText("");
+      setTypingDone(false);
+      setPressed(false);
+      setGlowing(false);
+      return;
+    }
+
+    setDisplayedText("");
+    setTypingDone(false);
+    setPressed(false);
+    setGlowing(false);
+
+    let i = 0;
+    const typeInterval = setInterval(() => {
+      i++;
+      setDisplayedText(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(typeInterval);
+        setTypingDone(true);
+        // Hand presses the button after typing finishes
+        setTimeout(() => setPressed(true), 600);
+        // Glow after the press
+        setTimeout(() => setGlowing(true), 1100);
+      }
+    }, 55);
+
+    return () => clearInterval(typeInterval);
+  }, [status, text]);
+
+  return (
+    <motion.div
+      initial={{ y: 100, opacity: 0, scale: 0.92 }}
+      animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 100, opacity: 0, scale: 0.92 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+      className="relative w-[700px] max-w-[95vw]"
+    >
+      {/* Outer glow ring */}
+      <motion.div
+        className="absolute -inset-4 rounded-[2.5rem] pointer-events-none"
+        animate={glowing ? {
+          boxShadow: [
+            `0 0 20px ${accentColor}40, 0 0 60px ${accentColor}20`,
+            `0 0 40px ${accentColor}80, 0 0 120px ${accentColor}40, 0 0 200px ${accentColor}15`,
+            `0 0 20px ${accentColor}40, 0 0 60px ${accentColor}20`,
+          ],
+        } : { boxShadow: '0 0 0px transparent' }}
+        transition={glowing ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : {}}
+      />
+
+      {/* Main card */}
+      <div className="bg-black/90 backdrop-blur-[60px] border border-white/15 rounded-[2rem] p-8 md:p-10 shadow-[0_60px_160px_rgba(0,0,0,0.9)] relative overflow-hidden">
+        {/* Inner glow overlay */}
+        <motion.div
+          className="absolute inset-0 rounded-[2rem] pointer-events-none"
+          animate={glowing ? { opacity: [0, 0.15, 0] } : { opacity: 0 }}
+          transition={glowing ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : {}}
+          style={{ background: `radial-gradient(ellipse at center, ${accentColor}, transparent 70%)` }}
+        />
+
+        {/* Browser-style dots */}
+        <div className="flex items-center gap-2.5 mb-8 relative z-10">
+          <div className="w-3.5 h-3.5 rounded-full bg-[#FF5F57] shadow-[0_0_8px_rgba(255,95,87,0.4)]" />
+          <div className="w-3.5 h-3.5 rounded-full bg-[#FEBC2E] shadow-[0_0_8px_rgba(254,188,46,0.4)]" />
+          <div className="w-3.5 h-3.5 rounded-full bg-[#28C840] shadow-[0_0_8px_rgba(40,200,64,0.4)]" />
+          <div className="flex-1" />
+          <span className="text-white/20 text-[10px] font-mono font-bold uppercase tracking-[0.15em]">Search</span>
+        </div>
+
+        {/* Search bar */}
+        <div className="relative z-10 flex items-center gap-4">
+          {/* Search icon */}
+          <div className="shrink-0 p-3 bg-white/5 rounded-xl border border-white/10">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/40">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+
+          {/* Text input area */}
+          <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-6 py-5 min-h-[60px] flex items-center relative overflow-hidden">
+            <span className="text-white/90 text-lg md:text-xl font-semibold tracking-tight leading-relaxed">
+              {displayedText}
+            </span>
+            {/* Blinking cursor */}
+            {!typingDone && (
+              <motion.span
+                className="inline-block w-[3px] h-7 ml-1 rounded-full"
+                style={{ backgroundColor: accentColor }}
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "steps(2)" }}
+              />
+            )}
+          </div>
+
+          {/* Search button with hand press animation */}
+          <div className="relative shrink-0">
+            <motion.button
+              className="px-8 py-5 rounded-xl font-black text-white text-base uppercase tracking-wider shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-white/10 relative overflow-hidden"
+              style={{ backgroundColor: accentColor }}
+              animate={pressed ? { scale: [1, 0.88, 1.05, 1] } : {}}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              {/* Button shine sweep */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: '-100%' }}
+                animate={pressed ? { x: '200%' } : { x: '-100%' }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              />
+              <span className="relative z-10">Search</span>
+            </motion.button>
+
+            {/* Hand cursor icon */}
+            <motion.div
+              className="absolute z-20 pointer-events-none"
+              initial={{ x: 60, y: 60, opacity: 0, scale: 0.8 }}
+              animate={typingDone ? (pressed ? { x: 5, y: 8, opacity: 1, scale: 0.9 } : { x: 20, y: 25, opacity: 1, scale: 1 }) : { x: 60, y: 60, opacity: 0, scale: 0.8 }}
+              transition={{ type: 'tween', duration: 0.4, ease: "easeOut" }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="black" strokeWidth="0.5" className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] rotate-[-10deg]">
+                <path d="M18 11V6.83a2 2 0 0 0-2-2 2 2 0 0 0-2 2V4.83a2 2 0 0 0-2-2 2 2 0 0 0-2 2V3.83a2 2 0 0 0-4 0v7.17l-1.4-1.4a2 2 0 0 0-2.83 2.83l5.66 5.66A8 8 0 0 0 13.76 21H18a4 4 0 0 0 4-4v-3a2 2 0 0 0-2-2 2 2 0 0 0-2 2z" />
+              </svg>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Quick suggestion pills */}
+        <div className="flex items-center gap-3 mt-6 relative z-10">
+          {["Trending", "AI Tools", "Launch"].map((tag, i) => (
+            <motion.span
+              key={tag}
+              initial={{ y: 10, opacity: 0 }}
+              animate={status === 'active' ? { y: 0, opacity: 1 } : { y: 10, opacity: 0 }}
+              transition={{ delay: 0.3 + i * 0.1 }}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-white/40 text-[11px] font-bold uppercase tracking-widest"
+            >
+              {tag}
+            </motion.span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function PremiumSocialOverlays({ type, ...props }: any) {
   switch (type) {
     case 'instagram-follow': return <InstagramFollowOverlay {...props} />;
@@ -337,6 +491,7 @@ export default function PremiumSocialOverlays({ type, ...props }: any) {
     case 'data-chart': return <DataChartOverlay {...props} />;
     case 'spotify-card': return <SpotifyCardOverlay {...props} />;
     case 'reddit-post': return <RedditPostOverlay {...props} />;
+    case 'search-bar': return <SearchBarOverlay {...props} />;
     default: return null;
   }
 }
