@@ -2800,65 +2800,42 @@ const CompositionNode = ({
               )
             );
 
-            // Design a sharp, snappy entrance and size expansion (up/down or both sides)
-            // for non-fullscreen assets to glide snappily and settle.
-            const sharpTransition = {
-              type: "spring",
-              stiffness: 180,
-              damping: 20,
-              mass: 0.9,
-              delay: i * 0.15
+            // Fluid glide entrance — assets smoothly converge to center
+            const glideTransition = {
+              type: "tween" as const,
+              duration: 1.2,
+              ease: [0.25, 0.1, 0.25, 1] as any, // cubic-bezier for silky deceleration
+              delay: i * 0.2,
             };
 
-            const expandTransition = {
-              type: "spring",
-              stiffness: 140,
-              damping: 15,
-              mass: 0.9,
-              delay: 0.4 + (i * 0.15)
+            const scaleTransition = {
+              type: "tween" as const,
+              duration: 1.4,
+              ease: [0.25, 0.1, 0.25, 1] as any,
+              delay: 0.1 + i * 0.2,
             };
 
-            let initialX = m.xOffset || 0;
-            let initialY = m.yOffset || 0;
-            let targetX = m.xOffset || 0;
-            let targetY = m.yOffset || 0;
-            let initialScaleX = 1;
-            let initialScaleY = 1;
-            let targetScaleX: any = m.scale || 1;
-            let targetScaleY: any = m.scale || 1;
+            const targetX = m.xOffset || 0;
+            const targetY = m.yOffset || 0;
+            const targetScale = m.scale || 1;
 
+            // All assets glide to center — entrance direction staggers for visual variety
+            let initialX = 0;
+            let initialY = 0;
             if (!m.isFullscreen) {
               if (comp.media.length === 1) {
-                // Single asset: Glide in from bottom to center, and expand both sides
-                initialY = 800;
-                targetY = m.yOffset || 0;
-                initialScaleX = 0.1;
-                initialScaleY = 0.1;
-                targetScaleX = [0.1, m.scale || 1];
-                targetScaleY = [0.1, m.scale || 1];
+                // Single asset: glide up from below
+                initialY = 600;
               } else {
-                // Multiple assets: Glide in and set on left or right side with sharp snap
+                // Multiple assets: alternate entry from bottom-left and bottom-right, converging to center
                 if (i === 0) {
-                  initialX = -1200;
-                  targetX = m.xOffset || -350;
-                  initialScaleX = 0.1; // expand both sides horizontally
-                  initialScaleY = 1;
-                  targetScaleX = [0.1, m.scale || 1.15];
-                  targetScaleY = [1, m.scale || 1.15];
+                  initialX = -500;
+                  initialY = 300;
                 } else if (i === 1) {
-                  initialX = 1200;
-                  targetX = m.xOffset || 350;
-                  initialScaleX = 1;
-                  initialScaleY = 0.1; // expand vertically (up/down)
-                  targetScaleX = [1, m.scale || 1.15];
-                  targetScaleY = [0.1, m.scale || 1.15];
+                  initialX = 500;
+                  initialY = 300;
                 } else {
-                  initialY = 800;
-                  targetY = m.yOffset || 0;
-                  initialScaleX = 0.2;
-                  initialScaleY = 0.2;
-                  targetScaleX = [0.2, m.scale || 1];
-                  targetScaleY = [0.2, m.scale || 1];
+                  initialY = 600;
                 }
               }
             }
@@ -2866,31 +2843,27 @@ const CompositionNode = ({
             const initialProps = m.isFullscreen ? {} : {
               x: initialX,
               y: initialY,
-              scaleX: initialScaleX,
-              scaleY: initialScaleY,
+              scale: 0.7,
               opacity: 0,
             };
 
             const animateProps = status === 'active' ? (m.isFullscreen ? {} : {
               x: targetX,
               y: targetY,
-              scaleX: targetScaleX,
-              scaleY: targetScaleY,
+              scale: targetScale,
               opacity: 1,
             }) : (m.isFullscreen ? {} : {
               x: initialX,
               y: initialY,
-              scaleX: initialScaleX,
-              scaleY: initialScaleY,
+              scale: 0.7,
               opacity: 0,
             });
 
             const motionTransition = m.isFullscreen ? {} : {
-              x: sharpTransition,
-              y: sharpTransition,
-              scaleX: expandTransition,
-              scaleY: expandTransition,
-              opacity: { duration: 0.3 }
+              x: glideTransition,
+              y: glideTransition,
+              scale: scaleTransition,
+              opacity: { duration: 0.5, delay: i * 0.15 }
             };
 
             return (
