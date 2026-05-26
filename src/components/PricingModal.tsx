@@ -167,7 +167,7 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
 
       const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
       const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5AcWH25jdwGsxAuGs');
+      const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
       const senderKey = new PublicKey(walletPubkey);
       const recipientOwnerKey = new PublicKey('FZ8RRJnQW7MTiQ15EY7AyrSDhACoXNTdsoJ74k2GRPoq');
