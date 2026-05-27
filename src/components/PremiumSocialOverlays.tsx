@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown, Flame, Sparkles, Layers, CreditCard } from 'lucide-react';
+import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown, Flame, Sparkles, Layers, CreditCard, Globe, Lock, RefreshCw } from 'lucide-react';
 
 interface BlockProps {
   status: 'past' | 'active' | 'future';
@@ -886,6 +886,254 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
   );
 };
 
+export const BrowserUrlOverlay = ({ status, caption, accentColor = "#3B82F6" }: BlockProps) => {
+  const url = React.useMemo(() => {
+    const raw = caption || "vibetrailer.fun/analytics";
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    return `https://${raw}`;
+  }, [caption]);
+
+  const [typedUrl, setTypedUrl] = React.useState("");
+  const [phase, setPhase] = React.useState<'typing' | 'enter' | 'loading' | 'loaded'>('typing');
+  const [loadProgress, setLoadProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    if (status !== 'active') {
+      setTypedUrl("");
+      setPhase('typing');
+      setLoadProgress(0);
+      return;
+    }
+
+    let isCancelled = false;
+    let charIdx = 0;
+    
+    // 1. Typing Phase
+    const typingInterval = setInterval(() => {
+      if (isCancelled) { clearInterval(typingInterval); return; }
+      charIdx++;
+      setTypedUrl(url.slice(0, charIdx));
+      
+      if (charIdx >= url.length) {
+        clearInterval(typingInterval);
+        
+        // 2. Enter Phase (brief delay when complete)
+        setTimeout(() => {
+          if (isCancelled) return;
+          setPhase('enter');
+          
+          // 3. Loading Phase
+          setTimeout(() => {
+            if (isCancelled) return;
+            setPhase('loading');
+            
+            let prog = 0;
+            const progressInterval = setInterval(() => {
+              if (isCancelled) { clearInterval(progressInterval); return; }
+              prog += 4;
+              setLoadProgress(Math.min(prog, 100));
+              
+              if (prog >= 100) {
+                clearInterval(progressInterval);
+                // 4. Loaded Phase
+                setTimeout(() => {
+                  if (!isCancelled) setPhase('loaded');
+                }, 150);
+              }
+            }, 30);
+          }, 400);
+        }, 500);
+      }
+    }, 35);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [status, url]);
+
+  return (
+    <motion.div
+      initial={{ y: 80, opacity: 0, scale: 0.94 }}
+      animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 80, opacity: 0, scale: 0.94 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 90 }}
+      className="relative w-[720px] max-w-[95vw]"
+    >
+      {/* Browser Card Frame */}
+      <div className="bg-[#0A0C10] border border-white/10 rounded-2xl shadow-[0_50px_130px_rgba(0,0,0,0.85)] relative overflow-hidden flex flex-col">
+        
+        {/* Browser Top Bar / Tabs & Controls */}
+        <div className="bg-[#10131A] border-b border-white/5 px-5 py-4 flex items-center justify-between gap-4">
+          
+          {/* Controls: Traffic light dots */}
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+            <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+            <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+          </div>
+
+          {/* Browser Search Bar */}
+          <div className="flex-1 max-w-[480px] bg-[#161B26] border border-white/10 rounded-lg px-4 py-2 flex items-center gap-2.5 shadow-inner relative overflow-hidden">
+            <Lock size={12} className="text-emerald-400 shrink-0" />
+            
+            <div className="flex-1 text-[13px] font-mono tracking-tight font-medium text-white/90 truncate flex items-center">
+              <span className="text-white/40 select-none">https://</span>
+              <span>{typedUrl.replace("https://", "")}</span>
+              
+              {phase === 'typing' && (
+                <motion.span
+                  className="inline-block w-[2px] h-[14px] ml-[2px] relative top-[1px]"
+                  style={{ backgroundColor: accentColor }}
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.7, repeat: Infinity, ease: "steps(2)" }}
+                />
+              )}
+            </div>
+
+            <motion.div
+              animate={phase === 'loading' ? { rotate: 360 } : {}}
+              transition={phase === 'loading' ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+              className="shrink-0"
+            >
+              <RefreshCw size={12} className={phase === 'loading' ? "text-blue-400" : "text-white/30"} />
+            </motion.div>
+
+            {phase === 'loading' && (
+              <motion.div
+                className="absolute bottom-0 left-0 h-[2px]"
+                style={{ 
+                  width: `${loadProgress}%`, 
+                  backgroundColor: accentColor,
+                  boxShadow: `0 0 8px ${accentColor}`,
+                }}
+              />
+            )}
+          </div>
+
+          <div className="w-12" />
+        </div>
+
+        {/* Browser viewport area */}
+        <div className="bg-[#0B0D14] min-h-[300px] relative overflow-hidden flex items-center justify-center">
+          
+          <AnimatePresence mode="wait">
+            {phase !== 'loaded' && (
+              <motion.div
+                key="loading-splash"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 flex flex-col items-center justify-center p-8 gap-4"
+              >
+                <div className="relative w-14 h-14 flex items-center justify-center">
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-white/5"
+                  />
+                  <motion.div
+                    className="absolute inset-0 rounded-full border-2 border-transparent"
+                    style={{ borderTopColor: accentColor }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  />
+                  <Globe className="text-white/20 w-6 h-6" />
+                </div>
+                <div className="flex flex-col items-center text-center gap-1.5">
+                  <span className="text-white/30 font-mono text-[10px] uppercase tracking-[0.2em]">Secure Connection</span>
+                  <span className="text-white/60 font-bold text-sm tracking-tight">Resolving Secure DNS Handshake...</span>
+                </div>
+              </motion.div>
+            )}
+
+            {phase === 'loaded' && (
+              <motion.div
+                key="loaded-content"
+                initial={{ opacity: 0, y: 35, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ type: 'spring', damping: 18, stiffness: 85 }}
+                className="w-full h-full p-6 md:p-8 flex flex-col gap-6"
+              >
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#3B82F6] to-[#8B5CF6] flex items-center justify-center shadow-lg border border-white/10 shrink-0">
+                      <Globe className="text-white w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-extrabold text-sm tracking-tight">VibeTrailer</h4>
+                      <p className="text-white/40 text-[10px] font-bold tracking-wider uppercase font-mono">Platform Active</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-white/50 text-[11px] font-semibold">Live Sandbox</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-5 flex-1">
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                    className="bg-[#121622]/60 border border-white/8 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-lg hover:border-white/15 transition-colors group relative overflow-hidden"
+                  >
+                    <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-blue-500/10 blur-xl group-hover:bg-blue-500/20 transition-colors pointer-events-none" />
+                    <div>
+                      <span className="text-white/40 text-[10px] font-extrabold uppercase tracking-wider font-mono">Real-time Conversions</span>
+                      <h3 className="text-white font-black text-3xl mt-1 tracking-tighter">+182.4%</h3>
+                    </div>
+                    
+                    <div className="flex items-end gap-1.5 h-16 pt-2">
+                      {[35, 55, 45, 75, 60, 95, 80].map((h, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ height: 0 }}
+                          animate={{ height: `${h}%` }}
+                          transition={{ delay: 0.25 + idx * 0.05, type: 'spring', damping: 12 }}
+                          style={{ backgroundColor: idx === 5 ? accentColor : 'rgba(255,255,255,0.15)' }}
+                          className="flex-1 rounded-sm shadow-sm"
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-[#121622]/60 border border-white/8 rounded-xl p-5 flex flex-col justify-between gap-4 shadow-lg hover:border-white/15 transition-colors group relative overflow-hidden"
+                  >
+                    <div className="absolute -right-6 -bottom-6 w-20 h-20 rounded-full bg-violet-500/10 blur-xl group-hover:bg-violet-500/20 transition-colors pointer-events-none" />
+                    <div>
+                      <span className="text-white/40 text-[10px] font-extrabold uppercase tracking-wider font-mono">System Integrity</span>
+                      <h3 className="text-white font-black text-3xl mt-1 tracking-tighter">99.98%</h3>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 pt-2">
+                      <div className="flex items-center justify-between text-xs text-white/50">
+                        <span>Database Node</span>
+                        <span className="text-emerald-400 font-bold">Operational</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: "99.98%" }}
+                          transition={{ delay: 0.4, duration: 1.2, ease: "easeOut" }}
+                          style={{ backgroundColor: accentColor }}
+                          className="h-full rounded-full"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function PremiumSocialOverlays({ type, ...props }: any) {
   switch (type) {
     case 'instagram-follow': return <InstagramFollowOverlay {...props} />;
@@ -897,6 +1145,7 @@ export default function PremiumSocialOverlays({ type, ...props }: any) {
     case 'search-bar': return <SearchBarOverlay {...props} />;
     case 'terminal-console': return <TerminalConsoleOverlay {...props} />;
     case 'notification-stack': return <NotificationStackOverlay {...props} />;
+    case 'browser-url': return <BrowserUrlOverlay {...props} />;
     default: return null;
   }
 }

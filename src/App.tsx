@@ -628,7 +628,7 @@ type Composition = {
   angle: number;
   caption: string;
   textPosition: TextPosition;
-  sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post' | 'coin-flip' | 'search-bar' | 'terminal-console' | 'notification-stack' | 'asset-only';
+  sceneType: 'standard' | 'instagram-follow' | 'x-post' | 'macos-notification' | 'data-chart' | 'spotify-card' | 'reddit-post' | 'coin-flip' | 'search-bar' | 'terminal-console' | 'notification-stack' | 'browser-url' | 'asset-only';
   textEffect: TextEffect;
   textEffectSource?: 'manual' | 'auto';
   transitionType: TransitionType;
@@ -720,7 +720,7 @@ const generateComposition = (
   const rand = Math.random();
 
   if (caption && rand > 0.85) {
-    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack'];
+    const socialTypes: Composition['sceneType'][] = ['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack', 'browser-url'];
     sceneType = socialTypes[Math.floor(Math.random() * socialTypes.length)];
   }
 
@@ -2731,7 +2731,7 @@ const CompositionNode = ({
         )}
 
         <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-          {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack'].includes(comp.sceneType) && comp.media.map((m, i) => {
+          {!['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack', 'browser-url'].includes(comp.sceneType) && comp.media.map((m, i) => {
             const shapeStyle = getM3ShapeStyle(m.m3Shape, comp.caption);
 
             // Ken Burns cinematic motions for fullscreen assets
@@ -4394,7 +4394,7 @@ export default function App() {
       // Logical Hierarchy: Manual > Skeleton > AI > Random
       const currentSceneType: any = existingComp?.sceneType || sceneChoreography?.sceneType || (
         complexity === 'dense' || complexity === 'layered' 
-          ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post', 'search-bar', 'terminal-console', 'notification-stack'][Math.floor(Math.random() * 7)]))
+          ? (sceneIdx % 2 === 0 ? 'standard' : (['macos-notification', 'instagram-follow', 'reddit-post', 'x-post', 'search-bar', 'terminal-console', 'notification-stack', 'browser-url'][Math.floor(Math.random() * 8)]))
           : 'standard'
       );
 
@@ -5565,6 +5565,7 @@ export default function App() {
                              <option value="search-bar">Search Bar</option>
                              <option value="terminal-console">Terminal Console</option>
                              <option value="notification-stack">Notification Stack</option>
+                             <option value="browser-url">Browser URL Bar</option>
                            </select>
                            
                            <button
@@ -5745,7 +5746,7 @@ export default function App() {
                    className="absolute inset-0"
                  >
                    {/* 1. Social Overlays layer */}
-                   {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'search-bar', 'terminal-console', 'notification-stack'].includes(currentComp.sceneType) && (
+                   {['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'search-bar', 'terminal-console', 'notification-stack', 'browser-url'].includes(currentComp.sceneType) && (
                       <div className="absolute inset-0 flex items-center justify-center p-8">
                         <PremiumSocialOverlays
                           type={currentComp.sceneType}
@@ -5763,7 +5764,7 @@ export default function App() {
                    )}
 
                    {/* 2. Kinetic Typography layer */}
-                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack', 'asset-only'].includes(currentComp.sceneType) && (() => {
+                   {currentComp.caption && !['instagram-follow', 'x-post', 'macos-notification', 'data-chart', 'spotify-card', 'reddit-post', 'coin-flip', 'search-bar', 'terminal-console', 'notification-stack', 'browser-url', 'asset-only'].includes(currentComp.sceneType) && (() => {
                       const activeTheme = currentComp.thiccTheme && currentComp.thiccTheme !== 'none' 
                         ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES] 
                         : null;
