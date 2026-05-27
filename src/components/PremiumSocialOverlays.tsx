@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown, Flame, Sparkles, Layers, CreditCard } from 'lucide-react';
 
 interface BlockProps {
   status: 'past' | 'active' | 'future';
@@ -726,6 +726,166 @@ export const TerminalConsoleOverlay = ({ status, caption, accentColor = "#22C55E
   );
 };
 
+export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366f1" }: BlockProps) => {
+  const notifications = React.useMemo(() => {
+    const c = caption || "Pro Plan Subscription";
+    return [
+      {
+        id: 'stripe',
+        app: 'STRIPE',
+        title: 'Payment Received',
+        desc: `New customer: ${c} (+$49.00)`,
+        time: 'Just Now',
+        iconBg: 'linear-gradient(135deg, #635BFF 0%, #8E2DE2 100%)',
+        icon: <CreditCard className="text-white w-5 h-5" />,
+        accent: '#635BFF',
+      },
+      {
+        id: 'product-hunt',
+        app: 'PRODUCT HUNT',
+        title: 'Trending #1 Product',
+        desc: '🚀 KasperMotion 2.0 reached 1,500+ upvotes!',
+        time: '2m ago',
+        iconBg: 'linear-gradient(135deg, #DA552F 0%, #FF8A00 100%)',
+        icon: <Flame className="text-white w-5 h-5" />,
+        accent: '#DA552F',
+      },
+      {
+        id: 'figma',
+        app: 'FIGMA',
+        title: 'Design Template Saved',
+        desc: '💬 "The smooth 3D overlays are absolute fire!"',
+        time: '5m ago',
+        iconBg: 'linear-gradient(135deg, #F24E1E 0%, #A259FF 100%)',
+        icon: <Layers className="text-white w-5 h-5" />,
+        accent: '#A259FF',
+      },
+      {
+        id: 'discord',
+        app: 'DISCORD',
+        title: 'New Member Joined',
+        desc: '✨ 250+ motion creators joined your Discord lounge!',
+        time: '12m ago',
+        iconBg: 'linear-gradient(135deg, #5865F2 0%, #5151E5 100%)',
+        icon: <Sparkles className="text-white w-5 h-5" />,
+        accent: '#5865F2',
+      },
+    ];
+  }, [caption]);
+
+  const [activeCount, setActiveCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (status !== 'active') {
+      setActiveCount(0);
+      return;
+    }
+
+    const timers: NodeJS.Timeout[] = [];
+    
+    // Stagger slide-in times for notifications:
+    // First card: 0.4s
+    // Second card: 1.6s
+    // Third card: 2.8s
+    // Fourth card: 4.0s
+    for (let i = 0; i < notifications.length; i++) {
+      const timer = setTimeout(() => {
+        setActiveCount(i + 1);
+      }, 400 + i * 1300);
+      timers.push(timer);
+    }
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [status, notifications]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={status === 'active' ? { opacity: 1 } : { opacity: 0 }}
+      className="relative w-[440px] max-w-[95vw] h-[280px] flex flex-col items-center justify-start"
+      style={{ perspective: 1200, transformStyle: 'preserve-3d' }}
+    >
+      <AnimatePresence>
+        {notifications.map((notif, index) => {
+          if (index >= activeCount) return null;
+          
+          // depthIdx = how many slots behind the frontmost/newest card this card sits
+          const depthIdx = (activeCount - 1) - index;
+          
+          // Smooth 3D cascading properties
+          const yOffset = depthIdx * 54;
+          const scale = 1 - depthIdx * 0.055;
+          const zIndex = 50 - depthIdx;
+          const opacity = 1 - depthIdx * 0.16;
+          const blurValue = depthIdx * 1.5;
+
+          return (
+            <motion.div
+              key={notif.id}
+              initial={{ y: -80, opacity: 0, scale: 0.8, rotateX: 18 }}
+              animate={{ 
+                y: yOffset, 
+                opacity: opacity, 
+                scale: scale, 
+                rotateX: depthIdx * 5,
+                z: -depthIdx * 25,
+                filter: `blur(${blurValue}px)`,
+              }}
+              exit={{ y: 220, opacity: 0, scale: 0.8 }}
+              transition={{ 
+                type: 'spring', 
+                damping: 17, 
+                stiffness: 95,
+                mass: 0.75,
+              }}
+              style={{ 
+                zIndex,
+                position: 'absolute',
+                top: 0,
+                transformStyle: 'preserve-3d',
+              }}
+              className="w-full bg-[#0E0F12]/80 backdrop-blur-[24px] border border-white/10 rounded-2xl p-4 flex gap-4 shadow-[0_30px_70px_rgba(0,0,0,0.7),inset_0_1px_1px_rgba(255,255,255,0.15)] select-none"
+            >
+              {/* Left app icon in gradient box */}
+              <div 
+                style={{ background: notif.iconBg }}
+                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-[0_8px_16px_rgba(0,0,0,0.3)] shrink-0 border border-white/10"
+              >
+                {notif.icon}
+              </div>
+
+              {/* Text content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <span 
+                      style={{ color: notif.accent }}
+                      className="font-black text-[10px] tracking-[0.15em] uppercase font-sans"
+                    >
+                      {notif.app}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="text-white/40 text-[10px] font-bold">Activity</span>
+                  </div>
+                  <span className="text-white/25 text-[9px] font-bold tracking-tight shrink-0">{notif.time}</span>
+                </div>
+                <h5 className="text-white font-extrabold text-sm tracking-tight mb-0.5 line-clamp-1">
+                  {notif.title}
+                </h5>
+                <p className="text-white/60 text-xs font-semibold leading-normal line-clamp-1">
+                  {notif.desc}
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 export default function PremiumSocialOverlays({ type, ...props }: any) {
   switch (type) {
     case 'instagram-follow': return <InstagramFollowOverlay {...props} />;
@@ -736,6 +896,7 @@ export default function PremiumSocialOverlays({ type, ...props }: any) {
     case 'reddit-post': return <RedditPostOverlay {...props} />;
     case 'search-bar': return <SearchBarOverlay {...props} />;
     case 'terminal-console': return <TerminalConsoleOverlay {...props} />;
+    case 'notification-stack': return <NotificationStackOverlay {...props} />;
     default: return null;
   }
 }
