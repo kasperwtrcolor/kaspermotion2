@@ -651,6 +651,7 @@ type Composition = {
   sceneDuration?: number;
   fontSize?: string;
   thiccTheme?: ThiccThemeId;
+  notificationTexts?: string[];
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -5528,89 +5529,134 @@ export default function App() {
                  </div>
                </div>
 
-               <div className="border-t border-black/5 pt-12 mb-16">
-                  <h3 className="mono text-[10px] font-bold uppercase opacity-40 mb-8">Scene Sequence Editor</h3>
-                  <div className="space-y-4">
-                    {compositions.map((comp, idx) => (
-                      <div key={comp.id} className="p-8 border border-black/5 bg-ivory/30 flex flex-col md:flex-row items-center gap-12 group hover:bg-white transition-all">
-                        <div className="w-12 h-12 bg-ink text-cream flex items-center justify-center font-black text-xl shrink-0">
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                           <p className="text-xl font-bold uppercase tracking-tight truncate mb-4">{comp.caption || "Untitled Scene"}</p>
-                           <div className="flex gap-2">
-                             {comp.media.map((m, mIdx) => (
-                               <div key={mIdx} className="w-16 h-16 border border-black/10 p-1 bg-white">
-                                 <img src={m.url} className={`w-full h-full grayscale ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}`} />
-                               </div>
-                             ))}
+                            <div className="border-t border-black/5 pt-12 mb-16">
+                   <h3 className="mono text-[10px] font-bold uppercase opacity-40 mb-8">Scene Sequence Editor</h3>
+                   <div className="space-y-4">
+                     {compositions.map((comp, idx) => (
+                       <div key={comp.id} className="p-8 border border-black/5 bg-ivory/30 flex flex-col gap-6 group hover:bg-white transition-all">
+                         {/* Main Settings Row */}
+                         <div className="flex flex-col md:flex-row items-center gap-12 w-full">
+                           <div className="w-12 h-12 bg-ink text-cream flex items-center justify-center font-black text-xl shrink-0">
+                             {idx + 1}
                            </div>
-                           
-                        </div>
-                        <div className="flex flex-wrap gap-4">
-                           <select
-                             value={comp.sceneType || 'standard'}
-                             onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
-                             className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
-                           >
-                             <option value="standard">Standard Scene</option>
-                             <option value="asset-only">Asset Only (No Text)</option>
-                             <option value="macos-notification">MacOS Notification</option>
-                             <option value="instagram-follow">Instagram Follow</option>
-                             <option value="reddit-post">Reddit Card</option>
-                             <option value="x-post">X / Twitter Post</option>
-                             <option value="spotify-card">Spotify Now Playing</option>
-                             <option value="data-chart">Dynamic Data Chart</option>
-                             <option value="coin-flip">3D Coin Flip Card</option>
-                             <option value="search-bar">Search Bar</option>
-                             <option value="terminal-console">Terminal Console</option>
-                             <option value="notification-stack">Notification Stack</option>
-                             <option value="browser-url">Browser URL Bar</option>
-                           </select>
-                           
-                           <button
-                              onClick={() => {
-                                setAddingAssetToSceneIdx(idx);
-                                setShowLibrary(true);
-                              }}
-                              className="bg-ivory border border-black/10 px-4 py-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[9px] font-bold uppercase whitespace-nowrap shrink-0 gap-2"
-                            >
-                              <ImageIcon size={12} /> Swap Asset
-                            </button>
-
-                           <div className="flex flex-1 gap-2">
-                             <select
-                                value={comp.textEffect || 'gsap-stagger'}
-                                onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                           <div className="flex-1 min-w-0">
+                              <p className="text-xl font-bold uppercase tracking-tight truncate mb-4">{comp.caption || "Untitled Scene"}</p>
+                              <div className="flex gap-2">
+                                {comp.media.map((m, mIdx) => (
+                                  <div key={mIdx} className="w-16 h-16 border border-black/10 p-1 bg-white">
+                                    <img src={m.url} className={`w-full h-full grayscale ${m.objectFit === 'contain' ? 'object-contain' : 'object-cover'}`} />
+                                  </div>
+                                ))}
+                              </div>
+                           </div>
+                           <div className="flex flex-wrap gap-4">
+                              <select
+                                value={comp.sceneType || 'standard'}
+                                onChange={(e) => updateSceneProperty(idx, 'sceneType', e.target.value)}
                                 className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
                               >
-                                <option value="gsap-stagger">Stagger Reveal</option>
-                                <option value="gsap-cascade">Cascade Fall</option>
-                                <option value="gsap-glow">Glow Pulse</option>
-                                <option value="gsap-3d-roll">3D Roll</option>
-                                <option value="gsap-elastic">Spring Elastic</option>
-                                <option value="gsap-tornado">Vortex Tornado</option>
-                                <option value="gsap-funnel">Gravity Funnel</option>
-                                <option value="gsap-stack">Letter Stack</option>
-                                <option value="gsap-typewriter">Typewriter</option>
-                                <option value="gsap-slide-type">Slide Typewriter</option>
-                                <option value="gsap-glitch">Glitch</option>
-                                <option value="gsap-wave">Wave Motion</option>
-                                <option value="gsap-blur-reveal">Blur Reveal</option>
+                                <option value="standard">Standard Scene</option>
+                                <option value="asset-only">Asset Only (No Text)</option>
+                                <option value="macos-notification">MacOS Notification</option>
+                                <option value="instagram-follow">Instagram Follow</option>
+                                <option value="reddit-post">Reddit Card</option>
+                                <option value="x-post">X / Twitter Post</option>
+                                <option value="spotify-card">Spotify Now Playing</option>
+                                <option value="data-chart">Dynamic Data Chart</option>
+                                <option value="coin-flip">3D Coin Flip Card</option>
+                                <option value="search-bar">Search Bar</option>
+                                <option value="terminal-console">Terminal Console</option>
+                                <option value="notification-stack">Notification Stack</option>
+                                <option value="browser-url">Browser URL Bar</option>
                               </select>
-                              <button 
-                                onClick={() => applyTextEffectToAllScenes(idx)}
-                                className="bg-ivory border border-black/10 px-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[8px] font-bold uppercase whitespace-nowrap shrink-0"
-                                title="Apply this text animation to all scenes"
-                              >
-                                Apply All
-                              </button>
+                              
+                              <button
+                                 onClick={() => {
+                                   setAddingAssetToSceneIdx(idx);
+                                   setShowLibrary(true);
+                                 }}
+                                 className="bg-ivory border border-black/10 px-4 py-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[9px] font-bold uppercase whitespace-nowrap shrink-0 gap-2"
+                               >
+                                 <ImageIcon size={12} /> Swap Asset
+                               </button>
+
+                              <div className="flex flex-1 gap-2">
+                                <select
+                                   value={comp.textEffect || 'gsap-stagger'}
+                                   onChange={(e) => updateSceneProperty(idx, 'textEffect', e.target.value)}
+                                   className="bg-white border border-black/10 px-4 py-3 mono text-[9px] uppercase font-bold outline-none focus:border-ink transition-colors flex-1"
+                                 >
+                                   <option value="gsap-stagger">Stagger Reveal</option>
+                                   <option value="gsap-cascade">Cascade Fall</option>
+                                   <option value="gsap-glow">Glow Pulse</option>
+                                   <option value="gsap-3d-roll">3D Roll</option>
+                                   <option value="gsap-elastic">Spring Elastic</option>
+                                   <option value="gsap-tornado">Vortex Tornado</option>
+                                   <option value="gsap-funnel">Gravity Funnel</option>
+                                   <option value="gsap-stack">Letter Stack</option>
+                                   <option value="gsap-typewriter">Typewriter</option>
+                                   <option value="gsap-slide-type">Slide Typewriter</option>
+                                   <option value="gsap-glitch">Glitch</option>
+                                   <option value="gsap-wave">Wave Motion</option>
+                                   <option value="gsap-blur-reveal">Blur Reveal</option>
+                                 </select>
+                                 <button 
+                                   onClick={() => applyTextEffectToAllScenes(idx)}
+                                   className="bg-ivory border border-black/10 px-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[8px] font-bold uppercase whitespace-nowrap shrink-0"
+                                   title="Apply this text animation to all scenes"
+                                 >
+                                   Apply All
+                                 </button>
+                              </div>
                            </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-               </div>
+                         </div>
+
+                         {/* Notification Stack Custom Editor */}
+                         {comp.sceneType === 'notification-stack' && (
+                           <div className="w-full border-t border-black/5 pt-6 mt-2 space-y-4">
+                             <div className="flex items-center gap-2">
+                               <span className="mono text-[10px] uppercase font-black tracking-wider text-ink/40">Notification Stack Editor</span>
+                               <div className="h-[1px] flex-1 bg-black/5" />
+                             </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               {[
+                                 { id: 0, app: 'Stripe Notification', placeholder: 'New customer subscribed: Pro Plan' },
+                                 { id: 1, app: 'Product Hunt Notification', placeholder: 'KasperMotion 2.0 reached 1,500+ upvotes!' },
+                                 { id: 2, app: 'Figma Notification', placeholder: 'The smooth 3D overlays are absolute fire!' },
+                                 { id: 3, app: 'Discord Notification', placeholder: '250+ creators joined your Discord lounge!' },
+                               ].map((field) => {
+                                 const currentTexts = comp.notificationTexts || [];
+                                 const currentValue = currentTexts[field.id] !== undefined ? currentTexts[field.id] : "";
+                                 
+                                 return (
+                                   <div key={field.id} className="flex flex-col gap-1.5">
+                                     <label className="mono text-[8px] font-bold text-ink/60 uppercase">{field.app}</label>
+                                     <input
+                                       type="text"
+                                       value={currentValue}
+                                       placeholder={field.placeholder}
+                                       onChange={(e) => {
+                                         const nextTexts = [...currentTexts];
+                                         for (let i = 0; i <= 3; i++) {
+                                           if (nextTexts[i] === undefined) {
+                                             nextTexts[i] = "";
+                                           }
+                                         }
+                                         nextTexts[field.id] = e.target.value;
+                                         updateSceneProperty(idx, 'notificationTexts', nextTexts);
+                                       }}
+                                       className="bg-white border border-black/10 px-4 py-3 text-xs font-semibold outline-none focus:border-ink transition-colors w-full placeholder:opacity-30"
+                                     />
+                                   </div>
+                                 );
+                               })}
+                             </div>
+                           </div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                </div>
 
                <div className="flex gap-4">
                  <button onClick={() => setSetupStep(3)} className="btn-outline flex-1 py-6 text-sm">Back</button>
@@ -5755,6 +5801,7 @@ export default function App() {
                           accentColor={textColor}
                           handle={socialHandle}
                           name={websiteSiteName || "KasperMotion"}
+                          notificationTexts={currentComp.notificationTexts}
                         />
                       </div>
                    )}

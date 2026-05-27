@@ -726,15 +726,20 @@ export const TerminalConsoleOverlay = ({ status, caption, accentColor = "#22C55E
   );
 };
 
-export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366f1" }: BlockProps) => {
+export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366f1", notificationTexts }: BlockProps & { notificationTexts?: string[] }) => {
   const notifications = React.useMemo(() => {
     const c = caption || "Pro Plan Subscription";
+    const text0 = notificationTexts?.[0] || `New customer: ${c} (+$49.00)`;
+    const text1 = notificationTexts?.[1] || '🚀 KasperMotion 2.0 reached 1,500+ upvotes!';
+    const text2 = notificationTexts?.[2] || '💬 "The smooth 3D overlays are absolute fire!"';
+    const text3 = notificationTexts?.[3] || '✨ 250+ motion creators joined your Discord lounge!';
+
     return [
       {
         id: 'stripe',
         app: 'STRIPE',
         title: 'Payment Received',
-        desc: `New customer: ${c} (+$49.00)`,
+        desc: text0,
         time: 'Just Now',
         iconBg: 'linear-gradient(135deg, #635BFF 0%, #8E2DE2 100%)',
         icon: <CreditCard className="text-white w-5 h-5" />,
@@ -744,7 +749,7 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'product-hunt',
         app: 'PRODUCT HUNT',
         title: 'Trending #1 Product',
-        desc: '🚀 KasperMotion 2.0 reached 1,500+ upvotes!',
+        desc: text1,
         time: '2m ago',
         iconBg: 'linear-gradient(135deg, #DA552F 0%, #FF8A00 100%)',
         icon: <Flame className="text-white w-5 h-5" />,
@@ -754,7 +759,7 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'figma',
         app: 'FIGMA',
         title: 'Design Template Saved',
-        desc: '💬 "The smooth 3D overlays are absolute fire!"',
+        desc: text2,
         time: '5m ago',
         iconBg: 'linear-gradient(135deg, #F24E1E 0%, #A259FF 100%)',
         icon: <Layers className="text-white w-5 h-5" />,
@@ -764,14 +769,14 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'discord',
         app: 'DISCORD',
         title: 'New Member Joined',
-        desc: '✨ 250+ motion creators joined your Discord lounge!',
+        desc: text3,
         time: '12m ago',
         iconBg: 'linear-gradient(135deg, #5865F2 0%, #5151E5 100%)',
         icon: <Sparkles className="text-white w-5 h-5" />,
         accent: '#5865F2',
       },
     ];
-  }, [caption]);
+  }, [caption, notificationTexts]);
 
   const [activeCount, setActiveCount] = React.useState(0);
 
