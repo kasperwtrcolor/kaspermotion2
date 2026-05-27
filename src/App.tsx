@@ -652,6 +652,7 @@ type Composition = {
   fontSize?: string;
   thiccTheme?: ThiccThemeId;
   notificationTexts?: string[];
+  notificationStack?: { app: string; title: string; desc: string; }[];
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -5618,35 +5619,98 @@ export default function App() {
                                <span className="mono text-[10px] uppercase font-black tracking-wider text-ink/40">Notification Stack Editor</span>
                                <div className="h-[1px] flex-1 bg-black/5" />
                              </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               {[
-                                 { id: 0, app: 'Stripe Notification', placeholder: 'New customer subscribed: Pro Plan' },
-                                 { id: 1, app: 'Product Hunt Notification', placeholder: 'KasperMotion 2.0 reached 1,500+ upvotes!' },
-                                 { id: 2, app: 'Figma Notification', placeholder: 'The smooth 3D overlays are absolute fire!' },
-                                 { id: 3, app: 'Discord Notification', placeholder: '250+ creators joined your Discord lounge!' },
-                               ].map((field) => {
-                                 const currentTexts = comp.notificationTexts || [];
-                                 const currentValue = currentTexts[field.id] !== undefined ? currentTexts[field.id] : "";
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                               {[0, 1, 2, 3].map((cardIdx) => {
+                                 const defaultTemplates = [
+                                   { app: 'Stripe', title: 'Payment Received', desc: 'New customer subscribed: Pro Plan' },
+                                   { app: 'Product Hunt', title: 'Trending #1 Product', desc: 'KasperMotion 2.0 reached 1,500+ upvotes!' },
+                                   { app: 'Figma', title: 'Design Template Saved', desc: 'The smooth 3D overlays are absolute fire!' },
+                                   { app: 'Discord', title: 'New Member Joined', desc: '250+ creators joined your Discord lounge!' },
+                                 ];
                                  
+                                 const stack = comp.notificationStack || [];
+                                 const cardData = stack[cardIdx] || { app: '', title: '', desc: '' };
+                                 
+                                 const updateCardField = (field: 'app' | 'title' | 'desc', val: string) => {
+                                   const nextStack = [...stack];
+                                   for (let i = 0; i <= 3; i++) {
+                                     if (!nextStack[i]) {
+                                       nextStack[i] = { 
+                                         app: defaultTemplates[i].app, 
+                                         title: defaultTemplates[i].title, 
+                                         desc: defaultTemplates[i].desc 
+                                       };
+                                     }
+                                   }
+                                   nextStack[cardIdx] = { ...nextStack[cardIdx], [field]: val };
+                                   updateSceneProperty(idx, 'notificationStack', nextStack);
+                                 };
+
                                  return (
-                                   <div key={field.id} className="flex flex-col gap-1.5">
-                                     <label className="mono text-[8px] font-bold text-ink/60 uppercase">{field.app}</label>
-                                     <input
-                                       type="text"
-                                       value={currentValue}
-                                       placeholder={field.placeholder}
-                                       onChange={(e) => {
-                                         const nextTexts = [...currentTexts];
-                                         for (let i = 0; i <= 3; i++) {
-                                           if (nextTexts[i] === undefined) {
-                                             nextTexts[i] = "";
-                                           }
-                                         }
-                                         nextTexts[field.id] = e.target.value;
-                                         updateSceneProperty(idx, 'notificationTexts', nextTexts);
-                                       }}
-                                       className="bg-white border border-black/10 px-4 py-3 text-xs font-semibold outline-none focus:border-ink transition-colors w-full placeholder:opacity-30"
-                                     />
+                                   <div key={cardIdx} className="bg-ivory/40 p-4 border border-black/5 rounded-lg space-y-3">
+                                     <div className="flex justify-between items-center pb-2 border-b border-black/5">
+                                       <span className="mono text-[9px] font-black uppercase text-ink/70">Notification Card #{cardIdx + 1}</span>
+                                     </div>
+                                     
+                                     <div className="flex gap-2">
+                                       <div className="flex-1 min-w-0">
+                                         <label className="mono text-[8px] font-bold text-ink/40 uppercase mb-1 block">App Preset</label>
+                                         <select
+                                           value={['stripe', 'product hunt', 'figma', 'discord', 'facebook', 'twitter', 'instagram', 'youtube', 'slack', 'linkedin'].includes((cardData.app || '').toLowerCase()) ? cardData.app : 'Custom'}
+                                           onChange={(e) => {
+                                             if (e.target.value !== 'Custom') {
+                                               updateCardField('app', e.target.value);
+                                             }
+                                           }}
+                                           className="bg-white border border-black/10 px-2 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
+                                         >
+                                           <option value="Stripe">Stripe Presets</option>
+                                           <option value="Product Hunt">Product Hunt Presets</option>
+                                           <option value="Figma">Figma Presets</option>
+                                           <option value="Discord">Discord Presets</option>
+                                           <option value="Facebook">Facebook Presets</option>
+                                           <option value="Twitter">X / Twitter Presets</option>
+                                           <option value="Instagram">Instagram Presets</option>
+                                           <option value="YouTube">YouTube Presets</option>
+                                           <option value="Slack">Slack Presets</option>
+                                           <option value="LinkedIn">LinkedIn Presets</option>
+                                           <option value="Custom">Custom / Other</option>
+                                         </select>
+                                       </div>
+
+                                       <div className="flex-1 min-w-0">
+                                         <label className="mono text-[8px] font-bold text-ink/40 uppercase mb-1 block">App Name</label>
+                                         <input
+                                           type="text"
+                                           value={cardData.app}
+                                           placeholder={defaultTemplates[cardIdx].app}
+                                           onChange={(e) => updateCardField('app', e.target.value)}
+                                           className="bg-white border border-black/10 px-2 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
+                                         />
+                                       </div>
+                                     </div>
+
+                                     <div className="flex flex-col gap-1">
+                                       <label className="mono text-[8px] font-bold text-ink/40 uppercase">Title</label>
+                                       <input
+                                         type="text"
+                                         value={cardData.title}
+                                         placeholder={defaultTemplates[cardIdx].title}
+                                         onChange={(e) => updateCardField('title', e.target.value)}
+                                         className="bg-white border border-black/10 px-3 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
+                                       />
+                                     </div>
+
+                                     <div className="flex flex-col gap-1">
+                                       <label className="mono text-[8px] font-bold text-ink/40 uppercase">Description Message</label>
+                                       <input
+                                         type="text"
+                                         value={cardData.desc}
+                                         placeholder={defaultTemplates[cardIdx].desc}
+                                         onChange={(e) => updateCardField('desc', e.target.value)}
+                                         className="bg-white border border-black/10 px-3 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
+                                       />
+                                     </div>
                                    </div>
                                  );
                                })}
@@ -5656,8 +5720,7 @@ export default function App() {
                        </div>
                      ))}
                    </div>
-                </div>
-
+                 </div>
                <div className="flex gap-4">
                  <button onClick={() => setSetupStep(3)} className="btn-outline flex-1 py-6 text-sm">Back</button>
                  <button onClick={resetProject} className="btn-outline flex-1 py-6 text-sm !border-red-500/30 !text-red-500 hover:!bg-red-500 hover:!text-white">Reset & Create New</button>
@@ -5802,6 +5865,7 @@ export default function App() {
                           handle={socialHandle}
                           name={websiteSiteName || "KasperMotion"}
                           notificationTexts={currentComp.notificationTexts}
+                          notificationStack={currentComp.notificationStack}
                         />
                       </div>
                    )}

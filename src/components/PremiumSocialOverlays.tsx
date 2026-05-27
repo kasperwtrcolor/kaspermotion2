@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown, Flame, Sparkles, Layers, CreditCard, Globe, Lock, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Instagram, Twitter, MessageSquare, Bell, TrendingUp, UserPlus, Heart, Share2, Music, Hash, ArrowUp, ArrowDown, Flame, Sparkles, Layers, CreditCard, Globe, Lock, RefreshCw, Youtube, Figma, Slack } from 'lucide-react';
 
 interface BlockProps {
   status: 'past' | 'active' | 'future';
@@ -726,20 +726,15 @@ export const TerminalConsoleOverlay = ({ status, caption, accentColor = "#22C55E
   );
 };
 
-export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366f1", notificationTexts }: BlockProps & { notificationTexts?: string[] }) => {
+export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366f1", notificationTexts, notificationStack }: BlockProps & { notificationTexts?: string[]; notificationStack?: { app: string; title: string; desc: string; }[] }) => {
   const notifications = React.useMemo(() => {
     const c = caption || "Pro Plan Subscription";
-    const text0 = notificationTexts?.[0] || `New customer: ${c} (+$49.00)`;
-    const text1 = notificationTexts?.[1] || '🚀 KasperMotion 2.0 reached 1,500+ upvotes!';
-    const text2 = notificationTexts?.[2] || '💬 "The smooth 3D overlays are absolute fire!"';
-    const text3 = notificationTexts?.[3] || '✨ 250+ motion creators joined your Discord lounge!';
-
-    return [
+    const defaultTemplates = [
       {
         id: 'stripe',
         app: 'STRIPE',
         title: 'Payment Received',
-        desc: text0,
+        desc: notificationTexts?.[0] || `New customer: ${c} (+$49.00)`,
         time: 'Just Now',
         iconBg: 'linear-gradient(135deg, #635BFF 0%, #8E2DE2 100%)',
         icon: <CreditCard className="text-white w-5 h-5" />,
@@ -749,7 +744,7 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'product-hunt',
         app: 'PRODUCT HUNT',
         title: 'Trending #1 Product',
-        desc: text1,
+        desc: notificationTexts?.[1] || '🚀 KasperMotion 2.0 reached 1,500+ upvotes!',
         time: '2m ago',
         iconBg: 'linear-gradient(135deg, #DA552F 0%, #FF8A00 100%)',
         icon: <Flame className="text-white w-5 h-5" />,
@@ -759,7 +754,7 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'figma',
         app: 'FIGMA',
         title: 'Design Template Saved',
-        desc: text2,
+        desc: notificationTexts?.[2] || '💬 "The smooth 3D overlays are absolute fire!"',
         time: '5m ago',
         iconBg: 'linear-gradient(135deg, #F24E1E 0%, #A259FF 100%)',
         icon: <Layers className="text-white w-5 h-5" />,
@@ -769,14 +764,116 @@ export const NotificationStackOverlay = ({ status, caption, accentColor = "#6366
         id: 'discord',
         app: 'DISCORD',
         title: 'New Member Joined',
-        desc: text3,
+        desc: notificationTexts?.[3] || '✨ 250+ motion creators joined your Discord lounge!',
         time: '12m ago',
         iconBg: 'linear-gradient(135deg, #5865F2 0%, #5151E5 100%)',
         icon: <Sparkles className="text-white w-5 h-5" />,
         accent: '#5865F2',
       },
     ];
-  }, [caption, notificationTexts]);
+
+    const getBrandDetails = (appName: string, index: number) => {
+      const nameLower = (appName || "").toLowerCase().trim();
+      
+      if (nameLower.includes('stripe')) {
+        return {
+          icon: <CreditCard className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #635BFF 0%, #8E2DE2 100%)',
+          accent: '#635BFF'
+        };
+      }
+      if (nameLower.includes('product hunt') || nameLower.includes('producthunt')) {
+        return {
+          icon: <Flame className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #DA552F 0%, #FF8A00 100%)',
+          accent: '#DA552F'
+        };
+      }
+      if (nameLower.includes('figma')) {
+        return {
+          icon: <Figma className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #F24E1E 0%, #A259FF 100%)',
+          accent: '#A259FF'
+        };
+      }
+      if (nameLower.includes('discord')) {
+        return {
+          icon: <Sparkles className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #5865F2 0%, #5151E5 100%)',
+          accent: '#5865F2'
+        };
+      }
+      if (nameLower.includes('facebook')) {
+        return {
+          icon: <MessageSquare className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #1877F2 0%, #00C6FF 100%)',
+          accent: '#1877F2'
+        };
+      }
+      if (nameLower.includes('twitter') || nameLower.includes('x-') || nameLower === 'x') {
+        return {
+          icon: <Twitter className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #15202B 0%, #0D1117 100%)',
+          accent: '#1D9BF0'
+        };
+      }
+      if (nameLower.includes('instagram')) {
+        return {
+          icon: <Instagram className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #F09433 0%, #DC2743 50%, #BC1888 100%)',
+          accent: '#E1306C'
+        };
+      }
+      if (nameLower.includes('youtube')) {
+        return {
+          icon: <Youtube className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #FF0000 0%, #BD081C 100%)',
+          accent: '#FF0000'
+        };
+      }
+      if (nameLower.includes('slack')) {
+        return {
+          icon: <Slack className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #4A154B 0%, #ECB22E 100%)',
+          accent: '#4A154B'
+        };
+      }
+      if (nameLower.includes('linkedin')) {
+        return {
+          icon: <UserPlus className="text-white w-5 h-5" />,
+          iconBg: 'linear-gradient(135deg, #0A66C2 0%, #0077B5 100%)',
+          accent: '#0A66C2'
+        };
+      }
+      
+      const hues = [220, 280, 340, 40];
+      return {
+        icon: <Bell className="text-white w-5 h-5" />,
+        iconBg: `linear-gradient(135deg, hsl(${hues[index % 4]}, 60%, 45%) 0%, hsl(${hues[index % 4] + 40}, 80%, 30%) 100%)`,
+        accent: `hsl(${hues[index % 4]}, 75%, 60%)`
+      };
+    };
+
+    return [0, 1, 2, 3].map((index) => {
+      const customData = notificationStack?.[index];
+      const fallback = defaultTemplates[index];
+      const app = customData?.app !== undefined && customData.app !== "" ? customData.app : fallback.app;
+      const title = customData?.title !== undefined && customData.title !== "" ? customData.title : fallback.title;
+      const desc = customData?.desc !== undefined && customData.desc !== "" ? customData.desc : fallback.desc;
+      const brand = getBrandDetails(app, index);
+
+      return {
+        id: fallback.id,
+        app: app.toUpperCase(),
+        title: title,
+        desc: desc,
+        time: fallback.time,
+        iconBg: brand.iconBg,
+        icon: brand.icon,
+        accent: brand.accent,
+      };
+    });
+  }, [caption, notificationTexts, notificationStack]);
 
   const [activeCount, setActiveCount] = React.useState(0);
 
