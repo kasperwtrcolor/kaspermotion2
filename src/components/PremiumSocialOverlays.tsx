@@ -483,6 +483,249 @@ export const SearchBarOverlay = ({ status, caption, accentColor = "#4285F4" }: B
   );
 };
 
+export const TerminalConsoleOverlay = ({ status, caption, accentColor = "#22C55E" }: BlockProps) => {
+  const lines = React.useMemo(() => {
+    const c = caption || "vibetrailer";
+    return [
+      { prompt: true, text: `npx ${c}@latest init ./` },
+      { prompt: false, text: `◼ Scaffolding project in ./`, color: 'text-white/50' },
+      { prompt: false, text: `◼ Installing dependencies...`, color: 'text-white/50' },
+      { prompt: false, text: '', type: 'progress' as const },
+      { prompt: false, text: `✓ 142 packages installed`, color: 'text-emerald-400' },
+      { prompt: true, text: `npm run build` },
+      { prompt: false, text: `  Building for production...`, color: 'text-white/40' },
+      { prompt: false, text: `  ✓ 2,198 modules transformed`, color: 'text-white/50' },
+      { prompt: false, text: `  ✓ built in 1.24s`, color: 'text-white/50' },
+      { prompt: false, text: '', type: 'success' as const },
+    ];
+  }, [caption]);
+
+  const [visibleLines, setVisibleLines] = React.useState(0);
+  const [typedChars, setTypedChars] = React.useState(0);
+  const [progressWidth, setProgressWidth] = React.useState(0);
+  const [showSuccess, setShowSuccess] = React.useState(false);
+  const [successFlash, setSuccessFlash] = React.useState(false);
+
+  React.useEffect(() => {
+    if (status !== 'active') {
+      setVisibleLines(0);
+      setTypedChars(0);
+      setProgressWidth(0);
+      setShowSuccess(false);
+      setSuccessFlash(false);
+      return;
+    }
+
+    let lineIdx = 0;
+    let charIdx = 0;
+    let cancelled = false;
+
+    const advanceLine = () => {
+      if (cancelled || lineIdx >= lines.length) return;
+
+      const line = lines[lineIdx];
+
+      if (line.type === 'progress') {
+        // Animate progress bar
+        setVisibleLines(lineIdx + 1);
+        let prog = 0;
+        const progInterval = setInterval(() => {
+          if (cancelled) { clearInterval(progInterval); return; }
+          prog += 3;
+          setProgressWidth(Math.min(prog, 100));
+          if (prog >= 100) {
+            clearInterval(progInterval);
+            lineIdx++;
+            setTimeout(() => !cancelled && advanceLine(), 200);
+          }
+        }, 25);
+        return;
+      }
+
+      if (line.type === 'success') {
+        setVisibleLines(lineIdx + 1);
+        setTimeout(() => {
+          if (cancelled) return;
+          setShowSuccess(true);
+          setTimeout(() => !cancelled && setSuccessFlash(true), 300);
+        }, 400);
+        return;
+      }
+
+      if (line.prompt) {
+        // Type out prompt lines character by character
+        setVisibleLines(lineIdx + 1);
+        charIdx = 0;
+        const typeInterval = setInterval(() => {
+          if (cancelled) { clearInterval(typeInterval); return; }
+          charIdx++;
+          setTypedChars(charIdx);
+          if (charIdx >= line.text.length) {
+            clearInterval(typeInterval);
+            lineIdx++;
+            setTimeout(() => !cancelled && advanceLine(), 400);
+          }
+        }, 40);
+      } else {
+        // Non-prompt lines appear instantly with a small delay
+        setVisibleLines(lineIdx + 1);
+        setTypedChars(0);
+        lineIdx++;
+        setTimeout(() => !cancelled && advanceLine(), 300);
+      }
+    };
+
+    setTimeout(() => advanceLine(), 500);
+
+    return () => { cancelled = true; };
+  }, [status, lines]);
+
+  return (
+    <motion.div
+      initial={{ y: 80, opacity: 0, scale: 0.94 }}
+      animate={status === 'active' ? { y: 0, opacity: 1, scale: 1 } : { y: 80, opacity: 0, scale: 0.94 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 90 }}
+      className="relative w-[720px] max-w-[95vw]"
+    >
+      {/* Success glow */}
+      <motion.div
+        className="absolute -inset-6 rounded-[2rem] pointer-events-none"
+        animate={successFlash ? {
+          boxShadow: [
+            `0 0 30px ${accentColor}50, 0 0 80px ${accentColor}25`,
+            `0 0 60px ${accentColor}90, 0 0 150px ${accentColor}40`,
+            `0 0 20px ${accentColor}30, 0 0 60px ${accentColor}15`,
+          ]
+        } : { boxShadow: '0 0 0px transparent' }}
+        transition={successFlash ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
+      />
+
+      {/* Terminal window */}
+      <div className="bg-[#0D1117] border border-white/10 rounded-2xl shadow-[0_60px_160px_rgba(0,0,0,0.95)] relative overflow-hidden">
+        {/* Title bar */}
+        <div className="flex items-center gap-2.5 px-5 py-4 bg-[#161B22] border-b border-white/5">
+          <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+          <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+          <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+          <div className="flex-1 text-center">
+            <span className="text-white/25 text-[11px] font-mono font-bold tracking-wider">Terminal</span>
+          </div>
+          <div className="w-9" /> {/* spacer to balance dots */}
+        </div>
+
+        {/* Terminal body */}
+        <div className="p-6 md:p-8 font-mono text-[14px] md:text-[15px] leading-[1.9] min-h-[320px] relative">
+          {/* Scanline effect */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none z-20 opacity-[0.03]"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.1) 1px, rgba(255,255,255,0.1) 2px)',
+              backgroundSize: '100% 3px',
+            }}
+          />
+
+          {lines.map((line, i) => {
+            if (i >= visibleLines) return null;
+            const isCurrentlyTyping = line.prompt && i === visibleLines - 1 && typedChars < line.text.length;
+            const displayText = line.prompt && i === visibleLines - 1
+              ? line.text.slice(0, typedChars)
+              : line.text;
+
+            if (line.type === 'progress') {
+              return (
+                <div key={i} className="flex items-center gap-3 my-2">
+                  <span className="text-white/30 text-xs font-bold uppercase tracking-widest shrink-0">Progress</span>
+                  <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ width: `${progressWidth}%`, backgroundColor: accentColor }}
+                    />
+                  </div>
+                  <span className="text-white/40 text-xs font-bold tabular-nums w-10 text-right">{progressWidth}%</span>
+                </div>
+              );
+            }
+
+            if (line.type === 'success') {
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={showSuccess ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.4 }}
+                  className="mt-4 flex items-center gap-3"
+                >
+                  {/* Flash overlay */}
+                  <motion.div
+                    className="absolute inset-0 pointer-events-none z-10 rounded-b-2xl"
+                    initial={{ opacity: 0 }}
+                    animate={successFlash ? { opacity: [0, 0.3, 0] } : {}}
+                    transition={{ duration: 0.6 }}
+                    style={{ backgroundColor: accentColor }}
+                  />
+                  <motion.div
+                    animate={showSuccess ? { rotate: [0, -10, 10, 0], scale: [0.5, 1.3, 1] } : {}}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="text-2xl"
+                  >
+                    ✓
+                  </motion.div>
+                  <span className="font-black text-lg tracking-tight" style={{ color: accentColor }}>
+                    Ready — Deploy with `vercel --prod`
+                  </span>
+                </motion.div>
+              );
+            }
+
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15 }}
+                className="flex"
+              >
+                {line.prompt && (
+                  <span className="select-none mr-2 shrink-0">
+                    <span className="text-emerald-400 font-bold">~</span>
+                    <span className="text-blue-400 font-bold"> ❯ </span>
+                  </span>
+                )}
+                <span className={line.prompt ? 'text-white/90' : (line.color || 'text-white/60')}>
+                  {displayText}
+                </span>
+                {/* Blinking cursor for currently typing line */}
+                {isCurrentlyTyping && (
+                  <motion.span
+                    className="inline-block w-[8px] h-[18px] ml-[2px] relative top-[2px]"
+                    style={{ backgroundColor: accentColor }}
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 0.7, repeat: Infinity, ease: "steps(2)" }}
+                  />
+                )}
+              </motion.div>
+            );
+          })}
+
+          {/* Blinking cursor on empty line when idle */}
+          {visibleLines === 0 && status === 'active' && (
+            <div className="flex">
+              <span className="text-emerald-400 font-bold">~</span>
+              <span className="text-blue-400 font-bold"> ❯ </span>
+              <motion.span
+                className="inline-block w-[8px] h-[18px] ml-[2px] relative top-[2px]"
+                style={{ backgroundColor: accentColor }}
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.7, repeat: Infinity, ease: "steps(2)" }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function PremiumSocialOverlays({ type, ...props }: any) {
   switch (type) {
     case 'instagram-follow': return <InstagramFollowOverlay {...props} />;
@@ -492,6 +735,7 @@ export default function PremiumSocialOverlays({ type, ...props }: any) {
     case 'spotify-card': return <SpotifyCardOverlay {...props} />;
     case 'reddit-post': return <RedditPostOverlay {...props} />;
     case 'search-bar': return <SearchBarOverlay {...props} />;
+    case 'terminal-console': return <TerminalConsoleOverlay {...props} />;
     default: return null;
   }
 }
