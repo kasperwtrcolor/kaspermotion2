@@ -3084,6 +3084,7 @@ export default function App() {
   const [preferredCameraPath, setPreferredCameraPath] = useState<string>('random');
   const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
+  const [includeAudioExport, setIncludeAudioExport] = useState(true);
   const [transitionType, setTransitionType] = useState<TransitionType>('morph-star');
   const [sceneDuration, setSceneDuration] = useState<number>(4.5);
   const [preset, setPreset] = useState<string>('custom');
@@ -4690,7 +4691,7 @@ export default function App() {
       }
 
       let combinedStream = stream;
-      if (audioRef.current && globalAudioUrl) {
+      if (includeAudioExport && audioRef.current && globalAudioUrl) {
         try {
           const audioStream = (audioRef.current as any).captureStream ? (audioRef.current as any).captureStream() : (audioRef.current as any).mozCaptureStream ? (audioRef.current as any).mozCaptureStream() : null;
           if (audioStream && audioStream.getAudioTracks().length > 0) {
@@ -6191,6 +6192,25 @@ export default function App() {
                    </select>
                  </div>
                </div>
+
+                {/* Audio capture checkbox */}
+                <div className="flex items-start gap-3.5 mb-6 p-4 border border-black/5 bg-ivory/50">
+                  <input
+                    type="checkbox"
+                    id="includeAudioExport"
+                    checked={includeAudioExport}
+                    onChange={(e) => setIncludeAudioExport(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 accent-black shrink-0 cursor-pointer"
+                  />
+                  <div className="flex flex-col gap-1 cursor-pointer select-none" onClick={() => setIncludeAudioExport(!includeAudioExport)}>
+                    <label htmlFor="includeAudioExport" className="mono text-[10px] font-black uppercase text-black cursor-pointer">
+                      Capture Sound / Audio Track
+                    </label>
+                    <p className="font-sans text-[10px] opacity-40 leading-normal">
+                      Uncheck to export a silent video (Resolves "incompatible audio codecs" error on X.com/Twitter when uploading from Chrome).
+                    </p>
+                  </div>
+                </div>
 
                <div className="bg-ivory border border-black/5 p-4 mb-8 space-y-2">
                  <p className="font-sans text-[11px] leading-relaxed opacity-60">
