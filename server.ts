@@ -674,6 +674,105 @@ H2 Tags: ${h2s.join(' | ')}
     }
   });
 
+  // Convert recorded video to a highly-optimized GIF using FFmpeg
+  app.post('/api/video/to-gif', express.raw({ type: '*/*', limit: '150mb' }), async (req, res) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      const title = (req.headers['x-video-title'] as string) || 'Untitled Trailer';
+      
+      if (!req.body || req.body.length === 0) {
+        return res.status(400).json({ error: 'No video data received' });
+      }
+
+      console.log(`[Vibe Engine] Received video for GIF conversion. Size: ${req.body.length} bytes`);
+
+      const fs = await import('fs/promises');
+      const os = await import('os');
+      const tempDir = os.tmpdir();
+      
+      const videoId = `gif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const inputPath = path.join(tempDir, `${videoId}_input.webm`);
+      const outputPath = path.join(tempDir, `${videoId}.gif`);
+
+      // Write video buffer to temp file
+      await fs.writeFile(inputPath, req.body);
+
+      // Execute FFmpeg to convert video to highly optimized, vibrant, lightweight palette GIF
+      // Uses scale=480:-1 and 12 fps to make it extremely responsive and fit inside social limits
+      const { exec } = await import('child_process');
+      const ffmpegCmd = `ffmpeg -y -i "${inputPath}" -vf "fps=12,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" "${outputPath}"`;
+      
+      console.log(`[Vibe Engine] Running FFmpeg: ${ffmpegCmd}`);
+
+      await new Promise<void>((resolve, reject) => {
+        exec(ffmpegCmd, (error, stdout, stderr) => {
+          if (error) {
+            console.error('[Vibe Engine] FFmpeg conversion failed:', stderr);
+            reject(error);
+          } else {
+            console.log('[Vibe Engine] FFmpeg conversion succeeded.');
+            resolve();
+          }
+        });
+      });
+
+      // Read output GIF file
+      const gifBuffer = await fs.readFile(outputPath);
+
+      // Upload the GIF to Firebase Storage
+      const storagePath = `public-videos/${videoId}.gif`;
+      const bucket = storageBucket;
+      const file = bucket.file(storagePath);
+
+      await file.save(gifBuffer, {
+        metadata: {
+          contentType: 'image/gif',
+          metadata: {
+            videoId,
+            userId: userId || 'anonymous',
+            title: `${title} (GIF)`,
+            uploadedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      // Make readable
+      await file.makePublic();
+      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+
+      // Save metadata to Firestore
+      const videoDoc = {
+        videoId,
+        userId: userId || 'anonymous',
+        title: `${title} (GIF)`,
+        url: publicUrl,
+        storagePath,
+        status: 'complete',
+        createdAt: FieldValue.serverTimestamp(),
+        views: 0,
+        ext: 'gif',
+        size: gifBuffer.length
+      };
+
+      await db.collection('videos').doc(videoId).set(videoDoc);
+
+      const shareUrl = `${process.env.APP_URL || 'https://vibetrailer.com'}/share/${videoId}`;
+
+      // Clean up temp files
+      await fs.unlink(inputPath).catch(() => {});
+      await fs.unlink(outputPath).catch(() => {});
+
+      res.json({
+        videoId,
+        shareUrl,
+        gifUrl: publicUrl
+      });
+    } catch (error: any) {
+      console.error('[Vibe Engine] GIF conversion error:', error);
+      res.status(500).json({ error: error.message || 'Failed to convert video to GIF' });
+    }
+  });
+
   // Get video metadata for the share page
   app.get('/api/video/:id', async (req, res) => {
     try {

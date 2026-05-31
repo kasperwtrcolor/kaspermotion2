@@ -23,6 +23,7 @@ import MorphTransitionOverlay from './components/MorphTransitionOverlay';
 import PremiumSocialOverlays from './components/PremiumSocialOverlays';
 import TransitionFiller from './components/TransitionFiller';
 import { CompositionProvider } from './components/CompositionProvider';
+import { NotificationStackEditor } from './components/NotificationStackEditor';
 import { findBestTransitionItem, TRANSITION_ITEM_LIB, SECONDARY_3D_ITEMS, HYPER_SHAPES, MORPH_SHAPES } from './constants/transitionAssets';
 import { findBestMotionIcon, MotionIcon } from './components/motion-icons/MotionIconRegistry';
 import SharePage from './components/SharePage';
@@ -3082,7 +3083,7 @@ export default function App() {
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [preferredCameraPath, setPreferredCameraPath] = useState<string>('random');
-  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov'>('webm');
+  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov' | 'gif'>('webm');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
   const [includeAudioExport, setIncludeAudioExport] = useState(true);
   const [transitionType, setTransitionType] = useState<TransitionType>('morph-star');
@@ -3188,13 +3189,11 @@ export default function App() {
     setAppMode('landing');
     setSetupStep(1);
     setScrapeUrl("https://");
-    setHistory([]);
     setMediaMapping({});
     setTextOnlyLines(new Set());
     setGlobalAudioUrl(null);
     setAiChoreography(null);
     setWebsiteSiteName('');
-    setSiteUrl('');
   };
 
   const handleStartOver = () => {
@@ -4448,10 +4447,7 @@ export default function App() {
         undefined, // sticker
         1, 0, 0,
         customDur,
-        caption,
-        currentFontFamily,
-        textColor,
-        isMultiColor
+        caption
       );
       
       comp.sceneType = currentSceneType;
@@ -4460,9 +4456,20 @@ export default function App() {
       comp.textPosition = currentTextPosition;
       comp.fontSize = currentFontSize;
       comp.textEffectSource = currentEffectSource;
+      comp.fontFamily = currentFontFamily;
+      comp.textColor = textColor;
+      comp.isMultiColor = isMultiColor;
 
-      // Deep preserve media settings (Scale, Fit, Motion)
+      // Deep preserve media settings (Scale, Fit, Motion) and custom scene parameters
       if (existingComp) {
+        comp.notificationStack = existingComp.notificationStack;
+        comp.notificationTexts = existingComp.notificationTexts;
+        comp.giphyStickerUrl = existingComp.giphyStickerUrl;
+        comp.stickerScale = existingComp.stickerScale;
+        comp.stickerX = existingComp.stickerX;
+        comp.stickerY = existingComp.stickerY;
+        comp.websiteUrl = existingComp.websiteUrl;
+
         comp.media = comp.media.map(m => {
           const existingMedia = existingComp.media.find(em => em.url === m.url);
           if (existingMedia) {
@@ -4721,48 +4728,105 @@ export default function App() {
         sequenceActiveRef.current = false;
         const blob = new Blob(chunksRef.current, { type: mimeType });
 
-        // 1. Download locally
-        const localUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = localUrl;
-        const ext = exportFormat === 'mov' ? 'mov' : (exportFormat === 'mp4' ? 'mp4' : 'webm');
-        a.download = `motion-trailer-${exportResolution}.${ext}`;
-        a.click();
-        URL.revokeObjectURL(localUrl);
         setIsRecording(false);
         stream.getTracks().forEach(t => t.stop());
         document.body.style.cursor = 'default';
         const header = document.querySelector('header');
         if (header) (header as HTMLElement).style.display = '';
 
-        // 2. Upload to server for shareable link
-        try {
-          setIsUploadingVideo(true);
-          setToastMessage('Generating shareable link...');
-          const uploadRes = await fetch(getApiUrl('/api/video/upload'), {
-            method: 'POST',
-            headers: {
-              'Content-Type': mimeType.split(';')[0],
-              'x-user-id': user?.uid || '',
-              'x-video-title': websiteSiteName || 'Motion Trailer',
-            },
-            body: blob
-          });
+        if (exportFormat === 'gif') {
+          // GIF Mode: Convert on the server and then download the GIF
+          try {
+            setIsUploadingVideo(true);
+            setToastMessage('Creating high-quality cinematic GIF on server... (may take 10-15s)');
+            
+            const toGifRes = await fetch(getApiUrl('/api/video/to-gif'), {
+              method: 'POST',
+              headers: {
+                'Content-Type': mimeType.split(';')[0],
+                'x-user-id': user?.uid || '',
+                'x-video-title': websiteSiteName || 'Motion Trailer',
+              },
+              body: blob
+            });
 
-          if (uploadRes.ok) {
-            const { shareUrl } = await uploadRes.json();
-            setLastShareUrl(shareUrl);
-            setToastMessage(`Video shared! Link copied to clipboard.`);
-            navigator.clipboard.writeText(shareUrl).catch(() => {});
-          } else {
-            setToastMessage('Video saved locally. Share upload failed.');
+            if (toGifRes.ok) {
+              const { gifUrl, shareUrl } = await toGifRes.json();
+              setLastShareUrl(shareUrl);
+              
+              // Download the GIF locally
+              const a = document.createElement('a');
+              a.href = gifUrl;
+              a.download = `motion-trailer-${exportResolution}.gif`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              
+              setToastMessage('Cinematic GIF generated! Downloaded & link copied to clipboard.');
+              navigator.clipboard.writeText(shareUrl).catch(() => {});
+            } else {
+              // Fallback to downloading raw WebM locally if GIF fails
+              const localUrl = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = localUrl;
+              a.download = `motion-trailer-${exportResolution}.webm`;
+              a.click();
+              URL.revokeObjectURL(localUrl);
+              setToastMessage('GIF conversion failed. Downloaded raw video recording instead.');
+            }
+          } catch (err) {
+            console.error('GIF conversion failed:', err);
+            // Fallback to downloading raw WebM locally
+            const localUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = localUrl;
+            a.download = `motion-trailer-${exportResolution}.webm`;
+            a.click();
+            URL.revokeObjectURL(localUrl);
+            setToastMessage('GIF conversion failed. Downloaded raw video recording instead.');
+          } finally {
+            setIsUploadingVideo(false);
+            setTimeout(() => setToastMessage(null), 6000);
           }
-        } catch (err) {
-          console.error('Video upload failed:', err);
-          setToastMessage('Video saved locally. Share upload failed.');
-        } finally {
-          setIsUploadingVideo(false);
-          setTimeout(() => setToastMessage(null), 6000);
+        } else {
+          // Standard Video Mode: Download locally immediately
+          const localUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = localUrl;
+          const ext = exportFormat === 'mov' ? 'mov' : (exportFormat === 'mp4' ? 'mp4' : 'webm');
+          a.download = `motion-trailer-${exportResolution}.${ext}`;
+          a.click();
+          URL.revokeObjectURL(localUrl);
+
+          // Upload to server for shareable link
+          try {
+            setIsUploadingVideo(true);
+            setToastMessage('Generating shareable link...');
+            const uploadRes = await fetch(getApiUrl('/api/video/upload'), {
+              method: 'POST',
+              headers: {
+                'Content-Type': mimeType.split(';')[0],
+                'x-user-id': user?.uid || '',
+                'x-video-title': websiteSiteName || 'Motion Trailer',
+              },
+              body: blob
+            });
+
+            if (uploadRes.ok) {
+              const { shareUrl } = await uploadRes.json();
+              setLastShareUrl(shareUrl);
+              setToastMessage(`Video shared! Link copied to clipboard.`);
+              navigator.clipboard.writeText(shareUrl).catch(() => {});
+            } else {
+              setToastMessage('Video saved locally. Share upload failed.');
+            }
+          } catch (err) {
+            console.error('Video upload failed:', err);
+            setToastMessage('Video saved locally. Share upload failed.');
+          } finally {
+            setIsUploadingVideo(false);
+            setTimeout(() => setToastMessage(null), 6000);
+          }
         }
       };
 
@@ -5615,109 +5679,13 @@ export default function App() {
 
                          {/* Notification Stack Custom Editor */}
                          {comp.sceneType === 'notification-stack' && (
-                           <div className="w-full border-t border-black/5 pt-6 mt-2 space-y-4">
-                             <div className="flex items-center gap-2">
-                               <span className="mono text-[10px] uppercase font-black tracking-wider text-ink/40">Notification Stack Editor</span>
-                               <div className="h-[1px] flex-1 bg-black/5" />
-                             </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                               {[0, 1, 2, 3].map((cardIdx) => {
-                                 const defaultTemplates = [
-                                   { app: 'Stripe', title: 'Payment Received', desc: 'New customer subscribed: Pro Plan' },
-                                   { app: 'Product Hunt', title: 'Trending #1 Product', desc: 'KasperMotion 2.0 reached 1,500+ upvotes!' },
-                                   { app: 'Figma', title: 'Design Template Saved', desc: 'The smooth 3D overlays are absolute fire!' },
-                                   { app: 'Discord', title: 'New Member Joined', desc: '250+ creators joined your Discord lounge!' },
-                                 ];
-                                 
-                                 const stack = comp.notificationStack || [];
-                                 const cardData = stack[cardIdx] || { app: '', title: '', desc: '' };
-                                 
-                                 const updateCardField = (field: 'app' | 'title' | 'desc', val: string) => {
-                                   const nextStack = [...stack];
-                                   for (let i = 0; i <= 3; i++) {
-                                     if (!nextStack[i]) {
-                                       nextStack[i] = { 
-                                         app: defaultTemplates[i].app, 
-                                         title: defaultTemplates[i].title, 
-                                         desc: defaultTemplates[i].desc 
-                                       };
-                                     }
-                                   }
-                                   nextStack[cardIdx] = { ...nextStack[cardIdx], [field]: val };
-                                   updateSceneProperty(idx, 'notificationStack', nextStack);
-                                 };
-
-                                 return (
-                                   <div key={cardIdx} className="bg-ivory/40 p-4 border border-black/5 rounded-lg space-y-3">
-                                     <div className="flex justify-between items-center pb-2 border-b border-black/5">
-                                       <span className="mono text-[9px] font-black uppercase text-ink/70">Notification Card #{cardIdx + 1}</span>
-                                     </div>
-                                     
-                                     <div className="flex gap-2">
-                                       <div className="flex-1 min-w-0">
-                                         <label className="mono text-[8px] font-bold text-ink/40 uppercase mb-1 block">App Preset</label>
-                                         <select
-                                           value={['stripe', 'product hunt', 'figma', 'discord', 'facebook', 'twitter', 'instagram', 'youtube', 'slack', 'linkedin'].includes((cardData.app || '').toLowerCase()) ? cardData.app : 'Custom'}
-                                           onChange={(e) => {
-                                             if (e.target.value !== 'Custom') {
-                                               updateCardField('app', e.target.value);
-                                             }
-                                           }}
-                                           className="bg-white border border-black/10 px-2 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
-                                         >
-                                           <option value="Stripe">Stripe Presets</option>
-                                           <option value="Product Hunt">Product Hunt Presets</option>
-                                           <option value="Figma">Figma Presets</option>
-                                           <option value="Discord">Discord Presets</option>
-                                           <option value="Facebook">Facebook Presets</option>
-                                           <option value="Twitter">X / Twitter Presets</option>
-                                           <option value="Instagram">Instagram Presets</option>
-                                           <option value="YouTube">YouTube Presets</option>
-                                           <option value="Slack">Slack Presets</option>
-                                           <option value="LinkedIn">LinkedIn Presets</option>
-                                           <option value="Custom">Custom / Other</option>
-                                         </select>
-                                       </div>
-
-                                       <div className="flex-1 min-w-0">
-                                         <label className="mono text-[8px] font-bold text-ink/40 uppercase mb-1 block">App Name</label>
-                                         <input
-                                           type="text"
-                                           value={cardData.app}
-                                           placeholder={defaultTemplates[cardIdx].app}
-                                           onChange={(e) => updateCardField('app', e.target.value)}
-                                           className="bg-white border border-black/10 px-2 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
-                                         />
-                                       </div>
-                                     </div>
-
-                                     <div className="flex flex-col gap-1">
-                                       <label className="mono text-[8px] font-bold text-ink/40 uppercase">Title</label>
-                                       <input
-                                         type="text"
-                                         value={cardData.title}
-                                         placeholder={defaultTemplates[cardIdx].title}
-                                         onChange={(e) => updateCardField('title', e.target.value)}
-                                         className="bg-white border border-black/10 px-3 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
-                                       />
-                                     </div>
-
-                                     <div className="flex flex-col gap-1">
-                                       <label className="mono text-[8px] font-bold text-ink/40 uppercase">Description Message</label>
-                                       <input
-                                         type="text"
-                                         value={cardData.desc}
-                                         placeholder={defaultTemplates[cardIdx].desc}
-                                         onChange={(e) => updateCardField('desc', e.target.value)}
-                                         className="bg-white border border-black/10 px-3 py-1.5 text-xs font-semibold outline-none focus:border-ink w-full"
-                                       />
-                                     </div>
-                                   </div>
-                                 );
-                               })}
-                             </div>
-                           </div>
-                         )}
+                            <NotificationStackEditor
+                              composition={comp}
+                              onSave={(nextStack) => {
+                                updateSceneProperty(idx, 'notificationStack', nextStack);
+                              }}
+                            />
+                          )}
                        </div>
                      ))}
                    </div>
@@ -6177,6 +6145,7 @@ export default function App() {
                      <option value="webm">WebM (Alpha)</option>
                      <option value="mp4">MP4 (Standard)</option>
                      <option value="mov">MOV (ProRes)</option>
+                     <option value="gif">GIF (Cinematic Loop)</option>
                    </select>
                  </div>
                  <div className="space-y-2">
