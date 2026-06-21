@@ -3097,6 +3097,7 @@ export default function App() {
   const [automatedSecondaryAssets, setAutomatedSecondaryAssets] = useState(false);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
+  const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
     name: string;
     fromUrl: string;
@@ -3339,6 +3340,40 @@ export default function App() {
     }
   };
 
+  const handleBackgroundVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('video/')) {
+      setToastMessage('Please select a video file.');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    if (!user) {
+      setBackgroundVideoUrl(URL.createObjectURL(file));
+      setToastMessage('Background video set (local only — sign in to persist).');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    try {
+      setToastMessage('Uploading background video...');
+      const storageRef = ref(storage, `users/${user.uid}/bg-videos/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      const uploadPromise = uploadBytes(storageRef, file);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Upload timed out.')), 30000);
+      });
+      await Promise.race([uploadPromise, timeoutPromise]);
+      const url = await getDownloadURL(storageRef);
+      setBackgroundVideoUrl(url);
+      setToastMessage('Background video uploaded!');
+    } catch (err) {
+      console.error('Background video upload failed', err);
+      setBackgroundVideoUrl(URL.createObjectURL(file));
+      setToastMessage('Upload failed — using local preview.');
+    }
+    setTimeout(() => setToastMessage(null), 3000);
+    e.target.value = '';
+  };
+
   const sanitizeForFirestore = (obj: any): any => {
     if (Array.isArray(obj)) {
       return obj.map(v => sanitizeForFirestore(v));
@@ -3446,6 +3481,7 @@ export default function App() {
         settings: {
           fontStyle,
           backgroundStyles,
+          backgroundVideoUrl,
           textEffect,
           selectedEffects,
           transitionType,
@@ -3495,6 +3531,7 @@ export default function App() {
       ? project.settings.backgroundStyles
       : (project.settings.backgroundStyle ? [project.settings.backgroundStyle] : ['black']);
     setBackgroundStyles(loadedBackgrounds);
+    setBackgroundVideoUrl(project.settings.backgroundVideoUrl || null);
     setTextEffect(project.settings.textEffect || 'gsap-glow');
     setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-glow']);
     setTransitionType(project.settings.transitionType);
@@ -5465,6 +5502,43 @@ export default function App() {
 
                  <div className="space-y-10">
                     <div>
+                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Background Video</label>
+                       <div className="p-8 bg-white border border-black/5 space-y-4">
+                           <div className="flex items-center gap-4">
+                               {backgroundVideoUrl ? (
+                                   <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
+                                       <div className="relative w-24 h-14 rounded overflow-hidden bg-black shrink-0">
+                                         <video src={backgroundVideoUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                       </div>
+                                       <div className="flex-1 min-w-0">
+                                         <span className="mono text-[10px] uppercase font-bold block">Video Background Active</span>
+                                         <span className="mono text-[9px] opacity-50 block">Plays behind all scenes & themes</span>
+                                       </div>
+                                       <button 
+                                           onClick={() => setBackgroundVideoUrl(null)}
+                                           className="text-red-500 hover:text-red-700 transition-colors shrink-0"
+                                       >
+                                           <Trash2 className="w-4 h-4" />
+                                       </button>
+                                   </div>
+                               ) : (
+                                   <label className="flex-1 border-2 border-dashed border-black/20 p-8 flex flex-col items-center justify-center cursor-pointer hover:border-black/40 hover:bg-black/5 transition-all text-center">
+                                       <Video className="w-6 h-6 mb-2 opacity-50" />
+                                       <span className="mono text-[10px] font-bold uppercase block mb-1">Upload Background Video</span>
+                                       <span className="mono text-[9px] opacity-50">MP4, WebM, MOV — plays full-screen behind everything</span>
+                                       <input 
+                                           type="file" 
+                                           className="hidden" 
+                                           accept="video/*"
+                                           onChange={handleBackgroundVideoUpload}
+                                       />
+                                   </label>
+                               )}
+                           </div>
+                       </div>
+                    </div>
+
+                    <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Global Audio Track</label>
                        <div className="p-8 bg-white border border-black/5 space-y-4">
                            <div className="flex items-center gap-4">
@@ -5737,9 +5811,22 @@ export default function App() {
 
       return (
         <div
-          className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${getBackgroundClass()}`}
-          style={{ perspective: '2000px', backgroundColor: thiccBgColor }}
+          className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${backgroundVideoUrl ? 'bg-black' : getBackgroundClass()}`}
+          style={{ perspective: '2000px', backgroundColor: backgroundVideoUrl ? '#000' : thiccBgColor }}
         >
+          {/* Full-screen background video layer */}
+          {backgroundVideoUrl && (
+            <video
+              key={backgroundVideoUrl}
+              src={backgroundVideoUrl}
+              className="absolute inset-0 w-full h-full object-cover z-0"
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          )}
+
           <div className="grain-overlay" />
           
           {globalAudioUrl && (
@@ -5756,10 +5843,10 @@ export default function App() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${currentComp?.activeBackground || 'default'}-${currentComp?.thiccTheme || ''}`}
-                className={`absolute inset-0 ${getBackgroundClass()}`}
-                style={{ backgroundColor: thiccBgColor }}
+                className={`absolute inset-0 ${backgroundVideoUrl ? '' : getBackgroundClass()}`}
+                style={{ backgroundColor: backgroundVideoUrl ? (thiccBgColor || undefined) : thiccBgColor, opacity: backgroundVideoUrl ? 0.4 : undefined }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: backgroundVideoUrl ? 0.4 : 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
               />
