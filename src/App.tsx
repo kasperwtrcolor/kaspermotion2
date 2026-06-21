@@ -49,8 +49,14 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 };
 
 const searchPixabayVideos = async (query: string, page = 1): Promise<any> => {
-  const res = await fetch(getApiUrl(`/api/pixabay-videos?q=${encodeURIComponent(query)}&page=${page}&per_page=3`));
-  if (!res.ok) throw new Error(`Pixabay search failed (${res.status})`);
+  const apiKey = import.meta.env.VITE_PIXABAY_API_KEY || '';
+  if (!apiKey) throw new Error('Pixabay API key not configured');
+  const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}&per_page=3&safesearch=true`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
   return res.json();
 };
 
