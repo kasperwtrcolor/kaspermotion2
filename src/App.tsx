@@ -49,7 +49,8 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 };
 
 const searchPixabayVideos = async (query: string, page = 1): Promise<any> => {
-  const res = await fetch(getApiUrl(`/api/pixabay-videos?q=${encodeURIComponent(query)}&page=${page}&per_page=12`));
+  const res = await fetch(getApiUrl(`/api/pixabay-videos?q=${encodeURIComponent(query)}&page=${page}&per_page=3`));
+  if (!res.ok) throw new Error(`Pixabay search failed (${res.status})`);
   return res.json();
 };
 
@@ -5562,7 +5563,7 @@ export default function App() {
                                        searchPixabayVideos(pixabayQuery.trim()).then(data => {
                                          setPixabayResults(data.hits || []);
                                          setPixabayLoading(false);
-                                       }).catch(() => setPixabayLoading(false));
+                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
                                      }
                                    }}
                                    placeholder="Search free videos... (e.g. ocean, city, abstract)"
@@ -5575,7 +5576,7 @@ export default function App() {
                                        searchPixabayVideos(pixabayQuery.trim()).then(data => {
                                          setPixabayResults(data.hits || []);
                                          setPixabayLoading(false);
-                                       }).catch(() => setPixabayLoading(false));
+                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
                                      }
                                    }}
                                    disabled={pixabayLoading}
@@ -5596,7 +5597,7 @@ export default function App() {
                                        searchPixabayVideos(cat).then(data => {
                                          setPixabayResults(data.hits || []);
                                          setPixabayLoading(false);
-                                       }).catch(() => setPixabayLoading(false));
+                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
                                      }}
                                      className="px-2 py-1 bg-ivory border border-black/5 mono text-[8px] font-bold uppercase hover:bg-ink hover:text-cream transition-all"
                                    >
@@ -5608,7 +5609,7 @@ export default function App() {
                                {/* Results grid */}
                                {pixabayResults.length > 0 && (
                                  <div className="space-y-2">
-                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                   <div className="grid grid-cols-3 gap-2">
                                      {pixabayResults.map((hit: any) => {
                                        const thumbnail = hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail;
                                        const videoUrl = hit.videos?.large?.url || hit.videos?.medium?.url || hit.videos?.small?.url;
