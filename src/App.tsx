@@ -48,6 +48,11 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
   return res.json();
 };
 
+const searchPixabayVideos = async (query: string, page = 1): Promise<any> => {
+  const res = await fetch(getApiUrl(`/api/pixabay-videos?q=${encodeURIComponent(query)}&page=${page}&per_page=12`));
+  return res.json();
+};
+
 type TextPosition = 'bottom' | 'top' | 'center' | 'left' | 'right' | 'random';
 type FontStyle = 'font-sans' | 'font-serif' | 'font-mono' | 'font-display' | 'font-outfit' | 'font-grotesk' | 'font-syne' | 'font-bangers';
 type BackgroundStyle = 'black' | 'vibrant-glow' | 'particles' | 'grid' | 'gradient-teal' | 'gradient-rose' | 'gradient-amber' | 'gradient-emerald' | 'gradient-indigo' | 'gradient-slate' | 'deep-ocean' | 'sunset-fire' | 'midnight' | 'premium-parallax' | 'textured-paper' | string;
@@ -3098,6 +3103,10 @@ export default function App() {
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
+  const [pixabayQuery, setPixabayQuery] = useState('');
+  const [pixabayResults, setPixabayResults] = useState<any[]>([]);
+  const [pixabayLoading, setPixabayLoading] = useState(false);
+  const [showPixabaySearch, setShowPixabaySearch] = useState(false);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
     name: string;
     fromUrl: string;
@@ -5504,37 +5513,159 @@ export default function App() {
                     <div>
                        <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Background Video</label>
                        <div className="p-8 bg-white border border-black/5 space-y-4">
-                           <div className="flex items-center gap-4">
-                               {backgroundVideoUrl ? (
-                                   <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
-                                       <div className="relative w-24 h-14 rounded overflow-hidden bg-black shrink-0">
-                                         <video src={backgroundVideoUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                                       </div>
-                                       <div className="flex-1 min-w-0">
-                                         <span className="mono text-[10px] uppercase font-bold block">Video Background Active</span>
-                                         <span className="mono text-[9px] opacity-50 block">Plays behind all scenes & themes</span>
-                                       </div>
-                                       <button 
-                                           onClick={() => setBackgroundVideoUrl(null)}
-                                           className="text-red-500 hover:text-red-700 transition-colors shrink-0"
-                                       >
-                                           <Trash2 className="w-4 h-4" />
-                                       </button>
-                                   </div>
-                               ) : (
-                                   <label className="flex-1 border-2 border-dashed border-black/20 p-8 flex flex-col items-center justify-center cursor-pointer hover:border-black/40 hover:bg-black/5 transition-all text-center">
-                                       <Video className="w-6 h-6 mb-2 opacity-50" />
-                                       <span className="mono text-[10px] font-bold uppercase block mb-1">Upload Background Video</span>
-                                       <span className="mono text-[9px] opacity-50">MP4, WebM, MOV — plays full-screen behind everything</span>
-                                       <input 
-                                           type="file" 
-                                           className="hidden" 
-                                           accept="video/*"
-                                           onChange={handleBackgroundVideoUpload}
-                                       />
-                                   </label>
-                               )}
+                           {/* Current selection preview */}
+                           {backgroundVideoUrl && (
+                             <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
+                                 <div className="relative w-24 h-14 rounded overflow-hidden bg-black shrink-0">
+                                   <video src={backgroundVideoUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                   <span className="mono text-[10px] uppercase font-bold block">Video Background Active</span>
+                                   <span className="mono text-[9px] opacity-50 block">Plays behind all scenes & themes</span>
+                                 </div>
+                                 <button 
+                                     onClick={() => setBackgroundVideoUrl(null)}
+                                     className="text-red-500 hover:text-red-700 transition-colors shrink-0"
+                                 >
+                                     <Trash2 className="w-4 h-4" />
+                                 </button>
+                             </div>
+                           )}
+
+                           {/* Search / Upload toggle buttons */}
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => setShowPixabaySearch(!showPixabaySearch)}
+                               className={`flex-1 flex items-center justify-center gap-2 py-3 border mono text-[10px] font-bold uppercase transition-all ${
+                                 showPixabaySearch ? 'bg-ink text-cream border-ink' : 'bg-ivory border-black/10 hover:border-black/30'
+                               }`}
+                             >
+                               <Search size={14} /> Search Stock Videos
+                             </button>
+                             <label className="flex-1 flex items-center justify-center gap-2 py-3 border bg-ivory border-black/10 hover:border-black/30 mono text-[10px] font-bold uppercase transition-all cursor-pointer">
+                               <Upload size={14} /> Upload Your Own
+                               <input type="file" className="hidden" accept="video/*" onChange={handleBackgroundVideoUpload} />
+                             </label>
                            </div>
+
+                           {/* Pixabay Search Panel */}
+                           {showPixabaySearch && (
+                             <div className="space-y-3">
+                               <div className="flex gap-2">
+                                 <input
+                                   type="text"
+                                   value={pixabayQuery}
+                                   onChange={(e) => setPixabayQuery(e.target.value)}
+                                   onKeyDown={(e) => {
+                                     if (e.key === 'Enter' && pixabayQuery.trim()) {
+                                       setPixabayLoading(true);
+                                       searchPixabayVideos(pixabayQuery.trim()).then(data => {
+                                         setPixabayResults(data.hits || []);
+                                         setPixabayLoading(false);
+                                       }).catch(() => setPixabayLoading(false));
+                                     }
+                                   }}
+                                   placeholder="Search free videos... (e.g. ocean, city, abstract)"
+                                   className="elite-input flex-1 p-3 mono text-[11px]"
+                                 />
+                                 <button
+                                   onClick={() => {
+                                     if (pixabayQuery.trim()) {
+                                       setPixabayLoading(true);
+                                       searchPixabayVideos(pixabayQuery.trim()).then(data => {
+                                         setPixabayResults(data.hits || []);
+                                         setPixabayLoading(false);
+                                       }).catch(() => setPixabayLoading(false));
+                                     }
+                                   }}
+                                   disabled={pixabayLoading}
+                                   className="px-4 py-3 bg-ink text-cream mono text-[10px] font-bold uppercase hover:bg-ink/80 transition-all disabled:opacity-50"
+                                 >
+                                   {pixabayLoading ? <Loader2 size={14} className="animate-spin" /> : 'Search'}
+                                 </button>
+                               </div>
+
+                               {/* Quick category pills */}
+                               <div className="flex flex-wrap gap-1">
+                                 {['nature', 'travel', 'business', 'backgrounds', 'buildings', 'computer', 'science', 'music'].map(cat => (
+                                   <button
+                                     key={cat}
+                                     onClick={() => {
+                                       setPixabayQuery(cat);
+                                       setPixabayLoading(true);
+                                       searchPixabayVideos(cat).then(data => {
+                                         setPixabayResults(data.hits || []);
+                                         setPixabayLoading(false);
+                                       }).catch(() => setPixabayLoading(false));
+                                     }}
+                                     className="px-2 py-1 bg-ivory border border-black/5 mono text-[8px] font-bold uppercase hover:bg-ink hover:text-cream transition-all"
+                                   >
+                                     {cat}
+                                   </button>
+                                 ))}
+                               </div>
+
+                               {/* Results grid */}
+                               {pixabayResults.length > 0 && (
+                                 <div className="space-y-2">
+                                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                     {pixabayResults.map((hit: any) => {
+                                       const thumbnail = hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail;
+                                       const videoUrl = hit.videos?.large?.url || hit.videos?.medium?.url || hit.videos?.small?.url;
+                                       const isSelected = backgroundVideoUrl === videoUrl;
+                                       return (
+                                         <button
+                                           key={hit.id}
+                                           onClick={() => {
+                                             setBackgroundVideoUrl(videoUrl);
+                                             setToastMessage('Background video set!');
+                                             setTimeout(() => setToastMessage(null), 2000);
+                                           }}
+                                           className={`relative group aspect-video rounded overflow-hidden border-2 transition-all ${
+                                             isSelected ? 'border-ink ring-2 ring-ink scale-[1.02]' : 'border-transparent hover:border-black/30'
+                                           }`}
+                                         >
+                                           <img
+                                             src={thumbnail}
+                                             alt={hit.tags || 'Video'}
+                                             className="w-full h-full object-cover"
+                                           />
+                                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                                             <Play size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="white" />
+                                           </div>
+                                           {isSelected && (
+                                             <div className="absolute top-1 right-1 w-5 h-5 bg-ink rounded-full flex items-center justify-center">
+                                               <CheckCircle2 size={12} className="text-cream" />
+                                             </div>
+                                           )}
+                                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+                                             <span className="mono text-[7px] text-white/80 block truncate">{hit.tags}</span>
+                                           </div>
+                                         </button>
+                                       );
+                                     })}
+                                   </div>
+                                   <div className="flex items-center justify-center pt-1">
+                                     <a href="https://pixabay.com" target="_blank" rel="noopener noreferrer" className="mono text-[8px] opacity-40 hover:opacity-70 transition-opacity">
+                                       Videos by Pixabay — Free to use
+                                     </a>
+                                   </div>
+                                 </div>
+                               )}
+
+                               {pixabayLoading && (
+                                 <div className="flex items-center justify-center py-8">
+                                   <Loader2 size={20} className="animate-spin opacity-40" />
+                                 </div>
+                               )}
+
+                               {!pixabayLoading && pixabayResults.length === 0 && pixabayQuery && (
+                                 <div className="text-center py-6 opacity-40">
+                                   <span className="mono text-[10px]">Search for videos above</span>
+                                 </div>
+                               )}
+                             </div>
+                           )}
                        </div>
                     </div>
 

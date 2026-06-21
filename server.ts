@@ -91,6 +91,35 @@ async function startServer() {
     }
   });
 
+  // Pixabay Video Search Proxy to hide API Key
+  app.get('/api/pixabay-videos', async (req, res) => {
+    try {
+      const apiKey = process.env.PIXABAY_API_KEY || 'missing_key';
+      const { q, page = 1, per_page = 20, category, video_type = 'all' } = req.query;
+
+      const params = new URLSearchParams({
+        key: apiKey,
+        per_page: String(per_page),
+        page: String(page),
+        safesearch: 'true',
+        video_type: String(video_type),
+      });
+
+      if (q) params.set('q', String(q));
+      if (category) params.set('category', String(category));
+
+      const response = await fetch(`https://pixabay.com/api/videos/?${params.toString()}`);
+      if (!response.ok) {
+        const text = await response.text();
+        return res.status(response.status).json({ error: text });
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Webhook for Stripe must use raw body
   app.post('/api/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'] as string;
