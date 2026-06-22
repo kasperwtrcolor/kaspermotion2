@@ -51,7 +51,7 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 const searchPixabayVideos = async (query: string, page = 1): Promise<any> => {
   const apiKey = import.meta.env.VITE_PIXABAY_API_KEY || '';
   if (!apiKey) throw new Error('Pixabay API key not configured');
-  const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}&per_page=3&safesearch=true`;
+  const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}&per_page=6&safesearch=true`;
   const res = await fetch(url);
   if (!res.ok) {
     const text = await res.text();
@@ -3109,7 +3109,7 @@ export default function App() {
   const [automatedSecondaryAssets, setAutomatedSecondaryAssets] = useState(false);
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
-  const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
+  const [backgroundVideoUrls, setBackgroundVideoUrls] = useState<string[]>([]);
   const [pixabayQuery, setPixabayQuery] = useState('');
   const [pixabayResults, setPixabayResults] = useState<any[]>([]);
   const [pixabayLoading, setPixabayLoading] = useState(false);
@@ -3365,8 +3365,8 @@ export default function App() {
       return;
     }
     if (!user) {
-      setBackgroundVideoUrl(URL.createObjectURL(file));
-      setToastMessage('Background video set (local only — sign in to persist).');
+      setBackgroundVideoUrls(prev => [...prev, URL.createObjectURL(file)]);
+      setToastMessage('Background video added (local only — sign in to persist).');
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
@@ -3379,11 +3379,11 @@ export default function App() {
       });
       await Promise.race([uploadPromise, timeoutPromise]);
       const url = await getDownloadURL(storageRef);
-      setBackgroundVideoUrl(url);
-      setToastMessage('Background video uploaded!');
+      setBackgroundVideoUrls(prev => [...prev, url]);
+      setToastMessage('Background video added!');
     } catch (err) {
       console.error('Background video upload failed', err);
-      setBackgroundVideoUrl(URL.createObjectURL(file));
+      setBackgroundVideoUrls(prev => [...prev, URL.createObjectURL(file)]);
       setToastMessage('Upload failed — using local preview.');
     }
     setTimeout(() => setToastMessage(null), 3000);
@@ -3497,7 +3497,7 @@ export default function App() {
         settings: {
           fontStyle,
           backgroundStyles,
-          backgroundVideoUrl,
+          backgroundVideoUrls,
           textEffect,
           selectedEffects,
           transitionType,
@@ -3547,7 +3547,7 @@ export default function App() {
       ? project.settings.backgroundStyles
       : (project.settings.backgroundStyle ? [project.settings.backgroundStyle] : ['black']);
     setBackgroundStyles(loadedBackgrounds);
-    setBackgroundVideoUrl(project.settings.backgroundVideoUrl || null);
+    setBackgroundVideoUrls(project.settings.backgroundVideoUrls || (project.settings.backgroundVideoUrl ? [project.settings.backgroundVideoUrl] : []));
     setTextEffect(project.settings.textEffect || 'gsap-glow');
     setSelectedEffects(project.settings.selectedEffects || [project.settings.textEffect || 'gsap-glow']);
     setTransitionType(project.settings.transitionType);
@@ -5518,24 +5518,33 @@ export default function App() {
 
                  <div className="space-y-10">
                     <div>
-                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Background Video</label>
+                       <label className="mono text-[10px] uppercase opacity-40 font-bold mb-4 block">Background Videos <span className="opacity-50">({backgroundVideoUrls.length} selected — cycles per scene)</span></label>
                        <div className="p-8 bg-white border border-black/5 space-y-4">
-                           {/* Current selection preview */}
-                           {backgroundVideoUrl && (
-                             <div className="flex items-center gap-4 w-full bg-ivory p-4 border border-black/10">
-                                 <div className="relative w-24 h-14 rounded overflow-hidden bg-black shrink-0">
-                                   <video src={backgroundVideoUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                                 </div>
-                                 <div className="flex-1 min-w-0">
-                                   <span className="mono text-[10px] uppercase font-bold block">Video Background Active</span>
-                                   <span className="mono text-[9px] opacity-50 block">Plays behind all scenes & themes</span>
-                                 </div>
-                                 <button 
-                                     onClick={() => setBackgroundVideoUrl(null)}
-                                     className="text-red-500 hover:text-red-700 transition-colors shrink-0"
-                                 >
-                                     <Trash2 className="w-4 h-4" />
-                                 </button>
+                           {/* Selected videos strip */}
+                           {backgroundVideoUrls.length > 0 && (
+                             <div className="space-y-2">
+                               <div className="flex gap-2 overflow-x-auto pb-2">
+                                 {backgroundVideoUrls.map((url, i) => (
+                                   <div key={i} className="relative shrink-0 w-28 aspect-video rounded overflow-hidden bg-black border border-black/10 group">
+                                     <video src={url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                     <div className="absolute top-0.5 left-1 bg-black/60 px-1 py-0.5 rounded">
+                                       <span className="mono text-[7px] text-white font-bold">Scene {i + 1}</span>
+                                     </div>
+                                     <button
+                                       onClick={() => setBackgroundVideoUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                       className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                     >
+                                       <X size={10} className="text-white" />
+                                     </button>
+                                   </div>
+                                 ))}
+                               </div>
+                               <button
+                                 onClick={() => setBackgroundVideoUrls([])}
+                                 className="mono text-[8px] text-red-500 hover:text-red-700 uppercase font-bold transition-colors"
+                               >
+                                 Clear All Videos
+                               </button>
                              </div>
                            )}
 
@@ -5612,21 +5621,28 @@ export default function App() {
                                  ))}
                                </div>
 
-                               {/* Results grid */}
+                               {/* Results grid — multi-select */}
                                {pixabayResults.length > 0 && (
                                  <div className="space-y-2">
+                                   <span className="mono text-[9px] opacity-50">Tap to add/remove — select multiple for per-scene backgrounds</span>
                                    <div className="grid grid-cols-3 gap-2">
                                      {pixabayResults.map((hit: any) => {
                                        const thumbnail = hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail;
                                        const videoUrl = hit.videos?.large?.url || hit.videos?.medium?.url || hit.videos?.small?.url;
-                                       const isSelected = backgroundVideoUrl === videoUrl;
+                                       const selectedIndex = backgroundVideoUrls.indexOf(videoUrl);
+                                       const isSelected = selectedIndex !== -1;
                                        return (
                                          <button
                                            key={hit.id}
                                            onClick={() => {
-                                             setBackgroundVideoUrl(videoUrl);
-                                             setToastMessage('Background video set!');
-                                             setTimeout(() => setToastMessage(null), 2000);
+                                             if (isSelected) {
+                                               setBackgroundVideoUrls(prev => prev.filter(u => u !== videoUrl));
+                                               setToastMessage('Video removed');
+                                             } else {
+                                               setBackgroundVideoUrls(prev => [...prev, videoUrl]);
+                                               setToastMessage(`Video added (${backgroundVideoUrls.length + 1} selected)`);
+                                             }
+                                             setTimeout(() => setToastMessage(null), 1500);
                                            }}
                                            className={`relative group aspect-video rounded overflow-hidden border-2 transition-all ${
                                              isSelected ? 'border-ink ring-2 ring-ink scale-[1.02]' : 'border-transparent hover:border-black/30'
@@ -5638,11 +5654,11 @@ export default function App() {
                                              className="w-full h-full object-cover"
                                            />
                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                                             <Play size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="white" />
+                                             {isSelected ? <CheckCircle2 size={24} className="text-white" /> : <Plus size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
                                            </div>
                                            {isSelected && (
                                              <div className="absolute top-1 right-1 w-5 h-5 bg-ink rounded-full flex items-center justify-center">
-                                               <CheckCircle2 size={12} className="text-cream" />
+                                               <span className="mono text-[8px] text-cream font-bold">{selectedIndex + 1}</span>
                                              </div>
                                            )}
                                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
@@ -5947,22 +5963,33 @@ export default function App() {
         ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES]?.bgColor
         : undefined;
 
+      const hasBackgroundVideos = backgroundVideoUrls.length > 0;
+      const currentBgVideo = hasBackgroundVideos
+        ? backgroundVideoUrls[currentIndex % backgroundVideoUrls.length]
+        : null;
+
       return (
         <div
-          className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${backgroundVideoUrl ? 'bg-black' : getBackgroundClass()}`}
-          style={{ perspective: '2000px', backgroundColor: backgroundVideoUrl ? '#000' : thiccBgColor }}
+          className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${hasBackgroundVideos ? 'bg-black' : getBackgroundClass()}`}
+          style={{ perspective: '2000px', backgroundColor: hasBackgroundVideos ? '#000' : thiccBgColor }}
         >
-          {/* Full-screen background video layer */}
-          {backgroundVideoUrl && (
-            <video
-              key={backgroundVideoUrl}
-              src={backgroundVideoUrl}
-              className="absolute inset-0 w-full h-full object-cover z-0"
-              autoPlay
-              loop
-              muted
-              playsInline
-            />
+          {/* Full-screen background video layer — cycles per scene */}
+          {hasBackgroundVideos && (
+            <AnimatePresence mode="wait">
+              <motion.video
+                key={currentBgVideo}
+                src={currentBgVideo!}
+                className="absolute inset-0 w-full h-full object-cover z-0"
+                autoPlay
+                loop
+                muted
+                playsInline
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+              />
+            </AnimatePresence>
           )}
 
           <div className="grain-overlay" />
@@ -5981,10 +6008,10 @@ export default function App() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${currentComp?.activeBackground || 'default'}-${currentComp?.thiccTheme || ''}`}
-                className={`absolute inset-0 ${backgroundVideoUrl ? '' : getBackgroundClass()}`}
-                style={{ backgroundColor: backgroundVideoUrl ? (thiccBgColor || undefined) : thiccBgColor, opacity: backgroundVideoUrl ? 0.4 : undefined }}
+                className={`absolute inset-0 ${hasBackgroundVideos ? '' : getBackgroundClass()}`}
+                style={{ backgroundColor: hasBackgroundVideos ? (thiccBgColor || undefined) : thiccBgColor, opacity: hasBackgroundVideos ? 0.4 : undefined }}
                 initial={{ opacity: 0 }}
-                animate={{ opacity: backgroundVideoUrl ? 0.4 : 1 }}
+                animate={{ opacity: hasBackgroundVideos ? 0.4 : 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
               />
