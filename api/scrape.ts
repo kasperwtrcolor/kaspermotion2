@@ -103,7 +103,7 @@ export default async function handler(req: any, res: any) {
 
       RESPONSE FORMAT (JSON ONLY):
       {
-        "script": "A 5-8 line punchy script. IMPORTANT: Do NOT use generic boilerplate about 'AI' or 'KasperMotion'. Use the ACTUAL product names and value propositions found in the website content (H1s, H2s, Meta Description). Each line must be unique and punchy.",
+        "script": "A 5-8 line punchy script. Write using natural, conversational language that sounds like a human talking to a friend. Do not use generic AI buzzwords like 'unlock', 'elevate', 'revolutionize', 'seamless', or 'supercharge'. Speak directly to the user's pain points. IMPORTANT: Do NOT use generic boilerplate about 'AI'. Use the ACTUAL product names and value propositions found in the website content (H1s, H2s, Meta Description). Each line must be unique and punchy.",
         "colors": {
           "primary": "Suggest a hex code for primary text",
           "accent": "Suggest a hex code for highlights",

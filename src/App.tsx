@@ -3813,6 +3813,7 @@ export default function App() {
         setCredits(prev => Math.max(0, prev - 2));
       }
       
+      setSetupStep(2);
       setToastMessage("Analysis complete! 2 credits used.");
       setTimeout(() => setToastMessage(null), 3000);
     } catch (err: any) {
@@ -4430,6 +4431,7 @@ export default function App() {
           setCredits(prev => Math.max(0, prev - 2));
         }
         
+        setSetupStep(2);
         setToastMessage("Scrape complete! 2 credits used.");
 
       } else {
