@@ -3714,6 +3714,7 @@ export default function App() {
   const handleUrlAnalysis = async () => {
     if (!scrapeUrl || !scrapeUrl.includes('.')) return;
     
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
     if (!isAdmin && credits < 2) {
       setToastMessage("Not enough credits. AI Scrape requires 2 credits.");
       setTimeout(() => setToastMessage(null), 3000);
@@ -4369,6 +4370,7 @@ export default function App() {
   const handleScrape = async () => {
     if (!scrapeUrl) return;
 
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
     if (!isAdmin && credits < 2) {
       setToastMessage("Not enough credits. AI Scrape requires 2 credits.");
       setTimeout(() => setToastMessage(null), 3000);
