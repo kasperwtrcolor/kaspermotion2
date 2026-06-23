@@ -3263,13 +3263,26 @@ export default function App() {
           }
         }
 
-        await setDoc(doc(db, 'users', u.uid), {
-          uid: u.uid,
-          email: u.email,
-          displayName: u.displayName,
-          photoURL: u.photoURL,
-          createdAt: serverTimestamp()
-        }, { merge: true });
+        const userRef = doc(db, 'users', u.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName,
+            photoURL: u.photoURL,
+            credits: 10,
+            createdAt: serverTimestamp()
+          });
+          setCredits(10);
+        } else {
+          await setDoc(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            photoURL: u.photoURL,
+          }, { merge: true });
+        }
       }
     });
     return () => unsubscribe();
@@ -3700,6 +3713,13 @@ export default function App() {
 
   const handleUrlAnalysis = async () => {
     if (!scrapeUrl || !scrapeUrl.includes('.')) return;
+    
+    if (!isAdmin && credits < 2) {
+      setToastMessage("Not enough credits. AI Scrape requires 2 credits.");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     setIsScraping(true);
     setToastMessage("AI Director is analyzing your website...");
 
@@ -3785,14 +3805,21 @@ export default function App() {
         setChoreographySkeleton(data.choreographySkeleton);
       }
       setDesignTokens(data);
-      setToastMessage("Success! Your brand vibe has been extracted.");
-      setSetupStep(2); // Move to Assets review
+      
+      if (!isAdmin && user) {
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
+        setCredits(prev => Math.max(0, prev - 2));
+      }
+      
+      setToastMessage("Analysis complete! 2 credits used.");
+      setTimeout(() => setToastMessage(null), 3000);
     } catch (err: any) {
-      console.error("AI Analysis failed:", err);
+      console.error(err);
       setToastMessage(err.message || "Failed to analyze URL.");
+      setTimeout(() => setToastMessage(null), 3000);
     } finally {
       setIsScraping(false);
-      setTimeout(() => setToastMessage(null), 3000);
     }
   };
 
@@ -4341,6 +4368,13 @@ export default function App() {
 
   const handleScrape = async () => {
     if (!scrapeUrl) return;
+
+    if (!isAdmin && credits < 2) {
+      setToastMessage("Not enough credits. AI Scrape requires 2 credits.");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     setIsScraping(true);
     try {
       const res = await fetch('/api/scrape', {
@@ -4387,11 +4421,20 @@ export default function App() {
         if (newAssets.length > 0) {
           setMediaFiles(prev => [...prev, ...newAssets]);
         }
+        
+        if (!isAdmin && user) {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
+          setCredits(prev => Math.max(0, prev - 2));
+        }
+        
+        setToastMessage("Scrape complete! 2 credits used.");
 
       } else {
-        setToastMessage(data.error || "Failed to generate script.");
+        throw new Error(data.error || 'Failed to fetch content');
       }
     } catch (err) {
+      console.error(err);
       setToastMessage("Error connecting to scraper.");
     } finally {
       setIsScraping(false);
