@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
 import { animate } from 'motion';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, Clock } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -666,6 +666,7 @@ type Composition = {
   thiccTheme?: ThiccThemeId;
   notificationTexts?: string[];
   notificationStack?: { app: string; title: string; desc: string; }[];
+  backgroundVideoUrl?: string;
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -4968,7 +4969,7 @@ export default function App() {
 
         const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
         const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
-        const effectiveSceneDuration = Math.max(sceneDuration * 1000, hasText ? animDuration + 1500 : 0);
+        const effectiveSceneDuration = Math.max((compositions[i].sceneDuration || sceneDuration) * 1000, hasText ? animDuration + 1500 : 0);
 
         await new Promise(r => setTimeout(r, effectiveSceneDuration));
       }
@@ -5609,6 +5610,40 @@ export default function App() {
                                <Upload size={14} /> Upload Your Own
                                <input type="file" className="hidden" accept="video/*" onChange={handleBackgroundVideoUpload} />
                              </label>
+                             <button
+                                onClick={() => {
+                                  const twitterUrl = prompt('Paste an X/Twitter video URL:\n\nExample: https://x.com/username/status/123456789');
+                                  if (!twitterUrl || !twitterUrl.trim()) return;
+                                  if (!twitterUrl.match(/(?:x\.com|twitter\.com)\/\w+\/status\/\d+/)) {
+                                    setToastMessage('Invalid X/Twitter URL. Use format: https://x.com/user/status/123');
+                                    setTimeout(() => setToastMessage(null), 3000);
+                                    return;
+                                  }
+                                  setToastMessage('Fetching video from X...');
+                                  fetch('/api/twitter-video', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ url: twitterUrl.trim() })
+                                  })
+                                    .then(r => r.json())
+                                    .then(data => {
+                                      if (data.videoUrl) {
+                                        setBackgroundVideoUrls(prev => [...prev, data.videoUrl]);
+                                        setToastMessage(`X video added! (${backgroundVideoUrls.length + 1} selected)`);
+                                      } else {
+                                        setToastMessage(data.error || 'No video found in tweet.');
+                                      }
+                                      setTimeout(() => setToastMessage(null), 3000);
+                                    })
+                                    .catch(() => {
+                                      setToastMessage('Failed to fetch video from X.');
+                                      setTimeout(() => setToastMessage(null), 3000);
+                                    });
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 py-3 border bg-ivory border-black/10 hover:border-black/30 mono text-[10px] font-bold uppercase transition-all cursor-pointer"
+                              >
+                                <Twitter size={14} /> Import from X
+                              </button>
                            </div>
 
                            {/* Pixabay Search Panel */}
@@ -5921,6 +5956,60 @@ export default function App() {
                                  <ImageIcon size={12} /> Swap Asset
                                </button>
 
+                               {/* Per-scene duration control */}
+                               <div className="flex items-center gap-1 bg-white border border-black/10 px-3 py-2 shrink-0">
+                                 <Clock size={11} className="opacity-40" />
+                                 <input
+                                   type="number"
+                                   min={1}
+                                   max={30}
+                                   step={0.5}
+                                   value={comp.sceneDuration || sceneDuration}
+                                   onChange={(e) => {
+                                     const val = parseFloat(e.target.value);
+                                     if (!isNaN(val) && val >= 1 && val <= 30) {
+                                       updateSceneProperty(idx, 'sceneDuration', val);
+                                     }
+                                   }}
+                                   className="w-12 bg-transparent mono text-[11px] font-bold text-center outline-none"
+                                   title="Scene duration in seconds"
+                                 />
+                                 <span className="mono text-[8px] opacity-40">sec</span>
+                               </div>
+
+                               {/* Per-scene background video picker */}
+                               <div className="flex items-center gap-1 shrink-0">
+                                 {comp.backgroundVideoUrl ? (
+                                   <div className="flex items-center gap-1 bg-green-50 border border-green-200 px-3 py-2 group">
+                                     <Video size={11} className="text-green-600" />
+                                     <span className="mono text-[8px] font-bold text-green-700 uppercase">BG Video</span>
+                                     <button
+                                       onClick={() => updateSceneProperty(idx, 'backgroundVideoUrl', undefined)}
+                                       className="ml-1 w-4 h-4 bg-red-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                       title="Remove scene background video"
+                                     >
+                                       <X size={8} className="text-white" />
+                                     </button>
+                                   </div>
+                                 ) : backgroundVideoUrls.length > 0 ? (
+                                   <select
+                                     value=""
+                                     onChange={(e) => {
+                                       if (e.target.value) {
+                                         updateSceneProperty(idx, 'backgroundVideoUrl', e.target.value);
+                                       }
+                                     }}
+                                     className="bg-white border border-black/10 px-3 py-2 mono text-[8px] uppercase font-bold outline-none focus:border-ink transition-colors"
+                                     title="Assign a specific background video to this scene"
+                                   >
+                                     <option value="">Set BG Video</option>
+                                     {backgroundVideoUrls.map((bgUrl, bgIdx) => (
+                                       <option key={bgIdx} value={bgUrl}>Video {bgIdx + 1}</option>
+                                     ))}
+                                   </select>
+                                 ) : null}
+                               </div>
+
                               <div className="flex flex-1 gap-2">
                                 <select
                                    value={comp.textEffect || 'gsap-stagger'}
@@ -6010,10 +6099,13 @@ export default function App() {
         ? THICC_THEMES[currentComp.thiccTheme as keyof typeof THICC_THEMES]?.bgColor
         : undefined;
 
-      const hasBackgroundVideos = backgroundVideoUrls.length > 0;
-      const currentBgVideo = hasBackgroundVideos
-        ? backgroundVideoUrls[currentIndex % backgroundVideoUrls.length]
-        : null;
+      const perSceneBgVideo = currentComp?.backgroundVideoUrl || null;
+      const hasBackgroundVideos = perSceneBgVideo || backgroundVideoUrls.length > 0;
+      const currentBgVideo = perSceneBgVideo
+        ? perSceneBgVideo
+        : backgroundVideoUrls.length > 0
+          ? backgroundVideoUrls[currentIndex % backgroundVideoUrls.length]
+          : null;
 
       return (
         <div
