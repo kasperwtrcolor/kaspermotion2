@@ -41,8 +41,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (allMedia && Array.isArray(allMedia)) {
         const videoItem = allMedia.find((m: any) => m.type === 'video' || m.type === 'gif');
         if (videoItem?.url) {
+          const proxiedUrl = `/api/video-proxy?url=${encodeURIComponent(videoItem.url)}`;
           return res.status(200).json({ 
-            videoUrl: videoItem.url,
+            videoUrl: proxiedUrl,
             thumbnail: videoItem.thumbnail_url || data?.tweet?.media?.mosaic?.formats?.jpeg,
             source: 'fxtwitter',
             tweetText: data?.tweet?.text?.slice(0, 100),
@@ -67,8 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Could not extract video URL from tweet.' });
     }
 
+    const proxiedUrl = `/api/video-proxy?url=${encodeURIComponent(videoUrl)}`;
+
     return res.status(200).json({
-      videoUrl,
+      videoUrl: proxiedUrl,
       thumbnail: media?.mosaic?.formats?.jpeg || bestVideo?.thumbnail_url,
       source: 'fxtwitter',
       tweetText: data?.tweet?.text?.slice(0, 100),
