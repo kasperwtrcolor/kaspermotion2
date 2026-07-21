@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
 import { animate } from 'motion';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, Clock } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, Clock, Volume2, VolumeX } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -3111,6 +3111,7 @@ export default function App() {
 
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [backgroundVideoUrls, setBackgroundVideoUrls] = useState<string[]>([]);
+  const [bgVideoAudioEnabled, setBgVideoAudioEnabled] = useState(false);
   const [pixabayQuery, setPixabayQuery] = useState('');
   const [pixabayResults, setPixabayResults] = useState<any[]>([]);
   const [pixabayLoading, setPixabayLoading] = useState(false);
@@ -5587,12 +5588,22 @@ export default function App() {
                                    </div>
                                  ))}
                                </div>
-                               <button
-                                 onClick={() => setBackgroundVideoUrls([])}
-                                 className="mono text-[8px] text-red-500 hover:text-red-700 uppercase font-bold transition-colors"
-                               >
-                                 Clear All Videos
-                               </button>
+                               <div className="flex items-center gap-4">
+                                <button
+                                  onClick={() => setBackgroundVideoUrls([])}
+                                  className="mono text-[8px] text-red-500 hover:text-red-700 uppercase font-bold transition-colors"
+                                >
+                                  Clear All Videos
+                                </button>
+                                <button
+                                  onClick={() => setBgVideoAudioEnabled(prev => !prev)}
+                                  className={`mono text-[8px] uppercase font-bold transition-colors flex items-center gap-1 ${bgVideoAudioEnabled ? 'text-green-600 hover:text-green-800' : 'text-black/40 hover:text-black/70'}`}
+                                  title={bgVideoAudioEnabled ? 'Video audio is ON — click to mute' : 'Video audio is OFF — click to enable'}
+                                >
+                                  {bgVideoAudioEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
+                                  {bgVideoAudioEnabled ? 'Audio On' : 'Audio Off'}
+                                </button>
+                               </div>
                              </div>
                            )}
 
@@ -6121,7 +6132,7 @@ export default function App() {
                 className="absolute inset-0 w-full h-full object-cover z-0"
                 autoPlay
                 loop
-                muted
+                muted={!bgVideoAudioEnabled}
                 playsInline
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
