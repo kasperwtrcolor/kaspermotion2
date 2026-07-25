@@ -10,6 +10,7 @@ import { GiphyFetch } from '@giphy/js-fetch-api';
 import LandingPage from './components/LandingPage';
 import AppHeader from './components/AppHeader';
 import ProfilePage from './components/ProfilePage';
+import GuidePage from './components/GuidePage';
 import PricingModal from './components/PricingModal';
 import VideoCanvas from './components/VideoCanvas';
 import HandDrawnCursor from './components/HandDrawnCursor';
@@ -3053,7 +3054,7 @@ export default function App() {
     return match ? match[1] : null;
   };
 
-  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile' | 'share'>(getInitialMode());
+  const [appMode, setAppMode] = useState<'landing' | 'setup' | 'playing' | 'profile' | 'share' | 'guide'>(getInitialMode());
   const [shareVideoId, setShareVideoId] = useState<string | null>(getShareVideoId());
   const [lastShareUrl, setLastShareUrl] = useState<string | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
@@ -5013,6 +5014,21 @@ export default function App() {
     if (appMode === 'landing') {
       return (
         <LandingPage user={user} onStart={async () => {
+          if (!user) {
+            const loggedInUser = await handleLogin();
+            if (loggedInUser) {
+              setAppMode('setup');
+            }
+          } else {
+            setAppMode('setup');
+          }
+        }} />
+      );
+    }
+
+    if (appMode === 'guide') {
+      return (
+        <GuidePage user={user} onStart={async () => {
           if (!user) {
             const loggedInUser = await handleLogin();
             if (loggedInUser) {

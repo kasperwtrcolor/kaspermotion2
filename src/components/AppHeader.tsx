@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, RefreshCcw } from 'lucide-react';
+import { Menu, X, User as UserIcon, LogOut, Coins, Home, Film, UserCircle, Plus, Video, RefreshCcw, BookOpen } from 'lucide-react';
 
-type AppMode = 'landing' | 'setup' | 'playing' | 'profile' | 'share';
+type AppMode = 'landing' | 'setup' | 'playing' | 'profile' | 'share' | 'guide';
 
 interface AppHeaderProps {
   appMode: AppMode;
@@ -61,6 +61,7 @@ export default function AppHeader({
   const navItems = [
     { id: 'landing' as AppMode, label: 'Home', icon: <Home size={16} /> },
     { id: 'setup' as AppMode, label: 'Create', icon: <Film size={16} /> },
+    { id: 'guide' as AppMode, label: 'Guide', icon: <BookOpen size={16} /> },
     { id: 'profile' as AppMode, label: 'Profile', icon: <UserCircle size={16} /> },
   ];
 
