@@ -5057,8 +5057,8 @@ export default function App() {
 
     if (appMode === 'setup') {
       return (
-        <div className="min-h-screen bg-cream text-ink font-sans flex items-start md:items-center justify-center p-4 md:p-6 pt-24 overflow-y-auto relative z-10">
-          <div className="w-full max-w-4xl border border-black/10 bg-white p-8 md:p-16 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative shadow-2xl">
+        <div className="min-h-screen bg-cream text-ink font-sans flex items-start md:items-center justify-center p-4 md:p-8 lg:p-12 pt-24 overflow-y-auto relative z-10">
+          <div className="w-full max-w-7xl border border-black/10 bg-white p-8 md:p-12 lg:p-16 xl:p-20 my-auto max-h-[85vh] overflow-y-auto custom-scrollbar relative shadow-2xl">
             <AnimatePresence>
               {(isUploading || isSaving) && (
                 <motion.div
@@ -5232,7 +5232,7 @@ export default function App() {
                        initial={{ scale: 0.95, opacity: 0 }}
                        animate={{ scale: 1, opacity: 1 }}
                        exit={{ scale: 0.95, opacity: 0 }}
-                       className="bg-white border border-black/10 w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl"
+                       className="bg-white border border-black/10 w-full max-w-7xl max-h-[85vh] flex flex-col shadow-2xl"
                      >
                        <div className="p-10 border-b border-black/5 flex items-center justify-between">
                          <h3 className="text-3xl font-black uppercase flex items-center gap-4">
