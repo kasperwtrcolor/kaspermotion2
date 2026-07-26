@@ -52,7 +52,7 @@ const searchGiphy = async (query: string, offset = 0): Promise<any> => {
 const searchPixabayVideos = async (query: string, page = 1): Promise<any> => {
   const apiKey = import.meta.env.VITE_PIXABAY_API_KEY || '';
   if (!apiKey) throw new Error('Pixabay API key not configured');
-  const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}&per_page=10&safesearch=true`;
+  const url = `https://pixabay.com/api/videos/?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}&per_page=12&safesearch=true`;
   const res = await fetch(url);
   if (!res.ok) {
     const text = await res.text();
@@ -3116,6 +3116,8 @@ export default function App() {
   const [pixabayQuery, setPixabayQuery] = useState('');
   const [pixabayResults, setPixabayResults] = useState<any[]>([]);
   const [pixabayLoading, setPixabayLoading] = useState(false);
+  const [pixabayPage, setPixabayPage] = useState(1);
+  const [pixabayTotalHits, setPixabayTotalHits] = useState(0);
   const [showPixabaySearch, setShowPixabaySearch] = useState(false);
   const [activeShaderTransition, setActiveShaderTransition] = useState<{
     name: string;
@@ -3404,6 +3406,24 @@ export default function App() {
     }
     setTimeout(() => setToastMessage(null), 3000);
     e.target.value = '';
+  };
+
+  const handlePixabaySearch = async (queryStr: string, page = 1) => {
+    if (!queryStr.trim()) return;
+    setPixabayQuery(queryStr);
+    setPixabayLoading(true);
+    try {
+      const data = await searchPixabayVideos(queryStr.trim(), page);
+      setPixabayResults(data.hits || []);
+      setPixabayTotalHits(data.totalHits || 0);
+      setPixabayPage(page);
+    } catch (err) {
+      console.error(err);
+      setToastMessage('Video search failed — check your connection.');
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setPixabayLoading(false);
+    }
   };
 
   const sanitizeForFirestore = (obj: any): any => {
@@ -5683,11 +5703,7 @@ export default function App() {
                                    onChange={(e) => setPixabayQuery(e.target.value)}
                                    onKeyDown={(e) => {
                                      if (e.key === 'Enter' && pixabayQuery.trim()) {
-                                       setPixabayLoading(true);
-                                       searchPixabayVideos(pixabayQuery.trim()).then(data => {
-                                         setPixabayResults(data.hits || []);
-                                         setPixabayLoading(false);
-                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
+                                       handlePixabaySearch(pixabayQuery.trim(), 1);
                                      }
                                    }}
                                    placeholder="Search free videos... (e.g. ocean, city, abstract)"
@@ -5695,13 +5711,7 @@ export default function App() {
                                  />
                                  <button
                                    onClick={() => {
-                                     if (pixabayQuery.trim()) {
-                                       setPixabayLoading(true);
-                                       searchPixabayVideos(pixabayQuery.trim()).then(data => {
-                                         setPixabayResults(data.hits || []);
-                                         setPixabayLoading(false);
-                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
-                                     }
+                                      if (pixabayQuery.trim()) handlePixabaySearch(pixabayQuery.trim(), 1);
                                    }}
                                    disabled={pixabayLoading}
                                    className="px-4 py-3 bg-ink text-cream mono text-[10px] font-bold uppercase hover:bg-ink/80 transition-all disabled:opacity-50"
@@ -5715,14 +5725,7 @@ export default function App() {
                                  {['nature', 'travel', 'business', 'backgrounds', 'buildings', 'computer', 'science', 'music'].map(cat => (
                                    <button
                                      key={cat}
-                                     onClick={() => {
-                                       setPixabayQuery(cat);
-                                       setPixabayLoading(true);
-                                       searchPixabayVideos(cat).then(data => {
-                                         setPixabayResults(data.hits || []);
-                                         setPixabayLoading(false);
-                                       }).catch(() => { setPixabayLoading(false); setToastMessage('Video search failed — check your connection.'); setTimeout(() => setToastMessage(null), 3000); });
-                                     }}
+                                     onClick={() => handlePixabaySearch(cat, 1)}
                                      className="px-2 py-1 bg-ivory border border-black/5 mono text-[8px] font-bold uppercase hover:bg-ink hover:text-cream transition-all"
                                    >
                                      {cat}
@@ -5733,50 +5736,67 @@ export default function App() {
                                {/* Results grid — multi-select */}
                                {pixabayResults.length > 0 && (
                                  <div className="space-y-2">
-                                   <span className="mono text-[9px] opacity-50">Tap to add/remove — select multiple for per-scene backgrounds</span>
-                                   <div className="grid grid-cols-3 gap-2">
-                                     {pixabayResults.map((hit: any) => {
-                                       const thumbnail = hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail;
-                                       const videoUrl = hit.videos?.large?.url || hit.videos?.medium?.url || hit.videos?.small?.url;
-                                       const selectedIndex = backgroundVideoUrls.indexOf(videoUrl);
-                                       const isSelected = selectedIndex !== -1;
-                                       return (
-                                         <button
-                                           key={hit.id}
-                                           onClick={() => {
-                                             if (isSelected) {
-                                               setBackgroundVideoUrls(prev => prev.filter(u => u !== videoUrl));
-                                               setToastMessage('Video removed');
-                                             } else {
-                                               setBackgroundVideoUrls(prev => [...prev, videoUrl]);
-                                               setToastMessage(`Video added (${backgroundVideoUrls.length + 1} selected)`);
-                                             }
-                                             setTimeout(() => setToastMessage(null), 1500);
-                                           }}
-                                           className={`relative group aspect-video rounded overflow-hidden border-2 transition-all ${
-                                             isSelected ? 'border-ink ring-2 ring-ink scale-[1.02]' : 'border-transparent hover:border-black/30'
-                                           }`}
-                                         >
-                                           <img
-                                             src={thumbnail}
-                                             alt={hit.tags || 'Video'}
-                                             className="w-full h-full object-cover"
-                                           />
-                                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                                             {isSelected ? <CheckCircle2 size={24} className="text-white" /> : <Plus size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
-                                           </div>
-                                           {isSelected && (
-                                             <div className="absolute top-1 right-1 w-5 h-5 bg-ink rounded-full flex items-center justify-center">
-                                               <span className="mono text-[8px] text-cream font-bold">{selectedIndex + 1}</span>
-                                             </div>
-                                           )}
-                                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
-                                             <span className="mono text-[7px] text-white/80 block truncate">{hit.tags}</span>
-                                           </div>
-                                         </button>
-                                       );
-                                     })}
+                                   <div className="flex items-center justify-between">
+                                     <span className="mono text-[9px] opacity-50">Tap to add/remove — select multiple for per-scene backgrounds</span>
+                                     <span className="mono text-[9px] font-bold opacity-60">{pixabayTotalHits} videos found</span>
                                    </div>
+                                   <div className="max-h-[320px] overflow-y-auto custom-scrollbar p-1 border border-black/5 rounded">
+                                     <div className="grid grid-cols-3 gap-2">
+                                       {pixabayResults.map((hit: any) => {
+                                         const thumbnail = hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail;
+                                         const videoUrl = hit.videos?.large?.url || hit.videos?.medium?.url || hit.videos?.small?.url;
+                                         const selectedIndex = backgroundVideoUrls.indexOf(videoUrl);
+                                         const isSelected = selectedIndex !== -1;
+                                         return (
+                                           <button
+                                             key={hit.id}
+                                             onClick={() => {
+                                               if (isSelected) {
+                                                 setBackgroundVideoUrls(prev => prev.filter(u => u !== videoUrl));
+                                                 setToastMessage('Video removed');
+                                               } else {
+                                                 setBackgroundVideoUrls(prev => [...prev, videoUrl]);
+                                                 setToastMessage(`Video added (${backgroundVideoUrls.length + 1} selected)`);
+                                               }
+                                               setTimeout(() => setToastMessage(null), 1500);
+                                             }}
+                                             className={`relative group aspect-video rounded overflow-hidden border-2 transition-all ${
+                                               isSelected ? 'border-ink ring-2 ring-ink scale-[1.02]' : 'border-transparent hover:border-black/30'
+                                             }`}
+                                           >
+                                             <img
+                                               src={thumbnail}
+                                               alt={hit.tags || 'Video'}
+                                               className="w-full h-full object-cover"
+                                             />
+                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                                               {isSelected ? <CheckCircle2 size={24} className="text-white" /> : <Plus size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                             </div>
+                                             {isSelected && (
+                                               <div className="absolute top-1 right-1 w-5 h-5 bg-ink rounded-full flex items-center justify-center">
+                                                 <span className="mono text-[8px] text-cream font-bold">{selectedIndex + 1}</span>
+                                               </div>
+                                             )}
+                                             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5">
+                                               <span className="mono text-[7px] text-white/80 block truncate">{hit.tags}</span>
+                                             </div>
+                                           </button>
+                                         );
+                                       })}
+                                     </div>
+                                   </div>
+
+                                   {/* Pagination */}
+                                   <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                                      <button onClick={() => handlePixabaySearch(pixabayQuery, pixabayPage - 1)} disabled={pixabayPage <= 1 || pixabayLoading} className="flex items-center gap-1 px-3 py-1.5 bg-ivory border border-black/10 mono text-[9px] font-bold uppercase hover:bg-ink hover:text-cream transition-all disabled:opacity-30">
+                                         <ChevronLeft size={12} /> Prev
+                                      </button>
+                                      <span className="mono text-[9px] opacity-60">Page {pixabayPage} of {Math.ceil(pixabayTotalHits / 12) || 1}</span>
+                                      <button onClick={() => handlePixabaySearch(pixabayQuery, pixabayPage + 1)} disabled={pixabayPage >= Math.ceil(pixabayTotalHits / 12) || pixabayLoading} className="flex items-center gap-1 px-3 py-1.5 bg-ivory border border-black/10 mono text-[9px] font-bold uppercase hover:bg-ink hover:text-cream transition-all disabled:opacity-30">
+                                         Next <ChevronRight size={12} />
+                                      </button>
+                                   </div>
+
                                    <div className="flex items-center justify-center pt-1">
                                      <a href="https://pixabay.com" target="_blank" rel="noopener noreferrer" className="mono text-[8px] opacity-40 hover:opacity-70 transition-opacity">
                                        Videos by Pixabay — Free to use
