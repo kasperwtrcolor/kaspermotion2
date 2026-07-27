@@ -3113,6 +3113,7 @@ export default function App() {
   const [choreographySkeleton, setChoreographySkeleton] = useState<string>('custom');
 
   const [scrapeUrl, setScrapeUrl] = useState("https://");
+  const [scriptStyle, setScriptStyle] = useState<'standard' | 'saas_explainer' | 'viral_launch' | 'degen_vulgar' | 'cinematic_teaser'>('standard');
   const [isScraping, setIsScraping] = useState(false);
   const [websiteSiteName, setWebsiteSiteName] = useState<string>('');
   const [designTokens, setDesignTokens] = useState<any>(null);
@@ -3782,7 +3783,7 @@ export default function App() {
       const resp = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl })
+        body: JSON.stringify({ url: scrapeUrl, scriptStyle })
       });
 
       const data = await resp.json();
@@ -4454,7 +4455,7 @@ export default function App() {
       const res = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl })
+        body: JSON.stringify({ url: scrapeUrl, scriptStyle })
       });
       const data = await res.json();
       if (data.script) {
@@ -5186,6 +5187,36 @@ export default function App() {
                  </div>
 
                  <div className="space-y-8">
+                   {/* Script Tone / Vibe selector */}
+                   <div>
+                     <label className="mono text-[10px] uppercase opacity-40 font-bold mb-3 block">Script Style & Tone</label>
+                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                       {[
+                         { id: 'standard', label: 'Human / Natural', desc: 'Conversational, direct & pain-point focused' },
+                         { id: 'saas_explainer', label: 'SaaS Explainer', desc: 'B2B features, ROI & problem-solving' },
+                         { id: 'viral_launch', label: 'Viral Hype', desc: 'TikTok/X style, fast hooks & FOMO' },
+                         { id: 'degen_vulgar', label: 'Degen / Swearing', desc: 'Raw, uncensored, f-bombs & zero filter' },
+                         { id: 'cinematic_teaser', label: 'Cinematic Teaser', desc: 'Epic movie trailer tension & suspense' },
+                       ].map(style => (
+                         <button
+                           key={style.id}
+                           type="button"
+                           onClick={() => setScriptStyle(style.id as any)}
+                           className={`p-3 text-left border flex flex-col justify-between transition-all ${
+                             scriptStyle === style.id
+                               ? 'bg-ink text-cream border-ink shadow-md'
+                               : 'bg-ivory/50 border-black/10 hover:border-black/30 text-ink'
+                           }`}
+                         >
+                           <div>
+                             <p className="mono text-[10px] font-bold uppercase tracking-wider mb-1">{style.label}</p>
+                             <p className={`text-[9px] leading-tight ${scriptStyle === style.id ? 'text-cream/70' : 'text-ink/50'}`}>{style.desc}</p>
+                           </div>
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+
                    <div className="relative group">
                      <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-ink/20 group-focus-within:text-ink transition-colors" size={20} />
                      <input
