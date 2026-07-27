@@ -3045,10 +3045,14 @@ export default function App() {
   const [isRainbowActive, setIsRainbowActive] = useState(false);
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
 
-  // Detect share page from URL
-  const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' => {
-    const path = window.location.pathname;
+  // Detect initial app mode from URL path
+  const getInitialMode = (): 'landing' | 'setup' | 'playing' | 'profile' | 'share' | 'guide' => {
+    const path = window.location.pathname.toLowerCase();
     if (path.startsWith('/share/')) return 'share';
+    if (path === '/create' || path === '/setup') return 'setup';
+    if (path === '/guide') return 'guide';
+    if (path === '/profile' || path === '/account') return 'profile';
+    if (path === '/studio' || path === '/playing') return 'playing';
     return 'landing';
   };
   const getShareVideoId = (): string | null => {
@@ -3062,6 +3066,29 @@ export default function App() {
   const [lastShareUrl, setLastShareUrl] = useState<string | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+
+  // URL Routing & Browser History Synchronization
+  useEffect(() => {
+    let targetPath = '/';
+    if (appMode === 'setup') targetPath = '/create';
+    else if (appMode === 'guide') targetPath = '/guide';
+    else if (appMode === 'profile') targetPath = '/profile';
+    else if (appMode === 'playing') targetPath = '/studio';
+    else if (appMode === 'share' && shareVideoId) targetPath = `/share/${shareVideoId}`;
+
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ appMode }, '', targetPath);
+    }
+  }, [appMode, shareVideoId]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setAppMode(getInitialMode());
+      setShareVideoId(getShareVideoId());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Detect payment return from Stripe
   useEffect(() => {
