@@ -3115,6 +3115,7 @@ export default function App() {
   const [backgroundStyles, setBackgroundStyles] = useState<BackgroundStyle[]>(['black']);
   const [backgroundVideoUrls, setBackgroundVideoUrls] = useState<string[]>([]);
   const [bgVideoAudioEnabled, setBgVideoAudioEnabled] = useState(false);
+  const [fastCutIndex, setFastCutIndex] = useState(0);
   const [pixabayQuery, setPixabayQuery] = useState('');
   const [pixabayResults, setPixabayResults] = useState<any[]>([]);
   const [pixabayLoading, setPixabayLoading] = useState(false);
@@ -4159,6 +4160,19 @@ export default function App() {
       }
     }
   }, [appMode, currentIndex, compositions, windowSize, camX, camY, camZ]);
+
+  // Fast cutting timer for background videos
+  useEffect(() => {
+    const currentComp = compositions[currentIndex];
+    const isFastCutting = currentComp?.fastCuttingEnabled && backgroundVideoUrls.length > 1;
+    const fastCutIntervalMs = (currentComp?.fastCuttingInterval || 0.3) * 1000;
+
+    if (!isFastCutting || appMode !== 'playing') return;
+    const interval = setInterval(() => {
+      setFastCutIndex(prev => (prev + 1) % backgroundVideoUrls.length);
+    }, fastCutIntervalMs);
+    return () => clearInterval(interval);
+  }, [appMode, compositions, currentIndex, backgroundVideoUrls.length]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDraggingRef.current = true;
@@ -6182,17 +6196,6 @@ export default function App() {
 
       const perSceneBgVideo = currentComp?.backgroundVideoUrl || null;
       const isFastCutting = currentComp?.fastCuttingEnabled && backgroundVideoUrls.length > 1;
-      const fastCutIntervalMs = (currentComp?.fastCuttingInterval || 0.3) * 1000;
-
-      // Fast cutting timer state
-      const [fastCutIndex, setFastCutIndex] = useState(0);
-      useEffect(() => {
-        if (!isFastCutting || appMode !== 'playing') return;
-        const interval = setInterval(() => {
-          setFastCutIndex(prev => (prev + 1) % backgroundVideoUrls.length);
-        }, fastCutIntervalMs);
-        return () => clearInterval(interval);
-      }, [isFastCutting, appMode, backgroundVideoUrls.length, fastCutIntervalMs, currentIndex]);
 
       const hasBackgroundVideos = perSceneBgVideo || backgroundVideoUrls.length > 0;
       const currentBgVideo = isFastCutting
