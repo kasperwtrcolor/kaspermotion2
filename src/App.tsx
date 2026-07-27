@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useVelocity, useTransform, MotionValue } from 'motion/react';
 import { animate } from 'motion';
-import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, Clock, Volume2, VolumeX } from 'lucide-react';
+import { Upload, Video, X, AlertCircle, Play, FileText, Image as ImageIcon, ArrowRight, CheckCircle2, Link as LinkIcon, Loader2, LogOut, User as UserIcon, Save, History, Trash2, Sparkles, Wand2, ChevronLeft, ChevronRight, Search, Github, Twitter, Youtube, Figma, Slack, Instagram, Chrome, Grid, Columns, TrendingUp, Bell, MessageSquare, Quote, Star, Plus, Square, Music, Hash, Sunrise, Trees, Rocket, Cpu, Users, Glasses, Trophy, Flower2, Target, Dribbble, Maximize2, Zap, Clock, Volume2, VolumeX, Scissors } from 'lucide-react';
 import { auth, db, storage } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, query, where, onSnapshot, serverTimestamp, addDoc, deleteDoc, getDocFromServer } from 'firebase/firestore';
@@ -668,6 +668,8 @@ type Composition = {
   notificationTexts?: string[];
   notificationStack?: { app: string; title: string; desc: string; }[];
   backgroundVideoUrl?: string;
+  fastCuttingEnabled?: boolean;
+  fastCuttingInterval?: number; // in seconds (e.g. 0.15, 0.3, 0.5, 0.8)
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -6024,8 +6026,8 @@ export default function App() {
                                  <span className="mono text-[8px] opacity-40">sec</span>
                                </div>
 
-                               {/* Per-scene background video picker */}
-                               <div className="flex items-center gap-1 shrink-0">
+                               {/* Per-scene background video picker & Fast Cutting */}
+                               <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                  {comp.backgroundVideoUrl ? (
                                    <div className="flex items-center gap-1 bg-green-50 border border-green-200 px-3 py-2 group">
                                      <Video size={11} className="text-green-600" />
@@ -6055,6 +6057,38 @@ export default function App() {
                                      ))}
                                    </select>
                                  ) : null}
+
+                                 {/* Fast Cutting Mode Toggle */}
+                                 {backgroundVideoUrls.length > 1 && (
+                                   <div className="flex items-center gap-1 bg-white border border-black/10 px-2 py-1.5">
+                                     <button
+                                       onClick={() => updateSceneProperty(idx, 'fastCuttingEnabled', !comp.fastCuttingEnabled)}
+                                       className={`flex items-center gap-1 mono text-[8px] font-bold uppercase px-2 py-1 transition-all ${
+                                         comp.fastCuttingEnabled
+                                           ? 'bg-amber-500 text-black shadow-sm'
+                                           : 'bg-ivory text-black/50 hover:text-black'
+                                       }`}
+                                       title="Rapidly cuts between selected background videos during this scene"
+                                     >
+                                       <Scissors size={10} />
+                                       Fast Cut {comp.fastCuttingEnabled ? 'ON' : 'OFF'}
+                                     </button>
+
+                                     {comp.fastCuttingEnabled && (
+                                       <select
+                                         value={comp.fastCuttingInterval || 0.3}
+                                         onChange={(e) => updateSceneProperty(idx, 'fastCuttingInterval', parseFloat(e.target.value))}
+                                         className="bg-ivory border border-black/10 px-1 py-1 mono text-[8px] font-bold outline-none"
+                                         title="Cut Interval Speed"
+                                       >
+                                         <option value={0.15}>Rapid (0.15s)</option>
+                                         <option value={0.3}>Fast (0.3s)</option>
+                                         <option value={0.5}>Kinetic (0.5s)</option>
+                                         <option value={0.8}>Rhythm (0.8s)</option>
+                                       </select>
+                                     )}
+                                   </div>
+                                 )}
                                </div>
 
                               <div className="flex flex-1 gap-2">
@@ -6147,19 +6181,34 @@ export default function App() {
         : undefined;
 
       const perSceneBgVideo = currentComp?.backgroundVideoUrl || null;
+      const isFastCutting = currentComp?.fastCuttingEnabled && backgroundVideoUrls.length > 1;
+      const fastCutIntervalMs = (currentComp?.fastCuttingInterval || 0.3) * 1000;
+
+      // Fast cutting timer state
+      const [fastCutIndex, setFastCutIndex] = useState(0);
+      useEffect(() => {
+        if (!isFastCutting || appMode !== 'playing') return;
+        const interval = setInterval(() => {
+          setFastCutIndex(prev => (prev + 1) % backgroundVideoUrls.length);
+        }, fastCutIntervalMs);
+        return () => clearInterval(interval);
+      }, [isFastCutting, appMode, backgroundVideoUrls.length, fastCutIntervalMs, currentIndex]);
+
       const hasBackgroundVideos = perSceneBgVideo || backgroundVideoUrls.length > 0;
-      const currentBgVideo = perSceneBgVideo
-        ? perSceneBgVideo
-        : backgroundVideoUrls.length > 0
-          ? backgroundVideoUrls[currentIndex % backgroundVideoUrls.length]
-          : null;
+      const currentBgVideo = isFastCutting
+        ? backgroundVideoUrls[fastCutIndex % backgroundVideoUrls.length]
+        : perSceneBgVideo
+          ? perSceneBgVideo
+          : backgroundVideoUrls.length > 0
+            ? backgroundVideoUrls[currentIndex % backgroundVideoUrls.length]
+            : null;
 
       return (
         <div
           className={`relative w-screen h-screen overflow-hidden transition-colors duration-1000 ${hasBackgroundVideos ? 'bg-black' : getBackgroundClass()}`}
           style={{ perspective: '2000px', backgroundColor: hasBackgroundVideos ? '#000' : thiccBgColor }}
         >
-          {/* Full-screen background video layer — cycles per scene */}
+          {/* Full-screen background video layer — supports smooth transitions and rapid fast-cutting */}
           {hasBackgroundVideos && (
             <AnimatePresence mode="wait">
               <motion.video
@@ -6170,10 +6219,10 @@ export default function App() {
                 loop
                 muted={!bgVideoAudioEnabled}
                 playsInline
-                initial={{ opacity: 0 }}
+                initial={{ opacity: isFastCutting ? 0.8 : 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.8 }}
+                exit={{ opacity: isFastCutting ? 0.8 : 0 }}
+                transition={{ duration: isFastCutting ? 0.05 : 0.8 }}
               />
             </AnimatePresence>
           )}
