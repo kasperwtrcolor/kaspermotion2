@@ -670,6 +670,7 @@ type Composition = {
   backgroundVideoUrl?: string;
   fastCuttingEnabled?: boolean;
   fastCuttingInterval?: number; // in seconds (e.g. 0.15, 0.3, 0.5, 0.8)
+  fastCuttingVideoUrls?: string[]; // Specific videos selected for fast cutting in this scene
 };
 
 const CHOREOGRAPHY_SKELETONS = {
@@ -4164,15 +4165,19 @@ export default function App() {
   // Fast cutting timer for background videos
   useEffect(() => {
     const currentComp = compositions[currentIndex];
-    const isFastCutting = currentComp?.fastCuttingEnabled && backgroundVideoUrls.length > 1;
+    const pool = (currentComp?.fastCuttingVideoUrls && currentComp.fastCuttingVideoUrls.length > 0)
+      ? currentComp.fastCuttingVideoUrls
+      : backgroundVideoUrls;
+
+    const isFastCutting = currentComp?.fastCuttingEnabled && pool.length > 1;
     const fastCutIntervalMs = (currentComp?.fastCuttingInterval || 0.3) * 1000;
 
     if (!isFastCutting || appMode !== 'playing') return;
     const interval = setInterval(() => {
-      setFastCutIndex(prev => (prev + 1) % backgroundVideoUrls.length);
+      setFastCutIndex(prev => (prev + 1) % pool.length);
     }, fastCutIntervalMs);
     return () => clearInterval(interval);
-  }, [appMode, compositions, currentIndex, backgroundVideoUrls.length]);
+  }, [appMode, compositions, currentIndex, backgroundVideoUrls]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDraggingRef.current = true;
@@ -6072,34 +6077,73 @@ export default function App() {
                                    </select>
                                  ) : null}
 
-                                 {/* Fast Cutting Mode Toggle */}
+                                 {/* Fast Cutting Mode Toggle & Video Selection */}
                                  {backgroundVideoUrls.length > 1 && (
-                                   <div className="flex items-center gap-1 bg-white border border-black/10 px-2 py-1.5">
-                                     <button
-                                       onClick={() => updateSceneProperty(idx, 'fastCuttingEnabled', !comp.fastCuttingEnabled)}
-                                       className={`flex items-center gap-1 mono text-[8px] font-bold uppercase px-2 py-1 transition-all ${
-                                         comp.fastCuttingEnabled
-                                           ? 'bg-amber-500 text-black shadow-sm'
-                                           : 'bg-ivory text-black/50 hover:text-black'
-                                       }`}
-                                       title="Rapidly cuts between selected background videos during this scene"
-                                     >
-                                       <Scissors size={10} />
-                                       Fast Cut {comp.fastCuttingEnabled ? 'ON' : 'OFF'}
-                                     </button>
-
-                                     {comp.fastCuttingEnabled && (
-                                       <select
-                                         value={comp.fastCuttingInterval || 0.3}
-                                         onChange={(e) => updateSceneProperty(idx, 'fastCuttingInterval', parseFloat(e.target.value))}
-                                         className="bg-ivory border border-black/10 px-1 py-1 mono text-[8px] font-bold outline-none"
-                                         title="Cut Interval Speed"
+                                   <div className="flex flex-col gap-2 bg-white border border-black/10 p-2">
+                                     <div className="flex items-center gap-2">
+                                       <button
+                                         onClick={() => updateSceneProperty(idx, 'fastCuttingEnabled', !comp.fastCuttingEnabled)}
+                                         className={`flex items-center gap-1 mono text-[8px] font-bold uppercase px-2 py-1 transition-all ${
+                                           comp.fastCuttingEnabled
+                                             ? 'bg-amber-500 text-black shadow-sm'
+                                             : 'bg-ivory text-black/50 hover:text-black'
+                                         }`}
+                                         title="Rapidly cuts between selected background videos during this scene"
                                        >
-                                         <option value={0.15}>Rapid (0.15s)</option>
-                                         <option value={0.3}>Fast (0.3s)</option>
-                                         <option value={0.5}>Kinetic (0.5s)</option>
-                                         <option value={0.8}>Rhythm (0.8s)</option>
-                                       </select>
+                                         <Scissors size={10} />
+                                         Fast Cut {comp.fastCuttingEnabled ? 'ON' : 'OFF'}
+                                       </button>
+
+                                       {comp.fastCuttingEnabled && (
+                                         <select
+                                           value={comp.fastCuttingInterval || 0.3}
+                                           onChange={(e) => updateSceneProperty(idx, 'fastCuttingInterval', parseFloat(e.target.value))}
+                                           className="bg-ivory border border-black/10 px-1 py-1 mono text-[8px] font-bold outline-none"
+                                           title="Cut Interval Speed"
+                                         >
+                                           <option value={0.15}>Rapid (0.15s)</option>
+                                           <option value={0.3}>Fast (0.3s)</option>
+                                           <option value={0.5}>Kinetic (0.5s)</option>
+                                           <option value={0.8}>Rhythm (0.8s)</option>
+                                         </select>
+                                       )}
+                                     </div>
+
+                                     {/* Specific video selector checkboxes for Fast Cutting */}
+                                     {comp.fastCuttingEnabled && (
+                                       <div className="space-y-1 pt-1 border-t border-black/5">
+                                         <span className="mono text-[7px] font-bold uppercase text-black/50 block">Select Videos to Fast-Cut:</span>
+                                         <div className="flex flex-wrap gap-1.5 max-w-xs">
+                                           {backgroundVideoUrls.map((bgUrl, bgIdx) => {
+                                             const selectedList = comp.fastCuttingVideoUrls || backgroundVideoUrls;
+                                             const isChecked = selectedList.includes(bgUrl);
+                                             return (
+                                               <button
+                                                 key={bgIdx}
+                                                 type="button"
+                                                 onClick={() => {
+                                                   const currentSelected = comp.fastCuttingVideoUrls ? [...comp.fastCuttingVideoUrls] : [...backgroundVideoUrls];
+                                                   let nextSelected: string[];
+                                                   if (isChecked) {
+                                                     nextSelected = currentSelected.filter(u => u !== bgUrl);
+                                                     if (nextSelected.length === 0) nextSelected = [bgUrl]; // Keep at least one
+                                                   } else {
+                                                     nextSelected = [...currentSelected, bgUrl];
+                                                   }
+                                                   updateSceneProperty(idx, 'fastCuttingVideoUrls', nextSelected);
+                                                 }}
+                                                 className={`mono text-[7px] font-bold uppercase px-1.5 py-0.5 border flex items-center gap-1 transition-all ${
+                                                   isChecked
+                                                     ? 'bg-ink text-cream border-ink'
+                                                     : 'bg-ivory text-black/40 border-black/10 hover:border-black/30'
+                                                 }`}
+                                               >
+                                                 {isChecked ? '✓' : '+'} Vid {bgIdx + 1}
+                                               </button>
+                                             );
+                                           })}
+                                         </div>
+                                       </div>
                                      )}
                                    </div>
                                  )}
@@ -6195,11 +6239,14 @@ export default function App() {
         : undefined;
 
       const perSceneBgVideo = currentComp?.backgroundVideoUrl || null;
-      const isFastCutting = currentComp?.fastCuttingEnabled && backgroundVideoUrls.length > 1;
+      const fastCutPool = (currentComp?.fastCuttingVideoUrls && currentComp.fastCuttingVideoUrls.length > 0)
+        ? currentComp.fastCuttingVideoUrls
+        : backgroundVideoUrls;
+      const isFastCutting = currentComp?.fastCuttingEnabled && fastCutPool.length > 1;
 
       const hasBackgroundVideos = perSceneBgVideo || backgroundVideoUrls.length > 0;
       const currentBgVideo = isFastCutting
-        ? backgroundVideoUrls[fastCutIndex % backgroundVideoUrls.length]
+        ? fastCutPool[fastCutIndex % fastCutPool.length]
         : perSceneBgVideo
           ? perSceneBgVideo
           : backgroundVideoUrls.length > 0
