@@ -4547,11 +4547,12 @@ export default function App() {
       const effectList: TextEffect[] = ['gsap-cascade', 'gsap-3d-roll', 'gsap-elastic', 'gsap-tornado', 'gsap-funnel', 'gsap-stack', 'gsap-glow', 'gsap-stagger', 'gsap-typewriter', 'gsap-slide-type', 'gsap-glitch', 'gsap-wave', 'gsap-blur-reveal'];
       const activeEffectList = selectedEffects.length > 0 ? selectedEffects : effectList;
       
-      // Logic: Global Override (if not random) > Manual Scene Edit > AI Choreography > Random from Selection
-      const currentEffect: TextEffect = (textEffect !== 'random')
+      // Logic: Global Override (if specific style chosen) > Manual Scene Edit > AI Choreography > Random from Selection
+      const isManualEffect = existingComp?.textEffectSource === 'manual';
+      const currentEffect: TextEffect = (textEffect !== 'random' && !isManualEffect)
         ? textEffect
-        : (existingComp?.textEffectSource === 'manual' ? existingComp.textEffect : (sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]));
-      const currentEffectSource = (textEffect !== 'random') ? 'auto' : (existingComp?.textEffectSource || 'auto');
+        : (existingComp?.textEffect || sceneChoreography?.textEffect || activeEffectList[Math.floor(Math.random() * activeEffectList.length)]);
+      const currentEffectSource = isManualEffect ? 'manual' : ((textEffect !== 'random') ? 'manual' : (existingComp?.textEffectSource || 'auto'));
 
       const posList: TextPosition[] = ['top', 'center', 'bottom', 'left', 'right'];
       const currentTextPosition = (preferredTextPosition === 'random')
@@ -4613,6 +4614,10 @@ export default function App() {
         comp.stickerX = existingComp.stickerX;
         comp.stickerY = existingComp.stickerY;
         comp.websiteUrl = existingComp.websiteUrl;
+        comp.backgroundVideoUrl = existingComp.backgroundVideoUrl;
+        comp.fastCuttingEnabled = existingComp.fastCuttingEnabled;
+        comp.fastCuttingInterval = existingComp.fastCuttingInterval;
+        comp.fastCuttingVideoUrls = existingComp.fastCuttingVideoUrls;
 
         comp.media = comp.media.map(m => {
           const existingMedia = existingComp.media.find(em => em.url === m.url);
