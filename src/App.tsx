@@ -3100,7 +3100,7 @@ export default function App() {
   const [preferredTextPosition, setPreferredTextPosition] = useState<TextPosition>('random');
   const [preferredTextSize, setPreferredTextSize] = useState<string>('random');
   const [preferredCameraPath, setPreferredCameraPath] = useState<string>('random');
-  const [exportFormat, setExportFormat] = useState<'webm' | 'mp4' | 'mov' | 'gif'>('webm');
+  const [exportFormat, setExportFormat] = useState<'mp4'>('mp4');
   const [exportResolution, setExportResolution] = useState<'720p' | '1080p' | '4K'>('1080p');
   const [includeAudioExport, setIncludeAudioExport] = useState(true);
   const [transitionType, setTransitionType] = useState<TransitionType>('morph-star');
@@ -4830,20 +4830,15 @@ export default function App() {
         preferCurrentTab: true
       } as any);
 
-      let mimeType = 'video/webm;codecs=vp9';
-      if (exportFormat === 'mp4') {
-        if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) mimeType = 'video/mp4;codecs=h264';
-        else if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
-        else {
-          setToastMessage("MP4 export not natively supported in this browser. Falling back to WebM. Use Safari or a converter for MP4.");
-          setTimeout(() => setToastMessage(null), 5000);
-        }
-      } else if (exportFormat === 'mov') {
-        if (MediaRecorder.isTypeSupported('video/quicktime')) mimeType = 'video/quicktime';
-        else {
-          setToastMessage("MOV export not natively supported in this browser. Falling back to WebM.");
-          setTimeout(() => setToastMessage(null), 5000);
-        }
+      let mimeType = 'video/mp4;codecs=h264';
+      if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) {
+        mimeType = 'video/mp4;codecs=h264';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mimeType = 'video/mp4';
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        mimeType = 'video/webm';
       }
 
       let combinedStream = stream;
@@ -4938,12 +4933,11 @@ export default function App() {
             setTimeout(() => setToastMessage(null), 6000);
           }
         } else {
-          // Standard Video Mode: Download locally immediately
+          // Standard Video Mode: Download locally immediately as MP4
           const localUrl = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = localUrl;
-          const ext = exportFormat === 'mov' ? 'mov' : (exportFormat === 'mp4' ? 'mp4' : 'webm');
-          a.download = `motion-trailer-${exportResolution}.${ext}`;
+          a.download = `motion-trailer-${exportResolution}.mp4`;
           a.click();
           URL.revokeObjectURL(localUrl);
 
@@ -6684,10 +6678,7 @@ export default function App() {
                      onChange={(e) => setExportFormat(e.target.value as any)}
                      className="w-full bg-ivory border border-black/10 p-3 mono text-[10px] font-bold uppercase"
                    >
-                     <option value="webm">WebM (Alpha)</option>
-                     <option value="mp4">MP4 (Standard)</option>
-                     <option value="mov">MOV (ProRes)</option>
-                     <option value="gif">GIF (Cinematic Loop)</option>
+                     <option value="mp4">MP4 Video</option>
                    </select>
                  </div>
                  <div className="space-y-2">
