@@ -345,11 +345,24 @@ const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, user }) =>
                 </div>
               )}
 
-              <div className="bg-ink text-cream p-8 mb-6">
+              <div className="bg-ink text-cream p-8 mb-6 relative overflow-hidden">
+                {/* Super Early Price Urgency Badge */}
+                <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1 bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-black uppercase tracking-wider rounded-full animate-pulse shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                  <span>🔥 Super Early Access — 80% Off</span>
+                </div>
+
                 <div className="flex items-baseline justify-between mb-6">
                   <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg font-bold line-through text-red-400/70">$25</span>
+                      <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded">Save $20</span>
+                    </div>
                     <div className="text-5xl font-black">$5</div>
-                    <p className="mono text-[10px] opacity-60 mt-1">one-time payment</p>
+                    <p className="mono text-[10px] text-amber-400 font-bold tracking-wider mt-1 uppercase flex items-center gap-1">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                      SUPER EARLY PRICE — ends soon
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-black">30</div>

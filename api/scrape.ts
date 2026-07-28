@@ -97,11 +97,11 @@ export default async function handler(req: any, res: any) {
 
     // 5. Script Style Prompts
     const styleDirectives: Record<string, string> = {
-      standard: "Write using natural, conversational language that sounds like a human talking to a friend. Do not use generic AI buzzwords like 'unlock', 'elevate', 'revolutionize', 'seamless', or 'supercharge'. Speak directly to the user's pain points.",
-      saas_explainer: "Write a high-converting, clear B2B/SaaS explainer script. Focus on the core problem, the solution, key features, and tangible ROI. Professional yet engaging.",
-      viral_launch: "Write a high-energy, viral social media hype launch script (TikTok/X/Reels style). Use short, snappy, high-octane phrasing, FOMO, and urgent hooks that grab attention in the first 2 seconds.",
-      degen_vulgar: "Write a raw, uncensored, degen crypto/web3/indie-hacker style script. Use swearing (f-bombs, damn, shit, holy fuck), edgy slang, raw honesty, zero corporate filter, and unapologetic attitude.",
-      cinematic_teaser: "Write a dramatic, epic movie trailer style teaser script. Mysterious, grand, suspenseful phrasing with deep atmospheric tension before revealing the product."
+      standard: "Write short, snappy, high-impact trailer captions (2-5 words per line max). Punchy and conversational. Zero fluff.",
+      saas_explainer: "Write ultra-short, crisp B2B/SaaS value statements (2-5 words per line max). Focus on core problem, solution, and high-value outcomes.",
+      viral_launch: "Write fast, explosive social hype lines (2-4 words per line max). Ultra-punchy hooks, extreme urgency, viral energy.",
+      degen_vulgar: "Write raw, uncensored, ultra-short degen lines (2-5 words max). Swearing, edgy, zero corporate filter, loud & aggressive.",
+      cinematic_teaser: "Write dramatic, minimal teaser phrases (2-4 words max). Suspenseful, mysterious, epic trailer impact."
     };
 
     const styleDirective = styleDirectives[scriptStyle] || styleDirectives['standard'];
@@ -114,7 +114,7 @@ export default async function handler(req: any, res: any) {
 
       RESPONSE FORMAT (JSON ONLY):
       {
-        "script": "A 5-8 line punchy script. STYLE DIRECTIVE: ${styleDirective} IMPORTANT: Do NOT use generic boilerplate about 'AI'. Use the ACTUAL product names and value propositions found in the website content (H1s, H2s, Meta Description). Each line must be unique and punchy.",
+        "script": "A 4-6 line script for a fast video trailer. CRITICAL RULE: Each line MUST be short and snappy (2 to 5 words max per line, e.g., 'Ship faster.', 'Zero setup required.', 'AI motion graphics.'). STYLE DIRECTIVE: ${styleDirective} IMPORTANT: Do NOT write long paragraphs or full sentences. Do NOT use generic boilerplate about 'AI' unless relevant. Use the ACTUAL product names and key value points from the website (H1s, H2s, Meta Description). Each line must be ultra-punchy.",
         "colors": {
           "primary": "Suggest a hex code for primary text",
           "accent": "Suggest a hex code for highlights",

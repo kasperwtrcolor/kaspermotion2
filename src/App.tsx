@@ -34,6 +34,8 @@ import AuthModal from './components/AuthModal';
 import ExplosionOverlay from './components/ExplosionOverlay';
 import CoinFlipCard from './components/CoinFlipCard';
 import RainbowPhysicsOverlay from './components/RainbowPhysicsOverlay';
+import CookieConsent from './components/CookieConsent';
+import FeedbackChat from './components/FeedbackChat';
 
 gsap.registerPlugin(useGSAP);
 
@@ -1865,22 +1867,22 @@ const GSAPSlideTypeText = ({ text, className = "", style = {}, textColor, isMult
     
     gsap.set(chars, { opacity: 0 });
     
-    const totalDuration = chars.length * 0.08;
+    const totalDuration = chars.length * 0.14;
     
     const tl = gsap.timeline();
     
     // Animate container out of screen to the left over the total duration
     tl.fromTo(containerRef.current,
       { x: "30vw" },
-      { x: "-150vw", duration: totalDuration + 2.5, ease: "power1.inOut" },
+      { x: "-150vw", duration: totalDuration + 4.0, ease: "power1.inOut" },
       0
     );
     
-    // Typewriter effect
+    // Typewriter effect — slowed down for readability
     tl.to(chars, {
       opacity: 1,
-      duration: 0.01,
-      stagger: 0.08,
+      duration: 0.02,
+      stagger: 0.14,
       ease: "none"
     }, 0);
   }, { scope: containerRef, dependencies: [text] });
@@ -3911,6 +3913,17 @@ export default function App() {
       });
     });
     setToastMessage("Text animation applied to all scenes");
+  };
+
+  const applySceneTypeToAllScenes = (idx: number) => {
+    setCompositions(prev => {
+      const sourceType = prev[idx].sceneType;
+      return prev.map((comp, i) => i === idx ? comp : {
+        ...comp,
+        sceneType: sourceType
+      });
+    });
+    setToastMessage("Social card type applied to all scenes");
   };
 
   const updateGlobalTextPosition = (pos: TextPosition) => {
@@ -6049,6 +6062,26 @@ export default function App() {
                                   </div>
                                 ))}
                               </div>
+                              {/* Editable script text */}
+                              <div className="mt-3 w-full">
+                                <textarea
+                                  value={comp.caption || ''}
+                                  onChange={(e) => {
+                                    const newCaption = e.target.value;
+                                    updateSceneProperty(idx, 'caption', newCaption);
+                                    // Also update scriptText so it persists for regeneration
+                                    setScriptText(prev => {
+                                      const lines = prev.split('\n');
+                                      while (lines.length <= idx) lines.push('');
+                                      lines[idx] = newCaption;
+                                      return lines.join('\n');
+                                    });
+                                  }}
+                                  rows={2}
+                                  className="w-full bg-white border border-black/10 px-3 py-2 mono text-[11px] font-medium outline-none focus:border-ink transition-colors resize-none leading-relaxed"
+                                  placeholder="Scene script text..."
+                                />  
+                              </div>
                            </div>
                            <div className="flex flex-wrap gap-4">
                               <select
@@ -6070,16 +6103,13 @@ export default function App() {
                                 <option value="notification-stack">Notification Stack</option>
                                 <option value="browser-url">Browser URL Bar</option>
                               </select>
-                              
-                              <button
-                                 onClick={() => {
-                                   setAddingAssetToSceneIdx(idx);
-                                   setShowLibrary(true);
-                                 }}
-                                 className="bg-ivory border border-black/10 px-4 py-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[9px] font-bold uppercase whitespace-nowrap shrink-0 gap-2"
-                               >
-                                 <ImageIcon size={12} /> Swap Asset
-                               </button>
+                              <button 
+                                onClick={() => applySceneTypeToAllScenes(idx)}
+                                className="bg-ivory border border-black/10 px-3 py-3 hover:bg-ink hover:text-white transition-colors flex items-center justify-center mono text-[8px] font-bold uppercase whitespace-nowrap shrink-0"
+                                title="Apply this social card type to all scenes"
+                              >
+                                Apply All
+                              </button>
 
                                {/* Per-scene duration control */}
                                <div className="flex items-center gap-1 bg-white border border-black/10 px-3 py-2 shrink-0">
@@ -6880,6 +6910,10 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Global overlays */}
+      <CookieConsent />
+      <FeedbackChat user={user} />
 
     </div>
   );

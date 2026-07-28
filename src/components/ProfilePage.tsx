@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Film, Image as ImageIcon, User as UserIcon, Trash2, Play, Coins, Calendar, Award, Sparkles, Zap, ChevronRight, Check } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc, query, orderBy, deleteDoc } from 'firebase/firestore';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeAdminTab, setActiveAdminTab] = useState<'users' | 'feedback'>('users');
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
       const qs = await getDocs(collection(db, 'users'));
       const us: any[] = [];
@@ -19,13 +20,30 @@ const AdminDashboard = () => {
       setUsers(us);
     } catch (e) {
       console.error(e);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchFeedback = async () => {
+    try {
+      const q = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'));
+      const qs = await getDocs(q);
+      const fb: any[] = [];
+      qs.forEach(docSnap => {
+        fb.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setFeedback(fb);
+    } catch (e) {
+      console.error('Error fetching feedback:', e);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchFeedback()]);
+      setLoading(false);
+    };
+    load();
   }, []);
 
   const addCredits = async (userId: string, currentCredits: number, amount: number) => {
@@ -40,33 +58,141 @@ const AdminDashboard = () => {
     }
   };
 
+  const markFeedbackResolved = async (feedbackId: string) => {
+    try {
+      await updateDoc(doc(db, 'feedback', feedbackId), { status: 'resolved' });
+      fetchFeedback();
+    } catch(e) {
+      console.error("Error updating feedback", e);
+    }
+  };
+
+  const deleteFeedback = async (feedbackId: string) => {
+    try {
+      await deleteDoc(doc(db, 'feedback', feedbackId));
+      fetchFeedback();
+    } catch(e) {
+      console.error("Error deleting feedback", e);
+    }
+  };
+
+  const getTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      'bug': 'bg-red-100 text-red-700 border-red-200',
+      'feature': 'bg-blue-100 text-blue-700 border-blue-200',
+      'feedback': 'bg-green-100 text-green-700 border-green-200',
+    };
+    return colors[type] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '—';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  const newFeedbackCount = feedback.filter(f => f.status === 'new').length;
+
   return (
     <div className="bg-white border border-black/5 p-12">
       <h3 className="text-3xl font-black uppercase mb-8 flex items-center gap-4">Admin Dashboard <Zap size={24} /></h3>
-      {loading ? <p className="mono text-xs uppercase opacity-40">Loading users...</p> : (
-         <div className="overflow-x-auto">
-            <table className="w-full text-left">
-               <thead>
+      
+      {/* Admin Sub-tabs */}
+      <div className="flex gap-2 mb-8 border-b border-black/10 pb-4">
+        <button 
+          onClick={() => setActiveAdminTab('users')}
+          className={`mono text-[11px] uppercase font-bold px-4 py-2 transition-all ${activeAdminTab === 'users' ? 'bg-ink text-cream' : 'hover:bg-ivory'}`}
+        >
+          Users ({users.length})
+        </button>
+        <button 
+          onClick={() => setActiveAdminTab('feedback')}
+          className={`mono text-[11px] uppercase font-bold px-4 py-2 transition-all relative ${activeAdminTab === 'feedback' ? 'bg-ink text-cream' : 'hover:bg-ivory'}`}
+        >
+          Feedback ({feedback.length})
+          {newFeedbackCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
+              {newFeedbackCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {loading ? <p className="mono text-xs uppercase opacity-40">Loading...</p> : (
+        <>
+          {/* Users Tab */}
+          {activeAdminTab === 'users' && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
                   <tr className="border-b border-black/10">
-                     <th className="py-4 mono text-[10px] uppercase opacity-40">User Email / ID</th>
-                     <th className="py-4 mono text-[10px] uppercase opacity-40">Credits</th>
-                     <th className="py-4 mono text-[10px] uppercase opacity-40">Action</th>
+                    <th className="py-4 mono text-[10px] uppercase opacity-40">User Email / ID</th>
+                    <th className="py-4 mono text-[10px] uppercase opacity-40">Credits</th>
+                    <th className="py-4 mono text-[10px] uppercase opacity-40">Action</th>
                   </tr>
-               </thead>
-               <tbody>
+                </thead>
+                <tbody>
                   {users.map(u => (
-                     <tr key={u.id} className="border-b border-black/5 last:border-0 hover:bg-ivory transition-colors">
-                        <td className="py-4 px-2">{u.email || u.uid || u.id}</td>
-                        <td className="py-4 px-2 font-black text-xl">{u.credits || 0}</td>
-                        <td className="py-4 px-2 flex gap-2">
-                           <button onClick={() => addCredits(u.id, u.credits, 10)} className="btn-outline py-2 px-4 text-[10px] font-bold">+10 Credits</button>
-                           <button onClick={() => addCredits(u.id, u.credits, 50)} className="btn-outline py-2 px-4 text-[10px] font-bold">+50 Credits</button>
-                        </td>
-                     </tr>
+                    <tr key={u.id} className="border-b border-black/5 last:border-0 hover:bg-ivory transition-colors">
+                      <td className="py-4 px-2">{u.email || u.uid || u.id}</td>
+                      <td className="py-4 px-2 font-black text-xl">{u.credits || 0}</td>
+                      <td className="py-4 px-2 flex gap-2">
+                        <button onClick={() => addCredits(u.id, u.credits, 10)} className="btn-outline py-2 px-4 text-[10px] font-bold">+10 Credits</button>
+                        <button onClick={() => addCredits(u.id, u.credits, 50)} className="btn-outline py-2 px-4 text-[10px] font-bold">+50 Credits</button>
+                      </td>
+                    </tr>
                   ))}
-               </tbody>
-            </table>
-         </div>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Feedback Tab */}
+          {activeAdminTab === 'feedback' && (
+            <div className="space-y-4">
+              {feedback.length === 0 ? (
+                <p className="mono text-xs uppercase opacity-40 py-8 text-center">No feedback submitted yet</p>
+              ) : (
+                feedback.map(fb => (
+                  <div key={fb.id} className={`border p-6 transition-all hover:shadow-md ${fb.status === 'resolved' ? 'opacity-50 border-black/5' : 'border-black/10'}`}>
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`mono text-[9px] uppercase font-bold px-2 py-1 border ${getTypeBadge(fb.type)}`}>
+                          {fb.type || 'feedback'}
+                        </span>
+                        <span className={`mono text-[9px] uppercase font-bold px-2 py-1 ${fb.status === 'new' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
+                          {fb.status || 'new'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {fb.status === 'new' && (
+                          <button 
+                            onClick={() => markFeedbackResolved(fb.id)}
+                            className="mono text-[9px] uppercase font-bold px-3 py-1 bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors"
+                          >
+                            ✓ Resolve
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => deleteFeedback(fb.id)}
+                          className="mono text-[9px] uppercase font-bold px-3 py-1 bg-red-50 text-red-500 border border-red-200 hover:bg-red-100 transition-colors"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm leading-relaxed mb-3">{fb.message}</p>
+                    <div className="flex items-center gap-4 mono text-[9px] opacity-40">
+                      {fb.email && <span>📧 {fb.email}</span>}
+                      {fb.userEmail && <span>👤 {fb.userEmail}</span>}
+                      <span>🕒 {formatDate(fb.createdAt)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
