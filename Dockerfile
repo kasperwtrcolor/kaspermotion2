@@ -1,54 +1,45 @@
-# Use Node.js 20 base image
-FROM node:20-slim
+FROM node:22-bookworm-slim
 
-# Install system dependencies for FFmpeg and Chrome (Puppeteer)
-RUN apt-get update && apt-get install -y \
+# Install Chromium, FFmpeg, and required system libraries for Puppeteer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
     ffmpeg \
-    wget \
-    gnupg \
-    ca-certificates \
     fonts-liberation \
+    fonts-noto-color-emoji \
+    fonts-noto-cjk \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libgbm1 \
+    libgtk-3-0 \
     libnss3 \
-    libatk1.0-0 \
-    libcups2 \
-    libdrm2 \
+    libx11-xcb1 \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpangocairo-1.0-0 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
-    --no-install-recommends \
+    xdg-utils \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.chrome.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set environment variables for Puppeteer and FFmpeg
-ENV CHROME_PATH=/usr/bin/google-chrome-stable
+# Use system Chromium — skip Puppeteer's bundled download
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV CHROME_PATH=/usr/bin/chromium
 ENV FFMPEG_PATH=/usr/bin/ffmpeg
 ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Install dependencies (layer caching)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the frontend
+# Build the Vite frontend
 RUN npm run build
 
-# Expose the server port
 EXPOSE 3000
 
-# Start the server using tsx
+# Start the Express server
 CMD ["npm", "start"]

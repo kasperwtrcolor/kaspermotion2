@@ -5078,6 +5078,161 @@ export default function App() {
     }
   };
 
+  // =========================================================================
+  // SERVER-SIDE RENDER (Railway) — Replaces screen recording
+  // =========================================================================
+  const startServerRender = async () => {
+    if (!checkStorageCap()) return;
+    const isAdmin = user?.email === 'philipsimmons67@gmail.com';
+    if (!isAdmin && credits < 2) {
+      setShowPricing(true);
+      return;
+    }
+
+    const renderServiceUrl = import.meta.env.VITE_RENDER_SERVICE_URL || getApiUrl('');
+
+    try {
+      setShowExportExplainer(false);
+      setIsUploadingVideo(true);
+      setRecordingProgress(0);
+      setToastMessage('Initializing server render...');
+
+      // 1. Calculate total duration from compositions
+      const totalDuration = compositions.reduce((sum, comp) => {
+        const hasText = comp.caption && comp.caption.trim().length > 0;
+        const animDuration = hasText ? (4 / textAnimationSpeed) : 0;
+        const effectiveSceneDuration = Math.max(
+          comp.sceneDuration || sceneDuration,
+          hasText ? animDuration + 1.5 : 0
+        );
+        return sum + effectiveSceneDuration;
+      }, 0) + 2; // +2s buffer for final scene
+
+      // 2. Create render job
+      const jobRes = await fetch(`${renderServiceUrl}/api/render-job`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          script: scriptText,
+          mediaUrls: compositions.flatMap(c => c.media.map(m => m.url)),
+          config: {
+            compositions: compositions.map(c => ({
+              ...c,
+              media: c.media.map(m => ({ url: m.url, type: m.type, name: m.name, objectFit: m.objectFit }))
+            })),
+            settings: {
+              textAnimationSpeed,
+              sceneDuration,
+              exportResolution,
+              backgroundVideoUrls: backgroundVideoUrls || [],
+              globalAudioUrl: globalAudioUrl || '',
+            }
+          },
+          sourceType: 'app',
+          sourceId: user?.uid || 'anonymous'
+        })
+      });
+
+      if (!jobRes.ok) throw new Error('Failed to create render job');
+      const { jobId } = await jobRes.json();
+      
+      setToastMessage(`Rendering on server (Job: ${jobId.slice(0, 12)}...)...`);
+
+      // 3. Trigger the headless render
+      const resConstraints = {
+        '4K': { width: 3840, height: 2160 },
+        '1080p': { width: 1920, height: 1080 },
+        '720p': { width: 1280, height: 720 }
+      }[exportResolution] || { width: 1920, height: 1080 };
+
+      // Build the playing URL that the headless browser will render
+      const playingUrl = `${renderServiceUrl}/?mode=headless-render&jobId=${jobId}`;
+
+      const renderRes = await fetch(`${renderServiceUrl}/api/render-hyperframes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: playingUrl,
+          duration: Math.ceil(totalDuration),
+          jobId,
+          width: resConstraints.width,
+          height: resConstraints.height,
+          fps: 30
+        })
+      });
+
+      if (!renderRes.ok) throw new Error('Failed to start render');
+
+      // 4. Poll for completion
+      let status = 'rendering';
+      let videoUrl = '';
+      let pollCount = 0;
+      const maxPolls = 300; // 5 min max at 1s intervals
+
+      while (status === 'rendering' || status === 'pending') {
+        await new Promise(r => setTimeout(r, 2000));
+        pollCount++;
+
+        if (pollCount > maxPolls) {
+          throw new Error('Render timed out after 10 minutes');
+        }
+
+        const statusRes = await fetch(`${renderServiceUrl}/api/render-job/${jobId}`);
+        if (!statusRes.ok) continue;
+
+        const jobData = await statusRes.json();
+        status = jobData.status;
+        const progress = jobData.progress || 0;
+
+        setRecordingProgress(progress);
+        setToastMessage(`Server rendering: ${progress}% complete...`);
+
+        if (status === 'complete') {
+          videoUrl = jobData.videoUrl;
+          break;
+        } else if (status === 'failed') {
+          throw new Error('Server render failed: ' + (jobData.error || 'Unknown error'));
+        }
+      }
+
+      // 5. Download the rendered MP4
+      if (videoUrl) {
+        setRecordingProgress(100);
+        setToastMessage('Render complete! Downloading MP4...');
+
+        const a = document.createElement('a');
+        a.href = videoUrl;
+        a.download = `${websiteSiteName || 'motion-trailer'}-${exportResolution}.mp4`;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        // Copy share URL
+        const shareUrl = `${window.location.origin}/share/${jobId}`;
+        setLastShareUrl(shareUrl);
+        navigator.clipboard.writeText(shareUrl).catch(() => {});
+
+        setToastMessage('Video rendered & downloaded! Share link copied to clipboard.');
+
+        // Deduct credits
+        if (user && !isAdmin) {
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
+        }
+      }
+
+    } catch (err: any) {
+      console.error('Server render failed:', err);
+      setToastMessage(`Server render failed: ${err.message}. Try the screen recording method instead.`);
+      setTimeout(() => setToastMessage(null), 8000);
+    } finally {
+      setIsUploadingVideo(false);
+      setRecordingProgress(0);
+      setTimeout(() => setToastMessage(null), 6000);
+    }
+  };
+
   const renderContent = () => {
     if (appMode === 'share' && shareVideoId) {
       return (
@@ -6756,7 +6911,7 @@ export default function App() {
               className="bg-white border border-black/10 p-10 max-w-md w-full text-ink shadow-2xl rounded-none"
             >
                <h2 className="mono text-2xl font-black uppercase mb-2 text-black">Export Engine</h2>
-               <p className="font-sans text-[11px] mb-8 opacity-40">Broadcast-quality video capture</p>
+               <p className="font-sans text-[11px] mb-8 opacity-40">Server-powered broadcast-quality MP4 rendering</p>
                
                <div className="grid grid-cols-2 gap-4 mb-8">
                  <div className="space-y-2">
@@ -6776,50 +6931,38 @@ export default function App() {
                      onChange={(e) => setExportResolution(e.target.value as any)}
                      className="w-full bg-ivory border border-black/10 p-3 mono text-[10px] font-bold uppercase"
                    >
-                     <option value="4K">ULTRA 4K</option>
                      <option value="1080p">FULL 1080P</option>
                      <option value="720p">HD 720P</option>
                    </select>
                  </div>
                </div>
 
-                {/* Audio capture checkbox */}
-                <div className="flex items-start gap-3.5 mb-6 p-4 border border-black/5 bg-ivory/50">
-                  <input
-                    type="checkbox"
-                    id="includeAudioExport"
-                    checked={includeAudioExport}
-                    onChange={(e) => setIncludeAudioExport(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 accent-black shrink-0 cursor-pointer"
-                  />
-                  <div className="flex flex-col gap-1 cursor-pointer select-none" onClick={() => setIncludeAudioExport(!includeAudioExport)}>
-                    <label htmlFor="includeAudioExport" className="mono text-[10px] font-black uppercase text-black cursor-pointer">
-                      Capture Sound / Audio Track
-                    </label>
-                    <p className="font-sans text-[10px] opacity-40 leading-normal">
-                      Uncheck to export a silent video (Resolves "incompatible audio codecs" error on X.com/Twitter when uploading from Chrome).
-                    </p>
-                  </div>
-                </div>
-
                <div className="bg-ivory border border-black/5 p-4 mb-8 space-y-2">
                  <p className="font-sans text-[11px] leading-relaxed opacity-60">
-                   <span className="font-bold opacity-100">1.</span> Click <span className="bg-ink text-white px-1">EXPORT VIDEO</span> below.
+                   <span className="font-bold opacity-100">⚡</span> Video is rendered on our cloud servers — no screen recording needed.
                  </p>
                  <p className="font-sans text-[11px] leading-relaxed opacity-60">
-                   <span className="font-bold opacity-100">2.</span> Select <span className="underline font-bold">Current Tab</span> when prompted.
-                 </p>
-                 <p className="font-sans text-[11px] leading-relaxed opacity-60">
-                   <span className="font-bold opacity-100">3.</span> Don't switch tabs. Recording starts after a 3s countdown.
+                   <span className="font-bold opacity-100">📥</span> Your MP4 will auto-download when the render completes (usually 1-3 minutes).
                  </p>
                </div>
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={startRecording}
-                  className="w-full p-4 bg-ink text-cream rounded-none font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl"
+                  onClick={startServerRender}
+                  disabled={isUploadingVideo}
+                  className="w-full p-4 bg-ink text-cream rounded-none font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Zap size={18} fill="currentColor" /> Export Video (2 CR)
+                  {isUploadingVideo ? (
+                    <><Loader2 size={18} className="animate-spin" /> Rendering ({Math.round(recordingProgress)}%)...</>
+                  ) : (
+                    <><Zap size={18} fill="currentColor" /> Render & Download (2 CR)</>
+                  )}
+                </button>
+                <button
+                  onClick={startRecording}
+                  className="w-full p-3 border border-black/10 hover:bg-black/5 font-bold uppercase text-[10px] flex items-center justify-center gap-2"
+                >
+                  <Video size={14} /> Screen Recording (Fallback)
                 </button>
                 <button
                   onClick={() => setShowExportExplainer(false)}
