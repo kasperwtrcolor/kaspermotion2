@@ -25,18 +25,20 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV CHROME_PATH=/usr/bin/chromium
 ENV FFMPEG_PATH=/usr/bin/ffmpeg
-ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Install dependencies (layer caching)
+# Install ALL dependencies including devDependencies (tsx is needed at runtime)
 COPY package*.json ./
 RUN npm ci
 
 # Copy source code
 COPY . .
 
+# Set production mode AFTER install so tsx is available
+ENV NODE_ENV=production
+
 EXPOSE 3000
 
-# Start the render-only worker (not the full server)
+# Start the render-only worker
 CMD ["npx", "tsx", "render-worker.ts"]
