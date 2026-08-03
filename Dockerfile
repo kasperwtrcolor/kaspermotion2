@@ -36,10 +36,7 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the Vite frontend
-RUN npm run build
-
 EXPOSE 3000
 
-# Start the Express server
-CMD ["npm", "start"]
+# Start the render-only worker (not the full server)
+CMD ["npx", "tsx", "render-worker.ts"]
