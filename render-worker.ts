@@ -7,33 +7,9 @@
 import express from 'express';
 import cors from 'cors';
 import * as path from 'path';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
-import { renderComposition } from './src/lib/renderer';
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config();
-
-// Initialize Firebase Admin
-if (getApps().length === 0) {
-  if (process.env.FIREBASE_PROJECT_ID) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app'
-    });
-  } else {
-    console.error('[Render Worker] FIREBASE_PROJECT_ID is required');
-    process.exit(1);
-  }
-}
-
-const db = getFirestore(process.env.FIREBASE_DATABASE_ID || 'ai-studio-05e7b484-8619-4800-9e84-75b7d72457cd');
-const storageBucket = getStorage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,14 +28,54 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
+// Health check — ALWAYS responds, even if Firebase isn't configured
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'healthy', engine: 'RenderWorker', uptime: process.uptime() });
+  res.json({
+    status: 'healthy',
+    engine: 'RenderWorker',
+    uptime: process.uptime(),
+    firebase: !!process.env.FIREBASE_PROJECT_ID
+  });
 });
+
+// ---- Lazy-init Firebase (only when needed) ----
+let db: any = null;
+let storageBucket: any = null;
+let FieldValue: any = null;
+
+async function getFirebase() {
+  if (db) return { db, storageBucket, FieldValue };
+
+  const { initializeApp, cert, getApps } = await import('firebase-admin/app');
+  const firestoreModule = await import('firebase-admin/firestore');
+  const { getStorage } = await import('firebase-admin/storage');
+
+  FieldValue = firestoreModule.FieldValue;
+
+  if (getApps().length === 0) {
+    if (!process.env.FIREBASE_PROJECT_ID) {
+      throw new Error('FIREBASE_PROJECT_ID is not set. Add it to Railway environment variables.');
+    }
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app'
+    });
+  }
+
+  db = firestoreModule.getFirestore(process.env.FIREBASE_DATABASE_ID || 'ai-studio-05e7b484-8619-4800-9e84-75b7d72457cd');
+  storageBucket = getStorage().bucket(process.env.FIREBASE_STORAGE_BUCKET || 'writeiq-44dd8.firebasestorage.app');
+
+  return { db, storageBucket, FieldValue };
+}
 
 // Create a render job
 app.post('/api/render-job', async (req, res) => {
   try {
+    const { db, FieldValue } = await getFirebase();
     const { script, mediaUrls, config, sourceType, sourceId } = req.body;
 
     if (!script) {
@@ -93,6 +109,7 @@ app.post('/api/render-job', async (req, res) => {
 // Get render job status
 app.get('/api/render-job/:id', async (req, res) => {
   try {
+    const { db } = await getFirebase();
     const jobId = req.params.id;
     const jobDoc = await db.collection('render-jobs').doc(jobId).get();
 
@@ -120,6 +137,8 @@ app.get('/api/render-job/:id', async (req, res) => {
 app.post('/api/render-hyperframes', async (req, res) => {
   console.log('[Render Worker] Received render request');
   try {
+    const { db, storageBucket, FieldValue } = await getFirebase();
+    const { renderComposition } = await import('./src/lib/renderer');
     const { url, duration, jobId, width, height, fps } = req.body;
     console.log(`[Render Worker] Job: ${jobId}, Duration: ${duration}s, Resolution: ${width}x${height}`);
 
@@ -147,18 +166,17 @@ app.post('/api/render-hyperframes', async (req, res) => {
       fps: fps || 30,
       width: width || 1920,
       height: height || 1080,
-      onProgress: async (p) => {
+      onProgress: async (p: number) => {
         if (jobId) {
           await db.collection('render-jobs').doc(jobId).set({
             progress: Math.round(p * 100)
           }, { merge: true });
         }
       }
-    }).then(async (renderedPath) => {
+    }).then(async (renderedPath: string) => {
       const fs = await import('fs/promises');
       const videoBuffer = await fs.readFile(renderedPath);
 
-      // Upload to Firebase Storage
       const videoId = `vid_hf_${Date.now()}`;
       const storagePath = `public-videos/${videoId}.mp4`;
       const file = storageBucket.file(storagePath);
@@ -172,7 +190,6 @@ app.post('/api/render-hyperframes', async (req, res) => {
       await file.makePublic();
       const publicUrl = `https://storage.googleapis.com/${storageBucket.name}/${storagePath}`;
 
-      // Create video document
       await db.collection('videos').doc(videoId).set({
         videoId,
         title: 'HyperRender Video',
@@ -184,7 +201,6 @@ app.post('/api/render-hyperframes', async (req, res) => {
         ext: 'mp4'
       });
 
-      // Update job status
       if (jobId) {
         await db.collection('render-jobs').doc(jobId).update({
           status: 'complete',
@@ -195,10 +211,9 @@ app.post('/api/render-hyperframes', async (req, res) => {
         });
       }
 
-      // Cleanup
       await fs.unlink(renderedPath).catch(() => {});
       console.log(`[Render Worker] Job ${id} complete: ${publicUrl}`);
-    }).catch(async (err) => {
+    }).catch(async (err: any) => {
       console.error(`[Render Worker] Job ${id} failed:`, err);
       if (jobId) {
         await db.collection('render-jobs').doc(jobId).update({
@@ -209,7 +224,6 @@ app.post('/api/render-hyperframes', async (req, res) => {
       }
     });
 
-    // Respond immediately — client will poll for status
     res.json({ jobId: id, status: 'started' });
   } catch (error: any) {
     console.error('[Render Worker] Error:', error);
@@ -225,6 +239,7 @@ app.all('*', (req, res) => {
   });
 });
 
+// Start server immediately — no async initialization that can crash
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Render Worker] Running on port ${PORT}`);
 });
