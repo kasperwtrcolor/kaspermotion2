@@ -5133,7 +5133,11 @@ export default function App() {
         })
       });
 
-      if (!jobRes.ok) throw new Error('Failed to create render job');
+      if (!jobRes.ok) {
+        const errBody = await jobRes.text().catch(() => 'No response body');
+        console.error('[Render] Job creation failed:', jobRes.status, errBody);
+        throw new Error(`Failed to create render job (${jobRes.status}): ${errBody}`);
+      }
       const { jobId } = await jobRes.json();
       
       setToastMessage(`Rendering on server (Job: ${jobId.slice(0, 12)}...)...`);
@@ -7056,7 +7060,7 @@ export default function App() {
 
       {/* Global overlays */}
       <CookieConsent />
-      <FeedbackChat user={user} />
+      {appMode === 'landing' && <FeedbackChat user={user} />}
 
     </div>
   );
