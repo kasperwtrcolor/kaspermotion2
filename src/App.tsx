@@ -5089,7 +5089,10 @@ export default function App() {
       return;
     }
 
-    const renderServiceUrl = import.meta.env.VITE_RENDER_SERVICE_URL || 'https://kaspermotion2-production.up.railway.app';
+    let renderServiceUrl = import.meta.env.VITE_RENDER_SERVICE_URL || 'https://kaspermotion2-production.up.railway.app';
+    if (renderServiceUrl && !renderServiceUrl.startsWith('http')) {
+      renderServiceUrl = `https://${renderServiceUrl}`;
+    }
 
     try {
       setShowExportExplainer(false);
