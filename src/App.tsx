@@ -5098,7 +5098,14 @@ export default function App() {
       setShowExportExplainer(false);
       setIsUploadingVideo(true);
       setRecordingProgress(0);
+      setIsRecording(true);
       setToastMessage('Initializing server render...');
+
+      // Stop video playback during render
+      sequenceActiveRef.current = false;
+      if (audioRef?.current) {
+        try { audioRef.current.pause(); } catch {}
+      }
 
       // 1. Calculate total duration from compositions
       const totalDuration = compositions.reduce((sum, comp) => {
@@ -5235,6 +5242,7 @@ export default function App() {
       setTimeout(() => setToastMessage(null), 8000);
     } finally {
       setIsUploadingVideo(false);
+      setIsRecording(false);
       setRecordingProgress(0);
       setTimeout(() => setToastMessage(null), 6000);
     }

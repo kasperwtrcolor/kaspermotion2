@@ -124,7 +124,7 @@ async function renderWithPuppeteer(
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
     // Wait for content to be ready
-    await page.waitForTimeout(2000);
+    await new Promise(r => setTimeout(r, 2000));
 
     // Create temp directory for frames
     const tempDir = path.join(os.tmpdir(), `render_${Date.now()}`);
@@ -144,7 +144,7 @@ async function renderWithPuppeteer(
       }, frame * frameDurationMs);
 
       // Wait for next frame interval
-      await page.waitForTimeout(frameDurationMs);
+      await new Promise(r => setTimeout(r, frameDurationMs));
 
       if (onProgress) {
         onProgress(frame / totalFrames);
