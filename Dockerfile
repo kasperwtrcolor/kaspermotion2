@@ -28,17 +28,20 @@ ENV FFMPEG_PATH=/usr/bin/ffmpeg
 
 WORKDIR /app
 
-# Install ALL dependencies including devDependencies (tsx is needed at runtime)
+# Install ALL dependencies (tsx + build tools needed)
 COPY package*.json ./
 RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Set production mode AFTER install so tsx is available
+# Build the Vite frontend (producer needs the built app to render)
+RUN npm run build
+
+# Set production mode AFTER install/build
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
-# Start the render-only worker
+# Start the @hyperframes/producer render server
 CMD ["npx", "tsx", "render-worker.ts"]

@@ -36,6 +36,7 @@ import CoinFlipCard from './components/CoinFlipCard';
 import RainbowPhysicsOverlay from './components/RainbowPhysicsOverlay';
 import CookieConsent from './components/CookieConsent';
 import FeedbackChat from './components/FeedbackChat';
+import VideoPlayerControls from './components/VideoPlayerControls';
 
 gsap.registerPlugin(useGSAP);
 
@@ -3169,6 +3170,9 @@ export default function App() {
   const [compositions, setCompositions] = useState<Composition[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sceneStartTime, setSceneStartTime] = useState(Date.now());
+  const [isPaused, setIsPaused] = useState(false);
+  const [sceneElapsed, setSceneElapsed] = useState(0);
+  const sceneElapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isSpatialWorld, setIsSpatialWorld] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -4306,9 +4310,34 @@ export default function App() {
 
 
 
+  // Scene elapsed time tracker
+  useEffect(() => {
+    if (appMode === 'playing' && !isPaused && !isRecording && compositions.length > 0) {
+      setSceneElapsed(0);
+      setSceneStartTime(Date.now());
+      if (sceneElapsedTimerRef.current) clearInterval(sceneElapsedTimerRef.current);
+      
+      const hasText = currentComp?.caption && currentComp.caption.trim().length > 0;
+      const animDuration = hasText ? (4 / textAnimationSpeed) : 0;
+      const effectiveSceneDurationSecs = Math.max(currentComp?.sceneDuration || sceneDuration || 5, hasText ? animDuration + 0.5 : 0);
+      
+      sceneElapsedTimerRef.current = setInterval(() => {
+        const elapsed = (Date.now() - sceneStartTime) / 1000;
+        setSceneElapsed(Math.min(elapsed / effectiveSceneDurationSecs, 1));
+      }, 100);
+      
+      return () => {
+        if (sceneElapsedTimerRef.current) clearInterval(sceneElapsedTimerRef.current);
+      };
+    } else {
+      if (sceneElapsedTimerRef.current) clearInterval(sceneElapsedTimerRef.current);
+    }
+  }, [appMode, isPaused, isRecording, currentIndex]);
+
+  // Scene auto-advance timer (respects pause)
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (appMode === 'playing' && !isRecording && compositions.length > 0) {
+    if (appMode === 'playing' && !isRecording && !isPaused && compositions.length > 0) {
       const hf = (window as any).__HYPERFRAMES_COMPOSITION__;
 
       const playNext = () => {
@@ -4328,7 +4357,7 @@ export default function App() {
       timer = setTimeout(playNext, effectiveSceneDuration);
     }
     return () => clearTimeout(timer);
-  }, [appMode, isRecording, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
+  }, [appMode, isRecording, isPaused, compositions, sceneDuration, textAnimationSpeed, currentIndex, currentComp]);
 
   useEffect(() => {
     if (appMode === 'playing' && currentIndex === 0 && audioRef.current && globalAudioUrl) {
@@ -6679,10 +6708,58 @@ export default function App() {
 
           {/* Vignette & Grime */}
           <div className="vignette-overlay z-[450]" />
-          <div className="absolute bottom-12 left-12 z-[600] flex items-center gap-4 opacity-40">
-             <div className="w-8 h-px bg-ink" />
 
-          </div>
+          {/* Video Player Controls */}
+          {!isRecording && (
+            <VideoPlayerControls
+              isPlaying={!isPaused}
+              onPlayPause={() => {
+                setIsPaused(prev => {
+                  if (!prev) {
+                    // Pausing: freeze GSAP timeline + audio
+                    gsap.globalTimeline.pause();
+                    if (audioRef.current) audioRef.current.pause();
+                  } else {
+                    // Resuming: resume GSAP timeline + audio
+                    gsap.globalTimeline.resume();
+                    if (audioRef.current) audioRef.current.play().catch(() => {});
+                    setSceneStartTime(Date.now());
+                  }
+                  return !prev;
+                });
+              }}
+              onStop={() => {
+                setIsPaused(false);
+                gsap.globalTimeline.resume();
+                if (audioRef.current) {
+                  audioRef.current.pause();
+                  audioRef.current.src = '';
+                }
+                setAppMode('setup');
+              }}
+              currentIndex={currentIndex}
+              totalScenes={compositions.length}
+              onSceneSelect={(idx) => {
+                setCurrentIndex(idx);
+                setSceneElapsed(0);
+                setSceneStartTime(Date.now());
+                const hf = (window as any).__HYPERFRAMES_COMPOSITION__;
+                if (hf) {
+                  const targetTime = compositions.slice(0, idx).reduce((acc, c) => acc + (c.sceneDuration || 5), 0);
+                  hf.seek(targetTime);
+                }
+              }}
+              sceneDurations={compositions.map(c => {
+                const hasText = c.caption && c.caption.trim().length > 0;
+                const animDuration = hasText ? (4 / textAnimationSpeed) : 0;
+                return Math.max(c.sceneDuration || sceneDuration || 5, hasText ? animDuration + 0.5 : 0);
+              })}
+              currentSceneElapsed={sceneElapsed}
+              onExport={() => startServerRender()}
+              isExporting={isUploadingVideo}
+              exportProgress={recordingProgress}
+            />
+          )}
         </div>
       );
     }
