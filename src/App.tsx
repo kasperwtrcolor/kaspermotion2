@@ -5231,7 +5231,7 @@ export default function App() {
         setToastMessage(`Server rendering: ${progress}% complete...`);
 
         if (status === 'complete') {
-          videoUrl = jobData.videoUrl;
+          videoUrl = jobData.videoUrl?.startsWith('/') ? `${renderServiceUrl}${jobData.videoUrl}` : jobData.videoUrl;
           break;
         } else if (status === 'failed') {
           throw new Error('Server render failed: ' + (jobData.error || 'Unknown error'));
