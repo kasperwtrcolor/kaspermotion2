@@ -27,7 +27,8 @@ const jobs = new Map();
 
 app.post('/api/render-job', (req, res) => {
   const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  jobs.set(jobId, { jobId, status: 'pending', progress: 0 });
+  // Store the config sent by the client so the headless browser can fetch it
+  jobs.set(jobId, { jobId, status: 'pending', progress: 0, config: req.body.config });
   res.json({ jobId, status: 'pending' });
 });
 
@@ -75,31 +76,30 @@ app.post('/api/render-hyperframes', async (req, res) => {
     try {
       const page = await browser.newPage();
       await page.setViewport({ width, height, deviceScaleFactor: 1 });
-
       console.log(`[Render] Navigating to: ${url}`);
+
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
       await new Promise(r => setTimeout(r, 3000)); // let animations init
-
+      
       // Create temp dir for frames
       const tempDir = path.join(os.tmpdir(), `render_${Date.now()}`);
       await fs.mkdir(tempDir, { recursive: true });
-
+      const frames = [];
       const frameDurationMs = 1000 / fps;
 
       for (let frame = 0; frame < totalFrames; frame++) {
         const framePath = path.join(tempDir, `frame_${String(frame).padStart(6, '0')}.png`);
+        
         await page.screenshot({ path: framePath, type: 'png' });
+        frames.push(framePath);
 
-        // Advance time in the page
-        await page.evaluate((ms) => {
-          window.dispatchEvent(new CustomEvent('renderer-tick', { detail: { timeMs: ms } }));
-        }, frame * frameDurationMs);
-
+        // Sleep to maintain roughly real-time capture
         await new Promise(r => setTimeout(r, Math.max(frameDurationMs * 0.5, 16)));
 
-        job.progress = Math.round((frame / totalFrames) * 80); // 0-80% = capture
-
-        if (frame % 30 === 0) {
+        // Update progress
+        if (frame % 5 === 0) {
+          job.progress = Math.round((frame / totalFrames) * 80); // 0-80% = capture
+          jobs.set(jobId, job);
           console.log(`[Render] Frame ${frame}/${totalFrames} (${job.progress}%)`);
         }
       }
