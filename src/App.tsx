@@ -6756,7 +6756,7 @@ export default function App() {
           <div className="vignette-overlay z-[450]" />
 
           {/* Video Player Controls */}
-          {!isRecording && (
+          {(!isRecording || isUploadingVideo) && (
             <VideoPlayerControls
               isPlaying={!isPaused}
               onPlayPause={() => {

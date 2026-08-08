@@ -78,8 +78,8 @@ app.post('/api/render-hyperframes', async (req, res) => {
       await page.setViewport({ width, height, deviceScaleFactor: 1 });
       console.log(`[Render] Navigating to: ${url}`);
 
-      await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-      await new Promise(r => setTimeout(r, 3000)); // let animations init
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await new Promise(r => setTimeout(r, 4000)); // let animations and firebase init
       
       // Create temp dir for frames
       const tempDir = path.join(os.tmpdir(), `render_${Date.now()}`);
