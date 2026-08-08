@@ -5108,7 +5108,7 @@ export default function App() {
   };
 
   // =========================================================================
-  // SERVER-SIDE RENDER (Railway) — Replaces screen recording
+  // VIDEO EXPORT — Client-side tab recording via MediaRecorder
   // =========================================================================
   const startServerRender = async () => {
     if (!checkStorageCap()) return;
@@ -5118,164 +5118,168 @@ export default function App() {
       return;
     }
 
-    let renderServiceUrl = import.meta.env.VITE_RENDER_SERVICE_URL || 'https://kaspermotion2-production.up.railway.app';
-    if (renderServiceUrl && !renderServiceUrl.startsWith('http')) {
-      renderServiceUrl = `https://${renderServiceUrl}`;
-    }
-
     try {
       setShowExportExplainer(false);
       setIsUploadingVideo(true);
       setRecordingProgress(0);
-      setIsRecording(true);
-      setToastMessage('Initializing server render...');
+      setToastMessage('Preparing export...');
 
-      // Stop video playback during render
-      sequenceActiveRef.current = false;
-      if (audioRef?.current) {
-        try { audioRef.current.pause(); } catch {}
-      }
-
-      // 1. Calculate total duration from compositions
-      const totalDuration = compositions.reduce((sum, comp) => {
-        const hasText = comp.caption && comp.caption.trim().length > 0;
-        const animDuration = hasText ? (4 / textAnimationSpeed) : 0;
-        const effectiveSceneDuration = Math.max(
-          comp.sceneDuration || sceneDuration,
-          hasText ? animDuration + 1.5 : 0
-        );
-        return sum + effectiveSceneDuration;
-      }, 0) + 2; // +2s buffer for final scene
-
-      // 2. Create render job
-      const jobRes = await fetch(`${renderServiceUrl}/api/render-job`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          script: scriptText,
-          mediaUrls: compositions.flatMap(c => c.media.map(m => m.url)),
-          config: {
-            compositions: compositions.map(c => ({
-              ...c,
-              media: c.media.map(m => ({ url: m.url, type: m.type, name: m.name, objectFit: m.objectFit }))
-            })),
-            settings: {
-              textAnimationSpeed,
-              sceneDuration,
-              exportResolution,
-              backgroundVideoUrls: backgroundVideoUrls || [],
-              globalAudioUrl: globalAudioUrl || '',
-            }
-          },
-          sourceType: 'app',
-          sourceId: user?.uid || 'anonymous'
-        })
-      });
-
-      if (!jobRes.ok) {
-        const errBody = await jobRes.text().catch(() => 'No response body');
-        console.error('[Render] Job creation failed:', jobRes.status, errBody);
-        throw new Error(`Failed to create render job (${jobRes.status}): ${errBody}`);
-      }
-      const { jobId } = await jobRes.json();
-      
-      setToastMessage(`Rendering on server (Job: ${jobId.slice(0, 12)}...)...`);
-
-      // 3. Trigger the headless render
+      // 1. Request tab capture
       const resConstraints = {
         '4K': { width: 3840, height: 2160 },
         '1080p': { width: 1920, height: 1080 },
         '720p': { width: 1280, height: 720 }
       }[exportResolution] || { width: 1920, height: 1080 };
 
-      // Build the playing URL that the headless browser will render
-      // Use the live app URL (Vercel), NOT the render service (Railway doesn't serve the frontend)
-      const appOrigin = window.location.origin;
-      const playingUrl = `${appOrigin}/?mode=headless-render&jobId=${jobId}`;
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: "browser",
+          width: { ideal: resConstraints.width },
+          height: { ideal: resConstraints.height },
+          frameRate: { ideal: 60 }
+        },
+        audio: false,
+        preferCurrentTab: true
+      } as any);
 
-      const renderRes = await fetch(`${renderServiceUrl}/api/render-hyperframes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: playingUrl,
-          duration: Math.ceil(totalDuration),
-          jobId,
-          width: resConstraints.width,
-          height: resConstraints.height,
-          fps: 30
-        })
+      // 2. Choose best codec
+      let mimeType = 'video/webm;codecs=vp9';
+      if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) {
+        mimeType = 'video/mp4;codecs=h264';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mimeType = 'video/mp4';
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        mimeType = 'video/webm;codecs=vp9';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        mimeType = 'video/webm';
+      }
+
+      const fileExt = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+
+      // Optionally add audio track
+      let combinedStream = stream;
+      if (includeAudioExport && audioRef.current && globalAudioUrl) {
+        try {
+          const audioStream = (audioRef.current as any).captureStream?.() || (audioRef.current as any).mozCaptureStream?.();
+          if (audioStream?.getAudioTracks().length > 0) {
+            combinedStream = new MediaStream([
+              ...stream.getVideoTracks(),
+              ...audioStream.getAudioTracks()
+            ]);
+          }
+        } catch {}
+      }
+
+      // 3. Set up MediaRecorder
+      const recorder = new MediaRecorder(combinedStream, {
+        mimeType,
+        videoBitsPerSecond: exportResolution === '4K' ? 50000000 : 15000000
+      });
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      // 4. When recording stops → download + go back to edit
+      const downloadPromise = new Promise<void>((resolve) => {
+        recorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+
+          const blob = new Blob(chunks, { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${websiteSiteName || 'motion-trailer'}-${exportResolution}.${fileExt}`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+          setToastMessage('Video exported! Returning to editor...');
+
+          // Deduct credits
+          if (user && !isAdmin) {
+            const userRef = doc(db, 'users', user.uid);
+            setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true }).catch(() => {});
+          }
+
+          resolve();
+        };
       });
 
-      if (!renderRes.ok) throw new Error('Failed to start render');
+      // If user stops screen sharing early
+      stream.getVideoTracks()[0].onended = () => {
+        if (recorder.state !== 'inactive') recorder.stop();
+      };
 
-      // 4. Poll for completion
-      let status = 'rendering';
-      let videoUrl = '';
-      let pollCount = 0;
-      const maxPolls = 300; // 5 min max at 1s intervals
+      // 5. Hide UI chrome, reset to scene 0
+      document.body.style.cursor = 'none';
+      const header = document.querySelector('header');
+      if (header) (header as HTMLElement).style.display = 'none';
 
-      while (status === 'rendering' || status === 'pending') {
-        await new Promise(r => setTimeout(r, 2000));
-        pollCount++;
+      setIsPaused(false);
+      setCurrentIndex(0);
+      setIsRecording(true);
+      setRecordingKey(prev => prev + 1);
 
-        if (pollCount > maxPolls) {
-          throw new Error('Render timed out after 10 minutes');
-        }
+      // Brief countdown
+      setToastMessage('Recording starts in 2...');
+      await new Promise(r => setTimeout(r, 1000));
+      setToastMessage('Recording starts in 1...');
+      await new Promise(r => setTimeout(r, 1000));
+      setToastMessage(null);
 
-        const statusRes = await fetch(`${renderServiceUrl}/api/render-job/${jobId}`);
-        if (!statusRes.ok) continue;
+      // 6. Start recording + play through all scenes
+      recorder.start();
+      sequenceActiveRef.current = true;
 
-        const jobData = await statusRes.json();
-        status = jobData.status;
-        const progress = jobData.progress || 0;
+      for (let i = 0; i < compositions.length; i++) {
+        if (!sequenceActiveRef.current) break;
 
-        setRecordingProgress(progress);
-        setToastMessage(`Server rendering: ${progress}% complete...`);
+        setCurrentIndex(i);
+        setRecordingProgress(Math.round((i / compositions.length) * 100));
 
-        if (status === 'complete') {
-          videoUrl = jobData.videoUrl?.startsWith('/') ? `${renderServiceUrl}${jobData.videoUrl}` : jobData.videoUrl;
-          break;
-        } else if (status === 'failed') {
-          throw new Error('Server render failed: ' + (jobData.error || 'Unknown error'));
-        }
+        const hasText = compositions[i].caption && compositions[i].caption.trim().length > 0;
+        const animDuration = hasText ? (4 / textAnimationSpeed) * 1000 : 0;
+        const effectiveSceneDuration = Math.max(
+          (compositions[i].sceneDuration || sceneDuration) * 1000,
+          hasText ? animDuration + 1500 : 0
+        );
+
+        await new Promise(r => setTimeout(r, effectiveSceneDuration));
       }
 
-      // 5. Download the rendered MP4
-      if (videoUrl) {
+      // 7. Final scene buffer, then stop
+      if (sequenceActiveRef.current) {
         setRecordingProgress(100);
-        setToastMessage('Render complete! Downloading MP4...');
-
-        const a = document.createElement('a');
-        a.href = videoUrl;
-        a.download = `${websiteSiteName || 'motion-trailer'}-${exportResolution}.mp4`;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        // Copy share URL
-        const shareUrl = `${window.location.origin}/share/${jobId}`;
-        setLastShareUrl(shareUrl);
-        navigator.clipboard.writeText(shareUrl).catch(() => {});
-
-        setToastMessage('Video rendered & downloaded! Share link copied to clipboard.');
-
-        // Deduct credits
-        if (user && !isAdmin) {
-          const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, { credits: Math.max(0, credits - 2) }, { merge: true });
-        }
+        await new Promise(r => setTimeout(r, 2000));
+        if (recorder.state !== 'inactive') recorder.stop();
       }
+
+      await downloadPromise;
+
+      // 8. Return to edit mode
+      setTimeout(() => {
+        setAppMode('setup');
+        setToastMessage(null);
+      }, 1500);
 
     } catch (err: any) {
-      console.error('Server render failed:', err);
-      setToastMessage(`Server render failed: ${err.message}. Try the screen recording method instead.`);
-      setTimeout(() => setToastMessage(null), 8000);
+      console.error('Export failed:', err);
+      if (err.name === 'NotAllowedError') {
+        setToastMessage('Screen sharing was denied. Please allow screen capture to export.');
+      } else {
+        setToastMessage(`Export failed: ${err.message}`);
+      }
+      setTimeout(() => setToastMessage(null), 6000);
     } finally {
       setIsUploadingVideo(false);
       setIsRecording(false);
       setRecordingProgress(0);
-      setTimeout(() => setToastMessage(null), 6000);
+      sequenceActiveRef.current = false;
+      document.body.style.cursor = 'default';
+      const header = document.querySelector('header');
+      if (header) (header as HTMLElement).style.display = '';
     }
   };
 
