@@ -5189,7 +5189,9 @@ export default function App() {
       }[exportResolution] || { width: 1920, height: 1080 };
 
       // Build the playing URL that the headless browser will render
-      const playingUrl = `${renderServiceUrl}/?mode=headless-render&jobId=${jobId}`;
+      // Use the live app URL (Vercel), NOT the render service (Railway doesn't serve the frontend)
+      const appOrigin = window.location.origin;
+      const playingUrl = `${appOrigin}/?mode=headless-render&jobId=${jobId}`;
 
       const renderRes = await fetch(`${renderServiceUrl}/api/render-hyperframes`, {
         method: 'POST',
