@@ -4934,7 +4934,7 @@ export default function App() {
           height: { ideal: resConstraints.height },
           frameRate: { ideal: 60 }
         },
-        audio: false,
+        audio: true,
         preferCurrentTab: true
       } as any);
 
@@ -4950,7 +4950,9 @@ export default function App() {
       }
 
       let combinedStream = stream;
-      if (includeAudioExport && audioRef.current && globalAudioUrl) {
+      // getDisplayMedia with audio:true captures all tab audio (X videos, etc.)
+      // Only manually add audioRef if the stream has no audio tracks (fallback)
+      if (stream.getAudioTracks().length === 0 && includeAudioExport && audioRef.current && globalAudioUrl) {
         try {
           const audioStream = (audioRef.current as any).captureStream ? (audioRef.current as any).captureStream() : (audioRef.current as any).mozCaptureStream ? (audioRef.current as any).mozCaptureStream() : null;
           if (audioStream && audioStream.getAudioTracks().length > 0) {

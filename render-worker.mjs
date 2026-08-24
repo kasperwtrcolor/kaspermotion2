@@ -38,24 +38,25 @@ app.get('/api/render-job/:id', (req, res) => {
   res.json(job);
 });
 
-// Serve rendered files
+// Serve rendered files from /tmp
 app.use('/outputs', express.static(os.tmpdir()));
 
 app.post('/api/render-hyperframes', async (req, res) => {
-  const { jobId, url, duration, width = 1920, height = 1080, fps = 30 } = req.body;
+  const { jobId, url, duration, width = 1920, height = 1080 } = req.body;
   const job = jobs.get(jobId) || { jobId, status: 'rendering', progress: 0 };
   job.status = 'rendering';
+  job.progress = 5;
   jobs.set(jobId, job);
 
   // Respond immediately so client can start polling
   res.json({ jobId, status: 'started' });
 
-  // Background render
-  const outputPath = path.join(os.tmpdir(), `${jobId}.mp4`);
-  const totalFrames = Math.ceil((duration || 5) * fps);
+  const webmPath = path.join(os.tmpdir(), `${jobId}.webm`);
+  const mp4Path = path.join(os.tmpdir(), `${jobId}.mp4`);
+  const totalDuration = duration || 10;
 
   try {
-    console.log(`[Render] Starting job ${jobId}: ${url} (${duration}s, ${width}x${height}, ${fps}fps, ${totalFrames} frames)`);
+    console.log(`[Render] Starting job ${jobId}: ${url} (${totalDuration}s, ${width}x${height})`);
     
     const puppeteer = await import('puppeteer');
     const browser = await puppeteer.default.launch({
@@ -76,76 +77,81 @@ app.post('/api/render-hyperframes', async (req, res) => {
     try {
       const page = await browser.newPage();
       await page.setViewport({ width, height, deviceScaleFactor: 1 });
+      
       console.log(`[Render] Navigating to: ${url}`);
+      job.progress = 10;
 
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await new Promise(r => setTimeout(r, 4000)); // let animations and firebase init
       
-      // Create temp dir for frames
-      const tempDir = path.join(os.tmpdir(), `render_${Date.now()}`);
-      await fs.mkdir(tempDir, { recursive: true });
-      const frames = [];
-      const frameDurationMs = 1000 / fps;
+      // Wait for app to load, fetch config, and start playing
+      console.log(`[Render] Page loaded, waiting for app to initialize...`);
+      job.progress = 15;
+      await new Promise(r => setTimeout(r, 5000));
 
-      for (let frame = 0; frame < totalFrames; frame++) {
-        const framePath = path.join(tempDir, `frame_${String(frame).padStart(6, '0')}.png`);
-        
-        await page.screenshot({ path: framePath, type: 'png' });
-        frames.push(framePath);
+      // Start screencast recording (Puppeteer 21+ built-in API)
+      // This is MUCH faster than frame-by-frame screenshots
+      console.log(`[Render] Starting screencast recording for ${totalDuration}s...`);
+      job.progress = 20;
+      
+      const recorder = await page.screencast({ path: webmPath });
 
-        // Sleep to maintain roughly real-time capture
-        await new Promise(r => setTimeout(r, Math.max(frameDurationMs * 0.5, 16)));
+      // Let the page play for the full duration, updating progress
+      const startTime = Date.now();
+      const checkInterval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const pct = Math.min(elapsed / totalDuration, 1);
+        job.progress = 20 + Math.round(pct * 60); // 20-80% = recording
+      }, 1000);
 
-        // Update progress
-        if (frame % 5 === 0) {
-          job.progress = Math.round((frame / totalFrames) * 80); // 0-80% = capture
-          jobs.set(jobId, job);
-          console.log(`[Render] Frame ${frame}/${totalFrames} (${job.progress}%)`);
-        }
-      }
+      await new Promise(r => setTimeout(r, totalDuration * 1000));
+      clearInterval(checkInterval);
 
-      console.log(`[Render] Captured ${totalFrames} frames. Encoding with FFmpeg...`);
+      // Stop recording
+      await recorder.stop();
+      console.log(`[Render] Screencast saved to ${webmPath}`);
       job.progress = 80;
 
-      // FFmpeg encode
+      // Convert WebM → MP4 with FFmpeg
+      console.log(`[Render] Converting to MP4...`);
       const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
+      
       await new Promise((resolve, reject) => {
         const proc = spawn(ffmpegPath, [
           '-y',
-          '-framerate', String(fps),
-          '-i', path.join(tempDir, 'frame_%06d.png'),
+          '-i', webmPath,
           '-c:v', 'libx264',
-          '-preset', 'medium',
+          '-preset', 'fast',
           '-crf', '23',
           '-pix_fmt', 'yuv420p',
           '-movflags', '+faststart',
-          '-vf', `scale=${width}:${height}`,
-          outputPath
+          '-an',  // no audio in headless render
+          mp4Path
         ]);
 
         proc.stderr.on('data', (data) => {
           const msg = data.toString();
-          const match = msg.match(/frame=\s*(\d+)/);
-          if (match) {
-            job.progress = 80 + Math.round((parseInt(match[1]) / totalFrames) * 20);
+          if (msg.includes('frame=')) {
+            job.progress = 85;
           }
         });
 
-        proc.on('close', (code) => code === 0 ? resolve() : reject(new Error(`FFmpeg exit ${code}`)));
+        proc.on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`FFmpeg exited with code ${code}`));
+          }
+        });
         proc.on('error', reject);
       });
 
-      // Cleanup temp frames
-      try {
-        const files = await fs.readdir(tempDir);
-        await Promise.all(files.map(f => fs.unlink(path.join(tempDir, f))));
-        await fs.rmdir(tempDir);
-      } catch {}
+      // Clean up WebM
+      try { await fs.unlink(webmPath); } catch {}
 
       job.status = 'complete';
       job.progress = 100;
       job.videoUrl = `/outputs/${jobId}.mp4`;
-      console.log(`[Render] Job ${jobId} complete: ${outputPath}`);
+      console.log(`[Render] Job ${jobId} complete: ${mp4Path}`);
 
     } finally {
       await browser.close();
