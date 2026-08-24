@@ -5283,15 +5283,25 @@ export default function App() {
       // 5. Download the rendered MP4
       if (videoUrl) {
         setRecordingProgress(100);
-        setToastMessage('Render complete! Downloading MP4...');
+        setToastMessage('Render complete! Downloading MP4 (this may take a few seconds)...');
 
-        const a = document.createElement('a');
-        a.href = videoUrl;
-        a.download = `${websiteSiteName || 'motion-trailer'}-${exportResolution}.mp4`;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        try {
+          const dlRes = await fetch(videoUrl);
+          if (!dlRes.ok) throw new Error('Download request failed');
+          const blob = await dlRes.blob();
+          const localUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = localUrl;
+          a.download = `${websiteSiteName || 'motion-trailer'}-${exportResolution}.mp4`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(localUrl), 10000);
+        } catch (err) {
+          console.error("Failed to fetch video for download", err);
+          // Fallback if fetch fails (e.g. CORS)
+          window.open(videoUrl, '_blank');
+        }
 
         // Copy share URL
         const shareUrl = `${window.location.origin}/share/${jobId}`;

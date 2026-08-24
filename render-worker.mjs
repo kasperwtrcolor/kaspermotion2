@@ -39,7 +39,13 @@ app.get('/api/render-job/:id', (req, res) => {
 });
 
 // Serve rendered files from /tmp
-app.use('/outputs', express.static(os.tmpdir()));
+app.use('/outputs', express.static(os.tmpdir(), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mp4')) {
+      res.setHeader('Content-Disposition', 'attachment; filename="vibetrailer-export.mp4"');
+    }
+  }
+}));
 
 app.post('/api/render-hyperframes', async (req, res) => {
   const { jobId, url, duration, width = 1920, height = 1080 } = req.body;
@@ -116,17 +122,38 @@ app.post('/api/render-hyperframes', async (req, res) => {
       const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
       
       await new Promise((resolve, reject) => {
-        const proc = spawn(ffmpegPath, [
+        const globalAudioUrl = job.config?.settings?.globalAudioUrl;
+        
+        const ffmpegArgs = [
           '-y',
-          '-i', webmPath,
+          '-i', webmPath
+        ];
+
+        if (globalAudioUrl) {
+          ffmpegArgs.push('-i', globalAudioUrl);
+        }
+
+        ffmpegArgs.push(
           '-c:v', 'libx264',
           '-preset', 'fast',
           '-crf', '23',
           '-pix_fmt', 'yuv420p',
-          '-movflags', '+faststart',
-          '-an',  // no audio in headless render
-          mp4Path
-        ]);
+          '-movflags', '+faststart'
+        );
+
+        if (globalAudioUrl) {
+          ffmpegArgs.push(
+            '-c:a', 'aac',
+            '-b:a', '192k',
+            '-shortest'
+          );
+        } else {
+          ffmpegArgs.push('-an');
+        }
+
+        ffmpegArgs.push(mp4Path);
+
+        const proc = spawn(ffmpegPath, ffmpegArgs);
 
         proc.stderr.on('data', (data) => {
           const msg = data.toString();

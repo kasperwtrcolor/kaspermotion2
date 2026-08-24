@@ -7,6 +7,9 @@ const CookieConsent: React.FC = () => {
   const [animateIn, setAnimateIn] = useState(false);
 
   useEffect(() => {
+    // Hide in headless render mode so it doesn't get baked into exports
+    if (window.location.search.includes('mode=headless-render')) return;
+
     const consent = localStorage.getItem(STORAGE_KEY);
     if (!consent) {
       setVisible(true);
